@@ -1,3 +1,5 @@
+const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
+
 const STORAGE_KEYS = {
   progress: 'deaQuizProgress',
   settings: 'deaQuizSettings',
@@ -167,6 +169,7 @@ function startSession(forcedMode = null) {
     order: finalList.map((q) => q.id),
     currentIndex: 0,
     answers: {},
+    choiceMap: {},
     graded: {},
     completedAt: null,
     explanationOpen: false,
@@ -183,7 +186,8 @@ function renderQuestion() {
   const question = getCurrentQuestion();
   const idx = state.session.currentIndex + 1;
   const total = state.session.order.length;
-  const chosen = state.session.answers[question.id] ?? null;
+  const choiceMap = getOrCreateChoiceMap(question.id, question.choices);
+  const chosen = getStoredSelectedLabel(question.id, question.choices, choiceMap);
   const graded = state.session.graded[question.id];
 
   els.quizSection.textContent = `Section ${question.section}: ${question.sectionTitle}`;
@@ -193,10 +197,12 @@ function renderQuestion() {
   els.resultIndicator.className = 'indicator';
   els.quizMessage.textContent = '';
 
-  const choices = Object.entries(question.choices)
-    .map(([key, text]) => {
-      const checked = chosen === key ? 'checked' : '';
-      return `<label data-choice="${key}"><input type="radio" name="choice" value="${key}" ${checked}/> ${key}. ${text}</label>`;
+  const choices = getChoiceLabels(question.choices)
+    .map((label) => {
+      const originalKey = choiceMap[label];
+      const text = question.choices[originalKey];
+      const checked = chosen === label ? 'checked' : '';
+      return `<label data-choice="${label}"><input type="radio" name="choice" value="${label}" ${checked}/> ${label}. ${text}</label>`;
     })
     .join('');
   els.choicesForm.innerHTML = choices;
@@ -206,7 +212,7 @@ function renderQuestion() {
   els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
 
   if (graded) {
-    applyGradedState(question, chosen);
+    applyGradedState(question, chosen, choiceMap);
   }
 
   updateBookmarkLabel(state.progress[question.id]?.bookmark);
@@ -221,12 +227,13 @@ function submitCurrentAnswer() {
     return;
   }
 
-  const chosen = selected.value;
-  state.session.answers[question.id] = chosen;
+  const selectedLabel = selected.value;
+  const choiceMap = getOrCreateChoiceMap(question.id, question.choices);
+  state.session.answers[question.id] = selectedLabel;
   state.session.graded[question.id] = true;
   state.session.explanationOpen = true;
 
-  const correct = chosen === question.answer;
+  const correct = choiceMap[selectedLabel] === question.answer;
   const currentProgress = state.progress[question.id] ?? baseProgress();
   currentProgress.seenCount += 1;
   if (correct) {
@@ -241,17 +248,18 @@ function submitCurrentAnswer() {
   renderQuestion();
 }
 
-function applyGradedState(question, chosen) {
-  const correct = chosen === question.answer;
+function applyGradedState(question, chosenLabel, choiceMap) {
+  const correctLabel = getChoiceLabels(question.choices).find((label) => choiceMap[label] === question.answer);
+  const correct = chosenLabel === correctLabel;
   els.resultIndicator.textContent = correct
-    ? `✅ 正解（正答: ${question.answer}）`
-    : `❌ 不正解（正答: ${question.answer}）`;
+    ? `✅ 正解（正答: ${correctLabel}）`
+    : `❌ 不正解（正答: ${correctLabel}）`;
   els.resultIndicator.classList.add(correct ? 'ok' : 'ng');
 
   els.choicesForm.querySelectorAll('label').forEach((label) => {
-    const key = label.dataset.choice;
-    if (key === question.answer) label.classList.add('correct');
-    if (key === chosen && key !== question.answer) label.classList.add('wrong');
+    const labelKey = label.dataset.choice;
+    if (labelKey === correctLabel) label.classList.add('correct');
+    if (labelKey === chosenLabel && labelKey !== correctLabel) label.classList.add('wrong');
   });
 }
 
@@ -281,8 +289,9 @@ function finishSession() {
 
   ids.forEach((id) => {
     const q = state.questions.find((item) => item.id === id);
-    const answer = state.session.answers[id];
-    const isCorrect = answer === q.answer;
+    const choiceMap = getOrCreateChoiceMap(id, q.choices);
+    const selectedLabel = getStoredSelectedLabel(id, q.choices, choiceMap);
+    const isCorrect = selectedLabel ? choiceMap[selectedLabel] === q.answer : false;
     if (isCorrect) correctCount += 1;
     else wrongItems.push(q);
 
@@ -358,6 +367,7 @@ function loadSession() {
     order: saved.order,
     currentIndex: idx,
     answers: saved.answers ?? {},
+    choiceMap: saved.choiceMap ?? {},
     graded: saved.graded ?? {},
     completedAt: saved.completedAt ?? null,
     explanationOpen: Boolean(saved.explanationOpen),
@@ -371,6 +381,58 @@ function loadSession() {
   }
 
   return session;
+}
+
+function getChoiceLabels(choices) {
+  const keys = Object.keys(choices);
+  const hasFixedLabels = FIXED_CHOICE_LABELS.every((label) => keys.includes(label));
+  return hasFixedLabels ? [...FIXED_CHOICE_LABELS] : [...keys].sort();
+}
+
+function getOrCreateChoiceMap(questionId, choices) {
+  const labels = getChoiceLabels(choices);
+  const originalKeys = Object.keys(choices);
+  const savedMap = state.session.choiceMap[questionId];
+  if (isValidChoiceMap(savedMap, labels, originalKeys)) {
+    return savedMap;
+  }
+
+  const shuffled = shuffle([...originalKeys]);
+  const generatedMap = labels.reduce((acc, label, index) => {
+    acc[label] = shuffled[index];
+    return acc;
+  }, {});
+
+  state.session.choiceMap[questionId] = generatedMap;
+  return generatedMap;
+}
+
+function isValidChoiceMap(map, labels, originalKeys) {
+  if (!map || typeof map !== 'object' || Array.isArray(map)) {
+    return false;
+  }
+
+  const mapLabels = Object.keys(map);
+  if (mapLabels.length !== labels.length || !labels.every((label) => mapLabels.includes(label))) {
+    return false;
+  }
+
+  const values = Object.values(map);
+  const valueSet = new Set(values);
+  return valueSet.size === originalKeys.length && originalKeys.every((key) => valueSet.has(key));
+}
+
+function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
+  const stored = state.session.answers[questionId] ?? null;
+  if (!stored) return null;
+
+  const labels = getChoiceLabels(choices);
+  if (labels.includes(stored)) {
+    return stored;
+  }
+
+  const map = choiceMap ?? getOrCreateChoiceMap(questionId, choices);
+  return labels.find((label) => map[label] === stored) ?? null;
 }
 
 function persistSession() {
