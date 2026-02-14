@@ -39,7 +39,8 @@
 
         <div class="button-row">
           <button type="submit" class="primary">開始</button>
-          <button type="button" id="resume-btn">前回の続きから</button>
+          <button type="button" id="resume-btn" class="hidden">続きから再開</button>
+          <button type="button" id="discard-session-btn" class="hidden">中断データを削除</button>
         </div>
       </form>
       <p id="home-message" class="message"></p>
@@ -59,6 +60,7 @@
         <button id="next-question" type="button">次へ</button>
         <button id="toggle-explanation" type="button">解説を表示</button>
         <button id="bookmark-btn" type="button">ブックマーク☆</button>
+        <button id="suspend-to-home" type="button">中断してホームへ</button>
       </div>
       <article id="explanation" class="explanation hidden"></article>
       <p id="quiz-message" class="message"></p>
