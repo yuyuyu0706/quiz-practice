@@ -24,7 +24,8 @@ python -m http.server 8000
   - セクション（1〜5）絞り込み
   - 出題モード（通常/ランダム/間違いのみ/ブックマークのみ）
   - 出題数（10/20/50/全問）
-  - 前回の続きから再開
+  - 続きから再開（中断セッションがある場合のみ表示）
+  - 中断データを削除（やり直し）
 - クイズ画面
   - 1問ずつ表示、A〜Dの4択回答
   - 回答確定で正誤判定（✅/❌）
@@ -33,6 +34,7 @@ python -m http.server 8000
   - 前へ/次へ
   - キーボード操作（A-D, 1-4, Enter, ←/→）
   - ブックマーク機能
+  - 中断してホームへ（現在状態を保存）
 - 結果画面
   - スコア（正答数/出題数/正答率）
   - セクション別正答率
@@ -73,7 +75,7 @@ python -m http.server 8000
 - `deaQuizProgress`: 問題ごとの学習履歴
   - `seenCount`, `correctCount`, `wrongCount`, `lastAnsweredAt`, `bookmark`
 - `deaQuizSettings`: ホーム画面の設定値
-- `deaQuizSession`: 進行中セッション（出題順、回答、現在位置）
+- `deaQuizActiveSession`: 進行中セッション（出題順、回答、現在位置、採点状況、保存時刻）
 
 ## localStorage リセット方法
 
@@ -82,7 +84,7 @@ python -m http.server 8000
 ```js
 localStorage.removeItem('deaQuizProgress');
 localStorage.removeItem('deaQuizSettings');
-localStorage.removeItem('deaQuizSession');
+localStorage.removeItem('deaQuizActiveSession');
 ```
 
 または、対象サイトのストレージをブラウザ設定から削除してください。

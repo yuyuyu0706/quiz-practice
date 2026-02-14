@@ -1,7 +1,7 @@
 const STORAGE_KEYS = {
   progress: 'deaQuizProgress',
   settings: 'deaQuizSettings',
-  session: 'deaQuizSession',
+  session: 'deaQuizActiveSession',
 };
 
 const state = {
@@ -25,6 +25,7 @@ const els = {
   sectionCheckboxes: document.getElementById('section-checkboxes'),
   questionCount: document.getElementById('question-count'),
   resumeBtn: document.getElementById('resume-btn'),
+  discardSessionBtn: document.getElementById('discard-session-btn'),
   homeMessage: document.getElementById('home-message'),
   quizSection: document.getElementById('quiz-section'),
   quizProgress: document.getElementById('quiz-progress'),
@@ -38,6 +39,7 @@ const els = {
   nextQuestion: document.getElementById('next-question'),
   toggleExplanation: document.getElementById('toggle-explanation'),
   bookmarkBtn: document.getElementById('bookmark-btn'),
+  suspendToHome: document.getElementById('suspend-to-home'),
   scoreText: document.getElementById('score-text'),
   sectionScoreText: document.getElementById('section-score-text'),
   wrongList: document.getElementById('wrong-list'),
@@ -52,10 +54,7 @@ async function init() {
   buildSectionCheckboxes();
   hydrateSettingsUI();
   attachEvents();
-  const savedSession = loadJSON(STORAGE_KEYS.session, null);
-  if (savedSession && savedSession.order?.length) {
-    els.homeMessage.textContent = '前回のセッションを検出しました。続きから再開できます。';
-  }
+  refreshResumeUI();
 }
 
 function attachEvents() {
@@ -66,14 +65,22 @@ function attachEvents() {
   });
 
   els.resumeBtn.addEventListener('click', () => {
-    const saved = loadJSON(STORAGE_KEYS.session, null);
-    if (!saved || !saved.order?.length) {
+    const saved = loadSession();
+    if (!saved) {
       els.homeMessage.textContent = '再開できるセッションがありません。';
+      refreshResumeUI();
       return;
     }
     state.session = saved;
     showView('quiz');
     renderQuestion();
+  });
+
+  els.discardSessionBtn.addEventListener('click', () => {
+    clearSession();
+    state.session = null;
+    els.homeMessage.textContent = '中断データを削除しました。';
+    refreshResumeUI();
   });
 
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
@@ -82,9 +89,9 @@ function attachEvents() {
 
   els.toggleExplanation.addEventListener('click', () => {
     els.explanation.classList.toggle('hidden');
-    els.toggleExplanation.textContent = els.explanation.classList.contains('hidden')
-      ? '解説を表示'
-      : '解説を非表示';
+    state.session.explanationOpen = !els.explanation.classList.contains('hidden');
+    els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
+    persistSession();
   });
 
   els.bookmarkBtn.addEventListener('click', () => {
@@ -99,6 +106,15 @@ function attachEvents() {
   els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
   els.backHome.addEventListener('click', () => {
     showView('home');
+    refreshResumeUI();
+  });
+
+  els.suspendToHome.addEventListener('click', () => {
+    if (!state.session) return;
+    persistSession();
+    showView('home');
+    els.homeMessage.textContent = '中断状態を保存しました。';
+    refreshResumeUI();
   });
 
   document.addEventListener('keydown', handleKeyboard);
@@ -145,6 +161,8 @@ function startSession(forcedMode = null) {
   const finalList = pool.slice(0, Math.min(count, pool.length));
 
   state.session = {
+    schemaVersion: 1,
+    app: 'dea-quiz-app',
     mode,
     order: finalList.map((q) => q.id),
     currentIndex: 0,
@@ -152,9 +170,11 @@ function startSession(forcedMode = null) {
     graded: {},
     completedAt: null,
     explanationOpen: false,
+    startedAt: new Date().toISOString(),
+    settingsSnapshot: { ...state.settings, mode },
   };
 
-  saveJSON(STORAGE_KEYS.session, state.session);
+  persistSession();
   showView('quiz');
   renderQuestion();
 }
@@ -190,7 +210,7 @@ function renderQuestion() {
   }
 
   updateBookmarkLabel(state.progress[question.id]?.bookmark);
-  saveJSON(STORAGE_KEYS.session, state.session);
+  persistSession();
 }
 
 function submitCurrentAnswer() {
@@ -294,13 +314,73 @@ function finishSession() {
   }
 
   state.session.completedAt = new Date().toISOString();
-  saveJSON(STORAGE_KEYS.session, state.session);
+  clearSession();
+  state.session = null;
+  refreshResumeUI();
   showView('result');
 }
 
 function getCurrentQuestion() {
   const id = state.session.order[state.session.currentIndex];
   return state.questions.find((q) => q.id === id);
+}
+
+
+function refreshResumeUI() {
+  const saved = loadSession();
+  const hasSession = Boolean(saved);
+  els.resumeBtn.classList.toggle('hidden', !hasSession);
+  els.discardSessionBtn.classList.toggle('hidden', !hasSession);
+  if (hasSession) {
+    els.homeMessage.textContent = '前回のセッションを検出しました。続きから再開できます。';
+  } else if (els.homeMessage.textContent.includes('前回のセッション')) {
+    els.homeMessage.textContent = '';
+  }
+}
+
+function loadSession() {
+  const saved = loadJSON(STORAGE_KEYS.session, null);
+  if (!saved) return null;
+  if (!Array.isArray(saved.order) || saved.order.length === 0) {
+    clearSession();
+    return null;
+  }
+  const idx = Number(saved.currentIndex);
+  if (!Number.isInteger(idx) || idx < 0 || idx >= saved.order.length) {
+    clearSession();
+    return null;
+  }
+
+  const session = {
+    schemaVersion: saved.schemaVersion ?? 1,
+    app: saved.app ?? 'dea-quiz-app',
+    mode: saved.mode ?? 'normal',
+    order: saved.order,
+    currentIndex: idx,
+    answers: saved.answers ?? {},
+    graded: saved.graded ?? {},
+    completedAt: saved.completedAt ?? null,
+    explanationOpen: Boolean(saved.explanationOpen),
+    startedAt: saved.startedAt ?? new Date().toISOString(),
+    settingsSnapshot: saved.settingsSnapshot ?? null,
+  };
+
+  if (session.completedAt) {
+    clearSession();
+    return null;
+  }
+
+  return session;
+}
+
+function persistSession() {
+  if (!state.session) return;
+  state.session.savedAt = new Date().toISOString();
+  saveJSON(STORAGE_KEYS.session, state.session);
+}
+
+function clearSession() {
+  localStorage.removeItem(STORAGE_KEYS.session);
 }
 
 function showView(name) {
