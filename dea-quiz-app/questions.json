@@ -1,0 +1,1002 @@
+[
+  {
+    "id": "Q1",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 1: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q1の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q2",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 2: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q2の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q3",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 3: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q3の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q4",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 4: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q4の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q5",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 5: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q5の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q6",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 6: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q6の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q7",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 7: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q7の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q8",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 8: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q8の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q9",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 9: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q9の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q10",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "[Databricks Intelligence Platform] DEA対策問題 10: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q10の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-1"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q11",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 11: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q11の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q12",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 12: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q12の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q13",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 13: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q13の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q14",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 14: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q14の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q15",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 15: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q15の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q16",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 16: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q16の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q17",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 17: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q17の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q18",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 18: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q18の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q19",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 19: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q19の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q20",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and ELT",
+    "question": "[Data Ingestion and ELT] DEA対策問題 20: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q20の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-2"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q21",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 21: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q21の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q22",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 22: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q22の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q23",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 23: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q23の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q24",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 24: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q24の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q25",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 25: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q25の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q26",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 26: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q26の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q27",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 27: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q27の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q28",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 28: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q28の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q29",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 29: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q29の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q30",
+    "section": "3",
+    "sectionTitle": "Data Storage and Governance",
+    "question": "[Data Storage and Governance] DEA対策問題 30: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q30の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-3"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q31",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 31: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q31の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q32",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 32: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q32の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q33",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 33: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q33の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q34",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 34: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q34の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q35",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 35: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q35の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q36",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 36: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q36の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q37",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 37: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q37の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q38",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 38: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q38の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q39",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 39: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q39の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q40",
+    "section": "4",
+    "sectionTitle": "Production Pipelines",
+    "question": "[Production Pipelines] DEA対策問題 40: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q40の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-4"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q41",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 41: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q41の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q42",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 42: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q42の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q43",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 43: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q43の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q44",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 44: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q44の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q45",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 45: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q45の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q46",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 46: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q46の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q47",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 47: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "D",
+    "explanation": "Q47の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 3
+  },
+  {
+    "id": "Q48",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 48: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "A",
+    "explanation": "Q48の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 1
+  },
+  {
+    "id": "Q49",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 49: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "B",
+    "explanation": "Q49の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 2
+  },
+  {
+    "id": "Q50",
+    "section": "5",
+    "sectionTitle": "Monitoring and Optimization",
+    "question": "[Monitoring and Optimization] DEA対策問題 50: 最も適切な選択肢を選んでください。",
+    "choices": {
+      "A": "Databricks SQL ウェアハウスを使って分析を行う",
+      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
+      "C": "Auto Loader や DLT を使って運用を簡素化する",
+      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+    },
+    "answer": "C",
+    "explanation": "Q50の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
+    "tags": [
+      "DEA",
+      "Databricks",
+      "Section-5"
+    ],
+    "difficulty": 3
+  }
+]

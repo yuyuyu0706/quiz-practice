@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DEA 50問 練習アプリ</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="app-header">
+      <h1>Databricks DEA 練習問題</h1>
+      <p class="subtitle">50問・4択・解説つき</p>
+    </header>
+
+    <section id="home-view" class="card view active">
+      <h2>学習設定</h2>
+      <form id="settings-form">
+        <fieldset>
+          <legend>出題範囲（セクション）</legend>
+          <div class="chips" id="section-checkboxes"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>出題モード</legend>
+          <label><input type="radio" name="mode" value="normal" checked /> 通常（順番）</label>
+          <label><input type="radio" name="mode" value="random" /> ランダム</label>
+          <label><input type="radio" name="mode" value="wrongOnly" /> 間違いのみ</label>
+          <label><input type="radio" name="mode" value="bookmarks" /> ブックマークのみ</label>
+        </fieldset>
+
+        <label for="question-count">出題数</label>
+        <select id="question-count" name="count">
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50" selected>50</option>
+          <option value="all">全問</option>
+        </select>
+
+        <div class="button-row">
+          <button type="submit" class="primary">開始</button>
+          <button type="button" id="resume-btn">前回の続きから</button>
+        </div>
+      </form>
+      <p id="home-message" class="message"></p>
+    </section>
+
+    <section id="quiz-view" class="card view">
+      <div class="quiz-head">
+        <p id="quiz-section"></p>
+        <p id="quiz-progress"></p>
+      </div>
+      <h2 id="quiz-question"></h2>
+      <form id="choices-form" class="choices"></form>
+      <p id="result-indicator" class="indicator"></p>
+      <div class="button-row wrap">
+        <button id="submit-answer" class="primary">回答する</button>
+        <button id="prev-question" type="button">前へ</button>
+        <button id="next-question" type="button">次へ</button>
+        <button id="toggle-explanation" type="button">解説を表示</button>
+        <button id="bookmark-btn" type="button">ブックマーク☆</button>
+      </div>
+      <article id="explanation" class="explanation hidden"></article>
+      <p id="quiz-message" class="message"></p>
+    </section>
+
+    <section id="result-view" class="card view">
+      <h2>結果</h2>
+      <p id="score-text"></p>
+      <p id="section-score-text"></p>
+      <h3>間違い問題</h3>
+      <ul id="wrong-list"></ul>
+      <div class="button-row wrap">
+        <button id="retry-wrong" class="primary">間違いのみ復習を開始</button>
+        <button id="back-home">ホームへ</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

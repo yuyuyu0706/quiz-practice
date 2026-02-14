@@ -1,0 +1,123 @@
+:root {
+  color-scheme: light;
+  font-family: "Inter", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --text: #1d2433;
+  --primary: #4f46e5;
+  --ok: #0f9d58;
+  --ng: #d93025;
+  --muted: #5f6b7a;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+.container {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.app-header {
+  margin-bottom: 12px;
+}
+.subtitle {
+  color: var(--muted);
+  margin-top: 4px;
+}
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+}
+.view { display: none; }
+.view.active { display: block; }
+fieldset {
+  border: 1px solid #d5dbe7;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+}
+legend { padding: 0 4px; }
+label {
+  display: block;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+.chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+.chips label {
+  border: 1px solid #d5dbe7;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+select,
+button {
+  font-size: 1rem;
+}
+button {
+  border: 1px solid #ccd3e0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #fff;
+  cursor: pointer;
+  min-height: 44px;
+}
+button.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.button-row.wrap { flex-wrap: wrap; }
+.quiz-head {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+}
+.choices label {
+  border: 1px solid #d5dbe7;
+  border-radius: 10px;
+  padding: 10px;
+}
+.choices label.correct {
+  border-color: var(--ok);
+  background: #e8f5ee;
+}
+.choices label.wrong {
+  border-color: var(--ng);
+  background: #fdeceb;
+}
+.indicator.ok { color: var(--ok); font-weight: 700; }
+.indicator.ng { color: var(--ng); font-weight: 700; }
+.explanation {
+  margin-top: 12px;
+  border-left: 4px solid var(--primary);
+  padding: 10px;
+  background: #f5f3ff;
+}
+.hidden { display: none; }
+.message { color: var(--muted); min-height: 1.2em; }
+#wrong-list {
+  padding-left: 20px;
+}
+#wrong-list li {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 600px) {
+  .container { padding: 12px; }
+  h1 { font-size: 1.3rem; }
+  h2 { font-size: 1.1rem; }
+}
