@@ -3,1000 +3,700 @@
     "id": "Q1",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 1: 最も適切な選択肢を選んでください。",
+    "question": "Databricks で**データレイアウトの決定を簡素化し、クエリ性能を最適化**する代表的な機能の組み合わせとして最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Z-Ordering と VACUUM",
+      "B": "Photon と DatabricksIQ",
+      "C": "Auto Optimize（Optimize Write/Auto Compaction）と Liquid Clustering",
+      "D": "Delta Sharing と Lakehouse Federation"
     },
-    "answer": "B",
-    "explanation": "Q1の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 2
+    "answer": "C",
+    "explanation": "物理配置の最適化やファイルサイズ調整を自動化する機能（Auto Optimize 等）と、クラスタリング方針の簡素化（Liquid Clustering）が「レイアウト決定の簡素化」と「性能最適化」に直結します。"
   },
   {
     "id": "Q2",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 2: 最も適切な選択肢を選んでください。",
+    "question": "Databricks Data Intelligence Platform の価値として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "単一ノードでの高速 ETL を提供する",
+      "B": "データ、ガバナンス、AI/BI を同一プラットフォーム上で統合し運用できる",
+      "C": "すべての処理をオンプレミスに限定する",
+      "D": "CSV のみをサポートしフォーマットを統一する"
     },
-    "answer": "C",
-    "explanation": "Q2の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 3
+    "answer": "B",
+    "explanation": "レイクハウスの統合（データ管理・ガバナンス・分析/AI）を一貫して扱えることが価値の中心です。"
   },
   {
     "id": "Q3",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 3: 最も適切な選択肢を選んでください。",
+    "question": "以下のうち、**同一のワークスペース内で複数チームが同じデータ資産を安全に共有**しやすくする設計として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "チームごとに別ワークスペースを作り、テーブルは各自で複製する",
+      "B": "Unity Catalog のカタログ/スキーマをチーム単位で分け、権限で制御する",
+      "C": "すべてを個人用 DBFS に保存する",
+      "D": "ジョブのクラスター名にチーム名を付ける"
     },
-    "answer": "D",
-    "explanation": "Q3の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 1
+    "answer": "B",
+    "explanation": "UC の論理階層（カタログ/スキーマ/テーブル）と権限付与が、共有と分離の両立に適します。"
   },
   {
     "id": "Q4",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 4: 最も適切な選択肢を選んでください。",
+    "question": "次のうち、**短時間のアドホック分析**に最も適したコンピュート選択はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "永続的な All-purpose（対話型）クラスター",
+      "B": "長時間稼働のジョブクラスターを手動で起動し続ける",
+      "C": "連続稼働の DLT パイプライン専用クラスター",
+      "D": "常にシングルノードクラスター"
     },
     "answer": "A",
-    "explanation": "Q4の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 2
+    "explanation": "ノートブックでの対話的作業は All-purpose クラスターが基本です（用途によりサーバレス選択もあり得ますが、ここでは典型を問う）。"
   },
   {
     "id": "Q5",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 5: 最も適切な選択肢を選んでください。",
+    "question": "SQL 実行の高速化に寄与する Databricks の実行エンジン機能として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Photon",
+      "B": "Delta Sharing",
+      "C": "Repos",
+      "D": "Volumes"
     },
-    "answer": "B",
-    "explanation": "Q5の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 3
+    "answer": "A",
+    "explanation": "Photon は SQL/ETL ワークロードの高速化に用いられる実行エンジンです。"
   },
   {
     "id": "Q6",
-    "section": "1",
-    "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 6: 最も適切な選択肢を選んでください。",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Databricks Connect の主目的として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "ローカル IDE から Databricks クラスターをリモート実行対象として利用できるようにする",
+      "B": "DBFS を FTP サーバとして公開する",
+      "C": "Unity Catalog の監査ログを外部に転送する",
+      "D": "Delta Sharing の受信設定を自動生成する"
     },
-    "answer": "C",
-    "explanation": "Q6の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "ローカル開発環境（IDE）で書いた Spark コードを Databricks 上で実行・デバッグする接続機構です。"
   },
   {
     "id": "Q7",
-    "section": "1",
-    "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 7: 最も適切な選択肢を選んでください。",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "ノートブックで**パラメータ化**してジョブ実行する方法として最も一般的なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`%pip install` を使う",
+      "B": "ウィジェット（dbutils.widgets）を使う",
+      "C": "`VACUUM` を実行する",
+      "D": "`DESCRIBE HISTORY` を使う"
     },
-    "answer": "D",
-    "explanation": "Q7の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 2
+    "answer": "B",
+    "explanation": "ウィジェットはジョブ実行時の入力（文字列/数値/ドロップダウン等）に使えます。"
   },
   {
     "id": "Q8",
-    "section": "1",
-    "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 8: 最も適切な選択肢を選んでください。",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "複数ノートブックを 1 つのリポジトリで管理し、ブランチ運用する機能はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Repos",
+      "B": "Dashboards",
+      "C": "SQL Warehouse",
+      "D": "Delta Sharing"
     },
     "answer": "A",
-    "explanation": "Q8の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 3
+    "explanation": "Repos は Git 連携によりノートブック等の資産をバージョン管理できます。"
   },
   {
     "id": "Q9",
-    "section": "1",
-    "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 9: 最も適切な選択肢を選んでください。",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Auto Loader が主に解決する課題として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "ストリーミングのスキーマ進化と増分ファイル取り込みを簡素化する",
+      "B": "テーブルの権限付与を自動化する",
+      "C": "クラスターのスポット利用を禁止する",
+      "D": "SQL だけで UDF を実装する"
     },
-    "answer": "B",
-    "explanation": "Q9の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "cloudFiles による増分検知、スキーマ推論/進化、チェックポイントなどが特徴です。"
   },
   {
     "id": "Q10",
-    "section": "1",
-    "sectionTitle": "Databricks Intelligence Platform",
-    "question": "[Databricks Intelligence Platform] DEA対策問題 10: 最も適切な選択肢を選んでください。",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Auto Loader の**有効なソース**として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`cloudFiles` でクラウドオブジェクトストレージ（例：S3/ADLS/GCS）上のファイルを監視",
+      "B": "JDBC で RDB のテーブルを監視",
+      "C": "Kafka のトピックのみを監視",
+      "D": "ローカル PC の `C:\\data` を監視"
     },
-    "answer": "C",
-    "explanation": "Q10の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-1"
-    ],
-    "difficulty": 2
+    "answer": "A",
+    "explanation": "Auto Loader はクラウドストレージ上のファイル取り込みに最適化されています。"
   },
   {
     "id": "Q11",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 11: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "Auto Loader で**増分取り込み**の状態を保持するために必須となる設定はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`checkpointLocation`",
+      "B": "`spark.sql.shuffle.partitions`",
+      "C": "`spark.databricks.delta.retentionDurationCheck.enabled`",
+      "D": "`spark.sql.ansi.enabled`"
     },
-    "answer": "D",
-    "explanation": "Q11の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 3
+    "answer": "A",
+    "explanation": "チェックポイントは処理済みファイルやストリーミング状態を保持します。"
   },
   {
     "id": "Q12",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 12: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "Auto Loader のスキーマを永続化し、スキーマ進化を安全に扱うために用いる設定はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`schemaLocation`",
+      "B": "`mergeSchema`",
+      "C": "`ZORDER BY`",
+      "D": "`OPTIMIZE`"
     },
     "answer": "A",
-    "explanation": "Q12の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 1
+    "explanation": "schemaLocation に推論結果や進化情報が格納され、安定運用に重要です。"
   },
   {
     "id": "Q13",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 13: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "次のうち、ノートブックでセル単位の言語を切り替える「マジックコマンド」の例として正しいのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`%sql`",
+      "B": "`!sql`",
+      "C": "`#sql`",
+      "D": "`@sql`"
     },
-    "answer": "B",
-    "explanation": "Q13の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 2
+    "answer": "A",
+    "explanation": "`%sql`、`%python`、`%md` などが代表例です。"
   },
   {
     "id": "Q14",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 14: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "次のうち、Databricks の**組み込みデバッグ支援**として適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Spark UI とジョブログ、メトリクス、イベントログの参照",
+      "B": "OS のレジストリエディタ",
+      "C": "ブラウザ拡張機能のみ",
+      "D": "監査ログを手で grep するだけ"
     },
-    "answer": "C",
-    "explanation": "Q14の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 3
+    "answer": "A",
+    "explanation": "Spark UI（ステージ/タスク/SQL）、ドライバ/エグゼキュータログ、ジョブログなどが基本です。"
   },
   {
     "id": "Q15",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 15: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "Structured Streaming を使って Auto Loader で取り込みたい。読み取りに使う典型 API はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`spark.readStream.format(\"cloudFiles\")...`",
+      "B": "`spark.read.format(\"delta\")...`",
+      "C": "`dbutils.fs.mount(...)`",
+      "D": "`VACUUM table`"
     },
-    "answer": "D",
-    "explanation": "Q15の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "Auto Loader は `readStream` と `cloudFiles` の組み合わせが典型です。"
   },
   {
     "id": "Q16",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 16: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "ノートブックをジョブのタスクとして実行する際、**依存関係**として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "タスク間の依存（DAG）を Workflows で設定できる",
+      "B": "依存関係は OS の crontab でのみ設定する",
+      "C": "依存関係は Repos のブランチ名で表現する",
+      "D": "依存関係は Delta のテーブルプロパティに書く"
     },
     "answer": "A",
-    "explanation": "Q16の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 2
+    "explanation": "Workflows ではタスク依存（成功時/失敗時分岐など）を構成できます。"
   },
   {
     "id": "Q17",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 17: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "次のうち、ノートブック実行時に「同じセルを複数回実行して状態が変わる」問題を減らすために有効な運用はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "ノートブックの冒頭で入力データの参照先を固定し、再実行可能な手順にする",
+      "B": "すべてのセルに `display()` を置く",
+      "C": "常にドライバメモリを最大化する",
+      "D": "Python だけを使い SQL を禁止する"
     },
-    "answer": "B",
-    "explanation": "Q17の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 3
+    "answer": "A",
+    "explanation": "再現性（idempotency）を意識し、状態依存を減らすのが基本です。"
   },
   {
     "id": "Q18",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 18: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "Auto Loader のユースケースとして最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "日次で増える JSON/CSV/Parquet ファイルをオブジェクトストレージから増分取り込みしてブロンズに着地",
+      "B": "既存の Delta テーブルを VACUUM するだけ",
+      "C": "UC のユーザー作成を自動化する",
+      "D": "ノートブックの見た目を変更する"
     },
-    "answer": "C",
-    "explanation": "Q18の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "ファイル増分取り込み（ブロンズ層）での利用が典型です。"
   },
   {
     "id": "Q19",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 19: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "Databricks Connect 利用時のトラブルシューティングとして最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "ローカルのライブラリ版本とクラスターランタイム/DBR の互換性を確認する",
+      "B": "クラスター名を短くする",
+      "C": "DBFS のルートを削除する",
+      "D": "常にシングルノードにする"
     },
-    "answer": "D",
-    "explanation": "Q19の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 2
+    "answer": "A",
+    "explanation": "互換性（Python/Spark/DBR）や認証設定がまず確認ポイントです。"
   },
   {
     "id": "Q20",
     "section": "2",
-    "sectionTitle": "Data Ingestion and ELT",
-    "question": "[Data Ingestion and ELT] DEA対策問題 20: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "開発と取り込み",
+    "question": "ストリーミング取り込みのジョブが遅い。まず確認すべき内容として適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Spark UI でステージ/タスクのスキュー、シャッフル、I/O 待ち、バッチ処理時間を確認する",
+      "B": "監査ログだけを見る",
+      "C": "Repos を削除する",
+      "D": "ノートブックを PDF 化する"
     },
     "answer": "A",
-    "explanation": "Q20の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-2"
-    ],
-    "difficulty": 3
+    "explanation": "遅延の原因は計算/シャッフル/I/O/スキュー等が多く、Spark UI が第一選択です。"
   },
   {
     "id": "Q21",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 21: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "メダリオンアーキテクチャにおける **Bronze** の主目的として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "取り込みデータをできるだけ加工せず、監査可能な形で保存する",
+      "B": "完全に正規化して BI 用の最終形にする",
+      "C": "すべての重複を排除し集計まで完了させる",
+      "D": "監査ログのみを格納する"
     },
-    "answer": "B",
-    "explanation": "Q21の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "Bronze は「生データに近い形の着地（履歴保持・再処理可能）」が基本です。"
   },
   {
     "id": "Q22",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 22: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "**Silver** の主目的として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "取り込み生データをそのまま保持する",
+      "B": "クリーニング・正規化・結合などの品質改善を行い、下流で使いやすくする",
+      "C": "経営指標を集計しダッシュボードだけを作る",
+      "D": "外部共有のために匿名化だけをする"
     },
-    "answer": "C",
-    "explanation": "Q22の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 2
+    "answer": "B",
+    "explanation": "Silver はクレンジング/整形/統合など「利用可能な形」への変換が中心です。"
   },
   {
     "id": "Q23",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 23: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "**Gold** の主目的として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "生データの永続化",
+      "B": "監査ログの格納",
+      "C": "ビジネス利用（BI/ML）に最適化した集計・データマートを提供する",
+      "D": "ファイル取り込みの増分検知"
     },
-    "answer": "D",
-    "explanation": "Q23の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 3
+    "answer": "C",
+    "explanation": "Gold は下流ユースケース向け（集計・指標・データマート）です。"
   },
   {
     "id": "Q24",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 24: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "次のうち、バッチ ETL に適したクラスター選択として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Job クラスター（タスク実行時に起動し、完了後に終了）",
+      "B": "24時間稼働の All-purpose クラスターを手動管理",
+      "C": "ローカル PC の Python 実行環境",
+      "D": "監査ログ専用クラスター"
     },
     "answer": "A",
-    "explanation": "Q24の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 1
+    "explanation": "バッチ処理は Job クラスターでコスト最適化しやすいです。"
   },
   {
     "id": "Q25",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 25: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "DLT（Delta Live Tables）の利点として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "すべての処理を手動で順番に実行する必要がある",
+      "B": "宣言的にパイプラインを定義し、依存関係・品質制約・運用（リトライ等）を統合できる",
+      "C": "どんなデータ品質の問題も自動で修復する",
+      "D": "Unity Catalog を不要にする"
     },
     "answer": "B",
-    "explanation": "Q25の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 2
+    "explanation": "宣言型パイプライン、expectations、運用容易性が主要メリットです。"
   },
   {
     "id": "Q26",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 26: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "DLT の expectation（例：`CONSTRAINT valid_timestamp EXPECT (...)`）に違反したレコードの扱いで、最も典型的なのはどれ？（設定により挙動は変化し得る）",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "すべてのレコードが自動的に削除される",
+      "B": "違反レコードはテーブルに書き込まれ、イベントとして無効が記録される",
+      "C": "直ちにワークスペースが停止する",
+      "D": "UC の権限がリセットされる"
     },
-    "answer": "C",
-    "explanation": "Q26の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 3
+    "answer": "B",
+    "explanation": "期待値は「記録」「ドロップ」「失敗」などを選べますが、記録（無効としてログに残す）が基本パターンです。"
   },
   {
     "id": "Q27",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 27: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "DDL として最も適切な操作はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`CREATE TABLE`",
+      "B": "`UPDATE`",
+      "C": "`MERGE`",
+      "D": "`DELETE`"
     },
-    "answer": "D",
-    "explanation": "Q27の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "DDL はスキーマ/オブジェクト定義（CREATE/ALTER/DROP 等）です。"
   },
   {
     "id": "Q28",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 28: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "DML として最も適切な操作はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`ALTER TABLE`",
+      "B": "`CREATE SCHEMA`",
+      "C": "`INSERT INTO`",
+      "D": "`DROP TABLE`"
     },
-    "answer": "A",
-    "explanation": "Q28の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 2
+    "answer": "C",
+    "explanation": "DML はデータ操作（INSERT/UPDATE/DELETE/MERGE 等）です。"
   },
   {
     "id": "Q29",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 29: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "PySpark DataFrame で「ユーザー別に売上合計と注文回数」を計算する最も適切なパターンはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`groupBy(\"user_id\").agg(sum(\"sales\").alias(\"total_sales\"), count(\"*\").alias(\"orders\"))`",
+      "B": "`select(\"user_id\").where(\"sales\")`",
+      "C": "`dropDuplicates(\"sales\")`",
+      "D": "`cacheTable(\"user_id\")`"
     },
-    "answer": "B",
-    "explanation": "Q29の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 3
+    "answer": "A",
+    "explanation": "集計は `groupBy().agg()` が基本です。"
   },
   {
     "id": "Q30",
     "section": "3",
-    "sectionTitle": "Data Storage and Governance",
-    "question": "[Data Storage and Governance] DEA対策問題 30: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "次のうち、ウィンドウ関数を DataFrame で使う主な目的として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "行ごとに独立した乱数を作る",
+      "B": "パーティション内の順序を考慮した累積値、順位、移動平均との差などを計算する",
+      "C": "UC 権限を付与する",
+      "D": "Auto Loader のチェックポイントを設定する"
     },
-    "answer": "C",
-    "explanation": "Q30の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-3"
-    ],
-    "difficulty": 1
+    "answer": "B",
+    "explanation": "Window は「グループ内の順序」を扱う計算（rank/lag/rolling 等）に使います。"
   },
   {
     "id": "Q31",
-    "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 31: 最も適切な選択肢を選んでください。",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "Delta テーブルに対する `MERGE INTO` の典型用途として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "取り込み済みのデータを上書きせず、参照専用にする",
+      "B": "変更データ（CDC）を適用し、アップサート（更新/挿入）を行う",
+      "C": "テーブルを物理削除して容量を増やす",
+      "D": "クラスターを自動終了する"
     },
-    "answer": "D",
-    "explanation": "Q31の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 2
+    "answer": "B",
+    "explanation": "`MERGE` はアップサートに使われ、CDC 適用で頻出です。"
   },
   {
     "id": "Q32",
-    "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 32: 最も適切な選択肢を選んでください。",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "次のうち、Delta Lake のタイムトラベルを利用する SQL として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`SELECT * FROM table VERSION AS OF 5`",
+      "B": "`SELECT * FROM table CLUSTER BY (col)`",
+      "C": "`SELECT * FROM table SHARE WITH other`",
+      "D": "`SELECT * FROM table OPTIMIZE`"
     },
     "answer": "A",
-    "explanation": "Q32の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 3
+    "explanation": "VERSION/TIMESTAMP 指定で過去スナップショット参照ができます。"
   },
   {
     "id": "Q33",
-    "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 33: 最も適切な選択肢を選んでください。",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "大規模なシャッフルが発生し、特定キーにデータが偏っている（スキュー）場合の対処として適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "キーのサルティング（salt）や再パーティション戦略を検討する",
+      "B": "監査ログを削除する",
+      "C": "常に単一パーティションに集約する",
+      "D": "Python UDF を増やす"
     },
-    "answer": "B",
-    "explanation": "Q33の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "スキューはシャッフルの偏りなので、分散の工夫（salt 等）が有効です。"
   },
   {
     "id": "Q34",
-    "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 34: 最も適切な選択肢を選んでください。",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "同じ中間結果を複数回使う処理があり、再計算コストが高い。DataFrame での対処として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`cache()` / `persist()` を使う",
+      "B": "`VACUUM` を実行する",
+      "C": "`DROP TABLE` する",
+      "D": "`GRANT USAGE` する"
     },
-    "answer": "C",
-    "explanation": "Q34の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 2
+    "answer": "A",
+    "explanation": "キャッシュは再利用により計算量を削減できます（メモリ/ディスク戦略に注意）。"
   },
   {
     "id": "Q35",
-    "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 35: 最も適切な選択肢を選んでください。",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "UDF（ユーザー定義関数）を使う際の一般的な注意点として適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "常に組み込み関数より速い",
+      "B": "最適化が効きにくい場合があるため、まず組み込み関数/SQL 関数を検討する",
+      "C": "UC 権限を自動付与する",
+      "D": "DLT では使えない"
     },
-    "answer": "D",
-    "explanation": "Q35の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 3
+    "answer": "B",
+    "explanation": "UDF は最適化（例：Catalyst/Photon）が効きにくいケースがあるため、組み込み優先が定石です。"
   },
   {
     "id": "Q36",
-    "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 36: 最も適切な選択肢を選んでください。",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "Delta テーブルで小さなファイルが大量にある場合の典型的な対策はどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`OPTIMIZE` によるファイルコンパクション",
+      "B": "`DESCRIBE HISTORY` の実行回数を増やす",
+      "C": "`SHOW GRANTS` を繰り返す",
+      "D": "`DROP SCHEMA` する"
     },
     "answer": "A",
-    "explanation": "Q36の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 1
+    "explanation": "小さなファイル問題は読み取り効率を下げるため、コンパクションが効果的です。"
   },
   {
     "id": "Q37",
     "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 37: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "DAB（Databricks Asset Bundles）の目的として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "ノートブックのセルを自動で折りたたむ",
+      "B": "Databricks のリソース（ジョブ、パイプライン等）をコードとして定義し、環境ごとにデプロイ可能にする",
+      "C": "DBFS を完全に廃止する",
+      "D": "監査ログを暗号化する"
     },
     "answer": "B",
-    "explanation": "Q37の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 2
+    "explanation": "DAB は Databricks リソースを宣言的にまとめ、再現性あるデプロイを支援します。"
   },
   {
     "id": "Q38",
     "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 38: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "DAB と従来の「GUI でジョブを手作業作成」の違いとして最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "DAB はバージョン管理しにくい",
+      "B": "DAB はリソース定義をファイルで管理し CI/CD に組み込みやすい",
+      "C": "GUI では環境差分管理が容易",
+      "D": "DAB はジョブを作れない"
     },
-    "answer": "C",
-    "explanation": "Q38の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 3
+    "answer": "B",
+    "explanation": "IaC 的に扱える点が最大の違いです。"
   },
   {
     "id": "Q39",
     "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 39: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "Workflows で失敗したタスクを、原因修正後に**該当タスク以降を再実行**したい。最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "修復（Repair）実行で失敗タスク/下流のみを再実行する",
+      "B": "すべてのタスクを毎回最初から実行するしかない",
+      "C": "Repos を削除してから再実行する",
+      "D": "UC の権限を削除してから再実行する"
     },
-    "answer": "D",
-    "explanation": "Q39の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "Repair は失敗点からの再実行を支援します（依存関係に注意）。"
   },
   {
     "id": "Q40",
     "section": "4",
-    "sectionTitle": "Production Pipelines",
-    "question": "[Production Pipelines] DEA対策問題 40: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "ジョブの実行ログや出力を追跡し、失敗原因を確認する基本手段として適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Workflows の Run（実行）詳細画面でログ/出力を確認する",
+      "B": "ブラウザの履歴だけを見る",
+      "C": "ノートブックを PNG にする",
+      "D": "DBFS を削除する"
     },
     "answer": "A",
-    "explanation": "Q40の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-4"
-    ],
-    "difficulty": 2
+    "explanation": "ジョブ実行の UI からタスクログ、ドライバログ、設定を辿れます。"
   },
   {
     "id": "Q41",
-    "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 41: 最も適切な選択肢を選んでください。",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "Databricks 管理のサーバレス（例：サーバレス SQL/ジョブ）を使う利点として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "クラスターを手動で常時チューニングする必要が増える",
+      "B": "コンピュート運用の多くをプラットフォーム側に任せ、起動/スケール等を最適化できる",
+      "C": "Spark UI が使えなくなる",
+      "D": "Delta を使えなくなる"
     },
     "answer": "B",
-    "explanation": "Q41の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 3
+    "explanation": "運用負荷軽減（管理の自動化）が大きな利点です。"
   },
   {
     "id": "Q42",
-    "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 42: 最も適切な選択肢を選んでください。",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "Spark UI を使って「どこが遅いか」を特定する際、まず見るべき情報の組み合わせとして最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Stage の時間、Shuffle Read/Write、Skew、Task 失敗/再試行",
+      "B": "ノートブックのテーマ色",
+      "C": "監査ログの保存先",
+      "D": "UC のグループ名"
     },
-    "answer": "C",
-    "explanation": "Q42の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 1
+    "answer": "A",
+    "explanation": "ボトルネックはステージ/タスク/シャッフル/I/O に現れます。"
   },
   {
     "id": "Q43",
-    "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 43: 最も適切な選択肢を選んでください。",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "ジョブが外部システム API を呼び出す。レート制限対策として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "リトライ（指数バックオフ）と並列度の制御を組み合わせる",
+      "B": "例外を握りつぶして成功扱いにする",
+      "C": "常に最大並列で呼び出す",
+      "D": "監査ログを無効化する"
     },
-    "answer": "D",
-    "explanation": "Q43の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 2
+    "answer": "A",
+    "explanation": "外部依存ではリトライ戦略と並列制御が基本です。"
   },
   {
     "id": "Q44",
-    "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 44: 最も適切な選択肢を選んでください。",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "本番向けに「環境差分（dev/stg/prod）」を安全に扱う一般的手法として適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "すべての環境で同じ資格情報を共有する",
+      "B": "環境ごとに変数/シークレット/設定を分離し、DAB などで切り替えてデプロイする",
+      "C": "本番では手動コピペのみで反映する",
+      "D": "監査ログを削除して差分をなくす"
     },
-    "answer": "A",
-    "explanation": "Q44の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 3
+    "answer": "B",
+    "explanation": "秘匿情報分離と環境別設定がセキュアで再現性も高いです。"
   },
   {
     "id": "Q45",
-    "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 45: 最も適切な選択肢を選んでください。",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "「処理が失敗したが、入力データはそのまま。コード修正だけで再実行したい」場合、運用として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "失敗時点の入力（ソース）を消す",
+      "B": "失敗タスクを修復実行し、必要に応じて idempotent な書き込み（MERGE など）で再実行可能にする",
+      "C": "監査ログを止める",
+      "D": "UC を無効化する"
     },
     "answer": "B",
-    "explanation": "Q45の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 1
+    "explanation": "再実行性（冪等性）と修復実行の組み合わせが実運用の基本です。"
   },
   {
     "id": "Q46",
     "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 46: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データガバナンス＆品質",
+    "question": "Unity Catalog における**マネージドテーブル**と**外部テーブル**の違いとして最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "マネージドは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部はユーザー管理の場所を参照する",
+      "B": "外部テーブルは SQL が使えない",
+      "C": "マネージドテーブルは読み取り専用",
+      "D": "外部テーブルは Delta 形式を使えない"
     },
-    "answer": "C",
-    "explanation": "Q46の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 2
+    "answer": "A",
+    "explanation": "所有権（データファイルの管理責任）が大きな違いです。"
   },
   {
     "id": "Q47",
     "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 47: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データガバナンス＆品質",
+    "question": "UC で「スキーマを利用する」ために必要になりやすい権限の組み合わせとして最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "`USAGE`（カタログ/スキーマ）＋対象オブジェクトへの権限（例：テーブルの `SELECT`）",
+      "B": "`OWNERSHIP` がないと何もできない",
+      "C": "`SELECT` だけあればスキーマ参照できる",
+      "D": "`VACUUM` 権限"
     },
-    "answer": "D",
-    "explanation": "Q47の正解は D です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 3
+    "answer": "A",
+    "explanation": "UC は階層に沿って `USAGE` とオブジェクト権限が必要になるのが基本です。"
   },
   {
     "id": "Q48",
     "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 48: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データガバナンス＆品質",
+    "question": "UC の重要なロール/概念として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Metastore 管理者（admin）やオブジェクト所有者（owner）など、管理境界を持つ役割",
+      "B": "監査ログ閲覧者は存在しない",
+      "C": "ジョブの所有者が UC の全権限を自動で持つ",
+      "D": "クラスターの作成者が全テーブルの所有者になる"
     },
     "answer": "A",
-    "explanation": "Q48の正解は A です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 1
+    "explanation": "管理者・所有者・権限付与者など、ガバナンスの責務が明確です。"
   },
   {
     "id": "Q49",
     "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 49: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データガバナンス＆品質",
+    "question": "Unity Catalog の**リネージ（lineage）**を活用する主な目的として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "ユーザーのパスワードを表示する",
+      "B": "データの派生関係（上流→下流）を把握し、影響範囲分析や監査に使う",
+      "C": "クラスターを停止する",
+      "D": "Auto Loader のスキーマ推論を高速化する"
     },
     "answer": "B",
-    "explanation": "Q49の正解は B です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 2
+    "explanation": "どのデータがどこから来て、どこへ使われたかの追跡により、変更影響や品質管理が容易になります。"
   },
   {
     "id": "Q50",
     "section": "5",
-    "sectionTitle": "Monitoring and Optimization",
-    "question": "[Monitoring and Optimization] DEA対策問題 50: 最も適切な選択肢を選んでください。",
+    "sectionTitle": "データガバナンス＆品質",
+    "question": "Delta Sharing の説明として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks SQL ウェアハウスを使って分析を行う",
-      "B": "Delta Lake のトランザクションログを活用して整合性を保つ",
-      "C": "Auto Loader や DLT を使って運用を簡素化する",
-      "D": "Unity Catalog で権限とデータアクセスを一元管理する"
+      "A": "Databricks ワークスペース間でしか共有できない",
+      "B": "共有先にデータコピーを強制しない方式で、外部システムとも共有できる（権限制御やコスト考慮が必要）",
+      "C": "共有は CSV に変換してメール送付する",
+      "D": "監査ログを共有するためだけの機能"
     },
-    "answer": "C",
-    "explanation": "Q50の正解は C です。DEAでは要件に応じて適切なDatabricks機能を選択する理解が重要です。",
-    "tags": [
-      "DEA",
-      "Databricks",
-      "Section-5"
-    ],
-    "difficulty": 3
+    "answer": "B",
+    "explanation": "共有方式（プロトコル/権限/課金/データ移動）を理解することが重要です。"
   }
 ]
