@@ -35,7 +35,21 @@
       "D": "CSV のみをサポートしフォーマットを統一する"
     },
     "answer": "B",
-    "explanation": "レイクハウスの統合（データ管理・ガバナンス・分析/AI）を一貫して扱えることが価値の中心です。"
+    "explanation": "Databricks Data Intelligence Platform（≒レイクハウス基盤の統合プラットフォーム）の価値は、「データ処理」だけでなく、データの“利用”に必要な要素（ガバナンス・AI/BI・協業・運用）までを同じ基盤上で一貫して回せる点にあります。したがって正解は **（データ、ガバナンス、AI/BI を同一プラットフォーム上で統合し運用できる）**です。\n\nたとえば、“統合“の具体例を示します。\n\n- 同じデータ（例：Deltaテーブル）を、ETL（エンジニア）・分析（アナリスト）・AI/ML（サイエンティスト）が共有して使う\n\n- その際に、Unity Catalog等で権限・監査・リネージを統一して管理できる（＝ガバナンスが後付けにならない）\n\n- BI領域も、AI/BIなどでプラットフォームに統合されている（“別製品に切り出さず”同じ基盤で運用）",
+    "references": [
+      {
+        "title": "Databricks データインテリジェンスプラットフォーム（日本語）",
+        "url": "https://www.databricks.com/jp/product/data-intelligence-platform"
+      },
+      {
+        "title": "AI/BI の概念（Data Intelligence Platform との統合）",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ai-bi/concepts"
+      },
+      {
+        "title": "ガバナンス機能（Unity Catalog）をワークスペースに組み込む考え方（日本語ブログ）",
+        "url": "https://www.databricks.com/jp/blog/built-governance-your-databricks-workspace"
+      }
+    ]
   },
   {
     "id": "Q3",
@@ -49,7 +63,21 @@
       "D": "ジョブのクラスター名にチーム名を付ける"
     },
     "answer": "B",
-    "explanation": "UC の論理階層（カタログ/スキーマ/テーブル）と権限付与が、共有と分離の両立に適します。"
+    "explanation": "正解は **（Unity Catalog のカタログ/スキーマをチーム単位で分け、権限で制御する）**です。\n\n同一ワークスペース内で複数チームが同じデータ資産を安全に共有するには、「論理的な境界（カタログ/スキーマ）」と「権限（GRANT/REVOKE）」でアクセスを設計できるUnity Catalogが最も相性が良いです。Unity Catalogはメタストア上で catalog.schema.table の階層を持ち、各階層に対して権限を付与できます\n\nなぜ、UCが“共有しやすい”のか（ポイント）\n\n- 同じ実体（同じテーブル/ビュー/ボリューム）を共有しつつ、チーム単位で「見える範囲」「操作できる範囲」を権限制御できる為\n\n- UCの権限は階層に沿って整理できる為。例えば「カタログ/スキーマは見えるが、テーブルはSELECTだけ」など、最小権限での設計がしやすい\n\n- “チーム境界”を ワークスペース分割やデータ複製で作るより、単一ワークスペースの方がガバナンスを効かせた共有が実現しやすい為",
+    "references": [
+      {
+        "title": "Unity Catalog の権限とセキュリティ保護可能なオブジェクト",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+      },
+      {
+        "title": "Unity Catalog の特権の管理（GRANT/REVOKE等）",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/manage-privileges/"
+      },
+      {
+        "title": "Unity Catalog のベスト プラクティス（設計の推奨）",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/best-practices"
+      }
+    ]
   },
   {
     "id": "Q4",
