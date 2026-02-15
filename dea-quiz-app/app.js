@@ -192,20 +192,30 @@ function renderQuestion() {
 
   els.quizSection.textContent = `Section ${question.section}: ${question.sectionTitle}`;
   els.quizProgress.textContent = `${idx} / ${total}`;
-  els.quizQuestion.textContent = `${question.id}. ${question.question}`;
+  els.quizQuestion.replaceChildren();
+  appendInlineFormattedText(els.quizQuestion, `${question.id}. ${question.question}`);
   els.resultIndicator.textContent = '';
   els.resultIndicator.className = 'indicator';
   els.quizMessage.textContent = '';
 
-  const choices = getChoiceLabels(question.choices)
-    .map((label) => {
-      const originalKey = choiceMap[label];
-      const text = question.choices[originalKey];
-      const checked = chosen === label ? 'checked' : '';
-      return `<label data-choice="${label}"><input type="radio" name="choice" value="${label}" ${checked}/> ${label}. ${text}</label>`;
-    })
-    .join('');
-  els.choicesForm.innerHTML = choices;
+  els.choicesForm.replaceChildren();
+  getChoiceLabels(question.choices).forEach((label) => {
+    const originalKey = choiceMap[label];
+    const text = question.choices[originalKey];
+
+    const choiceLabel = document.createElement('label');
+    choiceLabel.dataset.choice = label;
+
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'choice';
+    input.value = label;
+    input.checked = chosen === label;
+    choiceLabel.appendChild(input);
+
+    appendInlineFormattedText(choiceLabel, ` ${label}. ${text}`);
+    els.choicesForm.appendChild(choiceLabel);
+  });
 
   renderExplanation(question);
   els.explanation.classList.toggle('hidden', !state.session.explanationOpen);
@@ -273,7 +283,7 @@ function renderMarkdownToFragment(markdownText) {
   const flushParagraph = () => {
     if (!paragraphBuffer.length) return;
     const p = document.createElement('p');
-    p.textContent = paragraphBuffer.join('\n').trim();
+    appendInlineFormattedText(p, paragraphBuffer.join('\n').trim());
     fragment.appendChild(p);
     paragraphBuffer.length = 0;
   };
@@ -283,7 +293,7 @@ function renderMarkdownToFragment(markdownText) {
     const ul = document.createElement('ul');
     listBuffer.forEach((text) => {
       const li = document.createElement('li');
-      li.textContent = text;
+      appendInlineFormattedText(li, text);
       ul.appendChild(li);
     });
     fragment.appendChild(ul);
@@ -346,6 +356,29 @@ function renderMarkdownToFragment(markdownText) {
   flushList();
 
   return fragment;
+}
+
+function appendInlineFormattedText(element, text) {
+  const inlineBoldPattern = /\*\*(.+?)\*\*/g;
+  let currentIndex = 0;
+  let match = inlineBoldPattern.exec(text);
+
+  while (match) {
+    if (match.index > currentIndex) {
+      element.appendChild(document.createTextNode(text.slice(currentIndex, match.index)));
+    }
+
+    const strong = document.createElement('strong');
+    strong.textContent = match[1];
+    element.appendChild(strong);
+
+    currentIndex = inlineBoldPattern.lastIndex;
+    match = inlineBoldPattern.exec(text);
+  }
+
+  if (currentIndex < text.length) {
+    element.appendChild(document.createTextNode(text.slice(currentIndex)));
+  }
 }
 
 function submitCurrentAnswer() {
