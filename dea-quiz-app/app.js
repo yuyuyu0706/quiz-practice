@@ -207,7 +207,7 @@ function renderQuestion() {
     .join('');
   els.choicesForm.innerHTML = choices;
 
-  els.explanation.textContent = question.explanation;
+  renderExplanation(question);
   els.explanation.classList.toggle('hidden', !state.session.explanationOpen);
   els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
 
@@ -217,6 +217,135 @@ function renderQuestion() {
 
   updateBookmarkLabel(state.progress[question.id]?.bookmark);
   persistSession();
+}
+
+function renderExplanation(question) {
+  const explanation = typeof question.explanation === 'string' ? question.explanation : '';
+  const references = Array.isArray(question.references) ? question.references : [];
+  els.explanation.replaceChildren();
+
+  const body = renderMarkdownToFragment(explanation);
+  els.explanation.appendChild(body);
+
+  const validReferences = references.filter(
+    (item) => item && typeof item.title === 'string' && typeof item.url === 'string' && item.title && item.url,
+  );
+  if (!validReferences.length) return;
+
+  const section = document.createElement('section');
+  section.className = 'references';
+
+  const title = document.createElement('h3');
+  title.textContent = '参考リンク';
+  section.appendChild(title);
+
+  const list = document.createElement('ul');
+  validReferences.forEach((item) => {
+    const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.textContent = item.title;
+    link.href = item.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    li.appendChild(link);
+    list.appendChild(li);
+  });
+  section.appendChild(list);
+  els.explanation.appendChild(section);
+}
+
+function renderMarkdownToFragment(markdownText) {
+  const fragment = document.createDocumentFragment();
+  if (!markdownText.trim()) {
+    const empty = document.createElement('p');
+    empty.textContent = '解説はまだ登録されていません。';
+    fragment.appendChild(empty);
+    return fragment;
+  }
+
+  const lines = markdownText.replace(/\r\n/g, '\n').split('\n');
+  const paragraphBuffer = [];
+  const listBuffer = [];
+  let inCodeBlock = false;
+  let codeLanguage = '';
+  let codeBuffer = [];
+
+  const flushParagraph = () => {
+    if (!paragraphBuffer.length) return;
+    const p = document.createElement('p');
+    p.textContent = paragraphBuffer.join('\n').trim();
+    fragment.appendChild(p);
+    paragraphBuffer.length = 0;
+  };
+
+  const flushList = () => {
+    if (!listBuffer.length) return;
+    const ul = document.createElement('ul');
+    listBuffer.forEach((text) => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      ul.appendChild(li);
+    });
+    fragment.appendChild(ul);
+    listBuffer.length = 0;
+  };
+
+  const flushCode = () => {
+    const pre = document.createElement('pre');
+    pre.className = `code-block${codeLanguage ? ` lang-${codeLanguage}` : ''}`;
+    const code = document.createElement('code');
+    if (codeLanguage) code.className = `language-${codeLanguage}`;
+    code.textContent = codeBuffer.join('\n');
+    pre.appendChild(code);
+    fragment.appendChild(pre);
+    codeBuffer = [];
+    codeLanguage = '';
+  };
+
+  lines.forEach((line) => {
+    const fence = line.match(/^```\s*([a-zA-Z0-9_-]+)?\s*$/);
+    if (fence) {
+      if (inCodeBlock) {
+        flushCode();
+        inCodeBlock = false;
+      } else {
+        flushParagraph();
+        flushList();
+        inCodeBlock = true;
+        codeLanguage = (fence[1] ?? '').toLowerCase();
+      }
+      return;
+    }
+
+    if (inCodeBlock) {
+      codeBuffer.push(line);
+      return;
+    }
+
+    if (!line.trim()) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    const listItem = line.match(/^\s*-\s+(.*)$/);
+    if (listItem) {
+      flushParagraph();
+      listBuffer.push(listItem[1].trim());
+      return;
+    }
+
+    flushList();
+    paragraphBuffer.push(line);
+  });
+
+  if (inCodeBlock) {
+    flushCode();
+  }
+  flushParagraph();
+  flushList();
+
+  return fragment;
 }
 
 function submitCurrentAnswer() {

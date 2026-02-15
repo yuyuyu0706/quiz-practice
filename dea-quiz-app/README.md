@@ -59,9 +59,10 @@ python -m http.server 8000
       "D": "選択肢D"
     },
     "answer": "C",
-    "explanation": "解説",
-    "tags": ["タグ1", "タグ2"],
-    "difficulty": 2
+    "explanation": "Markdown形式の解説（段落・箇条書き・```sql / ```python のコードフェンス対応）",
+    "references": [
+      { "title": "公式ドキュメント名", "url": "https://docs.databricks.com/..." }
+    ]
   }
 ]
 ```
@@ -88,3 +89,14 @@ localStorage.removeItem('deaQuizActiveSession');
 ```
 
 または、対象サイトのストレージをブラウザ設定から削除してください。
+
+
+## 高度解説（Markdown）と参考リンク
+
+- `explanation` は Markdown 文字列として扱われます。
+  - 段落（空行区切り）
+  - 箇条書き（`- `）
+  - コードフェンス（` ```sql ` / ` ```python `）
+- `references` は任意フィールドです。未指定または空配列なら非表示です。
+- 参考リンクは新しいタブで開くように `target="_blank"` + `rel="noopener noreferrer"` を付与しています。
+- 既存の中断/再開セッションには新フィールドを保存しないため、古いセッションでも後方互換で表示できます。
