@@ -11,7 +11,17 @@
       "D": "Delta Sharing と Lakehouse Federation"
     },
     "answer": "C",
-    "explanation": "物理配置の最適化やファイルサイズ調整を自動化する機能（Auto Optimize 等）と、クラスタリング方針の簡素化（Liquid Clustering）が「レイアウト決定の簡素化」と「性能最適化」に直結します。"
+    "explanation": "Auto Optimize（Optimize Write / Auto Compaction）と Liquid Clustering の組み合わせは、\n**データレイアウト最適化の運用負荷を下げつつ、実行性能を安定化**させる定番です。\n\n- Auto Optimize: 小さすぎるファイルを抑制し、書き込み後の読み取り効率を改善\n- Liquid Clustering: パーティション設計の硬直化を避けながらクラスタリングを最適化\n- Photon などの実行エンジン最適化とも併用しやすい\n\n```sql\nOPTIMIZE sales.fct_orders;\nALTER TABLE sales.fct_orders CLUSTER BY (customer_id, order_date);\n```\n\n```python\n(df.write\n  .format(\"delta\")\n  .option(\"mergeSchema\", \"true\")\n  .mode(\"append\")\n  .saveAsTable(\"sales.fct_orders\"))\n```\n\n注意点: `VACUUM` はストレージ最適化には有効ですが、直接的なレイアウト最適化機能ではありません。",
+    "references": [
+      {
+        "title": "Liquid clustering for Delta tables",
+        "url": "https://docs.databricks.com/aws/en/delta/clustering"
+      },
+      {
+        "title": "Optimize data file layout",
+        "url": "https://docs.databricks.com/aws/en/lakehouse-architecture/performance-efficiency/best-practices#optimize-data-file-layout"
+      }
+    ]
   },
   {
     "id": "Q2",
@@ -123,7 +133,17 @@
       "D": "SQL だけで UDF を実装する"
     },
     "answer": "A",
-    "explanation": "cloudFiles による増分検知、スキーマ推論/進化、チェックポイントなどが特徴です。"
+    "explanation": "Auto Loader は、クラウドストレージ上の新規/更新ファイルを安全に増分取り込みするための仕組みです。\n\n- ファイル検知と重複防止を自動化\n- スキーマ進化（列追加など）に追従可能\n- Structured Streaming の checkpoint と組み合わせて再実行耐性を確保\n\n```python\nstream_df = (spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"json\")\n  .option(\"cloudFiles.schemaLocation\", \"dbfs:/chk/schemas/orders\")\n  .load(\"s3://raw/orders\"))\n```\n\n```sql\nCREATE TABLE IF NOT EXISTS bronze.orders\nUSING DELTA\nAS SELECT * FROM stream_tmp_view;\n```\n\n注意点: `schemaLocation` と `checkpointLocation` を混同しないこと。前者はスキーマ管理、後者は処理状態管理です。",
+    "references": [
+      {
+        "title": "What is Auto Loader?",
+        "url": "https://docs.databricks.com/aws/en/ingestion/auto-loader/"
+      },
+      {
+        "title": "Configure Auto Loader options",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
+      }
+    ]
   },
   {
     "id": "Q10",
@@ -207,7 +227,17 @@
       "D": "`VACUUM table`"
     },
     "answer": "A",
-    "explanation": "Auto Loader は `readStream` と `cloudFiles` の組み合わせが典型です。"
+    "explanation": "Auto Loader を使う典型パターンは `readStream.format(\"cloudFiles\")` です。\n\n- バッチ API の `read` ではなく、継続取り込みを前提に `readStream` を利用\n- 取り込み後は `writeStream` で Delta テーブルへ保存\n- watermark を設定する場合はイベント時間列の品質に注意\n\n```python\n(spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"parquet\")\n  .load(\"abfss://landing@acct.dfs.core.windows.net/events\")\n  .writeStream\n  .option(\"checkpointLocation\", \"dbfs:/chk/events\")\n  .trigger(availableNow=True)\n  .toTable(\"bronze.events\"))\n```\n\n```sql\nSELECT window(event_time, '10 minutes') AS w, count(*)\nFROM bronze.events\nGROUP BY window(event_time, '10 minutes');\n```\n\n注意点: ジョブ再実行時は同じ checkpoint を使うことで重複処理を防止できます。",
+    "references": [
+      {
+        "title": "Use Auto Loader in Structured Streaming",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/#incremental-ingestion-using-auto-loader-with-structured-streaming"
+      },
+      {
+        "title": "Spark Structured Streaming guide",
+        "url": "https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html"
+      }
+    ]
   },
   {
     "id": "Q16",

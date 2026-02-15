@@ -107,6 +107,54 @@ button.primary {
   padding: 10px;
   background: #f5f3ff;
 }
+
+.explanation p {
+  margin: 0 0 10px;
+  line-height: 1.7;
+}
+.explanation ul {
+  margin: 0 0 10px 20px;
+  padding: 0;
+}
+.explanation li {
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+.code-block {
+  margin: 0 0 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #111827;
+  color: #e5e7eb;
+  overflow-x: auto;
+}
+.code-block code {
+  font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 0.9rem;
+  white-space: pre;
+}
+.code-block.lang-sql {
+  border: 1px solid #5b7cfa;
+}
+.code-block.lang-python {
+  border: 1px solid #22c55e;
+}
+.references {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #d9d9ff;
+}
+.references h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.references ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.references a {
+  color: #312e81;
+}
 .hidden { display: none; }
 .message { color: var(--muted); min-height: 1.2em; }
 #wrong-list {
