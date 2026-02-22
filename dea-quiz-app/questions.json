@@ -91,7 +91,7 @@
       "D": "常にシングルノードクラスター"
     },
     "answer": "A",
-    "explanation": "正解は **（永続的な All-purpose（対話型）クラスター）**です。\n\n「短時間のアドホック分析」とは、人が手元で試行錯誤しながら（セルを実行→結果を見て→すぐ修正…）進める作業を指します。この用途では、Notebookの対話実行に最適化された All-purpose（対話型）クラスターが最も素直な選択になります。\n\n**ポイント（“短時間”の解釈）**\n\n- 「短時間」といっても、アドホック分析は 反復実行が多く、起動・ウォームアップ・依存関係の再準備が頻発すると体験が悪化しやすい\n\n- All-purposeは **対話利用（複数回の実行・デバッグ・可視化）**を前提にしているため、今回の設問意図に合います。\n\n**なぜ、他の選択肢が違うか**\n\n- **長時間稼働のジョブクラスターを手動で起動し続ける**\n\nジョブクラスターは基本「バッチ/定期実行向け」。手動で長時間稼働させるのは設計意図から外れ、運用もしづらい（起動/停止の責務が曖昧になります）。\n\n- **連続稼働のDLT専用クラスター**\n\nDLTはパイプライン運用（継続処理/宣言的ETL）が目的。アドホック分析のために常時稼働させるのは目的がズレます\n\n- **常にシングルノードクラスター**\n\n小規模・学習用途には便利ですが、アドホック分析一般に「常に」を付けると不適切。データ量や結合/集計で分散が必要になる場面に対応できません\n\n**補足（実務でよくある“もう1つの正解”）**\n\nもし「アドホック分析」が SQL中心（BI/クエリ）なら、実務では SQL Warehouse（可能なら Serverless）が第一候補になることも多いです。ただし本問は選択肢にSQL Warehouseが無いので、Notebook対話の代表格として All-purposeクラスタ が正解となります。",
+    "explanation": "正解は **永続的な All-purpose（対話型）クラスター** です。\n\n「短時間のアドホック分析」とは、人が手元で試行錯誤しながら（セルを実行→結果を見て→すぐ修正…）進める作業を指します。この用途では、Notebookの対話実行に最適化された All-purpose（対話型）クラスターが最も素直な選択になります。\n\n**ポイント（“短時間”の解釈）**\n\n- 「短時間」といっても、アドホック分析は 反復実行が多く、起動・ウォームアップ・依存関係の再準備が頻発すると体験が悪化しやすい\n\n- All-purposeは **対話利用（複数回の実行・デバッグ・可視化）**を前提にしているため、今回の設問意図に合います。\n\n**なぜ、他の選択肢が違うか**\n\n- **長時間稼働のジョブクラスターを手動で起動し続ける**\n\nジョブクラスターは基本「バッチ/定期実行向け」。手動で長時間稼働させるのは設計意図から外れ、運用もしづらい（起動/停止の責務が曖昧になります）。\n\n- **連続稼働のDLT専用クラスター**\n\nDLTはパイプライン運用（継続処理/宣言的ETL）が目的。アドホック分析のために常時稼働させるのは目的がズレます\n\n- **常にシングルノードクラスター**\n\n小規模・学習用途には便利ですが、アドホック分析一般に「常に」を付けると不適切。データ量や結合/集計で分散が必要になる場面に対応できません\n\n**補足（実務でよくある“もう1つの正解”）**\n\nもし「アドホック分析」が SQL中心（BI/クエリ）なら、実務では SQL Warehouse（可能なら Serverless）が第一候補になることも多いです。ただし本問は選択肢にSQL Warehouseが無いので、Notebook対話の代表格として All-purposeクラスタ が正解となります。",
     "references": [
       {
         "title": "クラシック コンピューティング",
@@ -123,7 +123,17 @@
       "D": "Volumes"
     },
     "answer": "A",
-    "explanation": "Photon は SQL/ETL ワークロードの高速化に用いられる実行エンジンです。"
+    "explanation": "正解は **Photon** です。\n\nPhoton は Databricks が提供する ネイティブのベクトル化クエリエンジンで、SQL（Databricks SQL）だけでなく、Spark SQL / DataFrame API の多くの処理を高速化します。したがって「SQL実行の高速化に寄与する“実行エンジン機能”」として最も適切なのは Photon です。なお、Photon は “書き方” ではなく “実行エンジン” の話なので、クエリ自体は普通のSQL/PythonでOKです\n\n- **Delta Sharing**\n\nDelta Sharingは、「安全なデータ共有」の仕組みであり、クエリ実行エンジンではありません\n\n- **Repos** \n\nReposは、コード管理（Git連携）のための機能で、SQL実行エンジンの高速化とは別領域です\n\n- **Volumes**\n\nVolumesは、ストレージ（Unity Catalog配下のボリューム等）に関する概念で、SQLの実行エンジンではありません",
+    "references": [
+      {
+        "title": "Photonとは?（Databricks公式ドキュメント / 日本語）",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/photon"
+      },
+      {
+        "title": "Databricks Photon Engine（製品概要）",
+        "url": "https://www.databricks.com/product/photon"
+      }
+    ]
   },
   {
     "id": "Q6",
@@ -137,7 +147,21 @@
       "D": "Delta Sharing の受信設定を自動生成する"
     },
     "answer": "A",
-    "explanation": "ローカル開発環境（IDE）で書いた Spark コードを Databricks 上で実行・デバッグする接続機構です。"
+    "explanation": "正解は **ローカル IDE から Databricks クラスターをリモート実行対象として利用できるようにする**です。\n\nDatabricks Connect は、ローカルのIDE（VS Code / PyCharm など）で書いた Sparkコードを、Databricks上のコンピュート（クラスター等）で実行できるようにする仕組みです。つまり「開発体験（IDEの補完・デバッグ）を維持しつつ、実行はDatabricks側の分散環境で行う」ことが主目的です",
+    "references": [
+      {
+        "title": "Databricks Connect（公式ドキュメント）",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/"
+      },
+      {
+        "title": "Databricks Connect for Python をインストールする",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/python/install"
+      },
+      {
+        "title": "チュートリアル: サーバーレス コンピューティングで Python コードを実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/python/tutorial-serverless"
+      }
+    ]
   },
   {
     "id": "Q7",
@@ -577,7 +601,25 @@
       "D": "`DROP SCHEMA` する"
     },
     "answer": "A",
-    "explanation": "小さなファイル問題は読み取り効率を下げるため、コンパクションが効果的です。"
+    "explanation": "正解は **OPTIMIZE によるファイルコンパクション** です。\n\n複数の小ファイルを大きめのファイルにまとめて（コンパクションして）読み取り効率を改善する機能が「OPTIMIZE」です。Deltaテーブルに小さなファイルが大量にあると、次の理由でクエリ性能が落ちやすくなります。\n\n- **ファイル数が多いほど、読み取り時のオーバーヘッドが増える**\n\n1ファイルあたりのオープン/シーク、メタデータ参照、タスク起動などの固定コストが積み上がります。\n\n- **スキャンが分断される**\n\n必要なデータ量は同じでも、ファイルが細切れだと Spark のタスク数・スケジューリング負荷が増えます。\n\nこれらの典型的な対策が「OPTIMIZE」です。\n\n**なぜ、他の選択肢が違うか**\n\n- ** `DESCRIBE HISTORY` を増やす** : 履歴参照コマンドであり、ファイル数そのものを減らしません\n\n- **`SHOW GRANTS` を繰り返す** : 権限確認であり、ファイル構成とは無関係です\n\n- **`DROP SCHEMA`** : スキーマ削除は破壊的で、性能改善策ではありません\n\n**補足事項**\n\nUnity カタログのマネージド テーブルの場合、SQL ウェアハウスまたは Databricks Runtime 11.3 LTS 以降を使用している場合、Databricks はこれらの構成のほとんどを自動的に調整します。",
+    "references": [
+      {
+        "title": "Azure Databricks の最適化に関する推奨事項",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/optimizations/"
+      },
+      {
+        "title": "データ ファイルのサイズを制御する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/tune-file-size"
+      },
+      {
+        "title": "データ ファイル レイアウトを最適化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/optimize"
+      },
+      {
+        "title": "Unity Catalog 管理テーブルの予測最適化（新しいアカウントの予測最適化は既定で有効）",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/optimizations/predictive-optimization"
+      }
+    ]
   },
   {
     "id": "Q37",
@@ -619,7 +661,17 @@
       "D": "UC の権限を削除してから再実行する"
     },
     "answer": "A",
-    "explanation": "Repair は失敗点からの再実行を支援します（依存関係に注意）。"
+    "explanation": "正解は **（修復（Repair）実行で失敗タスク/下流のみを再実行する）**です。\n\nDatabricks Workflows（Jobs）の Repair run は、失敗したジョブ実行（run）に対して「失敗したタスク」と、その失敗により実行されなかった／影響を受ける「依存（下流）タスク」だけを選んで再実行できる機能です。そのため、原因修正後に「該当タスク以降だけをやり直したい」という要件に最も合致します。\n\n- （毎回最初から）：Repair run があるので不要にコスト・時間が増えます。成功済みタスクの再処理を避けられるのがRepairの利点です。\n\n- （Reposを削除）：再実行の手段ではなく、逆に復旧を妨げます\n\n- （UC権限を削除）：権限削除は事故の元で、再実行と無関係です",
+    "references": [
+      {
+        "title": "ジョブの失敗のトラブルシューティングと修復（Repair runのUI手順）",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/repair-job-failures"
+      },
+      {
+        "title": "Jobs API: Repair a job run（Repair runをAPIで実行）",
+        "url": "https://docs.databricks.com/api/workspace/jobs/repairrun"
+      }
+    ]
   },
   {
     "id": "Q40",
@@ -1183,19 +1235,19 @@
       "D": "error"
     },
     "answer": "B",
-    "explanation": "**正解：B**（complete）\n\n問題文の“何をしたいか（目的）”と“どの機能で実現するか（前提条件）”に照らすと、この選択肢が最も整合します。\n\n- キーワード：complete",
+    "explanation": "正解は **（complete）** です。\n\nStructured Streaming の outputMode は「各マイクロバッチで“何を”シンクに書くか」を決めます。completeとは、毎トリガーで「集計結果テーブル全体（Result Table全体）」を書き出すモードです。**累積集計を常に最新で上書きしたい** ＝ 毎回、集計の全体結果を更新して出したい という要件に最も合致します。\n\n- **append**：新しく確定した行だけ追記するモード。集計の結果が後から変わる（状態を持つ集計）ケースでは、過去の結果を更新できず要件に合いません。\n\n- **ignore / error**：条件付き書き込みの制御であり、「累積集計を更新し続ける」目的のモードではありません（出力結果の“更新”とは別概念）\n\ngroupBy のような状態を持つ集計は、結果が継続的に更新されるため、complete が要件に合いやすいです",
     "references": [
       {
-        "title": "Notebooks: マジックコマンドなど（概要）",
-        "url": "https://docs.databricks.com/aws/en/notebooks/notebooks"
+        "title": "Databricks: 構造化ストリーミングの出力モードを選択する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/output-mode"
       },
       {
-        "title": "Auto Loader: スキーマ推論と進化",
-        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+        "title": "Apache Spark: Structured Streaming（DataFrames/Datasets API）",
+        "url": "https://spark.apache.org/docs/latest/streaming/apis-on-dataframes-and-datasets.html"
       },
       {
-        "title": "Auto Loader: オプション一覧",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
+        "title": "Delta Lake: Table streaming reads and writes（complete modeの例）",
+        "url": "https://docs.delta.io/delta-streaming/"
       }
     ]
   },
@@ -1331,7 +1383,7 @@
       "D": "Delta SharingでNotebookを共有する"
     },
     "answer": "B",
-    "explanation": "**正解：B**（Databricks Connectで外部IDEから実行しつつ、必要に応じてNotebookで検証する）\n\nDatabricks Connect は、ローカルIDE（VS Code/PyCharm等）から Databricks 上のコンピュートへ接続し、リモート実行しながら開発するための仕組みです。\n\n```python\n# 例：ローカルIDE側でSparkSessionを作り、リモートクラスタへ接続\nfrom pyspark.sql import SparkSession\nspark = SparkSession.builder.getOrCreate()\n```\n\n他の選択肢（監査ログ、Delta Sharing、Spark UIログ削除）は Connect の目的（開発体験/実行先の分離）と一致しません。",
+    "explanation": "正解：**（Databricks Connectで外部IDEから実行しつつ、必要に応じてNotebookで検証する）** \n\nDatabricks Connect は、ローカルIDE（VS Code/PyCharm等）から Databricks 上のコンピュートへ接続し、リモート実行しながら開発するための仕組みです。\n\n```python\n# 例：ローカルIDE側でSparkSessionを作り、リモートクラスタへ接続\nfrom pyspark.sql import SparkSession\nspark = SparkSession.builder.getOrCreate()\n```\n\n他の選択肢（監査ログ、Delta Sharing、Spark UIログ削除）は Connect の目的（開発体験/実行先の分離）と一致しません。",
     "references": [
       {
         "title": "Delta Sharing: 概要",
@@ -1471,7 +1523,7 @@
       "D": "MERGE INTO ..."
     },
     "answer": "C",
-    "explanation": "**正解：C**（CREATE TABLE ...）\n\nDDL はスキーマ（テーブル/スキーマ等）の定義操作（CREATE/ALTER/DROP）です。データ操作（INSERT/UPDATE/DELETE/MERGE）は DML に分類されます。\n\n```sql\nCREATE TABLE main.sales.orders (id BIGINT, amount DOUBLE);\n```",
+    "explanation": "正解：**（CREATE TABLE ...）**\n\nDDL はスキーマ（テーブル/スキーマ等）の定義操作（CREATE/ALTER/DROP）です。データ操作（INSERT/UPDATE/DELETE/MERGE）は DML に分類されます。\n\n```sql\nCREATE TABLE main.sales.orders (id BIGINT, amount DOUBLE);\n```",
     "references": [
       {
         "title": "Delta Lake: Optimize（ファイルコンパクション等）",
@@ -1499,7 +1551,7 @@
       "D": "ALTER TABLE ..."
     },
     "answer": "C",
-    "explanation": "**正解：C**（INSERT INTO table ...）\n\nDDL はスキーマ（テーブル/スキーマ等）の定義操作（CREATE/ALTER/DROP）です。データ操作（INSERT/UPDATE/DELETE/MERGE）は DML に分類されます。\n\n```sql\nCREATE TABLE main.sales.orders (id BIGINT, amount DOUBLE);\n```",
+    "explanation": "正解：**（INSERT INTO table ...）**\n\nDDL はスキーマ（テーブル/スキーマ等）の定義操作（CREATE/ALTER/DROP）です。データ操作（INSERT/UPDATE/DELETE/MERGE）は DML に分類されます。\n\n```sql\nCREATE TABLE main.sales.orders (id BIGINT, amount DOUBLE);\n```",
     "references": [
       {
         "title": "Compute: クラスタータイプの概要",
@@ -1723,7 +1775,6 @@
       "D": "DESCRIBE HISTORY"
     },
     "answer": "A",
-    "explanation": "**正解：A**（OPTIMIZE（必要に応じてクラスタリング等））\n\n`OPTIMIZE` は小さなファイルをまとめて読み取り効率を上げる（コンパクション等）代表的な操作です。\n\n```sql\nOPTIMIZE main.sales.orders;\n```",
     "references": [
       {
         "title": "Unity Catalog: Privileges and securable objects",
@@ -1751,19 +1802,15 @@
       "D": "キャッシュは常に不要になる"
     },
     "answer": "B",
-    "explanation": "**正解：B**（変換は実行計画として蓄積され、アクションで初めて実行される）\n\n分散集計は `groupBy().agg()` が基本です。`collect()` で全件をドライバへ集めるとメモリ逼迫やスケール不良になりがちです。\n\n```python\nfrom pyspark.sql import functions as F\n(df.groupBy('category')\n   .agg(F.count('*').alias('cnt'), F.sum('amount').alias('sum_amount')))\n```",
+    "explanation": "正解は **（変換は実行計画として蓄積され、アクションで初めて実行される）**です。\n\nSpark は、select / where / join / groupBy などの変換（transformation）を呼んだ時点では即実行せず、内部に「やりたい処理」を 論理計画（logical plan）として積み上げます。そして count() / show() / collect() / write などのアクション（action）が呼ばれたタイミングで、最適化（Catalyst）→物理計画→実行、が走ります。これが **遅延評価（lazy evaluation）**です。\n\n- 変換が即時実行されるなら遅延評価ではありません\n\n- Sparkは分散実行が前提で、全処理がドライバのみで実行されるわけではありません（ドライバは計画と調整、実体の計算は主にエグゼキュータ）\n\n- キャッシュは不要にはなりません。遅延評価でも同じ中間結果を繰り返し使う場合は cache/persist が有効です\n\n```python\nfrom pyspark.sql import functions as F\n\n# ここは変換（まだ実行されない）\ndf2 = (df.select('category', 'amount')\n         .where(F.col('amount') > 0)\n         .groupBy('category')\n         .agg(F.count('*').alias('cnt'), F.sum('amount').alias('sum_amount')))\n\n# ここで初めて実行（アクション）\ndf2.show()\n```",
     "references": [
       {
-        "title": "Compute: クラスタータイプの概要",
-        "url": "https://docs.databricks.com/aws/en/compute/cluster-types"
+        "title": "Apache Spark: RDD operations（Transformations vs Actions / Lazy evaluation）",
+        "url": "https://spark.apache.org/docs/latest/rdd-programming-guide.html#rdd-operations"
       },
       {
-        "title": "Jobs: コンピュートと実行",
-        "url": "https://docs.databricks.com/aws/en/jobs"
-      },
-      {
-        "title": "Serverless: 概要",
-        "url": "https://docs.databricks.com/aws/en/compute/serverless"
+        "title": "Apache Spark: RDD persistence（cache/persist の考え方）",
+        "url": "https://spark.apache.org/docs/latest/rdd-programming-guide.html#rdd-persistence"
       }
     ]
   },
