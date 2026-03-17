@@ -193,7 +193,7 @@ function renderQuestion() {
   els.quizSection.textContent = `Section ${question.section}: ${question.sectionTitle}`;
   els.quizProgress.textContent = `${idx} / ${total}`;
   els.quizQuestion.replaceChildren();
-  appendInlineFormattedText(els.quizQuestion, `${question.id}. ${question.question}`);
+  appendFormattedTextWithCodeBlocks(els.quizQuestion, `${question.id}. ${question.question}`);
   els.resultIndicator.textContent = '';
   els.resultIndicator.className = 'indicator';
   els.quizMessage.textContent = '';
@@ -213,7 +213,7 @@ function renderQuestion() {
     input.checked = chosen === label;
     choiceLabel.appendChild(input);
 
-    appendInlineFormattedText(choiceLabel, ` ${label}. ${text}`);
+    appendFormattedTextWithCodeBlocks(choiceLabel, ` ${label}. ${text}`);
     els.choicesForm.appendChild(choiceLabel);
   });
 
@@ -379,6 +379,40 @@ function appendInlineFormattedText(element, text) {
   if (currentIndex < text.length) {
     element.appendChild(document.createTextNode(text.slice(currentIndex)));
   }
+}
+
+function appendFormattedTextWithCodeBlocks(element, text) {
+  const normalized = String(text ?? '').replace(/\r\n/g, '\n');
+  const segments = normalized.split(/(```[\s\S]*?```)/g).filter(Boolean);
+
+  segments.forEach((segment) => {
+    const codeMatch = segment.match(/^```\s*([a-zA-Z0-9_-]+)?\n([\s\S]*?)\n?```$/);
+    if (codeMatch) {
+      const language = (codeMatch[1] ?? '').toLowerCase();
+      const pre = document.createElement('pre');
+      pre.className = `code-block${language ? ` lang-${language}` : ''}`;
+
+      const code = document.createElement('code');
+      if (language) code.className = `language-${language}`;
+      code.textContent = codeMatch[2];
+
+      pre.appendChild(code);
+      element.appendChild(pre);
+      return;
+    }
+
+    appendInlineFormattedTextWithLineBreaks(element, segment);
+  });
+}
+
+function appendInlineFormattedTextWithLineBreaks(element, text) {
+  const lines = String(text).split('\n');
+  lines.forEach((line, index) => {
+    appendInlineFormattedText(element, line);
+    if (index < lines.length - 1) {
+      element.appendChild(document.createElement('br'));
+    }
+  });
 }
 
 function submitCurrentAnswer() {
