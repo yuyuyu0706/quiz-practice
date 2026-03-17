@@ -15,11 +15,21 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
+  line-height: 1.6;
 }
 .container {
   max-width: 840px;
   margin: 0 auto;
   padding: 16px;
+}
+h1,
+h2,
+h3 {
+  line-height: 1.35;
+  margin-top: 0;
+}
+p {
+  margin-top: 0;
 }
 .app-header {
   margin-bottom: 12px;
@@ -56,7 +66,8 @@ label {
 .chips label {
   border: 1px solid #d5dbe7;
   border-radius: 999px;
-  padding: 6px 10px;
+  padding: 8px 12px;
+  margin-bottom: 0;
 }
 select,
 button {
@@ -84,12 +95,52 @@ button.primary {
 .quiz-head {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
   color: var(--muted);
+  margin-bottom: 10px;
+}
+.quiz-head p {
+  margin-bottom: 0;
+}
+#quiz-section {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+#quiz-progress {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+#quiz-question {
+  overflow-wrap: anywhere;
+}
+.choices {
+  margin-top: 8px;
 }
 .choices label {
   border: 1px solid #d5dbe7;
   border-radius: 10px;
-  padding: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  min-height: 46px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.choices label:hover {
+  border-color: #a8b4ff;
+  background: #f6f7ff;
+}
+.choices input[type="radio"] {
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.choices label:has(input:checked) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.12);
+  background: #f3f2ff;
 }
 .choices label.correct {
   border-color: var(--ok);
@@ -104,21 +155,22 @@ button.primary {
 .explanation {
   margin-top: 12px;
   border-left: 4px solid var(--primary);
-  padding: 10px;
+  padding: 12px;
   background: #f5f3ff;
+  overflow-wrap: anywhere;
 }
 
 .explanation p {
   margin: 0 0 10px;
-  line-height: 1.7;
+  line-height: 1.75;
 }
 .explanation ul {
   margin: 0 0 10px 20px;
   padding: 0;
 }
 .explanation li {
-  margin-bottom: 4px;
-  line-height: 1.6;
+  margin-bottom: 6px;
+  line-height: 1.7;
 }
 .code-block {
   margin: 0 0 12px;
@@ -127,6 +179,7 @@ button.primary {
   background: #111827;
   color: #e5e7eb;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .code-block code {
   font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
@@ -157,8 +210,13 @@ button.primary {
   margin: 0;
   padding-left: 20px;
 }
+.references li {
+  margin-bottom: 8px;
+}
 .references a {
   color: #312e81;
+  overflow-wrap: anywhere;
+  display: inline-block;
 }
 .hidden { display: none; }
 .message { color: var(--muted); min-height: 1.2em; }
@@ -167,10 +225,150 @@ button.primary {
 }
 #wrong-list li {
   margin-bottom: 8px;
+  overflow-wrap: anywhere;
 }
 
-@media (max-width: 600px) {
-  .container { padding: 12px; }
-  h1 { font-size: 1.3rem; }
-  h2 { font-size: 1.1rem; }
+@media (min-width: 481px) and (max-width: 900px) {
+  .container {
+    padding: 14px;
+    max-width: 760px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .button-row.wrap {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .button-row.wrap .primary,
+  #submit-answer,
+  #next-question,
+  #retry-wrong {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  .card {
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 1.28rem;
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+
+  .subtitle {
+    font-size: 0.92rem;
+  }
+
+  fieldset {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  label {
+    margin-bottom: 8px;
+  }
+
+  .chips {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .chips label {
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
+  select,
+  button {
+    font-size: 0.98rem;
+  }
+
+  button {
+    min-height: 48px;
+    width: 100%;
+  }
+
+  .quiz-head {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  #quiz-progress {
+    font-size: 0.9rem;
+  }
+
+  .choices label {
+    padding: 12px 12px;
+    min-height: 50px;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+
+  .button-row {
+    gap: 10px;
+  }
+
+  .button-row.wrap {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  #submit-answer,
+  #next-question,
+  #retry-wrong,
+  #back-home {
+    min-height: 50px;
+    font-weight: 600;
+  }
+
+  .explanation {
+    padding: 10px;
+  }
+
+  .explanation p,
+  .explanation li {
+    font-size: 0.95rem;
+  }
+
+  .code-block {
+    padding: 9px;
+  }
+
+  .code-block code {
+    font-size: 0.82rem;
+  }
+
+  .references ul,
+  #wrong-list {
+    padding-left: 16px;
+  }
+
+  #score-text,
+  #section-score-text {
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
 }
