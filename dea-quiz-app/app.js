@@ -569,10 +569,9 @@ function updatePrimaryActions(questionId) {
   els.submitAnswer.disabled = !canSubmit;
   els.nextQuestion.disabled = !canNext;
   els.nextQuestionInline.disabled = !canNext;
+  els.selectionHint.hidden = graded;
 
-  if (graded) {
-    els.selectionHint.textContent = '採点済みです。解説を確認して「次へ」へ進めます。';
-  } else if (selected) {
+  if (selected) {
     els.selectionHint.textContent = '選択済みです。「回答する」で採点します。';
   } else {
     els.selectionHint.textContent = '選択肢を選ぶと「回答する」が押せます。';
