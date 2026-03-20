@@ -35,7 +35,7 @@
       "D": "CSV のみをサポートしフォーマットを統一する"
     },
     "answer": "B",
-    "explanation": "正解は **（データ、ガバナンス、AI/BI を同一プラットフォーム上で統合し運用できる）**です。\n\nDatabricks Data Intelligence Platform（≒レイクハウス基盤の統合プラットフォーム）の価値は、「データ処理」だけでなく、データの“利用”に必要な要素（ガバナンス・AI/BI・協業・運用）までを同じ基盤上で一貫して回せる点にあります。\n\nたとえば、“統合“の具体例を示します。\n\n- 同じデータ（例：Deltaテーブル）を、ETL（エンジニア）・分析（アナリスト）・AI/ML（サイエンティスト）が共有して使う\n\n- その際に、Unity Catalog等で権限・監査・リネージを統一して管理できる（＝ガバナンスが後付けにならない）\n\n- BI領域も、AI/BIなどでプラットフォームに統合されている（“別製品に切り出さず”同じ基盤で運用）",
+    "explanation": "正解は **データ、ガバナンス、AI/BI を同一プラットフォーム上で統合し運用できる**です。\n\nDatabricks Data Intelligence Platform（≒レイクハウス基盤の統合プラットフォーム）の価値は、「データ処理」だけでなく、データの“利用”に必要な要素（ガバナンス・AI/BI・協業・運用）までを同じ基盤上で一貫して回せる点にあります。\n\nたとえば、“統合“の具体例を示します。\n\n- 同じデータ（例：Deltaテーブル）を、ETL（エンジニア）・分析（アナリスト）・AI/ML（サイエンティスト）が共有して使う\n\n- その際に、Unity Catalog等で権限・監査・リネージを統一して管理できる（＝ガバナンスが後付けにならない）\n\n- BI領域も、AI/BIなどでプラットフォームに統合されている（“別製品に切り出さず”同じ基盤で運用）",
     "references": [
       {
         "title": "Databricks データインテリジェンスプラットフォーム（日本語）",
@@ -367,13 +367,13 @@
     "sectionTitle": "開発と取り込み",
     "question": "Databricks Connect 利用時のトラブルシューティングとして最も適切なのはどれ？",
     "choices": {
-      "A": "ローカルのライブラリ版本とクラスターランタイム/DBR の互換性を確認する",
+      "A": "ローカルのライブラリとクラスターランタイム/DBR の互換性を確認する",
       "B": "クラスター名を短くする",
       "C": "DBFS のルートを削除する",
       "D": "常にシングルノードにする"
     },
     "answer": "A",
-    "explanation": "互換性（Python/Spark/DBR）や認証設定がまず確認ポイントです。"
+    "explanation": "正解は、**ローカルのライブラリとクラスターランタイム/DBR の互換性を確認する** です\n\n互換性（Python/Spark/DBR）や認証設定がまず確認ポイントです。"
   },
   {
     "id": "Q20",
@@ -387,7 +387,7 @@
       "D": "ノートブックを PDF 化する"
     },
     "answer": "A",
-    "explanation": "遅延の原因は計算/シャッフル/I/O/スキュー等が多く、Spark UI が第一選択です。"
+    "explanation": "正解は、**Spark UI で確認する**です\n\n遅延の原因は計算/シャッフル/I/O/スキュー等が多く、Spark UI での調査が第一選択です"
   },
   {
     "id": "Q21",
@@ -401,7 +401,7 @@
       "D": "監査ログのみを格納する"
     },
     "answer": "A",
-    "explanation": "Bronze は「生データに近い形の着地（履歴保持・再処理可能）」が基本です。"
+    "explanation": "正解は、**取り込みデータをできるだけ加工せず、監査可能な形で保存する** です。\n\nBronze は「生データに近い形の着地（履歴保持・再処理可能）」が基本です。"
   },
   {
     "id": "Q22",
@@ -415,7 +415,7 @@
       "D": "外部共有のために匿名化だけをする"
     },
     "answer": "B",
-    "explanation": "Silver はクレンジング/整形/統合など「利用可能な形」への変換が中心です。"
+    "explanation": "正解は、**クリーニング・正規化・結合などの品質改善を行い、下流で使いやすくする**です。\n\nSilver はクレンジング/整形/統合など「利用可能な形」への変換が中心です。"
   },
   {
     "id": "Q23",
@@ -429,7 +429,7 @@
       "D": "ファイル取り込みの増分検知"
     },
     "answer": "C",
-    "explanation": "Gold は下流ユースケース向け（集計・指標・データマート）です。"
+    "explanation": "正解は、**ビジネス利用（BI/ML）に最適化した集計・データマートを提供する** です。\n\nGold は下流ユースケース向け（集計・指標・データマート）です。"
   },
   {
     "id": "Q24",
@@ -443,7 +443,7 @@
       "D": "監査ログ専用クラスター"
     },
     "answer": "A",
-    "explanation": "バッチ処理は Job クラスターでコスト最適化しやすいです。"
+    "explanation": "正解は、**Job クラスター**です。\n\nバッチ処理は Job クラスターでコスト最適化しやすいです。"
   },
   {
     "id": "Q25",
@@ -513,7 +513,7 @@
       "D": "`cacheTable(\"user_id\")`"
     },
     "answer": "A",
-    "explanation": "集計は `groupBy().agg()` が基本です。"
+    "explanation": "正解は、**`groupBy(\"user_id\").agg(sum(\"sales\").alias(\"total_sales\"), count(\"*\").alias(\"orders\"))`**です。\n\n集計は `groupBy().agg()` が基本です。"
   },
   {
     "id": "Q30",
@@ -527,7 +527,7 @@
       "D": "Auto Loader のチェックポイントを設定する"
     },
     "answer": "B",
-    "explanation": "Window は「グループ内の順序」を扱う計算（rank/lag/rolling 等）に使います。"
+    "explanation": "正解は、**パーティション内の順序を考慮した累積値、順位、移動平均との差などを計算する**です。\n\nWindow は「グループ内の順序」を扱う計算（rank/lag/rolling 等）に使います。"
   },
   {
     "id": "Q31",
@@ -569,7 +569,7 @@
       "D": "`SELECT * FROM table OPTIMIZE`"
     },
     "answer": "A",
-    "explanation": "VERSION/TIMESTAMP 指定で過去スナップショット参照ができます。"
+    "explanation": "正解は **`SELECT * FROM table VERSION AS OF 5`**です。\n\nVERSION/TIMESTAMP 指定で過去スナップショット参照ができます。"
   },
   {
     "id": "Q33",
@@ -583,7 +583,7 @@
       "D": "Python UDF を増やす"
     },
     "answer": "A",
-    "explanation": "スキューはシャッフルの偏りなので、分散の工夫（salt 等）が有効です。"
+    "explanation": "正解は、**キーのサルティング（salt）や再パーティション戦略を検討する** です。\n\nスキューはシャッフルの偏りなので、分散の工夫（salt 等）が有効です。"
   },
   {
     "id": "Q34",
@@ -597,7 +597,7 @@
       "D": "`GRANT USAGE` する"
     },
     "answer": "A",
-    "explanation": "キャッシュは再利用により計算量を削減できます（メモリ/ディスク戦略に注意）。"
+    "explanation": "正解は、**`cache()` / `persist()` を使う** です。\n\nキャッシュは再利用により計算量を削減できます（メモリ/ディスク戦略に注意）。"
   },
   {
     "id": "Q35",
@@ -611,7 +611,7 @@
       "D": "DLT では使えない"
     },
     "answer": "B",
-    "explanation": "UDF は最適化（例：Catalyst/Photon）が効きにくいケースがあるため、組み込み優先が定石です。"
+    "explanation": "正解は、**最適化が効きにくい場合があるため、まず組み込み関数/SQL 関数を検討する** です。\n\nUDF は最適化（例：Catalyst/Photon）が効きにくいケースがあるため、組み込み優先が定石です。"
   },
   {
     "id": "Q36",
@@ -657,7 +657,7 @@
       "D": "監査ログを暗号化する"
     },
     "answer": "B",
-    "explanation": "DAB は Databricks リソースを宣言的にまとめ、再現性あるデプロイを支援します。"
+    "explanation": "正解は、**Databricks のリソース（ジョブ、パイプライン等）をコードとして定義し、環境ごとにデプロイ可能にする**です。\n\nDAB は Databricks リソースを宣言的にまとめ、再現性あるデプロイを支援します"
   },
   {
     "id": "Q38",
@@ -671,7 +671,7 @@
       "D": "DAB はジョブを作れない"
     },
     "answer": "B",
-    "explanation": "IaC 的に扱える点が最大の違いです。"
+    "explanation": "正解は、**DAB はリソース定義をファイルで管理し CI/CD に組み込みやすい**です。\n\nIaC 的に扱える点が最大の違いです。"
   },
   {
     "id": "Q39",
@@ -685,7 +685,7 @@
       "D": "UC の権限を削除してから再実行する"
     },
     "answer": "A",
-    "explanation": "正解は **（修復（Repair）実行で失敗タスク/下流のみを再実行する）**です。\n\nDatabricks Workflows（Jobs）の Repair run は、失敗したジョブ実行（run）に対して「失敗したタスク」と、その失敗により実行されなかった／影響を受ける「依存（下流）タスク」だけを選んで再実行できる機能です。そのため、原因修正後に「該当タスク以降だけをやり直したい」という要件に最も合致します。\n\n- （毎回最初から）：Repair run があるので不要にコスト・時間が増えます。成功済みタスクの再処理を避けられるのがRepairの利点です。\n\n- （Reposを削除）：再実行の手段ではなく、逆に復旧を妨げます\n\n- （UC権限を削除）：権限削除は事故の元で、再実行と無関係です",
+    "explanation": "正解は **修復（Repair）実行で失敗タスク/下流のみを再実行する**です。\n\nDatabricks Workflows（Jobs）の Repair run は、失敗したジョブ実行（run）に対して「失敗したタスク」と、その失敗により実行されなかった／影響を受ける「依存（下流）タスク」だけを選んで再実行できる機能です。そのため、原因修正後に「該当タスク以降だけをやり直したい」という要件に最も合致します。\n\n- （毎回最初から）：Repair run があるので不要にコスト・時間が増えます。成功済みタスクの再処理を避けられるのがRepairの利点です。\n\n- （Reposを削除）：再実行の手段ではなく、逆に復旧を妨げます\n\n- （UC権限を削除）：権限削除は事故の元で、再実行と無関係です",
     "references": [
       {
         "title": "ジョブの失敗のトラブルシューティングと修復（Repair runのUI手順）",
@@ -779,7 +779,7 @@
       "D": "UC を無効化する"
     },
     "answer": "B",
-    "explanation": "再実行性（冪等性）と修復実行の組み合わせが実運用の基本です。"
+    "explanation": "正解は、**失敗タスクを修復実行し、必要に応じて idempotent な書き込み（MERGE など）で再実行可能にする**です。\n\n再実行性（冪等性）と修復実行の組み合わせが実運用の基本です。"
   },
   {
     "id": "Q46",
@@ -793,13 +793,13 @@
       "D": "外部テーブルは Delta 形式を使えない"
     },
     "answer": "A",
-    "explanation": "所有権（データファイルの管理責任）が大きな違いです。"
+    "explanation": "正解は、**マネージドは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部はユーザー管理の場所を参照する**です。\n\n所有権（データファイルの管理責任）が大きな違いです。"
   },
   {
     "id": "Q47",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
-    "question": "UC で「スキーマを利用する」ために必要になりやすい権限の組み合わせとして最も適切なのはどれ？",
+    "question": "UnityCatalog で「スキーマを利用する」ために必要になりやすい権限の組み合わせとして最も適切なのはどれ？",
     "choices": {
       "A": "`USAGE`（カタログ/スキーマ）＋対象オブジェクトへの権限（例：テーブルの `SELECT`）",
       "B": "`OWNERSHIP` がないと何もできない",
@@ -807,7 +807,7 @@
       "D": "`VACUUM` 権限"
     },
     "answer": "A",
-    "explanation": "UC は階層に沿って `USAGE` とオブジェクト権限が必要になるのが基本です。"
+    "explanation": "正解は、**`USAGE`（カタログ/スキーマ）＋対象オブジェクトへの権限**です。\n\nUnityCatalog は階層に沿って `USAGE` とオブジェクト権限が必要になるのが基本です。"
   },
   {
     "id": "Q48",
@@ -881,19 +881,15 @@
       "D": "ストリーミング解析は別製品に切り出すのが前提である"
     },
     "answer": "B",
-    "explanation": "**正解：B**（ストレージとコンピュートを分離し、同一データ上でBI/ML/ストリーミングを統合できる）\n\n問題文の“何をしたいか（目的）”と“どの機能で実現するか（前提条件）”に照らすと、この選択肢が最も整合します。\n\n- キーワード：ストレージとコンピュートを分離し、同一データ上でBI/ML/ストリーミングを統合できる",
+    "explanation": "正解は、**ストレージとコンピュートを分離し、同一データ上でBI/ML/ストリーミングを統合できる** です。\n\nDatabricksのレイクハウス / Data Intelligence Platform の中核は、オブジェクトストレージ上の同じデータを基盤として、SQL分析、データエンジニアリング、機械学習、ストリーミング処理を一体で扱える点にあります。Databricks自身も、レイクハウスを「データウェアハウスの性能・管理性」と「データレイクの柔軟性・低コスト」を統合するアーキテクチャとして説明しています",
     "references": [
       {
-        "title": "Compute: クラスタータイプの概要",
-        "url": "https://docs.databricks.com/aws/en/compute/cluster-types"
+        "title": "データ・インテリジェンス・プラットフォーム",
+        "url": "https://www.databricks.com/jp/product/data-intelligence-platform"
       },
       {
-        "title": "Jobs: コンピュートと実行",
-        "url": "https://docs.databricks.com/aws/en/jobs"
-      },
-      {
-        "title": "Serverless: 概要",
-        "url": "https://docs.databricks.com/aws/en/compute/serverless"
+        "title": "Data Lakehouse とは何ですか?",
+        "url": "https://www.databricks.com/jp/blog/what-is-data-lakehouse"
       }
     ]
   },
@@ -909,7 +905,7 @@
       "D": "Unity Catalogメタストアのみ"
     },
     "answer": "B",
-    "explanation": "**正解：B**（データプレーン）\n\nUnity Catalog はカタログ/スキーマ/テーブル等をセキュアオブジェクトとして扱い、最小権限でアクセス制御・監査・リネージを提供します。",
+    "explanation": "正解は、**データプレーン** です",
     "references": [
       {
         "title": "Unity Catalog: Privileges and securable objects",
@@ -965,19 +961,23 @@
       "D": "クエリのたびに全件フルスキャンすることで一貫性を保つ"
     },
     "answer": "B",
-    "explanation": "正解は、**頻出のフィルタ/結合を踏まえたデータの並び替えや最適化を自動化してくれる機能群を有効化する** です。\n\n問題文の“何をしたいか（目的）”と“どの機能で実現するか（前提条件）”に照らすと、この選択肢が最も整合します。\n\n- キーワード：頻出のフィルタ/結合を踏まえたデータの並び替えや最適化を自動化してくれる機能群を有効化する",
+    "explanation": "正解は、**頻出のフィルタ/結合を踏まえたデータの並び替えや最適化を自動化してくれる機能群を有効化する** です\n\nこの問題のポイントは、**クエリ性能を上げたいときに、データレイアウトの調整をどこまで人手で抱えるべきか** です。Databricksでは、近年は Liquid Clustering や Predictive Optimization によって、テーブルの物理レイアウト最適化をより自動化・簡素化する方向を推奨しています。Databricks公式も、Liquid Clustering は「table partitioning と Z-ORDER を置き換える データレイアウトの最適化テクニック」と位置づけ、データレイアウトの決定を簡素化しつつ、クエリ性能を最適化すると説明しています\n\n**Liquid Clusteringの有効化例**\n\n```SQL\nALTER TABLE main.sales.orders CLUSTER BY AUTO;```\n",
     "references": [
       {
-        "title": "Compute: クラスタータイプの概要",
-        "url": "https://docs.databricks.com/aws/en/compute/cluster-types"
+        "title": "テーブルにリキッドクラスタリングを使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/clustering"
       },
       {
-        "title": "Jobs: コンピュートと実行",
-        "url": "https://docs.databricks.com/aws/en/jobs"
+        "title": "Unity Catalog 管理テーブルの予測最適化",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/optimizations/predictive-optimization"
       },
       {
-        "title": "Serverless: 概要",
-        "url": "https://docs.databricks.com/aws/en/compute/serverless"
+        "title": "データ ファイル レイアウトを最適化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/optimize"
+      },
+      {
+        "title": "パフォーマンスのためのワークロードを設計する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/performance-efficiency/best-practices#3-design-workloads-for-performance"
       }
     ]
   },
@@ -993,7 +993,7 @@
       "D": "ストリーミングではDeltaを使えないのでCSVにする"
     },
     "answer": "B",
-    "explanation": "正解は、**同一Deltaテーブルに対して、バッチ書き込みとStructured Streaming書き込みを用途に応じて使う** です。\n\n問題文の“何をしたいか（目的）”と“どの機能で実現するか（前提条件）”に照らすと、この選択肢が最も整合します。\n\n- キーワード：同一Deltaテーブルに対して、バッチ書き込みとStructured Streaming書き込みを用途に応じて使う",
+    "explanation": "正解は、**同一Deltaテーブルに対して、バッチ書き込みとStructured Streaming書き込みを用途に応じて使う** です",
     "references": [
       {
         "title": "Compute: クラスタータイプの概要",
@@ -2394,8 +2394,8 @@
   },
   {
     "id": "Q105",
-    "section": "3",
-    "sectionTitle": "データ処理 & 変換",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
     "question": "Delta Live Tablesパイプラインでデータ品質制約を定義したい。この制約に違反するレコードが対象テーブルに追加され、メトリクスに報告されるようにしてください",
     "choices": {
       "A": "CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION NONE",
@@ -2418,8 +2418,8 @@
   },
   {
     "id": "Q106",
-    "section": "3",
-    "sectionTitle": "データ処理 & 変換",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
     "question": "DataFrame.WriteStream メソッド で、クエリが2分ごとにマイクロバッチを実行するオプションを指定してください",
     "choices": {
       "A": "trigger(”2 minutes”)",
@@ -2500,7 +2500,7 @@
     "id": "Q110",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
-    "question": "Delta Live Tablesパイプラインを設計したい。ソースシステムは、ソースデータで取り込まれた変更イベントのファイルを生成します。各変更イベントには、指定されたレコードが挿入、更新、削除されたかどうかを示すメタデータが含まれています。更に、変更が発生した順序を示すタイムスタンプ列も含まれています。データエンジニアはこれらの変更イベントに基づいてターゲットテーブルを更新する必要があります。この問題を解決するために最も適したコマンドはどれですか？",
+    "question": "Delta Live Tablesパイプラインを設計したい。\n\nソースシステムは、ソースデータで取り込まれた変更イベントのファイルを生成します。各変更イベントには、指定されたレコードが挿入、更新、削除されたかを示すメタデータが含まれています。更に、変更が発生した順序を示すタイムスタンプ列も含まれています。\n\nデータエンジニアはこれらの変更イベントに基づいてターゲットテーブルを更新する必要があります。この問題を解決するために最も適したコマンドはどれですか？",
     "choices": {
       "A": "MERGE INTO",
       "B": "APPLY CHANGES INTO",
@@ -2517,6 +2517,830 @@
       {
         "title": "DatabricksのMERGE INTOとAPPLY CHANGES INTOの違い",
         "url": "https://qiita.com/taka_yayoi/items/4376b3403a3dbfdfe89f"
+      }
+    ]
+  },
+  {
+    "id": "Q111",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "spark.readStream()にて、デフォルト値のトリガー間隔は、次のうちどれか？",
+    "choices": {
+      "A": "500ms - 0.5秒毎",
+      "B": "30000ms - 30秒毎",
+      "C": "クエリはバッチモードで実行され、利用可能なすべてのデータを一度に処理した後、トリガーが停止する",
+      "D": "1800000ms - 30分毎"
+    },
+    "answer": "A",
+    "explanation": "正解は、**500ms - 0.5秒毎** です。\n\nトリガー間隔を指定しない場合、データは0.5秒毎に処理します。\n\nこれは、trigger(processingTime=”500ms”) と同等です",
+    "references": [
+      {
+        "title": "構造化ストリーミングのトリガー間隔を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/triggers"
+      }
+    ]
+  },
+  {
+    "id": "Q112",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Deltaテーブルにおいて、トランザクションログファイルの主要なフォーマットは次のうちどれですか？",
+    "choices": {
+      "A": "JSON",
+      "B": "Parquet",
+      "C": "Delta",
+      "D": "XML"
+    },
+    "answer": "A",
+    "explanation": "正解は、**JSON** です。\n\nDelta Lakeのテーブルデータは、Parquet形式のデータファイル1つ以上と、JSON形式のトランザクションログとしてストレージに保存されます",
+    "references": [
+      {
+        "title": "Azure Databricks の Delta Lake とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/"
+      },
+      {
+        "title": "Delta Transaction Log Protocol",
+        "url": "https://github.com/delta-io/delta/blob/master/PROTOCOL.md"
+      }
+    ]
+  },
+  {
+    "id": "Q113",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "以下のSQLコマンドのうち、新しい行を既存のDeltaテーブル=usersに追加するものはどれですか？",
+    "choices": {
+      "A": "INSERT INTO users VALUES (“0015”, “Adam”, 23)",
+      "B": "INSERT VALUES (“0015”, “Adam”, 23)  INTO users",
+      "C": "APPEND VALUES (“0015”, “Adam”, 23) INTO users",
+      "D": "APPEND INTO users VALUES (“0015”, “Adam”, 23)"
+    },
+    "answer": "A",
+    "explanation": "正解は、**INSERT INTO~** です",
+    "references": [
+      {
+        "title": "INSERT",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-dml-insert-into"
+      }
+    ]
+  },
+  {
+    "id": "Q114",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Delta Live Tablesパイプラインでデータ品質制約を定義したい。この制約に違反するレコードを削除して、メトリクスに報告されるようにしてください",
+    "choices": {
+      "A": "CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION FAIL UPDATE",
+      "B": "CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION DROP ROW",
+      "C": "CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION DELETE ROW",
+      "D": "ON VIOLATION句を追加する必要なし。デフォルトで、制約に違反するレコードは削除され、イベントログに無効として報告される"
+    },
+    "answer": "B",
+    "explanation": "正解は、**ON VIOLATION DROP ROW** です。\n\n",
+    "references": [
+      {
+        "title": "パイプラインの期待値を使用してデータ品質を管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/expectations"
+      },
+      {
+        "title": "Lakeflow SDPでデータ品質を守るエクスペクテーション-3つのモード",
+        "url": "https://qiita.com/taka_yayoi/items/0b525cb05a095ad0bbe1#3%E3%81%A4%E3%81%AE%E3%83%A2%E3%83%BC%E3%83%89%E3%82%92%E7%90%86%E8%A7%A3%E3%81%99%E3%82%8B"
+      }
+    ]
+  },
+  {
+    "id": "Q115",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "カスタムロケーションスキーマ=db_hrを持っており、このスキーマが基盤上のストレージのどこに作成されたのかを知りたい。コマンドは次のうちどれですか？",
+    "choices": {
+      "A": "DESCRIBE EXTENDED db_hr",
+      "B": "DESCRIBE DATABASE db_hr",
+      "C": "SELECT location FROM db_hr.db",
+      "D": "DESCRIBE db_hr"
+    },
+    "answer": "B",
+    "explanation": "正解は、**DESCRIBE DATABASE db_hr** です。\n\nこのコマンドは、既存のスキーマ（データベース）のメタデータを返します。メタデータ情報には、データベース名、コメント、ファイルシステム上の場所が含まれます。オプションのEXTENDEDオプションが指定されている場合は、データベースのプロパティも返します",
+    "references": [
+      {
+        "title": "DESCRIBE SCHEMA",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-aux-describe-schema"
+      }
+    ]
+  },
+  {
+    "id": "Q116",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "Unity Catalogに保存したユーザーアクティビティイベントテーブルの処理に取り組んでいます。user_idやevent_dateなど、複数の列に対するフィルタが頻繁にクエリで使用されます。コストのかかるテーブルスキャンを回避するために、チームはどのデータレイアウト手法を採用すべきでしょうか？",
+    "choices": {
+      "A": "user_id と event_date の組み合わせに対して Liquid Clustering を適用する",
+      "B": "user_id に対して Z-Orderインデックスを適用する",
+      "C": "event_date に対して Partitioning を適用する",
+      "D": "user_id には Partitioning、event_date には Z-Orderインデックスを適用する"
+    },
+    "answer": "A",
+    "explanation": "正解は、**user_id と event_date の組み合わせに対して Liquid Clustering を適用する** です。\n\nこの手法は、両方の列に基づいてデータレイアウトを段階的に最適化し、これらの列に対するフィルタを効率的にサポートするとともに、コストのかかるテーブルスキャンを回避します\n\nevent_dateのみでパーティショニングすると、日付によるクエリのフィルタリングには役立ちますが、user_idによるフィルタリングは最適化されないため、パーティション内でフルスキャンが発生する可能性があります\n\nuser_idに対するZ-Orderインデックスは、user_idでフィルタリングするクエリを最適化しますが、event_dateによるフィルタリングを無視するため、日付でフィルタリングする場合にスキャンが非効率になります\n\nuser_id によるパーティショニングと event_date による Z-Order は、両方の列でのフィルタリングをサポートしますが、特にユーザー数が多い場合、多数の小さなパーティションが作成され、管理とパフォーマンスの問題を引き起こす可能性があります",
+    "references": [
+      {
+        "title": "テーブルに Liquid Clustering を使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/clustering"
+      },
+      {
+        "title": "テーブルに Auto Liquid Clustering を使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/clustering#auto-liquid"
+      }
+    ]
+  },
+  {
+    "id": "Q117",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "アナリストは、Databricksを使用して大規模なDelta Lakeデータセットに対して頻繁にアドホッククエリを実行します。しかし、クエリのパフォーマンスが低下しているという問題が発生しています。彼らは、キャッシュされたデータを利用することで、探索的分析のための迅速かつインタラクティブな応答を実現する必要があります。このワークロードに最適なインスタンスタイプはどれですか？",
+    "choices": {
+      "A": "General Purpose",
+      "B": "Memory Optimized",
+      "C": "Storage Optimized",
+      "D": "Compute Optimized"
+    },
+    "answer": "C",
+    "explanation": "正解は、**Storage Optimized** です。\n\nアドホック分析や対話型分析は、ストレージ最適化インスタンスを利用することで大きなメリットを得られます。Storage Optimizedインスタンスは、デルタキャッシュを活用してパフォーマンスを向上させることができます。これらのインスタンスタイプは、高いディスクスループットを実現するように設計されており、探索的クエリにおける読み取り速度の向上とレイテンシの低減を可能にします",
+    "references": [
+      {
+        "title": "Databricks、Spark、Delta Lakeワークロードを最適化するための包括的なガイド",
+        "url": "https://www.databricks.com/discover/pages/optimize-data-workloads-guide"
+      }
+    ]
+  },
+  {
+    "id": "Q118",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "spark.table().writeStream() にて、クエリが複数のマイクロバッチを実行して利用可能なすべてのデータを処理し、その後トリガーを停止するようにしたい。次のうちどのトリガーを扱うべきですか？",
+    "choices": {
+      "A": ".trigger(micro-batches=True)",
+      "B": ".trigger(processingTime=”0 seconds“)",
+      "C": ".trigger(once=True)",
+      "D": ".trigger(availableNow=True)"
+    },
+    "answer": "D",
+    "explanation": "正解は、**.trigger(availableNow=True)** です。\n\nこのトリガーは、ストリームをバッチモードで実行します。そして、利用可能なすべてのデータが複数のマイクロバッチに分割されて処理されます。利用可能なデータの処理が完了すると、トリガーは自動的に停止します",
+    "references": [
+      {
+        "title": "構造化ストリーミングのトリガー間隔を構成する",
+        "url": "https://docs.databricks.com/aws/ja/structured-streaming/triggers#configuring-incremental-batch-processing"
+      }
+    ]
+  },
+  {
+    "id": "Q119",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "分析ワークロードに対するLiquid Clusteringの主な利点は何ですか？",
+    "choices": {
+      "A": "取り込み時に機密データフィールドを自動的に暗号化します",
+      "B": "入力データソースからのリアルタイムストリーミングを保証します",
+      "C": "データ重複を防ぎ、クエリパフォーマンスを向上させます",
+      "D": "クエリ実行時のスキャンデータ量を削減します"
+    },
+    "answer": "D",
+    "explanation": "正解は、**クエリ実行時のスキャンデータ量を削減** です。\n\nLiquid Clustering は、Deltaテーブル内のデータの物理的なレイアウトを段階的に最適化するように設計された機能です。指定されたクラスタリングキー（通常は頻繁にクエリされる列）に従ってデータを整理します。これらのクラスタリングキーに基づいて関連データをクラスタリングすることで、データスキップを可能にし、クエリ実行中にスキャンする必要のあるデータ量を大幅に削減します。この最適化により、クエリ応答時間の短縮とリソース使用効率の向上が実現します",
+    "references": [
+      {
+        "title": "テーブルに Liquid Clustering を使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/clustering"
+      }
+    ]
+  },
+  {
+    "id": "Q120",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "Databricks Intelligence Platformにおいて、データウェアハウジングソリューションを提供するサービスは次のうちどれですか？",
+    "choices": {
+      "A": "Unity Catalog",
+      "B": "SQL warehouse",
+      "C": "Databricks SQL",
+      "D": "Delta Lives Tables (DLT)"
+    },
+    "answer": "C",
+    "explanation": "正解は、**Databricks SQL** です\n\nDatabricks SQL は、Databricks Lakehouseプラットフォーム上のデータウェアハウスであり、すべてのSQLおよびBIアプリケーションを大規模に実行できます",
+    "references": [
+      {
+        "title": "レイクハウスによるデータウェアハウジングとは？",
+        "url": "https://www.databricks.com/jp/product/databricks-sql"
+      },
+      {
+        "title": "レイクハウスにおけるデータウェアハウジング",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/get-started/data-warehousing-concepts#data-warehousing-in-your-lakehouse"
+      },
+      {
+        "title": "Databricks SQLを使用してデータウェアハウジングの使用を開始する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/get-started/"
+      }
+    ]
+  },
+  {
+    "id": "Q121",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "部署ごとの給与の合計、平均、および件数を計算するために、以下のコードを記述しました\n\n```python\nresult_df = df.groupBy(”department”).agg({”salary”: ”sum”, ”salary”: ”avg”, ”salary”: ”count”})```コード実行後、結果として得たデータフレームには、期待した3つの指標ではなく、1つの集計値しか含まれていません。この問題の最も可能性の高い原因とは？",
+    "choices": {
+      "A": "Pythonの辞書(dict)は重複キーを許可しない為、最後に集計されたキーのみが適用された",
+      "B": "agg() メソッドは、一度に 1つの集計関数のみをサポートする為",
+      "C": "複数の関数を集約する場合、agg() メソッドは辞書ではなく、tuplesのlistを使用する必要がある為",
+      "D": "groupBy() メソッドの前には、集計に使用する列に対して select() メソッドを呼び出す必要がある為"
+    },
+    "answer": "A",
+    "explanation": "正解は、**Pythonの辞書(dict)は重複キーを許可しない為** です\n\nこの実装では、辞書がagg()メソッドに渡され、「salary」列に対する複数の集計関数を指定します。しかし、Pythonの辞書は一意のキーを持つ必要があり、「salary」をキーとして複数回使用すると、以前のエントリは暗黙のうちに上書きします。提示例では、最後の集計（「salary」:「count」）のみが実際に実行されます\n\n同じ列に対して複数のメトリックを正しく計算するには、pyspark.sql.functionsモジュールの関数を使用し、各集計を明示的に定義するのが適切な方法です\n\n```python\nfrom pyspark.sql import functions as F\nresult_df = df.groupBy(”department”).agg(\n    F.sum(”salary”).alias(”total_salary”),\n    F.avg(”salary”).alias(”average_salary”),\n    F.count(”salary”).alias(”salary_count”))```",
+    "references": [
+      {
+        "title": "GroupedData",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/reference/classes/groupeddata"
+      },
+      {
+        "title": "pyspark.sql.GroupedData.agg",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.GroupedData.agg.html"
+      },
+      {
+        "title": "Pythonの辞書（dict）とは？初心者向けに基本操作からメソッド、エラー対策まで徹底解説",
+        "url": "https://note.com/eiji71/n/n1546d9765a43"
+      }
+    ]
+  },
+  {
+    "id": "Q122",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "このKafkaトピックから読み込むためのストリーミングDataFrameをPySparkで正しく構築しているのはどれですか？",
+    "choices": {
+      "A": "```python\neventsStream = spark.readStream.kafka(”host:port”, ”events_topic”, ”latest”)```",
+      "B": "```python\neventsStream = (spark.readStream\n                    .format(”kafka”)\n                    .option(”kafka.bootstrap.servers”, ”host:port”)\n                    .option(”subscribe”, ”events_topic”)\n                    .option(”startingOffsets”, ”latest”)\n                    .load()\n                )```",
+      "C": "```python\neventsStream = spark.readStream.format(”kafka”).load(”host:port”, ”events_topic”, ”latest”)```",
+      "D": "```python\neventsStream = (spark.readStream\n                    .format(”cloud_files”)\n                    .option(”cloudFiles.format”, ”kafka”)\n                    .option(”cloudFiles.bootstrap.servers”, ”host:port”)\n                    .option(”cloudFiles.subscribe”, ”events_topic”)\n                    .option(”cloudFiles.startingOffsets”, ”latest”)\n                    .load()\n                )```"
+    },
+    "answer": "B",
+    "explanation": "正解は、**spark.readStream.format(”kafka”)** です\n\noptionも次のような指定が可能です\n\n- **kafka.bootstrap.servers** を使用してKafkaクラスタを識別する\n\n- **subscribe** は、対象の Kafka トピックを定義する\n\n- **startingOffsets**は、消費開始点を制御するための値です。「latest」または「earliest」に設定することで、読み取り開始位置を指定できます",
+    "references": [
+      {
+        "title": "Apache Kafka に接続する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/connect/streaming/kafka/"
+      }
+    ]
+  },
+  {
+    "id": "Q123",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "PySparkでは、Spark SQLで作成されたDeltaテーブルemployeesをクエリするために、以下のどのコマンドを使用できますか？",
+    "choices": {
+      "A": "```python\npyspark.sql.read(SELECT * FROM employees)```",
+      "B": "```python\nspark.sql(”employees”)```",
+      "C": "```python\nSpark SQL tables can not be accessed from PySpark```",
+      "D": "```python\nspark.table(”employees”)```"
+    },
+    "answer": "D",
+    "explanation": "正解は、**spark.table(”employees”)** です\n\nspark.table() 関数は、指定された Spark SQL テーブルを PySpark DataFrame として返します",
+    "references": [
+      {
+        "title": "pyspark.sql.SparkSession.table",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.SparkSession.table.html"
+      }
+    ]
+  },
+  {
+    "id": "Q124",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "Automatic Liquid Clusteringは、どの列をクラスタリングキーとして使用するかをどのように決定するのですか？",
+    "choices": {
+      "A": "予測最適化を活用して、観測されたクエリ動作に基づいて最適なクラスタリングキーを選択します",
+      "B": "高度なサンプリング戦略を活用し、すべてのファイル間でデータを均一にバランスさせた後、列の選択をランダム化します",
+      "C": "テーブル作成時に指定された、事前定義されたクラスタリング列から、クラスタリングキーをインテリジェントに選択します",
+      "D": "スキーマ内の列定義のタイプと順序に基づいて、最適なクラスタリングキーを自動的に決定します"
+    },
+    "answer": "A",
+    "explanation": "正解は、**予測最適化を活用して、観測されたクエリ動作に基づいて最適なクラスタリングキーを選択します** です\n\nDatabricksの Automatic Liquid Clustering は、アクセスパターンとメタデータ統計に基づいて、Deltaテーブル内のデータの物理的なレイアウトを自動的に最適化するように設計された機能です",
+    "references": [
+      {
+        "title": "自動リキッドクラスタリング",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/clustering#auto-liquid"
+      }
+    ]
+  },
+  {
+    "id": "Q125",
+    "section": "5",
+    "sectionTitle": "データガバナンス＆品質",
+    "question": "ある組織は、AWS、Azure、GCPにまたがる複数のクライアントが大規模なデータセットにアクセスできるようにするため、Delta Sharingを計画している。上級データエンジニアは、データ共有プロセスを開始する前に、データセットをCloudflare R2オブジェクトストレージに移行することを推奨している。この Delta Sharing の設定において、Cloudflare R2はどのようなメリットがありますか？",
+    "choices": {
+      "A": "クラウドプロバイダーへのデータ送信にかかるコスト(Egress Cost)を削減します",
+      "B": "動的データマスキングのネイティブサポートを提供します",
+      "C": "自動チェックポイント機能を備えたストリーミングデータへの組み込みサポートを提供します",
+      "D": "クラウドベンダーロックインを回避するための標準APIを提供します"
+    },
+    "answer": "A",
+    "explanation": "正解は、**クラウドプロバイダーへのデータ転送にかかるコストを削減** です\n\nCloudflare R2では、データ送信コスト(Egress Cost)が不要になるため、クラウド環境間でデータを共有する際の費用を大幅に削減できます",
+    "references": [
+      {
+        "title": "Delta Sharing のエグレス コストを監視および管理する (プロバイダー向け)",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/manage-egress"
+      }
+    ]
+  },
+  {
+    "id": "Q126",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "データエンジニアは、どのシナリオにおいて、COPY INTOコマンドではなくAuto Loaderを使用すべきでしょうか？",
+    "choices": {
+      "A": "再アップロードされたファイルのサブセットを読み込む場合",
+      "B": "今後、数百万個以上のファイルを取り込む予定である場合",
+      "C": "数千個程度の少数のファイルを取り込む場合",
+      "D": "データスキーマが頻繁に変更されない場合"
+    },
+    "answer": "B",
+    "explanation": "正解は、**今後、数百万個以上のファイルを取り込む予定である場合** です\n\n「取り込むファイル数の規模」と「スキーマ変更の有無」が判断軸です\n\n- **取り込むファイル数の規模**\n\n数千個のファイルを取り込む場合は、COPY INTOが良いです。しかし、今後、数百万個以上のファイルを取り込む予定がある場合は、Auto Loaderが良いです\n\n- **スキーマ変更の有無**\n\nデータスキーマが頻繁に変更される場合、Auto Loaderはスキーマ推論と進化のような優れた機能が活用できます",
+    "references": [
+      {
+        "title": "COPY INTOを使用してデータを読み込む",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/copy-into/"
+      },
+      {
+        "title": "オートローダーとは何ですか？",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/"
+      }
+    ]
+  },
+  {
+    "id": "Q127",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "データエンジニアは、どのシナリオにおいて、COPY INTOコマンドではなくAuto Loaderを使用すべきでしょうか？",
+    "choices": {
+      "A": "再アップロードされたファイルのサブセットを読み込む場合",
+      "B": "今後、数百万個以上のファイルを取り込む予定である場合",
+      "C": "数千個程度の少数のファイルを取り込む場合",
+      "D": "データスキーマが頻繁に変更されない場合"
+    },
+    "answer": "B",
+    "explanation": "正解は、**今後、数百万個以上のファイルを取り込む予定である場合** です\n\n「取り込むファイル数の規模」と「スキーマ変更の有無」が判断軸です\n\n- **取り込むファイル数の規模**\n\n数千個のファイルを取り込む場合は、COPY INTOが良いです。しかし、今後、数百万個以上のファイルを取り込む予定がある場合は、Auto Loaderが良いです\n\n- **スキーマ変更の有無**\n\nデータスキーマが頻繁に変更される場合、Auto Loaderはスキーマ推論と進化のような優れた機能が活用できます",
+    "references": [
+      {
+        "title": "COPY INTOを使用してデータを読み込む",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/copy-into/"
+      },
+      {
+        "title": "オートローダーとは何ですか？",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/"
+      }
+    ]
+  },
+  {
+    "id": "Q128",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "数百の列と数十億のレコードを含む複数の大規模データセットを結合する大規模なETLパイプラインを処理しています。結合フェーズ中に、Sparkエグゼキュータが繰り返しデータをディスクに書き出しており、過剰なシャッフルによってパフォーマンスが著しく低下していることに彼らは気づきました。本処理のパフォーマンスを向上させる為に、どのようなコンピュートを選択すべきでしょうか？",
+    "choices": {
+      "A": "GPU Optimized",
+      "B": "Memory Optimized",
+      "C": "Storage Optimized",
+      "D": "Compute Optimized"
+    },
+    "answer": "B",
+    "explanation": "正解は、**Memory Optimized** です。\n\nSparkの結合処理は、特に大規模なデータセットや複雑な結合条件を扱う場合、非常に多くのメモリを消費する可能性があります。これは、結合処理中にデータをシャッフルし、場合によってはメモリに格納する必要があるためです。メモリ最適化なリソースにより、ディスクスピルを起こさずにメモリ内操作をより多く完了できる為、シャッフルオーバーヘッドが大幅に削減され、パフォーマンスが向上が期待できます",
+    "references": [
+      {
+        "title": "Databricks、Spark、Delta Lakeワークロードを最適化するための包括的なガイド",
+        "url": "https://www.databricks.com/discover/pages/optimize-data-workloads-guide"
+      }
+    ]
+  },
+  {
+    "id": "Q129",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Delta Live Tablesパイプラインでデータ品質制約を定義したい。この制約に違反するレコードが発生するとパイプラインが失敗するようにしてください",
+    "choices": {
+      "A": "CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION FAIL UPDATE",
+      "B": "CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION FAIL PIPELINE",
+      "C": "CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION FAIL",
+      "D": "ON VIOLATION句を追加する必要なし。デフォルトでは、制約に違反するレコードがあるとパイプラインが失敗します"
+    },
+    "answer": "A",
+    "explanation": "正解は、**ON VIOLATION FAIL UPDATE** です。\n\n",
+    "references": [
+      {
+        "title": "パイプラインの期待値を使用してデータ品質を管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/expectations"
+      },
+      {
+        "title": "Lakeflow SDPでデータ品質を守るエクスペクテーション-3つのモード",
+        "url": "https://qiita.com/taka_yayoi/items/0b525cb05a095ad0bbe1#3%E3%81%A4%E3%81%AE%E3%83%A2%E3%83%BC%E3%83%89%E3%82%92%E7%90%86%E8%A7%A3%E3%81%99%E3%82%8B"
+      }
+    ]
+  },
+  {
+    "id": "Q130",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "Databricksのスポットインスタンスを使用するのに最適なシナリオはどれですか？",
+    "choices": {
+      "A": "ビジネスアナリストによるインタラクティブなデータ分析",
+      "B": "厳格なSLA要件を満たすリアルタイムストリーム処理",
+      "C": "高い同時実行性を要求するトランザクションワークロード",
+      "D": "再試行機能を備えた重要度の低いバッチ処理ジョブ"
+    },
+    "answer": "A",
+    "explanation": "正解は、**ビジネスアナリストによるインタラクティブなデータ分析** です。\n\nスポットインスタンスは、ステートレスで耐障害性の高いワークロード、例えば、大きなデータ損失やユーザーへの影響なしに再試行できるバッチ処理ジョブなどに最適です",
+    "references": [
+      {
+        "title": "Leverage Unused Compute Capacity for Data + AI With Azure Spot Instances and Azure Databricks",
+        "url": "https://www.databricks.com/blog/2021/05/25/leverage-unused-compute-capacity-for-data-ai-with-azure-spot-instances-and-azure-databricks.html"
+      }
+    ]
+  },
+  {
+    "id": "Q131",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "CTASステートメントに関して、以下の記述のうち正しくないものはどれですか？",
+    "choices": {
+      "A": "CTASステートメントは手動スキーマ宣言をサポートします",
+      "B": "CTASステートメントはクエリ結果からスキーマ情報を自動的に推測します",
+      "C": "CTASステートメントを使用すると、テーブル作成時にデータが挿入されます",
+      "D": "CTASステートメントはCREATE TABLE_AS SELECTステートメントの略です"
+    },
+    "answer": "A",
+    "explanation": "正解は、**CTASステートメントは手動スキーマ宣言をサポートします** です。\n\nCTASステートメントは、SELECTクエリの出力を使用してデルタテーブルを作成し、データを入力します。CTASステートメントはクエリ結果からスキーマ情報を自動的に推論する為、手動でのスキーマ宣言はサポートしていません",
+    "references": [
+      {
+        "title": "CREATE TABLE",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-create-table-using"
+      },
+      {
+        "title": "CTASステートメントを使用する場合、スキーマ、ID 列の制約、またはその他のテーブル仕様を定義することはできません",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/generated-columns#ctas-and-identity-columns"
+      },
+      {
+        "title": "Qiita-DatabricksにてCTAS（CREATE TABLE AS SELECT）を利用する方法",
+        "url": "https://qiita.com/manabian/items/6c960c1544c53977a316"
+      }
+    ]
+  },
+  {
+    "id": "Q132",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "次の構造化ストリーミングクエリは、メダリオンアーキテクチャのどの目的に最も合致しているでしょうか\n\n```python\n(spark.readStream\n        .table(”cleanedOrders”)\n        .groupBy(”productCategory”)\n        .agg(sum(”totalWithTax”))\n    .writeStream\n        .option(”checkpointLocation”, checkpointPath)\n        .outputMode(”complete”)\n        .table(”aggregatedOrders”)\n)```",
+    "choices": {
+      "A": "本クエリは、生データ-RAWをBronzeテーブルに取り込んでいます",
+      "B": "本クエリは、BronzeテーブルからSilverテーブルへのホップを実行しています",
+      "C": "本クエリは、Goldテーブルから本番アプリケーションへのデータ転送を実行しています",
+      "D": "本クエリは、SilverテーブルからGoldテーブルへのホップを実行しています"
+    },
+    "answer": "D",
+    "explanation": "正解は、**SilverテーブルからGoldテーブルへのホップを実行している** です。\n\n本クエリは、Silverテーブル **cleanedOrders** のクリーンな注文データからビジネスレベルの集計を作成し、Goldテーブル **aggregatedOrders** にロードします",
+    "references": [
+      {
+        "title": "Qiita-構造化ストリーミングとDatabricks SQLを組み合わせてリアルタイムダッシュボードを作成してみる",
+        "url": "https://qiita.com/taka_yayoi/items/419a0b830b61f14373e5#%E3%82%B4%E3%83%BC%E3%83%AB%E3%83%89%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB"
+      },
+      {
+        "title": "パイプラインを使用してデータを変換する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/transform"
+      }
+    ]
+  },
+  {
+    "id": "Q133",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "以下の空欄を埋めて、students列の各学生のコース数を1ずつ増やしてください\n\n```sql\nSELECT\n  faculty_id,\n  students,\n  ___________ AS new_totals\nFROM faculties```",
+    "choices": {
+      "A": "FILTER (students, i -> i.total_courses + 1)",
+      "B": "TRANSFORM (students, total_courses + 1)",
+      "C": "TRANSFORM (students, i -> i.total_courses + 1)",
+      "D": "FILTER (students, total_courses + 1)"
+    },
+    "answer": "C",
+    "explanation": "正解は、**TRANSFORM (students, i -> i.total_courses + 1)** です。\n\ntransform(input_array, lambd_function) は、入力配列の各要素を指定されたラムダ関数を使用して変換し、出力配列を返す高階関数です",
+    "references": [
+      {
+        "title": "transform関数",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/functions/transform"
+      },
+      {
+        "title": "higher-order関数(高階関数)",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/semi-structured/higher-order-functions"
+      }
+    ]
+  },
+  {
+    "id": "Q134",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "Delta Live Tables（DLT）でニアリアルな分析パイプラインを構築します。エッジサービスから取り込まれた生イベントデータは、主に2つの場所に取り込みます\n\n1-Delta table registered in Unity Catalog\n```python\necommerce.analytics.raw_clickstream```\n2-S3バケット-受信データはParquetファイルとして保存\n```python\ns3://ecommerce/analytics/clickstream/```\nパーソナライズした商品レコメンデーション、不正検出、ライブパフォーマンスダッシュボードなどをニアリアルなユースケースとしてサポートするには、DLTパイプライン内でストリーミングテーブルを定義する必要があります\n\nエンジニアは、@dlt.table デコレータを使用して以下の候補コードブロックを作成しました。次のコードブロックのうち、clickstream_events という名前のストリーミングテーブルを正しく作成するのはどれですか？",
+    "choices": {
+      "A": "```python\n@dlt.table(name = ”clickstream_events”)\ndef load_clickstream():\n    return spark.readStream.table(”ecommerce.analytics.raw_clickstream”)```",
+      "B": "```python\n@dlt.table(name = ”clickstream_events”)\ndef load_clickstream():\n    return (spark.read\n                 .format(”cloudFiles”)\n                 .option(”cloudFiles.format”, ”parquet”)\n                 .load(”s3://ecommerce/analytics/clickstream/”)\n)```",
+      "C": "```python\n@dlt.table(name = ”clickstream_events”)\ndef load_clickstream():\n    return spark.read.table(”ecommerce.analytics.raw_clickstream”)```",
+      "D": "```python\n@dlt.table(name = ”clickstream_events”)\ndef load_clickstream():\n    return spark.read.format(”parquet”).load(”s3://ecommerce/analytics/clickstream/”)```"
+    },
+    "answer": "A",
+    "explanation": "正解は、**spark.readStream.table()** です。\n\nこれにより、構造化ストリーミングは、デルタテーブルから新しいデータが到着するたびに継続的に読み込むことができます。これはストリーミングモードで動作することを保証し、増分的なデータ取り込みと加工処理を必要とするニアリアルなパイプライン構築に適しています",
+    "references": [
+      {
+        "title": "データを読み取ってデータセット定義を開始する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/developer/definition-function#read-data-to-begin-a-dataset-definition"
+      }
+    ]
+  },
+  {
+    "id": "Q135",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "S3バケットからJSONデータを取り込むために、Databricks Auto Loaderストリームを設定しています。受信データに新しい列を検出した場合、パイプラインは停止しますが、新しい列はスキーマに追加します。更新したスキーマで、再実行後の処理が正常に再開できることが要件です。指定した要件を満たすのは次のうちどれでしょうか",
+    "choices": {
+      "A": "rescue",
+      "B": "addNewColumns",
+      "C": "none",
+      "D": "failOnNewColumns"
+    },
+    "answer": "B",
+    "explanation": "正解は、**addNewColumns** です。\n\naddNewColumns モードは、Auto Loader におけるデフォルトのスキーマ進化のオプションです。このモードは、新しい列を検出するとストリームは失敗しますが、新しい列はスキーマに追加します\n\nこれにより、ジョブを再開すると、更新後のスキーマで処理が続行できます。重要な点は、**既存の列のデータ型は変更しない** という点です",
+    "references": [
+      {
+        "title": "AutoLoaderでスキーマの推論と進化を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+      }
+    ]
+  },
+  {
+    "id": "Q136",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "データレイクハウスの特徴を最もよく表しているのは次のうちどれですか？",
+    "choices": {
+      "A": "組織の構造化データに対するトランザクション保証を備えた、信頼性の高いデータ管理システム",
+      "B": "組織のオープンフォーマットデータファイルをクラウドに保存する際のコスト削減を支援するプラットフォーム",
+      "C": "データエンジニアリング、分析、機械学習のワークロードをサポートする、単一の柔軟で高性能なシステム",
+      "D": "オンプレミスのハードウェアに投資することなく、組織のデータレイクワークロードを拡張できるプラットフォーム"
+    },
+    "answer": "C",
+    "explanation": "正解は、**データエンジニアリング、分析、機械学習のワークロードをサポートする、単一の柔軟で高性能なシステム** です。\n\nDatabricksは「Databricks Intelligence Platform」と総称しており、は、データレイクとデータウェアハウスの優れた要素を組み合わせた、統合型のレイクハウス分析プラットフォームと説明しています",
+    "references": [
+      {
+        "title": "Databricks データインテリジェンスプラットフォーム（日本語）",
+        "url": "https://www.databricks.com/jp/product/data-intelligence-platform"
+      }
+    ]
+  },
+  {
+    "id": "Q137",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "あるデータエンジニアが、パフォーマンスの問題が発生している大規模な非パーティション化デルタテーブルを扱っています。彼らはOPTIMIZEコマンドを実行し、多数の小さなファイルをより大きなファイルに正常に圧縮することに成功しました。\n\nしかし、テーブルに対する後続のクエリの実行速度は依然として遅いままです。パフォーマンスを更に向上させる為、OPTIMIZEコマンドを再実行しましたが、データファイルのサイズに変化は見られませんでした。\n\n2回目の実行時の挙動を最もよく説明しているのは次のうちどれでしょうか？",
+    "choices": {
+      "A": "OPTIMIZEコマンドは、連続実行の保持期間が7日間です",
+      "B": "Delta テーブルをパーティション化していない為、OPTIMIZE を 2 回実行しても効果はありません",
+      "C": "OPTIMIZEコマンドを再実行する前に、VACUUMコマンドを実行する必要があります",
+      "D": "OPTIMIZEコマンドは、圧縮済のファイルを変更しません"
+    },
+    "answer": "D",
+    "explanation": "正解は、**OPTIMIZEコマンドは、圧縮済のファイルを変更しない** です。\n\nこの挙動は、OPTIMIZEコマンドの冪等性について最もよく説明しています。OPTIMIZEを実行すると、指定したテーブルまたはパーティション内の小さなファイルを識別し、それらをより大きく効率的なファイルにマージすることで、ファイルオーバーヘッドを削減し、I/Oパフォーマンスを向上します\n\nファイルが既に圧縮され、新しいデータが追加または変更していない場合、OPTIMIZEを再実行してもそれ以上の圧縮効果はありません。これは意図的な設計です。OPTIMIZEは冗長な計算を回避し、既に最適化した閾値を満たしているファイルを変更しません。\n\nしたがって、このケースでは新しいデータを取り込んでおらず、ファイルは既に最適な形式になっている為、2回目の実行はファイルサイズや構造に影響を与えません。これが、目立った変化がない理由です。\n\nしかし、クエリのパフォーマンス低下が継続していることから、根本原因はファイルサイズとは関係ない別要因の可能性が高いです",
+    "references": [
+      {
+        "title": "OPTIMIZE コマンド",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-optimize"
+      }
+    ]
+  },
+  {
+    "id": "Q138",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "Databricks Auto Loaderを使用して、以下のストリーミングデータ取り込みコードを実装しました\n\n```python\nspark.readStream \\n        .format(”cloudFiles”) \\n        .schema(expected_schema) \\n        .option(”cloudFiles.format”, ”json”) \\n        .option(”cloudFiles.schemaEvolutionMode”, ”failOnNewColumns”) \\n        .load(”s3://vendor/raw/sales/json/”) \\n    .writeStream \\n        .option(”checkpointLocation”, ”s3://vendor/checkpoints/sales”) \\n        .start(”sales_table”)```\n受信するJSONファイルで、元のスキーマに含まれていない新しい列が現れた場合、このストリーミングジョブはどのような動作が期待できますか？",
+    "choices": {
+      "A": "ストリームが失敗し、スキーマを手動で更新するか、問題のあるデータファイルを削除しない限り、再開しません",
+      "B": "ストリームは失敗しますが、新しい列でスキーマを更新すると自動的に再起動します",
+      "C": "ストリームが失敗した場合、すべての新しい列は後で処理するために、救済したデータ列に保存されます",
+      "D": "ストリームは一時的に停止しますが、スキーマの更新を行わずに新しい列を無視することで処理を継続します"
+    },
+    "answer": "A",
+    "explanation": "正解は、**ストリームが失敗し、スキーマを手動で更新するか、問題のあるデータファイルを削除しない限り、再開しない** です。\n\nfailOnNewColumns モードでは、ストリームは新しい列を検出すると、厳密なスキーマの一貫性を強制するために即座に失敗します。スキーマを手動で更新して新しい列を含めるか、スキーマの不一致の原因となっているデータファイルを削除しない限り、自動的に再起動しません。これにより、スキーマの意図しない逸脱を防ぎ、計画的なスキーマ管理が保証されます",
+    "references": [
+      {
+        "title": "AutoLoaderでスキーマの推論と進化を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+      }
+    ]
+  },
+  {
+    "id": "Q139",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "データエンジニアがコメント付きの新しいテーブルを作成するために使用できるコマンドは次のうちどれですか？",
+    "choices": {
+      "A": "```SQL\nCREATE TABLE payments\nCOMMENT ”This table contains sensitive information”\nAS SELECT * FROM bank_transactions```",
+      "B": "```SQL\nCOMMENT(”This table contains sensitive information”)\nCREATE TABLE payments\nAS SELECT * FROM bank_transactions```",
+      "C": "```SQL\nCREATE TABLE payments\nCOMMENT(”This table contains sensitive information”)\nAS SELECT * FROM bank_transactions```",
+      "D": "```SQL\nCREATE TABLE payments\nAS SELECT * FROM bank_transactions\nCOMMENT ”This table contains sensitive information”```"
+    },
+    "answer": "A",
+    "explanation": "正解は、**```SQL\nCREATE TABLE payments\nCOMMENT ”This table contains sensitive information”\nAS SELECT * FROM bank_transactions```** です\n\nCOMMENT関数は存在しないため、()では括らない指定になります",
+    "references": [
+      {
+        "title": "CREATE TABLE コマンド",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-create-table-using"
+      }
+    ]
+  },
+  {
+    "id": "Q140",
+    "section": "3",
+    "sectionTitle": "データ処理 & 変換",
+    "question": "データエンジニアがユーザー定義関数（UDF）を作成するために使用できるコードブロックは次のうちどれですか？",
+    "choices": {
+      "A": "```SQL\nCREATE FUNCTION plus_one(value INTEGER)\nRETURN value +1```",
+      "B": "```SQL\nCREATE UDF plus_one(value INTEGER)\nRETURN value +1;```",
+      "C": "```SQL\nCREATE UDF plus_one(value INTEGER)\nRETURNS INTEGER\nRETURN value +1;```",
+      "D": "```SQL\nCREATE FUNCTION plus_one(value INTEGER)\nRETURNS INTEGER\nRETURN value +1;```"
+    },
+    "answer": "D",
+    "explanation": "正解は、**```SQL\nCREATE FUNCTION plus_one(value INTEGER)\nRETURNS INTEGER\nRETURN value +1;```** です\n\nDatabricks SQLに限らず、 **CREATE FUNCTION文において、戻り値のデータ型の明示する「RETURNS」は必須** です。これは一般的なSQL標準の仕様と覚えてください",
+    "references": [
+      {
+        "title": "ユーザー定義関数 (UDF) とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/udf/"
+      },
+      {
+        "title": "CREATE FUNCTION ステートメント",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-create-sql-function"
+      }
+    ]
+  },
+  {
+    "id": "Q141",
+    "section": "5",
+    "sectionTitle": "データガバナンス＆品質",
+    "question": "Databricksプラットフォームのどの機能で、テーブルに対するユーザーの権限を取り消すことができますか？",
+    "choices": {
+      "A": "Workspace Admin Console",
+      "B": "Account Console",
+      "C": "Catalog Explorer",
+      "D": "Databricksプラットフォームでは、権限を取り消す方法はありません。テーブルを複製して新しい権限を付与します"
+    },
+    "answer": "C",
+    "explanation": "正解は、**Catalog Explorer** です\n\nDatabricks SQLの Catalog Explorer を使用すると、データオブジェクトのアクセス許可を管理できます。これには、ユーザーまたはユーザーグループからテーブルやデータベースに対するアクセス許可を取り消す機能も含まれます",
+    "references": [
+      {
+        "title": "カタログ エクスプローラーとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/catalog-explorer/"
+      }
+    ]
+  },
+  {
+    "id": "Q142",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "次のSQLキーワードのうち、テーブルの行の値を複数の列に変換≒行を回転させる機能はどれですか？",
+    "choices": {
+      "A": "PIVOT",
+      "B": "TRANSFORM",
+      "C": "ZORDER BY",
+      "D": "ROTATE"
+    },
+    "answer": "A",
+    "explanation": "正解は、**PIVOT** です\n\nPIVOT関数は、指定された列リストの一意の値を回転させて、テーブルの行を個別の列に変換します。言い換えれば、テーブルを縦長の形式から横長の形式に変換します",
+    "references": [
+      {
+        "title": "PIVOT",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-qry-select-pivot"
+      },
+      {
+        "title": "SQLピボット: 行を列に変換する",
+        "url": "https://www.databricks.com/jp/blog/2018/11/01/sql-pivot-converting-rows-to-columns.html"
+      }
+    ]
+  },
+  {
+    "id": "Q143",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Auto Loaderを使用してストリーミングデータ取り込みパイプラインを設計しています。要件は、パイプラインはスキーマの変更によって決して失敗してはならず、データに新しく追加された列はすべて取得して後で検査できるようにすることです。この要件を満たすためには、どのスキーマ進化モードを使用すべきでしょうか？",
+    "choices": {
+      "A": "rescue",
+      "B": "addNewColumns",
+      "C": "none",
+      "D": "failOnNewColumns"
+    },
+    "answer": "A",
+    "explanation": "正解は、**rescue** です。\n\nrescueモードは **スキーマが進化しないことを保証する** 為、新しい列が追加された場合でもストリームが失敗することはありません。代わりに、新しい列はすべて復元されたデータ列に格納する為、ストリームを中断することなく後で検査できます。これは「ストリームを障害なく実行し続けつつ、新しいスキーマ要素も取得する」という要件を満たしています",
+    "references": [
+      {
+        "title": "AutoLoaderでスキーマの推論と進化を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+      }
+    ]
+  },
+  {
+    "id": "Q144",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "Databricksアセットバンドルのdatabricks.ymlファイルにある `targetsセクション` の主な目的は何ですか？",
+    "choices": {
+      "A": "それぞれの構成が異なるデプロイ先の環境を指定すること",
+      "B": "バンドルに必要な外部ライブラリを一覧表示すること",
+      "C": "ワークスペースのユーザーロールとアクセスポリシーを定義すること",
+      "D": "Databricks Runtimeのバージョンを設定すること"
+    },
+    "answer": "A",
+    "explanation": "正解は、**それぞれの構成が異なるデプロイ先の環境を指定すること** です。\n\ndatabricks.ymlファイルのtargetsセクションは、複数のデプロイ環境（開発、ステージング、本番など）を定義するために使用します。各targetsでは、ワークスペースパス、クラスタ設定、環境固有の変数など、固有の構成を持つことができます。この構造は、環境分離とデプロイの柔軟性をサポートするものです",
+    "references": [
+      {
+        "title": "Databricks アセット バンドルの構成",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/settings"
+      },
+      {
+        "title": "チュートリアル: ワークスペースでバンドルを作成してデプロイする",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/workspace-tutorial"
+      },
+      {
+        "title": "Qiita-ワークスペースでのDatabricksアセットバンドルの活用",
+        "url": "https://qiita.com/taka_yayoi/items/74bb42d30bf5e58e6e04"
+      }
+    ]
+  },
+  {
+    "id": "Q145",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "本番環境で複数のタスクを実行するジョブを運用している。ジョブが失敗した場合、チームメンバーにメール通知したい。次のうち、どの方法が使用できますか？",
+    "choices": {
+      "A": "ジョブが失敗した場合、ユーザーに通知する方法はありません",
+      "B": "ジョブページでメール通知が構成できます",
+      "C": "ジョブの失敗時に通知を受け取るように設定できるのは、ジョブの所有者のみです",
+      "D": "Job API を使用することで、各タスクのステータスに応じてプログラムからメールが送信できます。"
+    },
+    "answer": "B",
+    "explanation": "正解は、**ジョブページでメール通知が構成できる** です。\n\nDatabricks Jobsは、ジョブの開始、成功、失敗の場合に通知を受け取るためのメール通知をサポートしています。ジョブページの詳細パネルにある「ジョブ通知」で、「通知を編集」をクリックして、1つ以上のメールアドレスを追加します。",
+    "references": [
+      {
+        "title": "Lakeflow ジョブ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/"
+      }
+    ]
+  },
+  {
+    "id": "Q146",
+    "section": "2",
+    "sectionTitle": "開発と取り込み",
+    "question": "Gitフォルダ内で実行できる機能は次のうちどれですか？",
+    "choices": {
+      "A": "リモートのGitリポジトリから変更をpullする",
+      "B": "新しいリモートGitリポジトリを作成する",
+      "C": "ブランチを削除する",
+      "D": "プルリクエストを作成する"
+    },
+    "answer": "A",
+    "explanation": "正解は、**リモートのGitリポジトリから変更をpullする** です。\n\nGitフォルダはGitのpull操作をサポートしています。これは、リモートリポジトリからコンテンツを取得してダウンロードし、ローカルリポジトリをそのコンテンツに合わせて即座に更新するものです",
+    "references": [
+      {
+        "title": "Azure Databricks Git フォルダ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/repos/"
+      },
+      {
+        "title": "Git Pull",
+        "url": "https://github.com/git-guides/git-pull"
+      }
+    ]
+  },
+  {
+    "id": "Q147",
+    "section": "4",
+    "sectionTitle": "データパイプラインの製品化",
+    "question": "データエンジニアリングチームは、手動で停止するまで、定義した間隔で全てのテーブルを更新するDLTパイプラインを運用しています。パイプラインを停止すると、コンピューティングリソースも終了します\nこのDLTパイプラインの実行モードを最も適切に説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "このDLTパイプラインは、本番モード ☓ 継続パイプラインモードの組み合わせで実行している",
+      "B": "このDLTパイプラインは、本番モード ☓ トリガーパイプラインモードの組み合わせで実行している",
+      "C": "このDLTパイプラインは、開発モード ☓ 継続パイプラインモードの組み合わせで実行している",
+      "D": "このDLTパイプラインは、開発モード ☓ トリガーパイプラインモードの組み合わせで実行している"
+    },
+    "answer": "A",
+    "explanation": "正解は、**本番モード ☓ 継続パイプラインモードの組み合わせで実行している** です。\n\n継続パイプラインモードは、入力データの変更に応じてテーブルを継続的に更新します。更新を開始すると、パイプラインを停止するまで動作し続けます。\n\n本番モードの特徴は次のとおりです\n\n- パイプラインが停止すると、クラスタを即座に終了する\n\n- 回復可能なエラーが発生した場合、クラスターを自動再起動する（例：メモリリークや古い認証情報でエラーなど）\n\n- 特定のエラーが発生した場合、パイプライン実行を再試行します（例：クラスタの起動失敗など）",
+    "references": [
+      {
+        "title": "パイプライン開発機能の概要",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/develop#overview-of-pipeline-development-features"
+      },
+      {
+        "title": "パイプラインの更新を実行する-開発モード",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/updates#development-mode"
+      },
+      {
+        "title": "トリガーされたパイプライン モードと連続パイプライン モード",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/pipeline-mode"
       }
     ]
   }
