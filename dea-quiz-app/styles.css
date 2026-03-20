@@ -122,6 +122,10 @@ button.primary:hover:not(:disabled) {
   border: 1px solid #cdd5ff;
 }
 .button-group-secondary {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
   padding-top: 8px;
   border-top: 1px dashed #d7ddf0;
 }
@@ -146,9 +150,11 @@ button.primary:hover:not(:disabled) {
   transform: rotate(180deg);
 }
 .secondary-actions-panel {
+  flex: 1;
   margin-top: 10px;
 }
 .button-row-secondary-header {
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -412,6 +418,7 @@ button.primary:hover:not(:disabled) {
   }
 
   .button-group-secondary {
+    display: block;
     margin-top: 10px;
     padding-top: 6px;
   }
