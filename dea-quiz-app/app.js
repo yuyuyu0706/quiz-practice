@@ -43,6 +43,8 @@ const els = {
   nextQuestion: document.getElementById('next-question'),
   nextQuestionInline: document.getElementById('next-question-inline'),
   toggleExplanation: document.getElementById('toggle-explanation'),
+  secondaryActionsToggle: document.getElementById('secondary-actions-toggle'),
+  secondaryActionsPanel: document.getElementById('secondary-actions-panel'),
   explanationActionRow: document.getElementById('explanation-action-row'),
   bookmarkBtn: document.getElementById('bookmark-btn'),
   suspendToHome: document.getElementById('suspend-to-home'),
@@ -90,13 +92,28 @@ function attachEvents() {
   });
 
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
-  els.prevQuestion.addEventListener('click', () => moveQuestion(-1));
-  els.nextQuestion.addEventListener('click', () => moveQuestion(1));
-  els.nextQuestionInline.addEventListener('click', () => moveQuestion(1));
+  els.prevQuestion.addEventListener('click', () => {
+    closeSecondaryActions();
+    moveQuestion(-1);
+  });
+  els.nextQuestion.addEventListener('click', () => {
+    closeSecondaryActions();
+    moveQuestion(1);
+  });
+  els.nextQuestionInline.addEventListener('click', () => {
+    closeSecondaryActions();
+    moveQuestion(1);
+  });
+
+  els.secondaryActionsToggle?.addEventListener('click', () => {
+    const expanded = els.secondaryActionsToggle.getAttribute('aria-expanded') === 'true';
+    setSecondaryActionsOpen(!expanded);
+  });
 
   els.choicesForm.addEventListener('change', handleChoiceSelectionChange);
 
   els.toggleExplanation.addEventListener('click', () => {
+    closeSecondaryActions();
     els.explanation.classList.toggle('hidden');
     state.session.explanationOpen = !els.explanation.classList.contains('hidden');
     els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
@@ -105,6 +122,7 @@ function attachEvents() {
   });
 
   els.bookmarkBtn.addEventListener('click', () => {
+    closeSecondaryActions();
     const q = getCurrentQuestion();
     const current = state.progress[q.id] ?? baseProgress();
     current.bookmark = !current.bookmark;
@@ -121,6 +139,7 @@ function attachEvents() {
 
   els.suspendToHome.addEventListener('click', () => {
     if (!state.session) return;
+    closeSecondaryActions();
     persistSession();
     showView('home');
     els.homeMessage.textContent = '中断状態を保存しました。';
@@ -128,6 +147,36 @@ function attachEvents() {
   });
 
   document.addEventListener('keydown', handleKeyboard);
+  document.addEventListener('click', handleDocumentClick);
+  window.addEventListener('resize', handleViewportChange);
+}
+
+
+function handleDocumentClick(event) {
+  if (!isMobileViewport()) return;
+  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
+  if (!secondaryGroup || secondaryGroup.contains(event.target)) return;
+  closeSecondaryActions();
+}
+
+function handleViewportChange() {
+  if (!isMobileViewport()) {
+    closeSecondaryActions({ forceDesktopState: true });
+  }
+}
+
+function setSecondaryActionsOpen(isOpen) {
+  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
+  if (!els.secondaryActionsToggle || !secondaryGroup) return;
+  const shouldOpen = Boolean(isOpen) && isMobileViewport();
+  secondaryGroup.classList.toggle('is-open', shouldOpen);
+  els.secondaryActionsToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+}
+
+function closeSecondaryActions(options = {}) {
+  const { forceDesktopState = false } = options;
+  if (!isMobileViewport() && !forceDesktopState) return;
+  setSecondaryActionsOpen(false);
 }
 
 function handleKeyboard(event) {
@@ -242,6 +291,8 @@ function renderQuestion(options = {}) {
   updateExplanationActions();
   updateBookmarkLabel(state.progress[question.id]?.bookmark);
   persistSession();
+
+  closeSecondaryActions();
 
   if (scrollToTop) {
     scrollQuizIntoView();
@@ -718,6 +769,7 @@ function clearSession() {
 }
 
 function showView(name) {
+  closeSecondaryActions({ forceDesktopState: true });
   Object.entries(els.views).forEach(([key, node]) => {
     node.classList.toggle('active', key === name);
   });

@@ -125,6 +125,29 @@ button.primary:hover:not(:disabled) {
   padding-top: 8px;
   border-top: 1px dashed #d7ddf0;
 }
+.secondary-actions-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.secondary-actions-toggle::before {
+  content: '…';
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.secondary-actions-toggle::after {
+  content: '▾';
+  font-size: 0.88rem;
+  transition: transform 0.2s ease;
+}
+.secondary-actions-toggle[aria-expanded='true']::after {
+  transform: rotate(180deg);
+}
+.secondary-actions-panel {
+  margin-top: 10px;
+}
 .button-row-primary {
   align-items: stretch;
 }
@@ -329,6 +352,25 @@ button.primary:hover:not(:disabled) {
 }
 
 @media (max-width: 768px) {
+  .secondary-actions-toggle {
+    display: inline-flex;
+    width: auto;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.92rem;
+    border-radius: 999px;
+    background: #f8fafc;
+  }
+
+  .secondary-actions-panel {
+    display: none;
+    margin-top: 8px;
+  }
+
+  .button-group-secondary.is-open .secondary-actions-panel {
+    display: block;
+  }
+
   .button-row-primary {
     flex-direction: column;
   }
@@ -346,12 +388,13 @@ button.primary:hover:not(:disabled) {
 
   .button-group-secondary {
     margin-top: 10px;
+    padding-top: 6px;
   }
 
   .button-row-secondary {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 8px;
   }
 
   #suspend-to-home {
@@ -360,6 +403,12 @@ button.primary:hover:not(:disabled) {
 }
 
 @media (max-width: 480px) {
+  .secondary-actions-toggle {
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 0.86rem;
+  }
+
   .container {
     padding: 10px;
   }
@@ -452,11 +501,25 @@ button.primary:hover:not(:disabled) {
   }
 
   .button-group-secondary {
-    padding-top: 12px;
+    padding-top: 6px;
+    margin-top: 8px;
+  }
+
+  .secondary-actions-panel {
+    margin-top: 6px;
   }
 
   .button-row-secondary {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .button-row-secondary button {
+    min-height: 40px;
+    width: auto;
+    padding: 8px 10px;
+    font-size: 0.86rem;
+    border-radius: 9px;
   }
 
   #submit-answer,
