@@ -47,6 +47,7 @@
     </section>
 
     <section id="quiz-view" class="card view">
+      <div id="quiz-top-anchor" class="quiz-top-anchor" aria-hidden="true"></div>
       <div class="quiz-head">
         <p id="quiz-section"></p>
         <p id="quiz-progress"></p>
@@ -54,16 +55,29 @@
       <h2 id="quiz-question"></h2>
       <form id="choices-form" class="choices"></form>
       <p id="result-indicator" class="indicator"></p>
-      <div class="button-row wrap">
-        <button id="submit-answer" class="primary">回答する</button>
-        <button id="prev-question" type="button">前へ</button>
-        <button id="next-question" type="button">次へ</button>
-        <button id="toggle-explanation" type="button">解説を表示</button>
-        <button id="bookmark-btn" type="button">ブックマーク☆</button>
-        <button id="suspend-to-home" type="button">中断してホームへ</button>
+      <div class="button-group button-group-primary" aria-label="主要操作">
+        <div class="button-row button-row-primary">
+          <button id="submit-answer" class="primary">回答する</button>
+          <button id="next-question" type="button" class="primary" disabled>次へ</button>
+        </div>
+        <p id="selection-hint" class="selection-hint">選択肢を選ぶと「回答する」が押せます。</p>
+      </div>
+      <div class="button-group button-group-secondary" aria-label="補助操作">
+        <div class="button-row wrap button-row-secondary">
+          <button id="prev-question" type="button">前へ</button>
+          <button id="toggle-explanation" type="button">解説を表示</button>
+          <button id="bookmark-btn" type="button">ブックマーク☆</button>
+          <button id="suspend-to-home" type="button" class="danger-secondary">中断してホームへ</button>
+        </div>
       </div>
       <article id="explanation" class="explanation hidden"></article>
-      <p id="quiz-message" class="message"></p>
+      <div id="explanation-action-row" class="button-group button-group-primary explanation-actions hidden" aria-label="解説後の主要操作">
+        <p class="selection-hint explanation-hint">解説を読み終えたら、ここから次の問題へ進めます。</p>
+        <div class="button-row button-row-primary">
+          <button id="next-question-inline" type="button" class="primary">次へ進む</button>
+        </div>
+      </div>
+      <p id="quiz-message" class="message" role="status" aria-live="polite"></p>
     </section>
 
     <section id="result-view" class="card view">

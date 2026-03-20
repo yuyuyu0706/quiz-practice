@@ -36,10 +36,14 @@ const els = {
   resultIndicator: document.getElementById('result-indicator'),
   explanation: document.getElementById('explanation'),
   quizMessage: document.getElementById('quiz-message'),
+  selectionHint: document.getElementById('selection-hint'),
+  quizTopAnchor: document.getElementById('quiz-top-anchor'),
   submitAnswer: document.getElementById('submit-answer'),
   prevQuestion: document.getElementById('prev-question'),
   nextQuestion: document.getElementById('next-question'),
+  nextQuestionInline: document.getElementById('next-question-inline'),
   toggleExplanation: document.getElementById('toggle-explanation'),
+  explanationActionRow: document.getElementById('explanation-action-row'),
   bookmarkBtn: document.getElementById('bookmark-btn'),
   suspendToHome: document.getElementById('suspend-to-home'),
   scoreText: document.getElementById('score-text'),
@@ -75,7 +79,7 @@ function attachEvents() {
     }
     state.session = saved;
     showView('quiz');
-    renderQuestion();
+    renderQuestion({ scrollToTop: true });
   });
 
   els.discardSessionBtn.addEventListener('click', () => {
@@ -88,11 +92,15 @@ function attachEvents() {
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
   els.prevQuestion.addEventListener('click', () => moveQuestion(-1));
   els.nextQuestion.addEventListener('click', () => moveQuestion(1));
+  els.nextQuestionInline.addEventListener('click', () => moveQuestion(1));
+
+  els.choicesForm.addEventListener('change', handleChoiceSelectionChange);
 
   els.toggleExplanation.addEventListener('click', () => {
     els.explanation.classList.toggle('hidden');
     state.session.explanationOpen = !els.explanation.classList.contains('hidden');
     els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
+    updateExplanationActions();
     persistSession();
   });
 
@@ -128,7 +136,10 @@ function handleKeyboard(event) {
   const map = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', A: 'A', B: 'B', C: 'C', D: 'D' };
   if (map[key]) {
     const choiceInput = els.choicesForm.querySelector(`input[value="${map[key]}"]`);
-    if (choiceInput) choiceInput.checked = true;
+    if (choiceInput) {
+      choiceInput.checked = true;
+      handleChoiceSelectionChange();
+    }
   } else if (event.key === 'Enter') {
     event.preventDefault();
     submitCurrentAnswer();
@@ -179,10 +190,11 @@ function startSession(forcedMode = null) {
 
   persistSession();
   showView('quiz');
-  renderQuestion();
+  renderQuestion({ scrollToTop: true });
 }
 
-function renderQuestion() {
+function renderQuestion(options = {}) {
+  const { scrollToTop = false } = options;
   const question = getCurrentQuestion();
   const idx = state.session.currentIndex + 1;
   const total = state.session.order.length;
@@ -197,6 +209,7 @@ function renderQuestion() {
   els.resultIndicator.textContent = '';
   els.resultIndicator.className = 'indicator';
   els.quizMessage.textContent = '';
+  els.choicesForm.classList.remove('needs-selection');
 
   els.choicesForm.replaceChildren();
   getChoiceLabels(question.choices).forEach((label) => {
@@ -225,8 +238,14 @@ function renderQuestion() {
     applyGradedState(question, chosen, choiceMap);
   }
 
+  updatePrimaryActions(question.id);
+  updateExplanationActions();
   updateBookmarkLabel(state.progress[question.id]?.bookmark);
   persistSession();
+
+  if (scrollToTop) {
+    scrollQuizIntoView();
+  }
 }
 
 function renderExplanation(question) {
@@ -415,13 +434,19 @@ function appendInlineFormattedTextWithLineBreaks(element, text) {
   });
 }
 
-function submitCurrentAnswer() {
+function submitCurrentAnswer(event) {
+  event?.preventDefault?.();
   const question = getCurrentQuestion();
   const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
   if (!selected) {
-    els.quizMessage.textContent = '選択肢を選んでから回答してください。';
+    els.quizMessage.textContent = '選択肢を1つ選んでから「回答する」を押してください。';
+    els.choicesForm.classList.add('needs-selection');
+    els.selectionHint.textContent = '未選択です。まずは選択肢をタップしてください。';
+    scrollChoiceGroupIntoView();
     return;
   }
+
+  els.choicesForm.classList.remove('needs-selection');
 
   const selectedLabel = selected.value;
   const choiceMap = getOrCreateChoiceMap(question.id, question.choices);
@@ -474,7 +499,58 @@ function moveQuestion(delta) {
   }
   state.session.currentIndex = nextIndex;
   state.session.explanationOpen = false;
-  renderQuestion();
+  renderQuestion({ scrollToTop: true });
+}
+
+
+function handleChoiceSelectionChange() {
+  els.quizMessage.textContent = '';
+  els.choicesForm.classList.remove('needs-selection');
+  updatePrimaryActions(getCurrentQuestion()?.id);
+}
+
+function updatePrimaryActions(questionId) {
+  const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
+  const graded = Boolean(state.session?.graded?.[questionId]);
+  const canSubmit = Boolean(selected) && !graded;
+  const canNext = graded;
+
+  els.submitAnswer.disabled = !canSubmit;
+  els.nextQuestion.disabled = !canNext;
+  els.nextQuestionInline.disabled = !canNext;
+
+  if (graded) {
+    els.selectionHint.textContent = '採点済みです。解説を確認して「次へ」へ進めます。';
+  } else if (selected) {
+    els.selectionHint.textContent = '選択済みです。「回答する」で採点します。';
+  } else {
+    els.selectionHint.textContent = '選択肢を選ぶと「回答する」が押せます。';
+  }
+}
+
+function updateExplanationActions() {
+  const question = getCurrentQuestion();
+  const graded = Boolean(question && state.session?.graded?.[question.id]);
+  const showInlineNext = graded && !els.explanation.classList.contains('hidden');
+  els.explanationActionRow.classList.toggle('hidden', !showInlineNext);
+}
+
+function isMobileViewport() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+function scrollQuizIntoView() {
+  const target = els.quizTopAnchor ?? els.views.quiz;
+  if (!target) return;
+
+  if (isMobileViewport()) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function scrollChoiceGroupIntoView() {
+  if (!isMobileViewport()) return;
+  els.choicesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function finishSession() {
