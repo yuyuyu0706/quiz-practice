@@ -45,6 +45,8 @@ const els = {
   toggleExplanation: document.getElementById('toggle-explanation'),
   secondaryActionsToggle: document.getElementById('secondary-actions-toggle'),
   secondaryActionsPanel: document.getElementById('secondary-actions-panel'),
+  suspendMobileSlot: document.getElementById('suspend-mobile-slot'),
+  suspendDesktopSlot: document.getElementById('suspend-desktop-slot'),
   explanationActionRow: document.getElementById('explanation-action-row'),
   bookmarkBtn: document.getElementById('bookmark-btn'),
   suspendToHome: document.getElementById('suspend-to-home'),
@@ -62,6 +64,7 @@ async function init() {
   buildSectionCheckboxes();
   hydrateSettingsUI();
   attachEvents();
+  syncSecondaryActionLayout();
   refreshResumeUI();
 }
 
@@ -160,9 +163,16 @@ function handleDocumentClick(event) {
 }
 
 function handleViewportChange() {
+  syncSecondaryActionLayout();
   if (!isMobileViewport()) {
     closeSecondaryActions({ forceDesktopState: true });
   }
+}
+
+function syncSecondaryActionLayout() {
+  const targetSlot = isMobileViewport() ? els.suspendMobileSlot : els.suspendDesktopSlot;
+  if (!targetSlot || !els.suspendToHome || targetSlot.contains(els.suspendToHome)) return;
+  targetSlot.appendChild(els.suspendToHome);
 }
 
 function setSecondaryActionsOpen(isOpen) {
