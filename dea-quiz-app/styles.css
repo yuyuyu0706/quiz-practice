@@ -161,7 +161,13 @@ button.primary:hover:not(:disabled) {
   margin-top: 10px;
 }
 .button-row-secondary-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  line-height: 1.4;
 }
 .button-row-secondary-header #suspend-to-home {
   margin-left: auto;
@@ -174,7 +180,13 @@ button.primary:hover:not(:disabled) {
   font-weight: 700;
 }
 .button-row-secondary button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #f8fafc;
+  min-height: 44px;
+  padding: 10px 14px;
+  line-height: 1.4;
 }
 .danger-secondary {
   background: var(--danger-soft);
