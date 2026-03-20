@@ -148,11 +148,18 @@ button.primary:hover:not(:disabled) {
 .secondary-actions-panel {
   margin-top: 10px;
 }
-.button-row-secondary-home {
-  margin-top: 10px;
+.button-row-secondary-top {
+  align-items: stretch;
 }
-.button-row-secondary-home button {
+.button-row-secondary-top button,
+.button-row-secondary-top .secondary-home-slot > button {
   width: auto;
+}
+.secondary-home-slot {
+  display: contents;
+}
+.button-group-secondary > #suspend-to-home {
+  display: none;
 }
 .button-row-primary {
   align-items: stretch;
@@ -161,7 +168,10 @@ button.primary:hover:not(:disabled) {
   flex: 1;
   font-weight: 700;
 }
-.button-row-secondary button {
+.button-row-secondary button,
+.button-row-secondary-top button,
+.button-row-secondary-top .secondary-home-slot > button,
+.button-row-secondary .secondary-home-slot > button {
   background: #f8fafc;
 }
 .danger-secondary {
@@ -416,11 +426,7 @@ button.primary:hover:not(:disabled) {
     gap: 8px;
   }
 
-  .button-row-secondary-home {
-    margin-top: 8px;
-  }
-
-  .button-row-secondary-home button,
+  .button-row-secondary-top .secondary-home-slot > button,
   .secondary-actions-toggle {
     width: auto;
     min-height: 40px;
@@ -550,11 +556,7 @@ button.primary:hover:not(:disabled) {
     border-radius: 9px;
   }
 
-  .button-row-secondary-home {
-    margin-top: 6px;
-  }
-
-  .button-row-secondary-home button,
+  .button-row-secondary-top .secondary-home-slot > button,
   .secondary-actions-toggle {
     min-height: 36px;
     padding: 6px 10px;
