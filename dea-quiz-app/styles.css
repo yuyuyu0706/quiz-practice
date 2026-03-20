@@ -148,11 +148,17 @@ button.primary:hover:not(:disabled) {
 .secondary-actions-panel {
   margin-top: 10px;
 }
-.button-row-secondary-home {
+.button-row-secondary-header {
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-top: 10px;
 }
-.button-row-secondary-home button {
+.button-row-secondary-header button {
   width: auto;
+}
+.button-row-secondary-header #suspend-to-home {
+  margin-left: auto;
 }
 .button-row-primary {
   align-items: stretch;
@@ -416,17 +422,23 @@ button.primary:hover:not(:disabled) {
     gap: 8px;
   }
 
-  .button-row-secondary-home {
+  .button-row-secondary-header {
     margin-top: 8px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
   }
 
-  .button-row-secondary-home button,
+  .button-row-secondary-header button,
   .secondary-actions-toggle {
     width: auto;
     min-height: 40px;
     padding: 8px 12px;
     font-size: 0.92rem;
     border-radius: 999px;
+  }
+
+  .button-row-secondary-header #suspend-to-home {
+    margin-left: 0;
   }
 }
 
@@ -550,11 +562,11 @@ button.primary:hover:not(:disabled) {
     border-radius: 9px;
   }
 
-  .button-row-secondary-home {
+  .button-row-secondary-header {
     margin-top: 6px;
   }
 
-  .button-row-secondary-home button,
+  .button-row-secondary-header button,
   .secondary-actions-toggle {
     min-height: 36px;
     padding: 6px 10px;
