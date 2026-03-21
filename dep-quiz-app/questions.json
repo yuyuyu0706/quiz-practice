@@ -1,0 +1,19 @@
+[
+  {
+    "id": "DEP-PLACEHOLDER-1",
+    "section": "1",
+    "sectionTitle": "Professional Placeholder",
+    "question": "Databricks Certified Data Engineer Professional 向けアプリの Phase 0 における主目的として最も適切なのはどれですか？",
+    "choices": {
+      "A": "Associate 版を Professional 版に完全置換すること",
+      "B": "Professional 版を独立追加し、後続開発できる土台を作ること",
+      "C": "全問題データを今すぐ 200 問投入すること",
+      "D": "共通化を最優先して 1 アプリに統合すること"
+    },
+    "answer": "B",
+    "explanation": "正解は **B** です。
+
+Phase 0 の目的は、Associate 版を壊さずに Professional 版のアプリ基盤を追加し、今後の問題投入や機能拡張を進めやすくすることです。",
+    "references": []
+  }
+]
