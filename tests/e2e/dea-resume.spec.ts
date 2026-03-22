@@ -2,9 +2,8 @@ import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startQuiz } from './helpers';
 
 test.describe('dea resume flow', () => {
-  test.skip(({ project }) => project.name !== 'chromium', 'Desktop-only resume coverage.');
-
-  test('can suspend to home and resume the same progress', async ({ page }) => {
+  test('can suspend to home and resume the same progress', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop-only resume coverage.');
     await startQuiz(page, '10');
     await answerCurrentQuestion(page);
     await expect(page.locator('#quiz-progress')).toContainText('1 / 10');

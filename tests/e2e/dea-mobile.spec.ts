@@ -2,9 +2,8 @@ import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startQuiz } from './helpers';
 
 test.describe('dea mobile quiz flow', () => {
-  test.skip(({ project }) => project.name !== 'mobile-chrome', 'Mobile-only coverage.');
-
-  test('supports the main controls and collapsible secondary actions on mobile', async ({ page }) => {
+  test('supports the main controls and collapsible secondary actions on mobile', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile-only coverage.');
     await startQuiz(page, '10');
 
     await expect(page.getByRole('button', { name: 'その他の操作' })).toBeVisible();
