@@ -1,0 +1,15 @@
+{
+  "name": "quiz-practice",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "validate:dea-questions": "node scripts/validate-dea-questions.mjs",
+    "test:e2e": "playwright test",
+    "test": "npm run validate:dea-questions && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "http-server": "^14.1.1"
+  }
+}
