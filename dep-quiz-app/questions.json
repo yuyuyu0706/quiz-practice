@@ -11,9 +11,7 @@
       "D": "共通化を最優先して 1 アプリに統合すること"
     },
     "answer": "B",
-    "explanation": "正解は **B** です。
-
-Phase 0 の目的は、Associate 版を壊さずに Professional 版のアプリ基盤を追加し、今後の問題投入や機能拡張を進めやすくすることです。",
+    "explanation": "正解は **B** です。Phase 0 の目的は、Associate 版を壊さずに Professional 版のアプリ基盤を追加し、今後の問題投入や機能拡張を進めやすくすることです。",
     "references": []
   }
 ]
