@@ -1,17 +1,100 @@
 [
   {
-    "id": "DEP-PLACEHOLDER-1",
+    "id": "DEP-Q201",
     "section": "1",
-    "sectionTitle": "Professional Placeholder",
-    "question": "Databricks Certified Data Engineer Professional 向けアプリの Phase 0 における主目的として最も適切なのはどれですか？",
+    "sectionTitle": "ストリーミング設計と運用",
+    "domain": "Streaming",
+    "tags": ["Auto Loader", "schema evolution"],
+    "difficulty": "hard",
+    "sourceType": "original",
+    "scenarioType": "troubleshooting",
+    "estimatedTimeSec": 150,
+    "question": "Auto Loader で JSON ファイルを継続取り込みしている。新しい列が断続的に追加される要件がある中で、最も適切な運用はどれか。",
     "choices": {
-      "A": "Associate 版を Professional 版に完全置換すること",
-      "B": "Professional 版を独立追加し、後続開発できる土台を作ること",
-      "C": "全問題データを今すぐ 200 問投入すること",
-      "D": "共通化を最優先して 1 アプリに統合すること"
+      "A": "schemaLocation を使わず、毎回フルスキャンで推論させる",
+      "B": "schemaLocation を永続化し、スキーマ進化モードを要件に応じて設定する",
+      "C": "checkpointLocation のみ設定すればスキーマ変更も自動管理できる",
+      "D": "CSV に変換してから取り込めばスキーマ進化を考慮しなくてよい"
     },
     "answer": "B",
-    "explanation": "正解は **B** です。Phase 0 の目的は、Associate 版を壊さずに Professional 版のアプリ基盤を追加し、今後の問題投入や機能拡張を進めやすくすることです。",
-    "references": []
+    "explanation": "Auto Loader では schemaLocation が推論済みスキーマの永続化に使われ、checkpointLocation は進捗管理を担う。スキーマ進化がある場合は両者の役割を分けて設計する必要がある。",
+    "whyWrong": {
+      "A": "推論の再実行コストが増え、安定運用しにくい",
+      "C": "checkpoint は処理状態であり schema 管理の代替ではない",
+      "D": "フォーマット変換は本質的な解決ではなく要件も満たさない"
+    },
+    "references": [
+      {
+        "title": "Auto Loader schema inference and evolution",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/schema"
+      }
+    ],
+    "notes": "長文化して運用トラブルシュート問題へ発展可能。"
+  },
+  {
+    "id": "DEP-Q202",
+    "section": "2",
+    "sectionTitle": "ガバナンスと共有",
+    "domain": "Governance",
+    "tags": ["Unity Catalog", "Delta Sharing"],
+    "difficulty": "medium",
+    "sourceType": "scenario-based",
+    "question": "複数の外部パートナーへ Databricks 上の最新データを安全に共有したい。共有先に自社ワークスペースへのアクセス権は与えたくない場合、最も適切なのはどれか。",
+    "choices": {
+      "A": "ワークスペースの閲覧権限を付与して直接テーブルを見せる",
+      "B": "DBFS にエクスポートしたファイルを手動配布する",
+      "C": "Delta Sharing を用いて共有オブジェクト単位で配布する",
+      "D": "クラスターのログを共有して必要データを再構築してもらう"
+    },
+    "answer": "C",
+    "explanation": "Delta Sharing は受信側へワークスペースアクセスを付与せずに、共有対象を制御しながら最新データを配布できる。Unity Catalog のガバナンスと組み合わせることで共有管理を集中化しやすい。",
+    "whyWrong": {
+      "A": "ワークスペース権限付与は共有範囲が広すぎる",
+      "B": "手動配布は鮮度と運用負荷の面で不利",
+      "D": "ログ共有はデータ共有の方式として不適切"
+    },
+    "references": [
+      {
+        "title": "What is Delta Sharing?",
+        "url": "https://docs.databricks.com/aws/en/delta-sharing/"
+      }
+    ],
+    "notes": "共有方式の比較問題として DEA への縮小展開も可能。"
+  },
+  {
+    "id": "DEP-Q203",
+    "section": "3",
+    "sectionTitle": "性能最適化",
+    "domain": "Performance",
+    "tags": ["Photon", "Liquid Clustering", "MERGE"],
+    "difficulty": "hard",
+    "sourceType": "official-inspired",
+    "scenarioType": "architecture",
+    "estimatedTimeSec": 180,
+    "question": "更新頻度の高い大規模 Delta テーブルで、分析クエリと定期 MERGE の両方を効率化したい。パーティション設計の硬直化は避けたい場合、最も適切な戦略はどれか。",
+    "choices": {
+      "A": "固定パーティションを細かく増やし続け、Photon は無効化する",
+      "B": "Liquid Clustering を利用しつつ、Photon 対応コンピュートで処理する",
+      "C": "常に CSV に書き出してから別テーブルへ再ロードする",
+      "D": "VACUUM の実行間隔だけを短くして対応する"
+    },
+    "answer": "B",
+    "explanation": "Liquid Clustering は固定パーティションの硬直性を避けながらデータレイアウトを最適化しやすく、Photon はクエリエンジン側の高速化に寄与する。両者は役割が異なるため併用効果を期待できる。",
+    "whyWrong": {
+      "A": "過度な固定パーティションは保守負荷を高め、Photon 無効化にも合理性がない",
+      "C": "CSV 退避は性能改善より運用負荷増大につながる",
+      "D": "VACUUM は不要ファイル整理であり、主たる実行性能改善策ではない"
+    },
+    "references": [
+      {
+        "title": "Liquid clustering for Delta tables",
+        "url": "https://docs.databricks.com/aws/en/delta/clustering"
+      },
+      {
+        "title": "Photon overview",
+        "url": "https://www.databricks.com/product/photon"
+      }
+    ],
+    "notes": "将来的に実務シナリオを追加して multi-step 問題へ展開しやすい。"
   }
 ]

@@ -17,9 +17,10 @@ The current test foundation targets the following goals:
 
 ```bash
 npm run validate:dea-questions
+npm run validate:dep-questions
 ```
 
-This runs `scripts/validate-dea-questions.mjs` and checks:
+These commands run the shared validator (`scripts/validate-questions.mjs`) through the DEA / DEP entry points and check:
 
 - JSON can be parsed
 - required fields exist on every question
@@ -27,6 +28,7 @@ This runs `scripts/validate-dea-questions.mjs` and checks:
 - `answer` is one of `A/B/C/D`
 - `id` values are unique
 - optional `references` entries have `title` and `url`
+- optional metadata such as `domain`, `tags`, `difficulty`, `sourceType`, `whyWrong`, `notes`, `scenarioType`, and `estimatedTimeSec` satisfies the schema when present
 
 ### E2E tests
 
@@ -129,8 +131,9 @@ GitHub Actions uses the same commands as local execution:
 1. install dependencies
 2. install Playwright browsers
 3. run `npm run validate:dea-questions`
-4. run `npm run test:e2e`
-5. upload `playwright-report` and `test-results`
+4. run `npm run validate:dep-questions`
+5. run `npm run test:e2e`
+6. upload `playwright-report` and `test-results`
 
 ## Future Expansion Candidates
 
