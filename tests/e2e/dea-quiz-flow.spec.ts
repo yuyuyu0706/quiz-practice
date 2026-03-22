@@ -8,15 +8,12 @@ test.describe('dea quiz flow on desktop', () => {
 
     await answerCurrentQuestion(page);
     await expect(page.getByRole('button', { name: '解説を非表示' })).toBeVisible();
-    await page.getByRole('button', { name: '次へ' }).click();
+    await page.locator('#next-question').click();
     await expect(page.locator('#quiz-progress')).toContainText('2 / 10');
 
     for (let index = 2; index <= 10; index += 1) {
       await answerCurrentQuestion(page);
-      const nextButton = index === 10
-        ? page.getByRole('button', { name: '次へ進む' })
-        : page.getByRole('button', { name: '次へ' });
-      await nextButton.click();
+      await page.locator('#next-question').click();
     }
 
     await expect(page.locator('#result-view')).toBeVisible();

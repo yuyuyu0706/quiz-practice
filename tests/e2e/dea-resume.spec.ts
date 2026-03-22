@@ -19,7 +19,7 @@ test.describe('dea resume flow', () => {
     await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);
     await expect(page.locator('#explanation')).toBeVisible();
 
-    await page.getByRole('button', { name: '次へ' }).click();
+    await page.locator('#next-question').click();
     await expect(page.locator('#quiz-progress')).toContainText('2 / 10');
   });
 });

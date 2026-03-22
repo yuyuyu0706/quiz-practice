@@ -13,8 +13,8 @@ test.describe('dea mobile quiz flow', () => {
     await expect(page.getByRole('button', { name: '中断してホームへ' })).toBeVisible();
 
     await answerCurrentQuestion(page);
-    await expect(page.getByRole('button', { name: '次へ' })).toBeVisible();
-    await page.getByRole('button', { name: '次へ' }).click();
+    await expect(page.locator('#next-question')).toBeVisible();
+    await page.locator('#next-question').click();
     await expect(page.locator('#quiz-progress')).toContainText('2 / 10');
   });
 });
