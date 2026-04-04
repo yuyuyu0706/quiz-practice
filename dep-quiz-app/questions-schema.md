@@ -94,7 +94,17 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 
 ### 4.3 `sectionTitle`
 - 画面上に表示するセクション名
-- 例：`"Databricks Intelligence Platform"`, `"データ処理 & 変換"`
+- DEP 版では、以下の定義済み値のみを使用する
+  - `Developing Code for Data Processing using Python and SQL`
+  - `Data Ingestion & Acquisition`
+  - `Data Transformation, Cleansing, and Quality`
+  - `Data Sharing and Federation`
+  - `Monitoring and Alerting`
+  - `Cost & Performance Optimisation`
+  - `Ensuring Data Security and Compliance`
+  - `Data Governance`
+  - `Debugging and Deploying`
+  - `Data Modelling`
 
 ### 4.4 `question`
 - 問題文そのもの
@@ -118,12 +128,29 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 - 各要素は最低限 `title` と `url` を持つ
 
 ### 4.9 `domain`
-- 問題の大分類（例: `Streaming`, `DLT`, `Governance` など）
+- 問題の大分類（定義）
+  - `Streaming`
+  - `DLT`
+  - `Governance`
 - セクション横断の分析用
 
 ### 4.10 `tags`
 - 詳細分類タグ（配列）
 - 検索・復習・分析に利用
+- 推奨: 1問あたり 3〜6 個程度
+- タグ例
+  - `Auto Loader`
+  - `schema evolution`
+  - `checkpoint`
+  - `Delta Lake`
+  - `Unity Catalog`
+  - `SCD Type 2`
+  - `watermark`
+  - `expectations`
+- 作成のコツ
+  - 「機能名 + 論点」で短く具体化する（例: `Auto Loader` + `schema evolution`）
+  - 同義語の表記ゆれを避ける（例: `Unity Catalog` に統一）
+  - 迷う場合は ChatGPT で候補を出し、最終的に既存タグ体系へ正規化する
 
 ### 4.11 `difficulty`
 - 難易度
