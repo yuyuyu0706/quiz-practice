@@ -234,7 +234,7 @@ button.primary:hover:not(:disabled) {
   font-weight: 700;
 }
 .quiz-question-id {
-  font-size: 1.1em;
+  font-size: 1.2em;
 }
 .choices {
   margin-top: 8px;
