@@ -230,6 +230,11 @@ button.primary:hover:not(:disabled) {
 }
 #quiz-question {
   overflow-wrap: anywhere;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.quiz-question-id {
+  font-size: 1.2em;
 }
 .choices {
   margin-top: 8px;
