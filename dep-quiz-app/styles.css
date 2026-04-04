@@ -351,6 +351,22 @@ button.primary:hover:not(:disabled) {
   padding-top: 10px;
   border-top: 1px solid #d7e8dc;
 }
+.why-wrong {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #d7e8dc;
+}
+.why-wrong h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.why-wrong ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.why-wrong li strong {
+  font-weight: 700;
+}
 .references h3 {
   margin: 0 0 6px;
   font-size: 1rem;
@@ -632,6 +648,7 @@ button.primary:hover:not(:disabled) {
   }
 
   .references ul,
+  .why-wrong ul,
   #wrong-list {
     padding-left: 16px;
   }
