@@ -294,7 +294,7 @@ function renderQuestion(options = {}) {
     els.choicesForm.appendChild(choiceLabel);
   });
 
-  renderExplanation(question);
+  renderExplanation(question, choiceMap);
   els.explanation.classList.toggle('hidden', !state.session.explanationOpen);
   els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
 
@@ -314,13 +314,37 @@ function renderQuestion(options = {}) {
   }
 }
 
-function renderExplanation(question) {
+function renderExplanation(question, choiceMap) {
   const explanation = typeof question.explanation === 'string' ? question.explanation : '';
   const references = Array.isArray(question.references) ? question.references : [];
+  const whyWrongEntries = getWhyWrongEntries(question.whyWrong, choiceMap);
   els.explanation.replaceChildren();
 
   const body = renderMarkdownToFragment(explanation);
   els.explanation.appendChild(body);
+
+  if (whyWrongEntries.length) {
+    const section = document.createElement('section');
+    section.className = 'why-wrong';
+
+    const title = document.createElement('h3');
+    title.textContent = 'なぜ、間違いか？';
+    section.appendChild(title);
+
+    const list = document.createElement('ul');
+    whyWrongEntries.forEach(({ label, reason }) => {
+      const li = document.createElement('li');
+
+      const key = document.createElement('strong');
+      key.textContent = `${label}: `;
+      li.appendChild(key);
+      li.appendChild(document.createTextNode(reason));
+      list.appendChild(li);
+    });
+
+    section.appendChild(list);
+    els.explanation.appendChild(section);
+  }
 
   const validReferences = references.filter(
     (item) => item && typeof item.title === 'string' && typeof item.url === 'string' && item.title && item.url,
@@ -347,6 +371,35 @@ function renderExplanation(question) {
   });
   section.appendChild(list);
   els.explanation.appendChild(section);
+}
+
+function getWhyWrongEntries(whyWrong, choiceMap = {}) {
+  if (!whyWrong || typeof whyWrong !== 'object' || Array.isArray(whyWrong)) {
+    return [];
+  }
+
+  const normalizedChoiceMap = choiceMap && typeof choiceMap === 'object' ? choiceMap : {};
+  const originalToDisplayed = Object.entries(normalizedChoiceMap).reduce((acc, [displayedLabel, originalLabel]) => {
+    acc[String(originalLabel)] = String(displayedLabel);
+    return acc;
+  }, {});
+
+  const entries = Object.entries(whyWrong)
+    .map(([label, value]) => ({
+      label: String(originalToDisplayed[String(label)] ?? label).trim(),
+      reason: typeof value === 'string' ? value.trim() : '',
+    }))
+    .filter((item) => item.label && item.reason);
+
+  if (!entries.length) return [];
+
+  const fixedOrder = new Map(FIXED_CHOICE_LABELS.map((label, index) => [label, index]));
+  return entries.sort((a, b) => {
+    const rankA = fixedOrder.has(a.label) ? fixedOrder.get(a.label) : Number.POSITIVE_INFINITY;
+    const rankB = fixedOrder.has(b.label) ? fixedOrder.get(b.label) : Number.POSITIVE_INFINITY;
+    if (rankA !== rankB) return rankA - rankB;
+    return a.label.localeCompare(b.label);
+  });
 }
 
 function renderMarkdownToFragment(markdownText) {
