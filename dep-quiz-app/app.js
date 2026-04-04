@@ -790,11 +790,19 @@ function showView(name) {
 }
 
 function buildSectionCheckboxes() {
-  const sections = Array.from(new Set(state.questions.map((q) => q.section)));
+  const sectionMap = new Map();
+  state.questions.forEach((question) => {
+    if (!sectionMap.has(question.section)) {
+      sectionMap.set(question.section, question.sectionTitle ?? '');
+    }
+  });
+
+  const sections = Array.from(sectionMap.entries()).sort(([sectionA], [sectionB]) => Number(sectionA) - Number(sectionB));
+
   els.sectionCheckboxes.innerHTML = sections
     .map(
-      (section) =>
-        `<label><input type="checkbox" name="sections" value="${section}" checked /> Section ${section}</label>`,
+      ([section, sectionTitle]) =>
+        `<label><input type="checkbox" name="sections" value="${section}" checked /><span class="section-label"><span class="section-number">Section ${section}</span><span class="section-title">${sectionTitle}</span></span></label>`,
     )
     .join('');
 }
