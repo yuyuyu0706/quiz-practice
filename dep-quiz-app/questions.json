@@ -2,7 +2,7 @@
   {
     "id": "DEP-Q201",
     "section": "1",
-    "sectionTitle": "ストリーミング設計と運用",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
     "domain": "Streaming",
     "tags": ["Auto Loader", "schema evolution"],
     "difficulty": "hard",
@@ -34,7 +34,7 @@
   {
     "id": "DEP-Q202",
     "section": "2",
-    "sectionTitle": "ガバナンスと共有",
+    "sectionTitle": "Data Ingestion & Acquisition",
     "domain": "Governance",
     "tags": ["Unity Catalog", "Delta Sharing"],
     "difficulty": "medium",
@@ -64,37 +64,41 @@
   {
     "id": "DEP-Q203",
     "section": "3",
-    "sectionTitle": "性能最適化",
-    "domain": "Performance",
-    "tags": ["Photon", "Liquid Clustering", "MERGE"],
-    "difficulty": "hard",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "CDF", "AUTO CDC", "Structured Streaming"],
+    "difficulty": "medium",
     "sourceType": "official-inspired",
     "scenarioType": "architecture",
     "estimatedTimeSec": 180,
-    "question": "更新頻度の高い大規模 Delta テーブルで、分析クエリと定期 MERGE の両方を効率化したい。パーティション設計の硬直化は避けたい場合、最も適切な戦略はどれか。",
+    "question": "在庫データの管理にLakeflowの宣言型パイプラインを使用しています。\n\nチームは、変更データフィード（CDF）を有効にしたストリーミングテーブル「inventory_updates」を管理しています。このテーブルには、製品在庫レベルのリアルタイムの変更が記録され、列には「product_id」、「quantity」、「update_timestamp」が含まれます。チームは、inventory_updates テーブルからの全ての在庫変更を、下流のレイヤーに段階的に伝播させる必要があります。\n\nどの実装方法がこの要件を正しく満たしていますか？",
     "choices": {
-      "A": "固定パーティションを細かく増やし続け、Photon は無効化する",
-      "B": "Liquid Clustering を利用しつつ、Photon 対応コンピュートで処理する",
-      "C": "常に CSV に書き出してから別テーブルへ再ロードする",
-      "D": "VACUUM の実行間隔だけを短くして対応する"
+      "A": "spark.read を使用して inventory_updates テーブルの CDF を読み込み、MERGE INTO を使用して変更を下流のテーブルにマージします",
+      "B": "spark.readStreamを使用してinventory_updatesテーブルのCDFを読み込み、AUTO CDC APIを使用して変更内容を下流のテーブルに適用します",
+      "C": "spark.readStreamを使用してinventory_updatesテーブルをskipChangeCommitsオプション付きで読み込み、新しく追加されたデータを下流のテーブルに段階的に伝播します",
+      "D": "spark.readStreamを使用してinventory_updatesテーブルを直接読み込み、新しい更新内容を下流のテーブルに段階的に伝播させます"
     },
     "answer": "B",
-    "explanation": "Liquid Clustering は固定パーティションの硬直性を避けながらデータレイアウトを最適化しやすく、Photon はクエリエンジン側の高速化に寄与する。両者は役割が異なるため併用効果を期待できる。",
+    "explanation": "正解は **spark.readStreamを使用してinventory_updatesテーブルのCDFを読み込み、AUTO CDC APIを使用して変更内容を下流のテーブルに適用** です\n\nLakeflow Declarative Pipelinesでは、CDFを使った変更データの継続的な反映にAUTO CDCを利用します。Databricks公式では、AUTO CDCはCDFを処理するためのAPIとして説明されており、変更の適用先に対して順序付けやキーを指定して反映できます。\n\nまた、Delta Change Data Feedを段階的に処理する際は、Structured Streamingで readChangeFeed=true を使う形が基本です",
     "whyWrong": {
-      "A": "過度な固定パーティションは保守負荷を高め、Photon 無効化にも合理性がない",
-      "C": "CSV 退避は性能改善より運用負荷増大につながる",
-      "D": "VACUUM は不要ファイル整理であり、主たる実行性能改善策ではない"
+      "A": "spark.read はバッチ読込であり、継続的・段階的な変更伝播の実装としては不適切です。CDFの増分処理ではStructured Streamingの利用が基本です。",
+      "C": "skipChangeCommits は更新・削除を無視し、appendのみを処理するため、在庫変更をすべて下流へ伝播する要件を満たせません。",
+      "D": "ストリーミングテーブルを直接読むだけでは、CDFとしての変更イベントを明示的に扱う実装になっておらず、更新内容の適用方法として不十分です。"
     },
     "references": [
       {
-        "title": "Liquid clustering for Delta tables",
-        "url": "https://docs.databricks.com/aws/en/delta/clustering"
+        "title": "AUTO CDC API: パイプラインを使用して変更データ キャプチャを簡略化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/cdc"
       },
       {
-        "title": "Photon overview",
-        "url": "https://www.databricks.com/product/photon"
+        "title": "Azure Databricks で Delta Lake 変更データフィードを利用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/delta-change-data-feed"
+      },
+      {
+        "title": "Delta テーブルのストリーミング読み取りと書き込み",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/delta-lake"
       }
     ],
-    "notes": "将来的に実務シナリオを追加して multi-step 問題へ展開しやすい。"
+    "notes": "CDFを使った下流反映ではAUTO CDCが中核。skipChangeCommitsは『変更を無視してappendだけ流す』論点との対比で引っかけになりやすい。sectionは2とも迷うが、変更適用ロジックを問うため3寄りで整理"
   }
 ]
