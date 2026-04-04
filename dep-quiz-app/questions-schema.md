@@ -94,17 +94,17 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 
 ### 4.3 `sectionTitle`
 - 画面上に表示するセクション名
-- DEP 版では、以下の定義済み値のみを使用する
-  - `Developing Code for Data Processing using Python and SQL`
-  - `Data Ingestion & Acquisition`
-  - `Data Transformation, Cleansing, and Quality`
-  - `Data Sharing and Federation`
-  - `Monitoring and Alerting`
-  - `Cost & Performance Optimisation`
-  - `Ensuring Data Security and Compliance`
-  - `Data Governance`
-  - `Debugging and Deploying`
-  - `Data Modelling`
+- DEP 版では、`section` と対になる以下の定義済み値のみを使用する
+  - `section: "1"` → `Developing Code for Data Processing using Python and SQL`
+  - `section: "2"` → `Data Ingestion & Acquisition`
+  - `section: "3"` → `Data Transformation, Cleansing, and Quality`
+  - `section: "4"` → `Data Sharing and Federation`
+  - `section: "5"` → `Monitoring and Alerting`
+  - `section: "6"` → `Cost & Performance Optimisation`
+  - `section: "7"` → `Ensuring Data Security and Compliance`
+  - `section: "8"` → `Data Governance`
+  - `section: "9"` → `Debugging and Deploying`
+  - `section: "10"` → `Data Modelling`
 
 ### 4.4 `question`
 - 問題文そのもの
@@ -154,14 +154,29 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 
 ### 4.11 `difficulty`
 - 難易度
-- 想定値: `easy` / `medium` / `hard`
+- 定義値: `easy` / `medium` / `hard`
+- 基準
+  - `easy`: 単一知識で解ける基礎問題。長い前提や複数サービス横断の判断を必要としない。
+  - `medium`: 2つ以上の知識を組み合わせる標準問題。選択肢の比較や設定差分の理解が必要。
+  - `hard`: 長文シナリオや複数要件のトレードオフ判断を含む応用問題。誤答の見極めが難しい。
 
 ### 4.12 `sourceType`
-- 問題の出自（例: `original`, `official-inspired`, `scenario-based`）
+- 問題の出自（定義）
+  - `original`: 作問者が独自に作成した問題。
+  - `official-inspired`: 公式ドキュメントや試験ガイドの論点を参考に再構成した問題（文面コピーはしない）。
+  - `scenario-based`: 実務シナリオを前提に、要件から最適解を選ぶ形式の問題。
 
 ### 4.13 `whyWrong`
 - 誤答選択肢の補足説明オブジェクト
 - 正解選択肢を含める必要はない（誤答のみ記載で可）
+- 例
+  ```json
+  "whyWrong": {
+    "A": "checkpointLocation はストリーミング進捗管理であり、スキーマ管理用途ではありません。",
+    "C": "要件の『継続取り込み時のスキーマ進化』を満たしていません。",
+    "D": "フォーマット変換は回避策であり、根本解決になりません。"
+  }
+  ```
 
 ### 4.14 `notes`
 - 作問・メンテナンス用の管理メモ
