@@ -294,7 +294,7 @@ function renderQuestion(options = {}) {
     els.choicesForm.appendChild(choiceLabel);
   });
 
-  renderExplanation(question);
+  renderExplanation(question, choiceMap);
   els.explanation.classList.toggle('hidden', !state.session.explanationOpen);
   els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
 
@@ -314,10 +314,10 @@ function renderQuestion(options = {}) {
   }
 }
 
-function renderExplanation(question) {
+function renderExplanation(question, choiceMap) {
   const explanation = typeof question.explanation === 'string' ? question.explanation : '';
   const references = Array.isArray(question.references) ? question.references : [];
-  const whyWrongEntries = getWhyWrongEntries(question.whyWrong);
+  const whyWrongEntries = getWhyWrongEntries(question.whyWrong, choiceMap);
   els.explanation.replaceChildren();
 
   const body = renderMarkdownToFragment(explanation);
@@ -328,7 +328,7 @@ function renderExplanation(question) {
     section.className = 'why-wrong';
 
     const title = document.createElement('h3');
-    title.textContent = '誤答のポイント';
+    title.textContent = 'なぜ、間違いか？';
     section.appendChild(title);
 
     const list = document.createElement('ul');
@@ -373,14 +373,20 @@ function renderExplanation(question) {
   els.explanation.appendChild(section);
 }
 
-function getWhyWrongEntries(whyWrong) {
+function getWhyWrongEntries(whyWrong, choiceMap = {}) {
   if (!whyWrong || typeof whyWrong !== 'object' || Array.isArray(whyWrong)) {
     return [];
   }
 
+  const normalizedChoiceMap = choiceMap && typeof choiceMap === 'object' ? choiceMap : {};
+  const originalToDisplayed = Object.entries(normalizedChoiceMap).reduce((acc, [displayedLabel, originalLabel]) => {
+    acc[String(originalLabel)] = String(displayedLabel);
+    return acc;
+  }, {});
+
   const entries = Object.entries(whyWrong)
     .map(([label, value]) => ({
-      label: String(label).trim(),
+      label: String(originalToDisplayed[String(label)] ?? label).trim(),
       reason: typeof value === 'string' ? value.trim() : '',
     }))
     .filter((item) => item.label && item.reason);
