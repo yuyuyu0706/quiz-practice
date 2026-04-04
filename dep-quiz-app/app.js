@@ -338,7 +338,7 @@ function renderExplanation(question, choiceMap) {
       const key = document.createElement('strong');
       key.textContent = `${label}: `;
       li.appendChild(key);
-      li.appendChild(document.createTextNode(reason));
+      appendInlineFormattedText(li, reason);
       list.appendChild(li);
     });
 
@@ -497,25 +497,33 @@ function renderMarkdownToFragment(markdownText) {
 }
 
 function appendInlineFormattedText(element, text) {
-  const inlineBoldPattern = /\*\*(.+?)\*\*/g;
+  const inlinePattern = /(\*\*(.+?)\*\*)|(`([^`\n]+)`)/g;
+  const source = String(text ?? '');
   let currentIndex = 0;
-  let match = inlineBoldPattern.exec(text);
+  let match = inlinePattern.exec(source);
 
   while (match) {
     if (match.index > currentIndex) {
-      element.appendChild(document.createTextNode(text.slice(currentIndex, match.index)));
+      element.appendChild(document.createTextNode(source.slice(currentIndex, match.index)));
     }
 
-    const strong = document.createElement('strong');
-    strong.textContent = match[1];
-    element.appendChild(strong);
+    if (match[2] !== undefined) {
+      const strong = document.createElement('strong');
+      strong.textContent = match[2];
+      element.appendChild(strong);
+    } else if (match[4] !== undefined) {
+      const code = document.createElement('code');
+      code.className = 'inline-code';
+      code.textContent = match[4];
+      element.appendChild(code);
+    }
 
-    currentIndex = inlineBoldPattern.lastIndex;
-    match = inlineBoldPattern.exec(text);
+    currentIndex = inlinePattern.lastIndex;
+    match = inlinePattern.exec(source);
   }
 
-  if (currentIndex < text.length) {
-    element.appendChild(document.createTextNode(text.slice(currentIndex)));
+  if (currentIndex < source.length) {
+    element.appendChild(document.createTextNode(source.slice(currentIndex)));
   }
 }
 
