@@ -264,7 +264,7 @@ function renderQuestion(options = {}) {
   els.quizSection.textContent = `Section ${question.section}: ${question.sectionTitle}`;
   els.quizProgress.textContent = `${idx} / ${total}`;
   els.quizQuestion.replaceChildren();
-  appendFormattedTextWithCodeBlocks(els.quizQuestion, `${question.id}. ${question.question}`);
+  appendFormattedTextWithCodeBlocks(els.quizQuestion, `${question.id}\n${question.question}`);
   els.resultIndicator.textContent = '';
   els.resultIndicator.className = 'indicator';
   els.quizMessage.textContent = '';
