@@ -144,3 +144,14 @@ Recommended additions for later phases:
 - visual snapshot coverage for home / quiz / result screens
 - `dep-quiz-app` expansion using the same helper and config pattern
 - stronger data validation such as URL format or section value constraints
+
+## DEP E2E Coverage
+
+DEP app coverage mirrors DEA patterns with app-specific specs:
+
+- `tests/e2e/dep-home.spec.ts`
+- `tests/e2e/dep-quiz-flow.spec.ts`
+- `tests/e2e/dep-resume.spec.ts`
+- `tests/e2e/dep-mobile.spec.ts`
+
+These tests validate DEP-specific UI details (section titles, question-ID line break, mobile secondary actions, and DEP localStorage resume key) while reusing shared helpers.
