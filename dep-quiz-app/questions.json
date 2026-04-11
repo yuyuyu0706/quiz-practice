@@ -1,65 +1,78 @@
 [
   {
     "id": "DEP-Q201",
-    "section": "1",
-    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
-    "domain": "Streaming",
-    "tags": ["Auto Loader", "schema evolution"],
-    "difficulty": "hard",
-    "sourceType": "original",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Performance",
+    "tags": ["broadcast join", "join hints", "Spark SQL", "Databricks SQL", "query optimization"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
     "scenarioType": "troubleshooting",
     "estimatedTimeSec": 150,
-    "question": "Auto Loader で JSON ファイルを継続取り込みしている。新しい列が断続的に追加される要件がある中で、最も適切な運用はどれか。",
+    "question": "大規模な売上テーブル（約100億件のレコード）と小規模な顧客テーブル（約500万件のレコード）を結合するために、次のようなクエリを作成しました\n\n```SQL\nSELECT ______\n  s.sale_id, s.amount, c.customer_name\nFROM sales AS s\nINNER JOIN customers AS c\nON s.customer_id = c.customer_id;```エンジニアは、クエリ最適化ツールに顧客テーブルに対してブロードキャスト結合を実行するように指示するブロードキャストヒントを追加したいと考えています\n\nこの目的を達成するために、空欄 _____ に正しく記入できる選択肢はどれですか？",
     "choices": {
-      "A": "schemaLocation を使わず、毎回フルスキャンで推論させる",
-      "B": "schemaLocation を永続化し、スキーマ進化モードを要件に応じて設定する",
-      "C": "checkpointLocation のみ設定すればスキーマ変更も自動管理できる",
-      "D": "CSV に変換してから取り込めばスキーマ進化を考慮しなくてよい"
+      "A": "`-- BROADCAST(c) --`",
+      "B": "`BROADCAST(c)`",
+      "C": "`/*+ BROADCAST(c) */`",
+      "D": "`BROADCAST ON (c)`"
     },
-    "answer": "B",
-    "explanation": "Auto Loader では schemaLocation が推論済みスキーマの永続化に使われ、checkpointLocation は進捗管理を担う。スキーマ進化がある場合は両者の役割を分けて設計する必要がある。",
+    "answer": "C",
+    "explanation": "正解は **`/*+ BROADCAST(c) */`** です\n\nDatabricks SQL および Spark SQL では、結合戦略ヒントは `SELECT` 句の直後に `/*+ ... */` 形式で記述します。したがって、`customers` テーブルの別名 `c` に対してブロードキャスト結合を指示したい場合は `SELECT /*+ BROADCAST(c) */` と書きます。Databricks のヒント構文でも `BROADCAST(table_name)` が join hint として定義されています\n\nこのヒントを指定すると、オプティマイザに対して `c` 側をブロードキャストする方針を強く示せます。売上テーブルが非常に大きく、顧客テーブルが比較的小さい今回のようなケースでは、ブロードキャスト結合が有効な典型例です。Databricks のベストプラクティスでも、小さい次元テーブル側にブロードキャストヒントを付ける例が示されています"
+  ,
     "whyWrong": {
-      "A": "推論の再実行コストが増え、安定運用しにくい",
-      "C": "checkpoint は処理状態であり schema 管理の代替ではない",
-      "D": "フォーマット変換は本質的な解決ではなく要件も満たさない"
+      "A": "`-- ... --` は SQL のヒント構文ではありません",
+      "B": "`BROADCAST(c)` だけを単独で `SELECT` 句に置く構文は使えません",
+      "D": "`BROADCAST ON (c)` という構文は Databricks SQL / Spark SQL の join hint には存在しません"
     },
     "references": [
       {
-        "title": "Auto Loader schema inference and evolution",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/schema"
+        "title": "結合を最適化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/best-practices#join-optimization"
+      },
+      {
+        "title": "Hints",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-qry-select-hints"
+      },
+      {
+        "title": "Hints - Spark SQL Documentation",
+        "url": "https://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-hints.html"
       }
     ],
-    "notes": "長文化して運用トラブルシュート問題へ発展可能。"
+    "notes": "論点は broadcast join hint の正式構文。`BROADCAST(c)` 自体はヒント名として正しいが、SQL上は `/*+ ... */` 形式で `SELECT` 句に埋め込む必要がある"
   },
   {
     "id": "DEP-Q202",
-    "section": "2",
-    "sectionTitle": "Data Ingestion & Acquisition",
-    "domain": "Governance",
-    "tags": ["Unity Catalog", "Delta Sharing"],
+    "section": "4",
+    "sectionTitle": "Data Sharing and Federation",
+    "domain": "Delta Sharing",
+    "tags": ["Delta Sharing", "CDF", "table_changes", "time travel", "WITH HISTORY"],
     "difficulty": "medium",
     "sourceType": "scenario-based",
-    "question": "複数の外部パートナーへ Databricks 上の最新データを安全に共有したい。共有先に自社ワークスペースへのアクセス権は与えたくない場合、最も適切なのはどれか。",
+    "question": "変更データフィード（CDF）が有効になっているDelta Lakeテーブル「products」を持っています。このテーブルをDelta Sharingを使用して外部の受信者と共有し、受信者が以下の操作を実行できるようにしたいと考えています\n\n- 増分変更を処理するには、table_changes() 関数を使用します\n- テーブルに対してタイムトラベルクエリを実行します\n\nデータエンジニアは、これを実現する為に、以下のどのコマンドを実行すべきでしょうか？",
     "choices": {
-      "A": "ワークスペースの閲覧権限を付与して直接テーブルを見せる",
-      "B": "DBFS にエクスポートしたファイルを手動配布する",
-      "C": "Delta Sharing を用いて共有オブジェクト単位で配布する",
-      "D": "クラスターのログを共有して必要データを再構築してもらう"
+      "A": "`ALTER SHARE sales_share ADD TABLE products WITH TIME TRAVEL;`",
+      "B": "`ALTER SHARE sales_share ADD TABLE products WITH (CDF AND TIME TRAVEL);`",
+      "C": "`ALTER SHARE sales_share ADD TABLE products WITH CDF;`",
+      "D": "`ALTER SHARE sales_share ADD TABLE products WITH HISTORY;`"
     },
-    "answer": "C",
-    "explanation": "Delta Sharing は受信側へワークスペースアクセスを付与せずに、共有対象を制御しながら最新データを配布できる。Unity Catalog のガバナンスと組み合わせることで共有管理を集中化しやすい。",
+    "answer": "D",
+    "explanation": "正解は **ALTER SHARE sales_share ADD TABLE products WITH HISTORY;** です\n\nDatabricks の `ALTER SHARE` 構文では、共有先にテーブル履歴を公開して time travel を可能にする正式オプションは `WITH HISTORY` です。公式ドキュメントでも、`WITH HISTORY` を指定すると受信者は `VERSION AS OF` や `TIMESTAMP AS OF` を使った time travel query を実行できると説明されています\n\nまた、受信者に `table_changes()` を使わせたい場合は、共有元テーブルであらかじめ CDF を有効化したうえで、そのテーブルを `WITH HISTORY` で共有する必要があります。つまり CDF 用の共有オプションを別途書くのではなく、CDF は元テーブル側の設定、共有時の指定は `WITH HISTORY` が正解です",
     "whyWrong": {
-      "A": "ワークスペース権限付与は共有範囲が広すぎる",
-      "B": "手動配布は鮮度と運用負荷の面で不利",
-      "D": "ログ共有はデータ共有の方式として不適切"
+      "A": "`WITH TIME TRAVEL` というオプションは `ALTER SHARE` 構文にはありません",
+      "B": "`WITH (CDF AND TIME TRAVEL)` という構文は存在しません",
+      "D": "`WITH CDF` という共有オプションはありません"
     },
     "references": [
       {
-        "title": "What is Delta Sharing?",
-        "url": "https://docs.databricks.com/aws/en/delta-sharing/"
+        "title": "ALTER SHARE",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-alter-share"
+      },
+      {
+        "title": "Delta Sharing の共有を作成および管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/create-share"
       }
     ],
-    "notes": "共有方式の比較問題として DEA への縮小展開も可能。"
+    "notes": "論点は『CDFを共有時に指定する』のではなく、『元テーブルでCDFを有効化し、共有はWITH HISTORYで行う』こと。`WITH HISTORY` が time travel と table_changes() の両方に効く前提条件として問われている"
   },
   {
     "id": "DEP-Q203",
@@ -79,7 +92,7 @@
       "D": "spark.readStreamを使用してinventory_updatesテーブルを直接読み込み、新しい更新内容を下流のテーブルに段階的に伝播させます"
     },
     "answer": "B",
-    "explanation": "正解は **spark.readStreamを使用してinventory_updatesテーブルのCDFを読み込み、AUTO CDC APIを使用して変更内容を下流のテーブルに適用** です\n\nLakeflow Declarative Pipelinesでは、CDFを使った変更データの継続的な反映にAUTO CDCを利用します。Databricks公式では、AUTO CDCはCDFを処理するためのAPIとして説明されており、変更の適用先に対して順序付けやキーを指定して反映できます。\n\nまた、Delta Change Data Feedを段階的に処理する際は、Structured Streamingで readChangeFeed=true を使う形が基本です",
+    "explanation": "正解は **spark.readStreamを使用してinventory_updatesテーブルのCDFを読み込み、AUTO CDC APIを使用して変更内容を下流のテーブルに適用** です\n\nLakeflow Declarative Pipelinesでは、CDFを使った変更データの継続的な反映にAUTO CDCを利用します。Databricks公式では、AUTO CDCはCDFを処理するためのAPIとして説明されており、変更の適用先に対して順序付けやキーを指定して反映できます。\n\nまた、Delta Change Data Feedを段階的に処理する際は、Structured Streaming で `readChangeFeed=true` を使う形が基本です",
     "whyWrong": {
       "A": "spark.read はバッチ読込であり、継続的・段階的な変更伝播の実装としては不適切です。CDFの増分処理ではStructured Streamingの利用が基本です。",
       "C": "skipChangeCommits は更新・削除を無視し、appendのみを処理するため、在庫変更をすべて下流へ伝播する要件を満たせません。",
@@ -100,5 +113,523 @@
       }
     ],
     "notes": "CDFを使った下流反映ではAUTO CDCが中核。skipChangeCommitsは『変更を無視してappendだけ流す』論点との対比で引っかけになりやすい。sectionは2とも迷うが、変更適用ロジックを問うため3寄りで整理"
+  },
+  {
+    "id": "DEP-Q204",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Delta Lake",
+    "tags": ["Change Data Feed", "CDF", "Type 1", "incremental processing", "full overwrite"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "scenarioType": "architecture",
+    "estimatedTimeSec": 180,
+    "question": "源泉システムから受信した新しいデータで毎晩上書きされる Type 1 テーブルを管理しています。\n\n若手エンジニアが、更新、挿入、または削除された行を特定するために、テーブルで Change Data Feed (CDF) 機能を有効にすることを提案しました。\n\n若手エンジニアの提案に対する正しい回答はどれですか？",
+    "choices": {
+      "A": "CDFは既存のテーブルでは有効にできません。新規に作成されたテーブルでのみ有効にできます",
+      "B": "CDFは、テーブルが SCD of Type 2 (※) である場合に役立ちます (※) Slowly Changing Dimension",
+      "C": "CDFは、各バッチで更新されるレコードのごく一部のみの場合に役立ちます",
+      "D": "CDFによってキャプチャされたテーブルのデータ変更は、ストリーミングモードでのみ読み取ることができます"
+    },
+    "answer": "C",
+    "explanation": "正解は **CDFは、各バッチで更新されるレコードのごく一部のみの場合に役立つ** です\n\nChange Data Feed (CDF) は、Delta テーブルの行レベル変更を記録し、挿入・更新・削除を増分として下流へ渡したい場面で有効です。一方で、設問の前提は『毎晩、源泉システムから受信した新しいデータでテーブル全体が上書きされる Type1 テーブル』です。このように各バッチでテーブル全体、または大部分が入れ替わる運用では、CDFを有効にしても増分抽出のメリットが小さくなります。\n\nつまり、CDFは『変更対象が全体ではなく一部に限られる』ときに特に有効です。変更された少数の行だけを追跡し、下流へ効率よく反映できるためです。毎晩フルリフレッシュされるようなテーブルでは、CDFを使っても大量の変更イベントを扱うことになり、若手エンジニアの提案は本質的な改善になりにくいです。Databricks公式でも、CDFは `row-level changes` を追跡する仕組みとして説明されており、増分処理向きの機能となります",
+    "whyWrong": {
+      "A": "CDFは新規テーブルだけでなく、既存テーブルにもテーブルプロパティの変更 (SET TBLPROPERTIES) で有効化できます",
+      "C": "CDFは SCD Type 2 専用ではありません。CDF自体は行レベル変更を記録する機能であり、SCD Type 1/Type 2 を含む複数の変更反映パターンで利用できます。AUTO CDC の説明でも、Type 1 と Type 2 の双方に対応する考え方が示されています",
+      "D": "CDFで記録された変更はストリーミングだけでなく、バッチでも読み取れます。Databricks公式のCDFドキュメントには `batch read` と `streaming read` の両方の利用方法があります"
+    },
+    "references": [
+      {
+        "title": "Azure Databricks で Delta Lake 変更データフィードを利用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/delta-change-data-feed"
+      },
+      {
+        "title": "テーブル プロパティ リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/table-properties"
+      },
+      {
+        "title": "Delta Lake の Change Data Feed を使って CDC を簡略化する方法",
+        "url": "https://www.databricks.com/jp/blog/2021/06/09/how-to-simplify-cdc-with-delta-lakes-change-data-feed.html"
+      },
+      {
+        "title": "Slowly changing dimension - wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Slowly_changing_dimension"
+      }
+    ],
+    "notes": "論点は『CDFが使えるか』ではなく『この運用に対して有効か』\n\n**フル上書き前提では、CDFの価値は薄く、少量変更時に有効** という点がポイント\n\nなお、Type 1 とはSDC の1種。洗い替えタイプを指す"
+  },
+  {
+    "id": "DEP-Q205",
+    "section": "7",
+    "sectionTitle": "Ensuring Data Security and Compliance",
+    "domain": "Security",
+    "tags": ["Secrets", "dbutils.secrets.get", "secret redaction", "Notebook security"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "scenarioType": "architecture",
+    "estimatedTimeSec": 180,
+    "question": "ノートブック内に以下のコードブロックがあります\n\n```python\ndb_password = dbutils.secrets.get(scope=”dev”, key=”database_password”)\n\nprint (db_password)```上記のコードを実行した時に何が起こりますか？",
+    "choices": {
+      "A": "「REDACTED」という文字列が表示されます",
+      "B": "「秘密情報を印刷できません」というエラーメッセージが表示されます",
+      "C": "パスワードの文字列値は平文で表示されます",
+      "D": "ノートブックにインタラクティブな入力ボックスが表示されます"
+    },
+    "answer": "A",
+    "explanation": "正解は **「REDACTED」という文字列が表示される** です\n\nDatabricks では、`dbutils.secrets.get()` で取得したシークレット値をノートブック出力に表示しようとすると、実際のシークレット値はそのまま表示されず、`[REDACTED]` に置き換えられます。公式ドキュメントでも、secret value を変数に代入して `print` した場合、表示時には `[REDACTED]` になると説明されています\n\nしたがって、このコードはエラーにはならず、また平文のパスワードも表示されません。目的は、ノートブック実行時に誤って標準出力へ秘密情報を露出させないようにすることです。なお、このマスキングは literal な secret value に対する redaction であり、シークレット値を意図的に変形した場合まで完全に防ぐものではない点には注意が必要です",
+    "whyWrong": {
+      "A": "Databricks は `dbutils.secrets.get()` 自体を禁止しているわけではありません。取得は可能で、表示時に secret value が `[REDACTED]` に置き換えられます",
+      "C": "平文表示はされません。Databricks の secret redaction により、ノートブック出力では `[REDACTED]` と表示されます",
+      "D": "インタラクティブな入力ボックスを表示する機能ではありません。入力ボックスは `dbutils.widgets` 系の機能であり、`dbutils.secrets.get()` は secret scope から値を取得するAPIです"
+    },
+    "references": [
+      {
+        "title": "シークレットの管理",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/security/secrets/"
+      },
+      {
+        "title": "チュートリアル: Databricks シークレットを作成して使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/security/secrets/example-secret-workflow"
+      },
+      {
+        "title": "Databricks Utilities (dbutils) リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-utils"
+      }
+    ],
+    "notes": "出題の核は secret redaction の標準挙動。表示結果は厳密には公式表記で `[REDACTED]`"
+  },
+  {
+    "id": "DEP-Q206",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Delta Lake",
+    "tags": ["Auto Compaction", "OPTIMIZE", "Z-Order", "small files", "performance tuning"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "scenarioType": "architecture",
+    "estimatedTimeSec": 180,
+    "question": "以下の内、`Delta Lake Auto Compaction` を最もよく表しているのはどれですか？",
+    "choices": {
+      "A": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用せずに OPTIMIZE を実行し、ファイルサイズを128MBに調整します",
+      "B": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用して OPTIMIZE を実行し、ファイルサイズを1GBに調整します",
+      "C": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用せず OPTIMIZE を実行し、ファイルサイズを1GBに調整します",
+      "D": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用して OPTIMIZE を実行し、ファイルサイズを128MBに調整します。"
+    },
+    "answer": "A",
+    "explanation": "正解は **Z-Orderを使用せずに OPTIMIZE を実行し、ファイルサイズを128MBに調整** です\n\nDatabricks の Auto Compaction は、小さいファイルを自動的にまとめて small file 問題を軽減する仕組みです。公式ドキュメントでは、書き込み成功後に同期的に実行され、まだ圧縮されていない小さいファイルだけを圧縮すると説明されています\n\nまた、Databricks は Auto Compaction で自動的に Z-ORDER を実行しません。Z-ORDER は別途 `OPTIMIZE ... ZORDER BY` で明示的に実行するものです\n\nさらに、Auto Compaction の説明では従来から既定の目標ファイルサイズは 128 MB と整理されます。一方で、1 GB は **手動OPTIMIZE** の文脈で語られることが多く、Auto Compaction の代表値としては不適切です",
+    "whyWrong": {
+      "B": "Auto Compaction は自動で Z-ORDER を実行しません。また、1GB も Auto Compaction の代表的な目標サイズとしては不適切です",
+      "C": "Z-ORDER を使わない点は合っていますが、1GB は Auto Compaction の代表的な目標サイズではありません。Auto Compaction は 128MB 前後のサイズで説明されるのが一般的です",
+      "D": "128MB というサイズ感は近いですが、Auto Compaction は自動で Z-ORDER を実行しません"
+    },
+    "references": [
+      {
+        "title": "データ ファイルのサイズを制御する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/tune-file-size"
+      },
+      {
+        "title": "データ ファイル レイアウトを最適化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/optimize"
+      },
+      {
+        "title": "パフォーマンス効率のベスト プラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/performance-efficiency/best-practices"
+      }
+    ],
+    "notes": "論点は『書き込み後に自動で小さいファイルをまとめる』『Z-ORDER は自動ではない』『Auto Compaction は手動 OPTIMIZE の代替ではない』の3点"
+  },
+  {
+    "id": "DEP-Q207",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "AUTO CDC", "SEQUENCE BY", "STRUCT", "composite ordering", "late-arriving data"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "scenarioType": "architecture",
+    "estimatedTimeSec": 180,
+    "question": "Lakeflow Declarative Pipelines の AUTO CDC API を使用して、以下の CDC データ処理を構成しています\n\n```SQL\nCREATE FLOW cdc_flow AS AUTO CDC INTO silver_transactions\nFROM stream(bronze_transactions)\nKEYS (transaction_id)\n__________\nCOLUMNS *```エンジニアは、ソースレコードの処理順序を定義し、複数の列からなる複合キーを使用して遅れて到着するデータを処理したいと考えています。順序は、まずトランザクションタイムスタンプで、同順位の場合はバージョン番号で行います。\nこの要件を満たすために、空欄 ______ に正しく記入できる選択肢は次のどれですか？",
+    "choices": {
+      "A": "`SEQUENCE BY (transaction_timestamp, version_number)`",
+      "B": "`ORDER BY transaction_timestamp, version_number`",
+      "C": "`ORDER BY STRUCT (transaction_timestamp, version_number)`",
+      "D": "`SEQUENCE BY STRUCT (transaction_timestamp, version_number)`"
+    },
+    "answer": "D",
+    "explanation": "正解は `SEQUENCE BY STRUCT (transaction_timestamp, version_number)` です\n\nLakeflow Declarative Pipelines の `AUTO CDC INTO` では、CDC イベントの論理的な処理順序を指定するために `SEQUENCE BY` 句を使用します。Databricks 公式の SQL リファレンスでは、複数列で順序付けしたい場合は `STRUCT` 式を使うと明記されています。つまり、まず `transaction_timestamp` で並べ、同値の場合は `version_number` で並べる、という要件は `SEQUENCE BY STRUCT (transaction_timestamp, version_number)` で表現します\n\nまた、`AUTO CDC` は順不同で到着する CDC イベントを扱うために sequence 列を必須で求めています。そのため、`ORDER BY` ではなく `SEQUENCE BY` を使う必要があります",
+    "whyWrong": {
+      "A": "`SEQUENCE BY` 自体は正しい句ですが、複数列をそのまま括弧で並べる構文ではありません。複数列の順序付けには `STRUCT(...)` を使います",
+      "B": "`ORDER BY` は `AUTO CDC INTO` の順序指定構文ではありません。この構文で使うのは `SEQUENCE BY` です",
+      "C": "複数列順序付けに `STRUCT(...)` を使う考え方は近いですが、句そのものが誤りです。`AUTO CDC INTO` では `ORDER BY` ではなく `SEQUENCE BY` を使います"
+    },
+    "references": [
+      {
+        "title": "AUTO CDC INTO (パイプライン)",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/developer/ldp-sql-ref-apply-changes-into"
+      },
+      {
+        "title": "AUTO CDC API: パイプラインを使用して変更データ キャプチャを簡略化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/cdc"
+      }
+    ],
+    "notes": "複数列順序付けのキーワードは `SEQUENCE BY STRUCT(...)`。`ORDER BY` に引っ張られる誤答を狙った問題"
+  },
+  {
+    "id": "DEP-Q208",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Structured Streaming", "deduplication", "foreachBatch", "insert-only merge", "Delta Lake"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "scenarioType": "architecture",
+    "estimatedTimeSec": 180,
+    "question": "どの方法であれば、ストリーミング重複排除を正しく実行できますか？",
+    "choices": {
+      "A": "各バッチ内の重複レコードを削除し、その結果をターゲットテーブルに追加します",
+      "B": "各バッチ内の重複レコードを削除し、挿入専用マージを使用して、結果をターゲットテーブルにマージします",
+      "C": "各バッチ内の重複レコードを削除し、結果をランク付けし、ランクが1のレコードのみをターゲットテーブルに挿入します",
+      "D": "ウォーターマーク付きの全てのバッチの重複レコードを削除し、その結果でターゲットテーブルを上書きします。"
+    },
+    "answer": "B",
+    "explanation": "正解は **各バッチ内の重複レコードを削除し、挿入専用マージを使用して、結果をターゲットテーブルにマージ** です\n\nDatabricks では、ストリーミングの重複排除を Delta Lake に対して実装する方法として、まず `dropDuplicates()` を使って各マイクロバッチ内の重複レコードを除去します\n\nただし、それだけでは過去のバッチで既にターゲットテーブルへ書き込まれたレコードとの重複は防げません。その為、続けて `insert-only MERGE` を使用し、ターゲットに同じキーが存在しない場合のみ挿入する形にします\n\nこの組み合わせにより、マイクロバッチ内の重複と、既存ターゲットとの重複の両方に対応できます",
+    "whyWrong": {
+      "A": "各バッチ内の重複削除だけでは考慮が足りません。ターゲットテーブルに既に存在するレコードとの重複削除が必要です",
+      "C": "ランク付けして 1 件だけ残す方法はこの用途の標準的な Databricks パターンではありません。設問の論点は、重複除去後に既存ターゲットとの重複も避けることです",
+      "D": "ウォーターマークは stateful な重複排除で使われますが、選択肢の『ターゲットテーブルを上書きする』は、この設問で問われている継続的な重複排除の代表パターンとして不適切です。Databricks は `insert-only MERGE` を推奨しています"
+    },
+    "references": [
+      {
+        "title": "foreachBatch を使用してストリーミング クエリからアップサートを行う",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/delta-lake#merge-in-streaming"
+      },
+      {
+        "title": "Delta テーブルに書き込む場合のデータ重複排除",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/merge#dedupe"
+      },
+      {
+        "title": "データ インジェスト戦略を設計する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/deployment-guide/delta-lake#design-data-ingestion-strategy"
+      }
+    ],
+    "notes": "問題文としては『ストリーミング結果を Delta テーブルへ重複排除しながら継続反映するには』とすると意図が明確。Spark の一般的な stateful deduplication に引っ張られ、この設問で最も適切な Databricks 実装パターンである insert-only MERGE を見落とす可能性あり"
+  },
+  {
+    "id": "DEP-Q209",
+    "section": "8",
+    "sectionTitle": "Data Governance",
+    "domain": "Governance",
+    "tags": ["Unity Catalog", "Catalog Explorer", "AI-generated comments", "column comments", "documentation"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "ビジネスアナリストと頻繁に連携し、Unityカタログのテーブルから洞察を得ています\nアナリスト達は、既存の社内文書が古くなっている為、主要な表のいくつかの列について混乱が生じていると報告しています。効率性を向上させ、誤解を減らす為、チームリーダーは全ての列に明確な説明を追加することを推奨しています。しかし、数百もの表や列を手作業で文書化するのは時間がかかり、矛盾が生じる可能性も高いです\n以下のどの方法であれば、チームがこのタスクを自動的に達成できますか？",
+    "choices": {
+      "A": "Databricks Assistantを活用して列の説明を生成し、ALTER TABLEコマンドを通じて適用します",
+      "B": "Unity Catalog ExplorerのAI生成列コメント機能を使用します",
+      "C": "Lakeflowの宣言型パイプラインを使用してテーブルを作成することで、列のドキュメント作成を自動化します",
+      "D": "Delta Lakeで生成された列を使用して、既存のデータに基づいて列の説明を自動的に作成します"
+    },
+    "answer": "B",
+    "explanation": "正解は **Unity Catalog ExplorerのAI生成列コメント機能を使用する** です\n\nDatabricks の Catalog Explorer には、Unity Catalog で管理されるテーブルや列に対して AI-generated comments を追加する機能があります。この機能は、既存メタデータをもとに列説明を自動生成できるため、手作業で数百の表や列を文書化する負担を大きく減らせます。Databricks 公式でも、AI-generated comments は tables や columns を含む Unity Catalog オブジェクトに対応すると説明されています\n\nまた、保存時には実際には `ALTER` SQL コマンドが発行されるため、コメントは Unity Catalog の正式なメタデータとして反映されます。Databricks は、AI-generated comments は便利だが誤りの可能性もあるため、人手レビューを推奨しています",
+    "whyWrong": {
+      "A": "Databricks Assistant や Genie Code はコード生成や補助には使えますが、この問題で問われている『列説明を自動生成して一貫したコメントとして付与する正式機能』に向きません",
+      "C": "Lakeflow Declarative Pipelines はデータ処理パイプライン定義のための機能であり、既存の多数のテーブル列コメントを自動生成する専用機能ではありません",
+      "D": "Delta Lake の `generated columns` は列値を式から算出する機能であり、列説明文を自動作成する機能ではありません"
+    },
+    "references": [
+      {
+        "title": "AI が生成したコメントを Unity Catalog オブジェクトに追加する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/comments/ai-comments/"
+      },
+      {
+        "title": "カタログ エクスプローラーとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/catalog-explorer/"
+      },
+      {
+        "title": "データとAIガバナンスのベストプラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/data-governance/best-practices"
+      }
+    ],
+    "notes": "Databricksでは Catalog Explorer から AI-generated comments を使って table/column comments を生成できる。保存時は ALTER が発行されるため、既存ジョブやパイプラインへの影響には注意"
+  },
+  {
+    "id": "DEP-Q210",
+    "section": "4",
+    "sectionTitle": "Data Sharing and Federation",
+    "domain": "Delta Sharing",
+    "tags": ["Delta Sharing", "WITH HISTORY", "performance", "temporary credentials", "Delta log"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "HISTORY機能のない Delta Sharing を使用して、外部の分析会社と大規模なデルタテーブルを共有しました。しかし、同社は共有データのクエリ実行時にパフォーマンスの低下に気づきました\n上級データエンジニアは、クエリのパフォーマンスを向上させるために、以下のコマンドを使用して HISTORY も共有することを提案しました\n\n```SQL\nALTER SHARE sales_share ADD TABLE products WITH HISTORY;```WITH HISTORYを使用することで得られるメリットは何ですか？",
+    "choices": {
+      "A": "Delta Sharing サーバーを介してクエリ要求のバランスを取るために、テーブルを複製します",
+      "B": "クラウドストレージの一時的なセキュリティ認証情報を利用し、共有された Delta テーブルのルートディレクトリにスコープを限定してアクセスできます",
+      "C": "テーブルのトランザクションログのみを共有するために、テーブルの shallow clone を作成します。",
+      "D": "Delta Sharingサーバーのディスクキャッシュを活用することで、ソーステーブルへの直接アクセスと同等のパフォーマンスを実現します"
+    },
+    "answer": "B",
+    "explanation": "正解は **クラウドストレージの一時的なセキュリティ認証情報を利用し、共有された Delta テーブルのルートディレクトリにスコープを限定してアクセスできる** です\n\nDatabricks-to-Databricks の Delta Sharing では、`WITH HISTORY` を有効にすると table history 共有だけでなく、共有先がクラウドストレージの一時的なセキュリティ認証情報を使って、共有元 Delta テーブルのルートディレクトリにスコープを限定した形でアクセスできるようになります。これにより読み取り性能が改善し、ソーステーブルへの直接アクセスに近いパフォーマンスになるとDatabricks 公式は説明しています\n\nつまり、`WITH HISTORY` のメリットは time travel だけではありません。Databricks-to-Databricks 共有では、Delta log も共有されることで読み取り経路が最適化され、大規模テーブルのクエリ性能改善にも繋がります",
+    "whyWrong": {
+      "A": "`WITH HISTORY` の性能改善を『テーブル複製による負荷分散』とは説明していません",
+      "C": "`WITH HISTORY` は shallow clone を作成する機能ではありません",
+      "D": "性能改善はありますが、その理由は『Delta Sharing サーバーのディスクキャッシュ』ではありません"
+    },
+    "references": [
+      {
+        "title": "履歴共有を使用してテーブルの読み取りパフォーマンスを向上させる",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/share-data-databricks#improve-table-read-performance-with-history-sharing"
+      },
+      {
+        "title": "Delta Sharing の共有を作成および管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/create-share"
+      },
+      {
+        "title": "ALTER SHARE",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-alter-share"
+      }
+    ],
+    "notes": "論点は『WITH HISTORY = time travel 用』に留まらず、Databricks-to-Databricks 共有では読み取り性能改善にも寄与する点"
+  },
+  {
+    "id": "DEP-Q211",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Delta Lake",
+    "tags": ["Change Data Feed", "CDF", "_change_data", "Delta Lake", "VACUUM"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "SCD Type 1 の Delta Lake テーブルを管理しています。若手データエンジニアが、テーブルディレクトリ内に「_change_data」という名前のフォルダがあることに気づき、このフォルダが何のために使われているのかを知りたいと考えています。このフォルダの目的を最もよく表しているのは次のうちどれですか？",
+    "choices": {
+      "A": "SCD Type 1 の全てのテーブルには、テーブルのデータに適用された更新を追跡する為の「_change_data」フォルダがあります",
+      "B": "テーブルでCDF機能が有効になっています。「_change_data」フォルダはCDFデータが保存される場所です",
+      "C": "テーブルで最適化書き込み機能が有効になっています。「_change_data」フォルダは、最適化されたデータが格納される場所です",
+      "D": "「_change_data」フォルダは、スキーマ定義の変更を追跡するためのデフォルトディレクトリです"
+    },
+    "answer": "B",
+    "explanation": "正解は **テーブルでCDF機能が有効になっています** です\n\nDelta Lake で Change Data Feed (CDF) を有効にすると、テーブルに対する行レベルの変更情報が記録されます。Databricks 公式では、CDF のデータは `_change_data` ディレクトリで管理されると説明されています\n\nしたがって、このフォルダの存在は『SCD Type 1 だから自動で作られる』ことを意味するのではなく、**そのテーブルで CDF が有効になっている**ことを示します。なお、Databricks は一部の操作では変更データファイルを別途生成せず、トランザクションログから直接 change data を計算する場合もあると説明しているため、CDF の仕組み全体を `_change_data` だけで判断するのは不十分です",
+    "whyWrong": {
+      "A": "`_change_data` は SCD Type 1 テーブルに必ず存在するフォルダではありません",
+      "C": "最適化書き込みや `OPTIMIZE` の出力先を表すディレクトリではありません",
+      "D": "`_change_data` はスキーマ定義変更の追跡用ディレクトリではありません"
+    },
+    "references": [
+      {
+        "title": "Azure Databricks で Delta Lake 変更データフィードを利用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/delta-change-data-feed"
+      }
+    ],
+    "notes": "論点は SCD Type 1 ではなく CDF。ただし厳密には、CDF が有効でも一部の操作では変更データファイルが生成されず、トランザクションログから計算される場合がある"
+  },
+  {
+    "id": "DEP-Q212",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "CI/CD",
+    "tags": ["Databricks Asset Bundles", "bundle run", "target", "CLI", "deployment environments"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "Databricks Asset Bundles を使用して events_process_job というジョブをデプロイしました。このジョブを実行するために、エンジニアはターミナルから次のコマンドを実行します\n\n```CLI\ndatabricks bundle run events_process_job```コマンドを観察した結果、上級データエンジニアは、コマンド実行時に `-t` オプションを追加することで実行プロセスを改善できると提案しました。このオプションの主な目的を説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "ジョブ実行のターゲットクラスタサイズを指定する",
+      "B": "ジョブ実行の対象環境を選択する",
+      "C": "ジョブ実行中に一時的なログ記録を有効にする",
+      "D": "実際にデータを処理せずにジョブの dry-run を実行する"
+    },
+    "answer": "B",
+    "explanation": "正解は **ジョブ実行の対象環境を選択する** です\n\nDatabricks CLI の `databricks bundle run` における `-t` オプションは、`--target` の短縮形です。これは `databricks.yml` の `targets` に定義された環境のうち、どの環境を対象に実行するかを指定するために使います\n\n`databricks bundle run events_process_job -t prod`\n\nDatabricks の公式ドキュメントでも、`databricks bundle run -t <target-name> <job-name>` という形で、`dev`、`test`、`staging`、`prod` などの target を選んでジョブを実行する例が示されています\n\nしたがって、このオプションの主目的はクラスタサイズ指定や一時ログの有効化、dry-run ではありません。Bundle で定義した複数のデプロイ先・実行先のうち、どの target 設定を使うかを明示するためのものです",
+    "whyWrong": {
+      "A": "`-t` はクラスタサイズを指定するオプションではありません",
+      "C": "`-t` は一時的なログ記録を有効にするオプションではありません",
+      "D": "`-t` は dry-run 用ではありません"
+    },
+    "references": [
+      {
+        "title": "手順 5: デプロイされたバンドルを実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/mlops-stacks#step-5-run-the-deployed-bundle"
+      },
+      {
+        "title": "宣言型オートメーション バンドルの構成",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/settings"
+      },
+      {
+        "title": "bundle コマンド グループ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/cli/bundle-commands"
+      }
+    ],
+    "notes": "論点は `-t` が target environment 指定であること。Asset Bundles は最近『Declarative Automation Bundles』表記へ移行しているが、CLI の bundle run と target の考え方は同じ"
+  },
+  {
+    "id": "DEP-Q213",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "CI/CD",
+    "tags": ["Jobs API", "REST API", "run_id", "jobs/runs/get", "job metadata"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "Databricks REST API を使用して、実行ID（run_id）に基づいてジョブ実行のメタデータを取得したいと考えています。以下のうち、、本要件を満たすREST API呼び出しはどれですか？",
+    "choices": {
+      "A": "`Send GET request to the endpoint ‘api/2.2/jobs/runs/get-output’`",
+      "B": "`Send POST request to the endpoint ‘api/2.2/jobs/runs/get’`",
+      "C": "`Send GET request to the endpoint ‘api/2.2/jobs/runs/get-metadata’`",
+      "D": "`Send GET request to the endpoint ‘api/2.2/jobs/runs/get’`"
+    },
+    "answer": "D",
+    "explanation": "正解は **`Send GET request to the endpoint ‘api/2.2/jobs/runs/get’`** です\n\nDatabricks Jobs API では、`run_id` に基づいてジョブ実行のメタデータを取得するための正式なエンドポイントは `GET /api/2.2/jobs/runs/get` です。Databricks の公式 REST API リファレンスでも、この API は『単一の run の metadata を取得する』操作として定義されています\n\n一方、`get-output` は run の出力取得向けであり、メタデータ取得の主エンドポイントではありません。また、`POST /api/2.2/jobs/runs/get` や `get-metadata` というエンドポイントは公式仕様に一致しません。したがって、本要件に最も適した REST API 呼び出しは D です",
+    "whyWrong": {
+      "A": "`get-output` は run の出力取得用です。出力には一部メタデータも含まれますが正式なAPIは `GET /api/2.2/jobs/runs/get` です",
+      "B": "`jobs/runs/get` のHTTPメソッドは POST ではなく GET です",
+      "C": "`api/2.2/jobs/runs/get-metadata` というエンドポイントは Databricks の公式 Jobs API にありません"
+    },
+    "references": [
+      {
+        "title": "Get a single job run - Databricks REST API Reference",
+        "url": "https://docs.databricks.com/api/azure/workspace/jobs/getrun"
+      },
+      {
+        "title": "Get the output for a single run - Databricks REST API Reference",
+        "url": "https://docs.databricks.com/api/azure/workspace/jobs_21/getrunoutput"
+      },
+      {
+        "title": "Jobs API 2.1 から 2.2 への更新",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/reference/jobs-api-2-2-updates"
+      }
+    ],
+    "notes": "論点は endpoint 名と HTTP method の組み合わせ。`runs/get` は metadata 取得、`runs/get-output` は output 取得"
+  },
+  {
+    "id": "DEP-Q214",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Spark",
+    "tags": ["Pandas UDF", "Apache Arrow", "PySpark", "vectorized UDF", "performance"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "Apache Sparkでの実行パフォーマンスを向上させるために、Pandas UDFは以下のどの形式を使用しますか？",
+    "choices": {
+      "A": "Delta Lake",
+      "B": "Apache Kafka",
+      "C": "Apache Iceberg",
+      "D": "Apache Arrow"
+    },
+    "answer": "D",
+    "explanation": "正解は **Apache Arrow** です\n\nPandas UDF は、Spark と Python/Pandas の間でデータを効率よく受け渡すために Apache Arrow を使用します。これにより、通常の行単位 Python UDF よりも高速に処理できるベクトル化実行が可能になります。Spark 公式および Databricks 公式でも、Pandas UDF は Apache Arrow を使ってデータを転送すると説明されています",
+    "whyWrong": {
+      "A": "Delta Lake はストレージレイヤーおよびテーブル形式であり、Pandas UDF の高速化に使われるデータ転送形式ではありません",
+      "B": "Apache Kafka はメッセージング基盤であり、Pandas UDF の内部データ転送形式ではありません",
+      "C": "Apache Iceberg はテーブル形式であり、Pandas UDF の実行高速化に使う転送形式ではありません"
+    },
+    "references": [
+      {
+        "title": "Apache Arrow in PySpark",
+        "url": "https://spark.apache.org/docs/latest/api/python/tutorial/sql/arrow_pandas.html"
+      },
+      {
+        "title": "pandas UDF - ユーザー定義 関数",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/udf/pandas"
+      },
+      {
+        "title": "pyspark.sql.functions.pandas_udf",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.pandas_udf.html"
+      }
+    ],
+    "notes": "Pandas UDF は vectorized UDF の代表例で、Arrow による JVM-Python 間データ転送最適化が論点"
+  },
+  {
+    "id": "DEP-Q215",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Auto Loader", "schema evolution", "mergeSchema", "writeStream", "Delta Lake"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "Autoloaderを使用して入力データをターゲットテーブルに取り込み、新しいフィールドが検出された際にテーブルのスキーマを自動的に進化させたい\n\n指定された要件を満たすために、空欄に正しく記入できる選択肢はどれですか？\n\n```python\nspark.readStream\n        .format(”cloudFiles”)\n        .option(”cloudFiles.format”, ”json”)\n        .option(”cloudFiles.schemaLocation”, checkpointPath)\n        .load(source_path)\n    .writeStream\n        .option(”checkpointLocation”, checkpointPath)\n        .___________\n        .start(”target_table”)```",
+    "choices": {
+      "A": "`option(”mergeSchema”, True)`",
+      "B": "`option(”cloudFiles.mergeSchema”, True)`",
+      "C": "`schema(schema_definition, mergeSchema=True)`",
+      "D": "`option(”cloudFiles.schemaEvolutionMode”, ”addNewColumns”)`"
+    },
+    "answer": "A",
+    "explanation": "正解は **`option(”mergeSchema”, True)`** です\n\nこの空欄は `.writeStream` 側にあるため、問われているのは Auto Loader が新しいフィールドを検出する設定ではなく、 **検出済みの新しい列をターゲットの Delta テーブルへ自動反映するための設定** です。Databricks では、`.write` または `.writeStream` に `mergeSchema` を指定することで、書き込み先テーブルのスキーマ進化を有効にできます。`mergeSchema` を有効にすると、新しい列が自動的に追加されます。 \n\n一方、`cloudFiles.schemaEvolutionMode` は Auto Loader の入力側で新しい列をどう扱うかを制御する設定であり、今回の空欄位置には一致しません",
+    "whyWrong": {
+      "B": "`cloudFiles.mergeSchema` という正式な Auto Loader オプションはありません",
+      "C": "`schema(schema_definition, mergeSchema=True)` という形は正式な構文ではありません",
+      "D": "`cloudFiles.schemaEvolutionMode` は Auto Loader の読み取り側設定であり、今回の `.writeStream` 側の空欄には直接対応しません"
+    },
+    "references": [
+      {
+        "title": "Azure Databricks でのスキーマの進化",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-engineering/schema-evolution"
+      },
+      {
+        "title": "自動ローダーでスキーマの推論と進化を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+      }
+    ],
+    "notes": "注意点は、Auto Loader の入力スキーマ進化設定と、Delta 書き込み先のスキーマ進化設定の混同です。穴埋め位置が writeStream 側である点を留意すべき問題"
+  },
+  {
+    "id": "DEP-Q216",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Spark",
+    "tags": ["foreachBatch", "MERGE", "SparkSession", "Databricks Runtime", "Structured Streaming"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "foreachBatchロジックを使用して、ターゲットのDeltaテーブルにデータをアップサートします。以下は、各マイクロバッチ処理時に呼び出される関数です。最新のDatabricks Runtime（バージョン10.6以上）を搭載したクラスターで関数内のSQLクエリを実行するために、空欄に正しく記入できるオプションはどれですか？\n\n```python\ndef upsert_data(microBatchDF, batch_id):\n    microBatchDF.createOrReplaceTempView(”sales_microbatch”)\n\n    sql_query = ”””\n      MERGE INTO sales_silver a\n      USING sales_microbatch b\n      ON a.item_id=b.item_id AND a.item_timestamp=b.item_timestamp\n      WHEN NOT MATCHED THEN INSERT *\n    ”””\n\n    ___________```",
+    "choices": {
+      "A": "`microBatchDF._jdf.sparkSession().sql(sql_query)`",
+      "B": "`microBatchDF.sql(sql_query)`",
+      "C": "`spark.sql(sql_query)`",
+      "D": "`microBatchDF.sparkSession.sql(sql_query)`"
+    },
+    "answer": "D",
+    "explanation": "正解は **`microBatchDF.sparkSession.sql(sql_query)`** です\n\nDatabricks の公式ドキュメントでは、`foreachBatch` の中で `createOrReplaceTempView()` により作成した一時ビューへ SQL を発行する場合、そのビューを定義した `microBatchDF` と同じ SparkSession を使う必要があります。\n\nまた、Python の例では Databricks Runtime 10.5 and below では `microBatchDF._jdf.sparkSession().sql(...)` を使用し、それより新しいランタイムでは `microBatchDF.sparkSession.sql(...)` を使用します",
+    "whyWrong": {
+      "A": "これは Databricks Runtime 10.5 and below 向けの書き方です。問題文を新しいランタイム前提に修正した場合は正解になりません",
+      "B": "`microBatchDF` は DataFrame であり、`sql()` を直接呼び出す対象ではありません。SQL は SparkSession に対して実行します",
+      "C": "公式は、一時ビューを定義した `microBatchDF` と同じ SparkSession を使う必要があると説明しています。そのため、グローバルの `spark.sql(...)` より `microBatchDF.sparkSession.sql(...)` が適切です"
+    },
+    "references": [
+      {
+        "title": "Delta テーブルのストリーミング読み取りと書き込み",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/delta-lake"
+      }
+    ],
+    "notes": "元の問題文『10.5以上』は境界条件が曖昧で、公式例とぶつかる"
+  },
+  {
+    "id": "DEP-Q217",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Performance",
+    "tags": ["Delta Lake", "partitioning", "over-partitioning", "performance tuning", "1GB rule"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、Lakehouseで管理しているテーブルが過剰にパーティション分割されているか調査したい。次のうち、Delta Lakeテーブルが過剰にパーティション分割されていることを示す指標はどれですか？",
+    "choices": {
+      "A": "テーブル内のパーティション数が少なすぎる場合",
+      "B": "テーブル内のほとんどのパーティションに1GBを超えるデータがある場合",
+      "C": "テーブルにデータが無期限に継続的に入ってくる場合",
+      "D": "テーブル内のほとんどのパーティションのデータが 1 GB 未満の場合"
+    },
+    "answer": "D",
+    "explanation": "正解は **テーブル内のほとんどのパーティションのデータが 1 GB 未満の場合** です\n\nDatabricks は、Delta Lake テーブルのパーティション設計について、各パーティションが少なくとも 1 GB のデータを持つことを推奨しています。パーティションが細かく分かれすぎていて、ほとんどのパーティションが 1 GB 未満しか持たない場合は、過剰パーティションの典型例です。こうした状態では、小さなファイルや小さなパーティションが増え、クエリ性能や運用効率の低下につながります\n\nDatabricks はあわせて、1 TB 未満のテーブルはそもそもパーティションしないことや、新規 Delta テーブルでは液体クラスタリングの利用も推奨しています。そのため、『多くの小さいパーティションがある』こと自体が見直し対象になりやすいです",
+    "whyWrong": {
+      "A": "パーティション数が少ないこと自体は、過剰パーティションの指標ではありません。むしろ Databricks は『少なく大きいパーティション』の方が性能面で有利になりやすいと説明しています",
+      "B": "ほとんどのパーティションが 1 GB を超えるなら、Databricks の推奨に近く、過剰パーティションのサインとは言えません",
+      "C": "継続的にデータが流入すること自体は、過剰パーティションの指標ではありません。問題はパーティションの粒度が細かすぎるかどうかです"
+    },
+    "references": [
+      {
+        "title": "Azure Databricks でテーブルをパーティション分割するタイミング",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/partitions"
+      },
+      {
+        "title": "パフォーマンス効率のベスト プラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/performance-efficiency/best-practices"
+      }
+    ],
+    "notes": "Databricks の基本目安は『各パーティションが少なくとも 1 GB』。この問題は 1 GB 未満の小さいパーティションが多いことを、過剰パーティションの兆候として見抜けるかを問う"
   }
 ]
