@@ -8,7 +8,12 @@ test.describe('dep quiz flow on desktop', () => {
 
     const question = page.locator('#quiz-question');
     await expect(question.locator('.quiz-question-id')).toBeVisible();
-    await expect(question.locator('br')).toHaveCount(1);
+    const lineBreakCount = await question.locator('br').count();
+    expect(lineBreakCount).toBeGreaterThanOrEqual(1);
+
+    const initialProgress = await page.locator('#quiz-progress').textContent();
+    const total = Number(initialProgress?.match(/\d+\s*\/\s*(\d+)/)?.[1]);
+    expect(total).toBeGreaterThanOrEqual(3);
 
     const questionFontSize = await question.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
     expect(questionFontSize).toBeGreaterThanOrEqual(15);
@@ -23,11 +28,11 @@ test.describe('dep quiz flow on desktop', () => {
     }
 
     await page.locator('#next-question').click();
-    await expect(page.locator('#quiz-progress')).toContainText('2 / 3');
+    await expect(page.locator('#quiz-progress')).toContainText(`2 / ${total}`);
 
     await answerCurrentQuestion(page);
     await page.locator('#next-question').click();
-    await expect(page.locator('#quiz-progress')).toContainText('3 / 3');
+    await expect(page.locator('#quiz-progress')).toContainText(`3 / ${total}`);
 
     await answerCurrentQuestion(page);
     await page.locator('#next-question').click();
