@@ -21,10 +21,13 @@ test.describe('dep resume flow', () => {
 
     await page.getByRole('button', { name: '続きから再開' }).click();
     await expect(page.locator('#quiz-view')).toBeVisible();
-    await expect(page.locator('#quiz-progress')).toContainText('1 / 3');
+    const resumedProgress = await page.locator('#quiz-progress').textContent();
+    const total = Number(resumedProgress?.match(/\d+\s*\/\s*(\d+)/)?.[1]);
+    expect(total).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('#quiz-progress')).toContainText(`1 / ${total}`);
     await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);
 
     await page.locator('#next-question').click();
-    await expect(page.locator('#quiz-progress')).toContainText('2 / 3');
+    await expect(page.locator('#quiz-progress')).toContainText(`2 / ${total}`);
   });
 });

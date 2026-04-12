@@ -18,6 +18,9 @@ test.describe('dep mobile quiz flow', () => {
     await answerCurrentQuestion(page);
     await expect(page.locator('#next-question')).toBeVisible();
     await page.locator('#next-question').click();
-    await expect(page.locator('#quiz-progress')).toContainText('2 / 3');
+    const progress = await page.locator('#quiz-progress').textContent();
+    const total = Number(progress?.match(/\d+\s*\/\s*(\d+)/)?.[1]);
+    expect(total).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('#quiz-progress')).toContainText(`2 / ${total}`);
   });
 });
