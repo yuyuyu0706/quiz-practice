@@ -59,7 +59,7 @@
     "whyWrong": {
       "A": "`WITH TIME TRAVEL` というオプションは `ALTER SHARE` 構文にはありません",
       "B": "`WITH (CDF AND TIME TRAVEL)` という構文は存在しません",
-      "D": "`WITH CDF` という共有オプションはありません"
+      "C": "`WITH CDF` という共有オプションはありません"
     },
     "references": [
       {

@@ -31,11 +31,45 @@ const scenarioTypeValues = ['single-step', 'multi-step', 'architecture', 'troubl
 const ids = new Set();
 const errors = [];
 
+const getLineNumber = (content, startIndex) => content.slice(0, startIndex).split('\n').length;
+const escaped = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const idLineHints = new Map();
+const idPattern = /"id"\s*:\s*"([^"]+)"/g;
+
+for (const match of raw.matchAll(idPattern)) {
+  const [, id] = match;
+  const line = getLineNumber(raw, match.index ?? 0);
+  const lineHints = idLineHints.get(id) ?? [];
+  lineHints.push(line);
+  idLineHints.set(id, lineHints);
+}
+
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim() !== '';
 const isPlainObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
 
 questions.forEach((question, index) => {
-  const label = `Question at index ${index}`;
+  const questionId = isPlainObject(question) && typeof question.id === 'string' ? question.id : null;
+  let lineNumber;
+  if (questionId) {
+    const idLines = idLineHints.get(questionId);
+    if (idLines && idLines.length > 0) {
+      lineNumber = idLines.shift();
+    } else {
+      const idRegex = new RegExp(`"id"\\s*:\\s*"${escaped(questionId)}"`);
+      const fallbackMatchIndex = raw.search(idRegex);
+      if (fallbackMatchIndex >= 0) {
+        lineNumber = getLineNumber(raw, fallbackMatchIndex);
+      }
+    }
+  }
+  const contextSegments = [`index ${index}`];
+  if (questionId) {
+    contextSegments.push(`id: ${questionId}`);
+  }
+  if (lineNumber !== undefined) {
+    contextSegments.push(`line ${lineNumber}`);
+  }
+  const label = `Question (${contextSegments.join(', ')})`;
 
   if (!isPlainObject(question)) {
     errors.push(`${label} must be an object.`);
