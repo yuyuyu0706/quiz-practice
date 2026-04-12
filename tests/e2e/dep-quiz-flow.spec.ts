@@ -30,12 +30,14 @@ test.describe('dep quiz flow on desktop', () => {
     await page.locator('#next-question').click();
     await expect(page.locator('#quiz-progress')).toContainText(`2 / ${total}`);
 
-    await answerCurrentQuestion(page);
-    await page.locator('#next-question').click();
-    await expect(page.locator('#quiz-progress')).toContainText(`3 / ${total}`);
+    for (let current = 2; current <= total; current += 1) {
+      await answerCurrentQuestion(page);
+      await page.locator('#next-question').click();
 
-    await answerCurrentQuestion(page);
-    await page.locator('#next-question').click();
+      if (current < total) {
+        await expect(page.locator('#quiz-progress')).toContainText(`${current + 1} / ${total}`);
+      }
+    }
 
     await expect(page.locator('#result-view')).toBeVisible();
     await expect(page.getByRole('heading', { name: '結果' })).toBeVisible();
