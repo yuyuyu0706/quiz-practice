@@ -630,5 +630,427 @@
       }
     ],
     "notes": "Databricks の基本目安は『各パーティションが少なくとも 1 GB』。この問題は 1 GB 未満の小さいパーティションが多いことを、過剰パーティションの兆候として見抜けるかを問う"
+  },
+  {
+    "id": "DEP-Q218",
+    "section": "4",
+    "sectionTitle": "Data Sharing and Federation",
+    "domain": "Delta Sharing",
+    "tags": ["Delta Sharing", "Databricks-to-Databricks sharing", "Unity Catalog Volumes", "Unity Catalog Models", "notebook sharing"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "次の Delta Sharing 実装のうち、static Delta テーブルに加えて、Unity Catalog Volumes、Unity Catalog Models、ノートブックの共有をサポートしているのはどれですか？",
+    "choices": {
+      "A": "顧客が管理するオープンソースのDelta Sharingサーバーの実装",
+      "B": "Databricks-to-Databricks sharing プロトコル",
+      "C": "Databricks オープン共有プロトコル",
+      "D": "選択肢のオプションのいずれも、これらの資産の共有はサポートしていません"
+    },
+    "answer": "B",
+    "explanation": "正解は **Databricks-to-Databricks sharing プロトコル** です\n\nDelta Sharing には、主に Databricks-to-Databricks sharing と open sharing があります。Databricks-to-Databricks sharing は、Unity Catalog 対応の Databricks ワークスペース間で共有する方式で、テーブルに加えて notebooks、volumes、models の共有もサポートします。一方、open sharing ではこれらの資産共有はサポートされません",
+    "whyWrong": {
+      "A": "顧客管理のオープンソース Delta Sharing サーバー実装は、主にオープンプロトコルによるテーブル共有を目的とします。Unity Catalog Volumes、Models、ノートブック共有の対象ではありません",
+      "C": "Databricks オープン共有プロトコルは、Databricks を使っていない受信者にもデータ共有できる方式ですが、notebook、volume、model sharing はサポートしません",
+      "D": "Databricks-to-Databricks sharing では、テーブル以外に notebooks、volumes、models の共有がサポートするため誤りです"
+    },
+    "references": [
+      {
+        "title": "オープン共有と Databricks 間共有の対比",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/#open-sharing-versus-databricks-to-databricks-sharing"
+      }
+    ],
+    "notes": "論点は open sharing と Databricks-to-Databricks sharing の共有可能アセットの違い。notebooks、volumes、models は Databricks-to-Databricks sharing 側の機能"
+  },
+  {
+    "id": "DEP-Q219",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Delta Lake",
+    "tags": ["Delta Lake", "SHALLOW CLONE", "DEEP CLONE", "VACUUM", "FileNotFoundException"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "「orders」テーブルのコピーとして「orders_backup」テーブルを作成しました。最近、チームは「orders_backup」テーブルをクエリした際に、一部のデータファイルが存在しないことを示すエラーが発生するようになりました\n\n「orders」テーブルのトランザクションログには、最近VACUUMコマンドの実行記録が残っています\n\nデータエンジニアが「orders_backups」テーブルを作成した方法を説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "Delta LakeのSHALLOW CLONE機能を使用して、ordersテーブルから作成しました",
+      "B": "Delta LakeのDEEP CLONE機能を使用して、ordersテーブルから作成しました",
+      "C": "CTASステートメントを使用して、ordersテーブルから作成しました",
+      "D": "CRASステートメントを使用して、ordersテーブルから作成しました"
+    },
+    "answer": "A",
+    "explanation": "正解は **Delta LakeのSHALLOW CLONE機能を使用して、ordersテーブルから作成** です\n\nDelta Lake の SHALLOW CLONE は、元テーブルのデータファイルを物理的にコピーせず、メタデータと元データファイルへの参照を使ってコピー先テーブルを作成します。そのため、元の `orders` テーブルで `VACUUM` が実行され、`orders_backup` が参照していたデータファイルが削除されると、コピー先テーブルをクエリした際にファイルが存在しないエラーが発生する可能性があります。\n\n一方、DEEP CLONE や CTAS はデータファイルをコピーして独立したテーブルを作成するため、元テーブル側の VACUUM によってコピー先の読み取りが壊れる典型パターンではありません",
+    "whyWrong": {
+      "B": "DEEP CLONE はデータファイルもコピーするため、元テーブルの VACUUM によってコピー先テーブルの参照ファイルが消える、という状況にはなりにくいです",
+      "C": "CTAS は SELECT 結果から新しいテーブルを作成する方式で、通常はコピー先が独自のデータファイルを持ちます。元テーブルの VACUUM による参照切れの説明としては不適切です",
+      "D": "CRAS という Delta Lake の標準的なテーブル作成方式はありません。おそらく CTAS との混同を狙った選択肢です"
+    },
+    "references": [
+      {
+        "title": "CLONEの種類",
+        "url": "https://docs.databricks.com/aws/ja/delta/clone#%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%B3%E3%81%AE%E7%A8%AE%E9%A1%9E"
+      }
+    ],
+    "notes": "論点は shallow clone が元テーブルのデータファイルを参照する点。VACUUM 後にコピー先で一部ファイル欠損エラーが出るなら、shallow clone が最も自然。Unity Catalog の shallow clone では VACUUM 影響の扱いが改善されている点は補足注意"
+  },
+  {
+    "id": "DEP-Q220",
+    "section": "5",
+    "sectionTitle": "Monitoring and Alerting",
+    "domain": "Streaming",
+    "tags": ["Structured Streaming", "production jobs", "retry policy", "continuous jobs", "checkpoint"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "本番環境の構造化ストリーミングジョブでは、以下のどの再試行ポリシーを使用することをお勧めしますか？",
+    "choices": {
+      "A": "無制限のリトライ実行、同時実行数は最大1つ、スケジュールは設定しない、タイムアウトを設定しない",
+      "B": "リトライしない、同時実行数は最大1つ、スケジュールは設定しない、タイムアウトを設定する",
+      "C": "無制限のリトライ実行、同時実行数は無制限、スケジュールは設定する、タイムアウトを設定する",
+      "D": "リトライしない、同時実行数は無制限、スケジュールは設定する、タイムアウトを設定しない"
+    },
+    "answer": "A",
+    "explanation": "正解は **無制限のリトライ実行、同時実行数は最大1つ、スケジュールは設定しない、タイムアウトを設定しない** です\n\n本番環境の Structured Streaming ジョブでは、失敗時に自動復旧できるようにリトライを有効にし、同じストリーミングクエリが複数同時に動かないよう最大同時実行数を1にすることが重要です。複数インスタンスが同じ checkpoint や出力先に対して同時に動くと、重複処理や競合の原因になります。\n\nまた、常時稼働するストリーミングジョブでは、通常の時刻スケジュールやタイムアウトで終了させるより、継続実行を前提に構成します。Databricks公式では、現在は常時稼働のストリーミングワークロードに continuous mode を推奨しており、これは同時実行を1つに制限し、失敗時に新しい run を開始し、指数バックオフで再試行します",
+    "whyWrong": {
+      "B": "リトライしない設定では、一時的な障害でジョブが停止したままになる可能性があります。本番ストリーミングでは自動復旧できる構成が望ましいです",
+      "C": "無制限リトライはよいですが、同時実行数を無制限にするのは不適切です。同じストリーミングジョブが複数同時に走ると、checkpoint や出力先で競合する可能性があります。また、常時稼働ジョブに通常スケジュールやタイムアウトを設定するのも不自然です",
+      "D": "リトライなし、同時実行数無制限、スケジュールありという組み合わせは、本番ストリーミングジョブとして不適切です。失敗時の自動復旧も、同時実行制御も不足しています"
+    },
+    "references": [
+      {
+        "title": "ジョブを継続的に実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/continuous"
+      },
+      {
+        "title": "失敗が予想されるストリーミング ワークロードを設計する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/production#design-streaming-workloads-to-expect-failure"
+      }
+    ],
+    "notes": "試験問題としては従来の推奨構成『unlimited retries / max concurrent runs 1 / no schedule / no timeout』を問う。現行Databricksでは continuous mode が推奨されているため、解説では旧来の設定と現行推奨の関係を補足するとよい"
+  },
+  {
+    "id": "DEP-Q221",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "CI/CD",
+    "tags": ["init script", "cluster startup", "Python library", "cluster configuration", "Databricks Runtime"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "クラスタが起動するたびに特定のPythonライブラリが利用可能であることを保証したい\nこの目標を最も効果的に達成できる方法はどれか？",
+    "choices": {
+      "A": "クラスタ起動時に毎回ドライバノードにライブラリを手動でインストールします",
+      "B": "Pythonノートブックを実行する際にライブラリをインストールします",
+      "C": "クラスタ起動後にDatabricks CLIを使用して、ライブラリファイルをクラスターにアップロードします",
+      "D": "クラスタ起動時に初期化スクリプトを使用して、ライブラリをインストールします"
+    },
+    "answer": "D",
+    "explanation": "正解は **クラスタ起動時に初期化スクリプトを使用して、ライブラリをインストール** です\n\nDatabricks の init script は、クラスタ起動時に各ノードで実行されるシェルスクリプトです。クラスタが起動するたびに特定の Python ライブラリを利用可能にしたい場合、初期化スクリプトで `pip install` などを実行することで、起動時に必要なライブラリを自動的にインストールできます\n\n手動インストールやノートブック実行時のインストールでは、 **クラスタ起動毎の再現性を担保しにくい** \n\nDatabricks では compute-scoped libraries も利用できますが、選択肢の中では init script を使う方法が最も適切です\n\n構成手順は次の通りです\n\n- Unity Catalog Volume に init script を置く\n\n`/Volumes/platform/admin/init_scripts/install_python_libs.sh` に配置\n\n```python\n#!/bin/bash\nset -euxo pipefail\n\n/databricks/python/bin/pip install --upgrade pip\n\n/databricks/python/bin/pip install \\\n  \"requests==2.32.3\" \\\n  \"pyyaml==6.0.2\" \\\n  \"orjson==3.10.7\"\n\n```\n\n- クラスター設定で指定する\n\nクラスターの Advanced options > Init Scripts で Volumeパスを指定します\n\nDatabricks Runtime 13.3 LTS 以上 + Unity Catalog 利用環境では、init script は Unity Catalog Volumes に置くことが推奨されています。また、標準アクセスモードでは init script を allowlist に追加する必要があります\n\n- 確認用ノートブック\n\n```python\nimport requests\nimport yaml\nimport orjson\n\nprint(requests.__version__)\nprint(yaml.__version__)\nprint(orjson.__version__)\n\n```\n- 補足\n\n単純に Python ライブラリだけを保証したいなら、まずは クラスタライブラリ または ジョブの依存ライブラリで管理する方が標準的です。init script は、apt-get、証明書配置、ODBCドライバ導入など、クラスタ起動時にOSレベルも含めて整えたい場合に向いています",
+    "whyWrong": {
+      "A": "手動インストールは再現性が低く、クラスタ起動のたびに確実にライブラリを利用可能にする方法として不適切です",
+      "B": "ノートブック実行時にインストールする方法では、そのノートブックを実行するまでライブラリが利用可能にならず、クラスタ起動時に保証するという要件を満たしません",
+      "C": "クラスタ起動後に CLI でアップロードする方法は、自動的にライブラリをインストールして利用可能にする方法としては不十分です"
+    },
+    "references": [
+      {
+        "title": "init スクリプトとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/init-scripts/"
+      },
+      {
+        "title": "ライブラリのインストール",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/libraries/"
+      }
+    ],
+    "notes": "現行Databricksでは、単純なPythonライブラリ配布なら compute-scoped libraries や cluster policy でのライブラリ指定も標準的な選択肢になり得る。問題文が『クラスタ起動時に』を強調しているため init script が正答"
+  },
+  {
+    "id": "DEP-Q222",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "materialized view", "aggregation", "dashboard", "pre-computation"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "小売企業のデータアナリストは、複数の地域および製品カテゴリーにわたる販売実績に関する日次レポートを作成する責任を負っています\n\n同社はLakeflow Declarative Pipelinesを使用して、オンラインストアから取引データを継続的に取り込んでいます\n\nアナリストは、総売上高、平均注文額、カテゴリ別の販売数量など、ビジネスレベルの集計を効率的に事前計算できる関係オブジェクトを作成する必要があります。これにより、下流のレポートやダッシュボードが毎回再計算することなく迅速にデータにアクセスできるようにします\n\nこのユースケースに最も適したオブジェクトは次のうちどれですか？",
+    "choices": {
+      "A": "Streaming table",
+      "B": "Standard view",
+      "C": "Temporary view",
+      "D": "Materialized view"
+    },
+    "answer": "D",
+    "explanation": "正解は **Materialized view** です\n\nMaterialized view は、クエリ結果を事前計算して保持する関係オブジェクトです。総売上高、平均注文額、カテゴリ別販売数量のような集計結果をあらかじめ計算しておくことで、下流のレポートやダッシュボードが毎回元データから再計算する必要を減らせます\n\nDatabricks の Lakeflow Declarative Pipelines でも、materialized view は複雑な変換や分析クエリに適したデータセット種別として説明されており、可能な場合は増分更新されます。大規模な集計やダッシュボード向けの事前計算には、streaming table より materialized view が適しています",
+    "whyWrong": {
+      "A": "Streaming table は継続的な取り込みや低レイテンシのストリーミング変換に適していますが、ビジネスレベルの集計を事前計算してレポート向けに提供する用途では materialized view の方が適切です",
+      "B": "Standard view はクエリ定義を保存するだけで、結果を物理的に保持しません。そのため、参照時に再計算が発生しやすく、今回の『毎回再計算せず高速にアクセス』という要件に合いません",
+      "C": "Temporary view は一時的なビューであり、パイプライン内の中間処理整理には使えますが、下流レポートやダッシュボード向けの永続的な事前集計には適していません"
+    },
+    "references": [
+      {
+        "title": "適切なデータセットの種類を選択する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/best-practices#choose-building-block"
+      },
+      {
+        "title": "マテリアライズド・ビュー",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/concepts#materialized-views"
+      }
+    ],
+    "notes": "キーワードは『ビジネスレベルの集計』『事前計算』『ダッシュボードが毎回再計算しない』。Lakeflowでは取り込み・append中心なら streaming table、集計・分析クエリなら materialized view と整理するとよい"
+  },
+  {
+    "id": "DEP-Q223",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "Delta Lake",
+    "tags": ["MERGE INTO", "Delta Lake", "upsert", "duplicate matches", "merge limitations"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "MERGE INTO コマンドを使用する際の制限事項として考えられるのは、次のうちどれですか？",
+    "choices": {
+      "A": "Merge機能はレコードの削除をサポートしていません。upsert 操作のみをサポートしています",
+      "B": "複数のソース行が一致し、テーブル内の同じターゲット行を変更しようとした場合、Merge は実行できません",
+      "C": "streaming jobs では、Watermarking を使用しない限り、Merge は実行できません",
+      "D": "単一のソース行が一致し、テーブル内の複数のターゲット行を変更しようとした場合、Merge は実行できません"
+    },
+    "answer": "B",
+    "explanation": "正解は **複数のソース行が一致し、テーブル内の同じターゲット行を変更しようとした場合、Merge は実行できません** です\n\nDatabricks の `MERGE INTO` では、1つのターゲット行に対して複数のソース行が一致して更新を試みることは許可されません。公式ドキュメントでも、1つのターゲット行に一致できるソース行は1行だけと明記されています。そのため、ソース側で重複キーがあり、同じターゲット行を複数ソース行が更新しようとする場合は、`MERGE` の制約に抵触します\n\n実務では、この制約を避けるために、`MERGE` 前にソースデータを重複排除するか、ウィンドウ関数などで最新1件に絞ってから `MERGE` するのが一般的です",
+    "whyWrong": {
+      "A": "Databricks の `MERGE` は upsert だけでなく delete もサポートしています。`WHEN MATCHED THEN DELETE` や `WHEN NOT MATCHED BY SOURCE THEN DELETE` も利用できます",
+      "C": "`MERGE` 自体に watermarking は必須ではありません。watermark は主にストリーミングの遅延データ管理や stateful 処理のための機能であり、`MERGE` の基本要件ではありません",
+      "D": "公式の制約として明示されているのは『複数のソース行が同じターゲット行に一致する』ケースです。この選択肢のようなことは、問題の論点としては公式の代表的な制約説明ではありません"
+    },
+    "references": [
+      {
+        "title": "マージ操作のセマンティクス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/merge#merge-operation-semantics"
+      }
+    ],
+    "notes": "論点は『multiple source rows matching the same target row』。MERGE 前のソース重複排除が実務上の重要ポイント"
+  },
+  {
+    "id": "DEP-Q224",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Performance",
+    "tags": ["dynamic file pruning", "Spark SQL", "query optimization", "file skipping", "runtime filtering"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "Apache Sparkにおける動的ファイルプルーニングを最も適切に説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "実行時のフィルタ情報に基づいて、クエリ実行中に無関係なデータファイルの読み込みをスキップする最適化手法",
+      "B": "データファイルの複製をワーカーノード間で行うことで、データ局所性とクエリパフォーマンスを向上させる最適化手法",
+      "C": "Sparkジョブの実行中に大容量ファイルを自動的に圧縮してストレージ使用量を削減する最適化手法",
+      "D": "実行時にファイルを動的に小さなチャンクに再分割し、実行エンジン間でワークロードを分散させる最適化手法"
+    },
+    "answer": "A",
+    "explanation": "正解は **実行時のフィルタ情報に基づいて、クエリ実行中に無関係なデータファイルの読み込みをスキップする最適化手法** です\n\n動的ファイルプルーニングは、クエリ実行時に得られたフィルタ条件を利用して、読み込む必要のないデータファイルを除外する最適化です。これにより、不要なI/Oを減らし、クエリ性能を改善できます。Apache Spark では、実行時統計や実行時情報を使ってより効率的な実行計画を選ぶ最適化が行われます\n\nしたがって、動的ファイルプルーニングはファイル複製、圧縮、チャンク再分割の仕組みではなく、『実行時フィルタに基づくファイルスキップ』として理解するのが適切です",
+    "whyWrong": {
+      "B": "動的ファイルプルーニングはデータファイルを複製する仕組みではありません",
+      "C": "大容量ファイルを自動圧縮する仕組みではありません",
+      "D": "ファイルを実行時に小さなチャンクへ再分割する仕組みではありません"
+    },
+    "references": [
+      {
+        "title": "動的ファイルプルーニング",
+        "url": "https://docs.databricks.com/aws/ja/optimizations/dynamic-file-pruning"
+      }
+    ],
+    "notes": "論点は『runtime filter に基づく file skipping』。類似概念として partition pruning、dynamic partition pruning、data skipping と混同しやすいので、不要ファイルを実行時に読まない最適化と整理するとよい"
+  },
+  {
+    "id": "DEP-Q225",
+    "section": "7",
+    "sectionTitle": "Ensuring Data Security and Compliance",
+    "domain": "Security",
+    "tags": ["Databricks Secrets", "dbutils.secrets.get", "API key", "secret scope", "credential management"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、外部APIからのデータをDatabricksワークスペースに統合するプロジェクトに取り組んでいます\n\nセキュリティ上の理由から、彼らはAPIキーをノートブックに直接ハードコーディングしないことにしました。代わりに、Databricks Secretsを使用して機密性の高い認証情報を安全に保存および管理することにしました。その方法は以下のとおりです\n\n```python\ndatabricks secrets create-scope api_scope\ndatabricks secrets put-secret api_scope api_key```彼らは現在、Databricksノートブックから外部APIエンドポイントにクエリを実行するために、APIキーを読み取りたいと考えています。以下のコードのうち、データエンジニアがこのタスクを達成できるのはどれですか？",
+    "choices": {
+      "A": "`api_key = dbutils.secrets.get(\"api_scope\", \"api_key\")`",
+      "B": "`api_key = dbutils.secrets.read(\"api_key\", \"api_scope\")`",
+      "C": "`api_key = dbutils.secrets.get(\"api_key\", \"api_scope\")`",
+      "D": "`api_key = dbutils.secrets.read(\"api_scope\", \"api_key\")`"
+    },
+    "answer": "A",
+    "explanation": "正解は **`api_key = dbutils.secrets.get(\"api_scope\", \"api_key\")`** です\n\nDatabricks ノートブックから Secret を取得する正式なメソッドは `dbutils.secrets.get` で、引数順は `scope, key` です。Databricks の dbutils リファレンスでも、`get(scope: String, key: String): String` と定義され、例として `dbutils.secrets.get(scope=\"my-scope\", key=\"my-key\")` が示されています。したがって、この設問では `api_scope` がスコープ名、`api_key` がキー名になります\n\nまた、`dbutils.secrets.read` というメソッドは Secrets utility には存在せず、利用可能な代表コマンドは `get`、`getBytes`、`list`、`listScopes` です",
+    "whyWrong": {
+      "B": "`dbutils.secrets.read` というメソッドは Databricks Secrets utility にはありません",
+      "C": "メソッド名は `get` で合っていますが、引数の順番が逆です。正式な順番は `scope, key` です",
+      "D": "`dbutils.secrets.read` というメソッドは存在しません"
+    },
+    "references": [
+      {
+        "title": "Databricks Utilities (dbutils) リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-utils"
+      }
+    ],
+    "notes": "論点は `dbutils.secrets.get(scope, key)` の引数順。`read` というメソッド名は存在しないため、まずメソッド名で切り分けると解きやすい"
+  },
+  {
+    "id": "DEP-Q226",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Structured Streaming", "dropDuplicates", "foreachBatch", "insert-only merge", "Delta Lake", "deduplication"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "若手エンジニアが、生のストリーミングデータを重複排除し、ターゲットのデルタテーブルに挿入するために、以下のコードを使用しています\n\n```python\nspark.readStream\n        .table(\"orders_raw\")\n        .dropDuplicates([\"order_id\", \"order_timestamp\"])\n    .writeStream\n        .option(\"checkpointLocation\", \"dbfs:/checkpoints\")\n        .table(\"orders_unique\")```上級データエンジニアは、後から到着する重複レコードが存在する場合、このアプローチでは不十分であると指摘しました。上級データエンジニアの発言を説明できるのは、次のうちどれでしょうか？",
+    "choices": {
+      "A": "重複排除を重複しない各区間に適用するためには、ウィンドウ関数も必要となる",
+      "B": "最新のレコードのみを処理することを保証するために、ランキング機能も必要です",
+      "C": "新しいレコードは、テーブルに既に挿入されたデータとの重複を排除する必要もあります",
+      "D": "記録の遅延が予想される期間においてのみ、ステータス情報を追跡するためには、Watermarking技術も必要となる"
+    },
+    "answer": "C",
+    "explanation": "正解は **新しいレコードは、テーブルに既に挿入されたデータとの重複を排除する** です\n\nこのコードでは `dropDuplicates([\"order_id\", \"order_timestamp\"])` を使ってストリーム側の重複を除去していますが、そのまま `.table(\"orders_unique\")` へ書き込むだけでは、すでにターゲットテーブル `orders_unique` に存在するレコードとの重複は防げません\n\nDatabricks では、Delta テーブルに対する継続的な重複排除の代表パターンとして、各マイクロバッチ内の重複を除去したうえで、`foreachBatch` と insert-only `MERGE` を使って、ターゲットテーブルに同じキーが存在しない場合のみ挿入する方法を案内しています。\n\nしたがって、上級データエンジニアの指摘は、『後から到着した重複が既存ターゲット表と重複する可能性があるため、ストリーム内の `dropDuplicates()` だけでは不十分であり、ターゲット既存データとの重複排除も必要である』という意味です",
+    "whyWrong": {
+      "A": "ウィンドウ関数はこの問題の必須要件ではありません。論点は区間ごとの処理ではなく、ターゲット表に既に存在するレコードとの重複排除です",
+      "B": "ランキング関数は最新1件を選ぶ用途では使えますが、この問題で不足している本質は、既存ターゲットテーブルとの重複確認です",
+      "D": "watermark は遅延データをどこまで状態保持するかを制御する際に有効ですが、このコードの最も直接的な不足は、ターゲット表に既に挿入済みのデータとの重複排除がないことです"
+    },
+    "references": [
+      {
+        "title": "Delta テーブルのストリーミング読み取りと書き込み",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/delta-lake"
+      },
+      {
+        "title": "foreachBatch を使用した任意のデータ シンクへの書き込み",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/foreach"
+      },
+      {
+        "title": "Delta Lake テーブルへのマージを使用したアップサート",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/merge"
+      },
+      {
+        "title": "Spark Dataset.dropDuplicates documentation",
+        "url": "https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/Dataset.html#dropDuplicates()"
+      }
+    ],
+    "notes": "Databricks の頻出パターンとしては、dropDuplicates + foreachBatch + insert-only MERGE の組み合わせを想起すると解きやすい"
+  },
+  {
+    "id": "DEP-Q227",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Structured Streaming", "stream-static join", "Delta Lake", "micro-batch", "join semantics"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、ストリーミングDeltaテーブル「activity_logs」と、静的Deltaテーブル「users」の結合結果に基づいて「user_activities」という名前のDeltaテーブルを更新するストリーミングジョブを持っています\n\n彼らは、「users」テーブルに新しいユーザーを追加しても、「activity_logs」テーブルにそれらのユーザーのアクティビティが存在する場合でも、「user_activities」テーブルの更新が自動的にトリガーされないことに気づきました。以下のうち、この問題を説明する可能性が高いのはどれですか？",
+    "choices": {
+      "A": "この stream-static join は、デフォルトではステートフルではありません。ただし、Spark の設定 delta.statefulStreamStaticJoin を true に設定すれば、ステートフルになります",
+      "B": "この stream-static join のストリーミング部分が結合処理を開始します。結合のストリーミング側に新しいデータが現れた場合にのみ、処理を開始します",
+      "C": "この stream-static join の static の部分は、バッチモードでのみ結合処理を実行します",
+      "D": "この結合の各マイクロバッチ毎に、ユーザーテーブルを REFRESH TABLEコマンドで更新する必要があります"
+    },
+    "answer": "B",
+    "explanation": "正解は **この stream-static join のストリーミング部分が結合処理を開始します。結合のストリーミング側に新しいデータが現れた場合にのみ、処理を開始します** です\n\nDatabricks の stream-static join は、ストリーミング側の新着データをきっかけにマイクロバッチが実行され、その時点での static Delta table の最新有効バージョンと結合されます。したがって、`users` のような静的側テーブルだけが更新されても、それ自体ではストリーミングクエリの新しい処理は始まりません\n\nこのため、`activity_logs` に新しいデータが来ない限り、`users` に新規ユーザーが追加されても `user_activities` の更新は自動ではトリガーされません。これは stream-static join の基本的な実行特性です",
+    "whyWrong": {
+      "A": "Databricks の stream-static join は stateless join と説明されていますが、問題の本質は stateful かどうかではなく、ストリーミング側の新着データによってのみ処理が進む点です",
+      "C": "静的側がバッチデータであること自体は事実ですが、それが更新反映されない直接理由ではありません。直接の理由は、マイクロバッチ開始条件がストリーミング側の新着データだからです",
+      "D": "各マイクロバッチで `REFRESH TABLE` を必須とする仕様ではありません。問題はキャッシュ更新ではなく、静的側更新だけではストリーミング処理が発火しないことです"
+    },
+    "references": [
+      {
+        "title": "ストリーム静的結合 (stream-static join)",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/transform/join#stream-static"
+      }
+    ],
+    "notes": "論点は stream-static join の発火条件。static 側は各マイクロバッチ時点の最新有効バージョンが参照されるが、static 側の更新だけでは新しいマイクロバッチは始まらない"
+  },
+  {
+    "id": "DEP-Q228",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "expectations", "data quality", "dlt.expect", "expect_or_drop", "expect_or_fail"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "若手エンジニアが、Lakeflow Declarative Pipeline（LDP）におけるデータ品質検証の実装を担当することになりました\n\n彼らは、入力データセットが処理される前に特定の基準を満たしていることを確認するために、いくつかの期待値関数を追加しました。若手エンジニアがプルリクエストを送信した後、シニアデータエンジニアがコードのレビューを開始し、検証に使用されている関数呼び出しの1つが正しくないことに気づきました\n\nレビューの一環として、上級エンジニアは、パイプラインで使用されているすべての期待値関数がDatabricksのドキュメントに従って有効であることを確認したいと考えています\n\nLakeflow 宣言型パイプラインにおいて、以下の関数呼び出しのうち、有効な期待値関数ではないものはどれですか？",
+    "choices": {
+      "A": "`dlt.expect_or_fail`",
+      "B": "`dlt.expect_or_warn`",
+      "C": "`dlt.expect_or_drop`",
+      "D": "`dlt.expect`"
+    },
+    "answer": "B",
+    "explanation": "正解は **dlt.expect_or_warn** です\n\nLakeflow Declarative Pipelines の expectation で有効な基本関数は、次のとおりです\n\n- レコードを保持してメトリクスを記録する `expect`\n\n- 不正レコードを落とす `expect_or_drop`\n\n- 不正レコードで更新を失敗させる `expect_or_fail`\n\n`warn` は `expect` のデフォルト動作として提供されており、`expect_or_warn` という関数は存在しません。その為、レビュー時に無効な expectation 関数呼び出しとして指摘すべきなのは `dlt.expect_or_warn` です。なお、現行ドキュメントでは Python 例は `dlt` ではなく `dp` 名前空間で説明されていますが、問いたい論点は『warn 専用関数はない』ことです",
+    "whyWrong": {
+      "A": "`expect_or_fail` は有効な expectation 関数です。不正レコードが見つかった場合、更新を失敗させます",
+      "C": "`expect_or_drop` は有効な expectation 関数です。不正レコードをドロップして処理を継続します",
+      "D": "`expect` は有効な expectation 関数です。これは warn のデフォルト動作に相当し、不正レコードを保持しつつメトリクスを収集します"
+    },
+    "references": [
+      {
+        "title": "パイプラインの期待値を使用してデータ品質を管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/expectations"
+      }
+    ],
+    "notes": "現行ドキュメントでは Python の名前空間は `dp`。ただし試験問題や旧資料では `dlt.expect` 系の表記が残ることがある。論点は `warn` が独立関数ではなく `expect` のデフォルト動作である点"
+  },
+  {
+    "id": "DEP-Q229",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Spark",
+    "tags": ["PySpark", "unit testing", "assertDataFrameEqual", "DataFrame equality", "testing"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、既存のデータフレームに新しい列を追加する変換パイプラインをテストしています。結果として得られるデータフレームが期待される出力と一致することを確認したいと考えています。データエンジニアが等価性 (equality) を検証するために使用できる関数は次のうちどれですか？",
+    "choices": {
+      "A": "`assertEqual(actual_df, expected_df)`",
+      "B": "`assert(actual_df = expected_df)`",
+      "C": "`verifyEquality(actual_df, expected_df)`",
+      "D": "`assertDataFrameEqual(actual_df, expected_df)`"
+    },
+    "answer": "D",
+    "explanation": "正解は **assertDataFrameEqual(actual_df, expected_df)** です\n\nPySpark では、DataFrame の等価性を検証するためのテストユーティリティとして `assertDataFrameEqual` が提供されています。この関数は、2つの DataFrame のデータとスキーマを比較し、差異があれば分かりやすい形で示します。Apache Spark の公式ドキュメントにも `pyspark.testing.assertDataFrameEqual` が掲載されています",
+    "whyWrong": {
+      "A": "`assertEqual` は一般的なテストフレームワークのメソッド名としては存在しますが、PySpark の DataFrame 比較専用関数ではありません",
+      "B": "`assert(actual_df = expected_df)` は Python 構文としても不適切です。等価比較なら `==` が必要です",
+      "C": "`verifyEquality` という PySpark 公式の DataFrame 等価性検証関数はありません"
+    },
+    "references": [
+      {
+        "title": "pyspark.testing.assertDataFrameEqual",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.testing.assertDataFrameEqual.html"
+      },
+      {
+        "title": "Testing PySpark - Option 1: Using Only PySpark Built-in Test Utility Functions",
+        "url": "https://spark.apache.org/docs/latest/api/python/getting_started/testing_pyspark.html#Option-1:-Using-Only-PySpark-Built-in-Test-Utility-Functions"
+      }
+    ],
+    "notes": "assertDataFrameEqual は PySpark の公式テストユーティリティ。設問は関数名そのものの確認問題"
+  },
+  {
+    "id": "DEP-Q230",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Structured Streaming", "late-arriving data", "watermark", "event time", "stateful processing"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、Spark Structured Streamingで遅れて到着するデータを処理するために、次のうちどの手法を使用できますか？",
+    "choices": {
+      "A": "Partitioning",
+      "B": "Windowing",
+      "C": "Watermarking",
+      "D": "Checkpointing"
+    },
+    "answer": "C",
+    "explanation": "正解は **Watermarking** です\n\nSpark Structured Streaming では、遅れて到着するデータを扱うために watermark を使用します。Watermark は、イベント時刻に基づいて『どこまで遅延データを受け入れるか』を定義し、遅延許容範囲内のデータを処理しつつ、古い状態情報を整理するために使われます。\n\nそのため、late-arriving data を扱う代表的な手法として最も適切なのは Watermarking です",
+    "whyWrong": {
+      "A": "Partitioning はデータの分割方法に関する仕組みです",
+      "B": "Windowing は時間単位などで集計範囲を定義する仕組みです",
+      "D": "Checkpointing はストリーミング処理の進捗や状態を保存して障害復旧を可能にするための仕組みです"
+    },
+    "references": [
+      {
+        "title": "データ処理のしきい値を管理するためにウォーターマークを適用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/watermarks"
+      },
+      {
+        "title": "Handling Late Data and Watermarking",
+        "url": "https://spark.apache.org/docs/latest/streaming/apis-on-dataframes-and-datasets.html#handling-late-data-and-watermarking"
+      }
+    ],
+    "notes": "Windowing と迷いやすいが、遅延到着データの許容範囲を定義する中心機能は watermark"
   }
 ]
