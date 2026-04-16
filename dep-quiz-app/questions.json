@@ -17,7 +17,7 @@
       "D": "`BROADCAST ON (c)`"
     },
     "answer": "C",
-    "explanation": "正解は **`/*+ BROADCAST(c) */`** です\n\nDatabricks SQL および Spark SQL では、結合戦略ヒントは `SELECT` 句の直後に `/*+ ... */` 形式で記述します。したがって、`customers` テーブルの別名 `c` に対してブロードキャスト結合を指示したい場合は `SELECT /*+ BROADCAST(c) */` と書きます。Databricks のヒント構文でも `BROADCAST(table_name)` が join hint として定義されています\n\nこのヒントを指定すると、オプティマイザに対して `c` 側をブロードキャストする方針を強く示せます。売上テーブルが非常に大きく、顧客テーブルが比較的小さい今回のようなケースでは、ブロードキャスト結合が有効な典型例です。Databricks のベストプラクティスでも、小さい次元テーブル側にブロードキャストヒントを付ける例が示されています",
+    "explanation": "正解は **/*+ BROADCAST(c) */** です\n\nDatabricks SQL および Spark SQL では、結合戦略ヒントは `SELECT` 句の直後に `/*+ ... */` 形式で記述します。したがって、`customers` テーブルの別名 `c` に対してブロードキャスト結合を指示したい場合は `SELECT /*+ BROADCAST(c) */` と書きます。Databricks のヒント構文でも `BROADCAST(table_name)` が join hint として定義されています\n\nこのヒントを指定すると、オプティマイザに対して `c` 側をブロードキャストする方針を強く示せます。売上テーブルが非常に大きく、顧客テーブルが比較的小さい今回のようなケースでは、ブロードキャスト結合が有効な典型例です。Databricks のベストプラクティスでも、小さい次元テーブル側にブロードキャストヒントを付ける例が示されています",
     "whyWrong": {
       "A": "`-- ... --` は SQL のヒント構文ではありません",
       "B": "`BROADCAST(c)` だけを単独で `SELECT` 句に置く構文は使えません",
@@ -1052,5 +1052,247 @@
       }
     ],
     "notes": "Windowing と迷いやすいが、遅延到着データの許容範囲を定義する中心機能は watermark"
+  },
+  {
+    "id": "DEP-Q231",
+    "section": "10",
+    "sectionTitle": "Data Modeling",
+    "domain": "Data Modeling",
+    "tags": ["SCD", "Slowly Changing Dimension", "Type 0", "Type 1", "Type 2", "Type 3"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "以下の定義のうち、Type-0のSlowly Change Dimension (SCD)を正しく説明しているのはどれですか？",
+    "choices": {
+      "A": "新しく到着したデータが既存のデータを上書きするテーブルです",
+      "B": "一切の変更を許容しないテーブルです",
+      "C": "現在と過去のデータの両方を時系列で保存および管理するテーブルです",
+      "D": "追加した列に履歴を保存するテーブルです"
+    },
+    "answer": "B",
+    "explanation": "正解は **一切の変更を許容しないテーブル** です\n\nType 0 の Slowly Changing Dimension は、初回に登録された値をそのまま保持し、以後の変更を反映しない考え方です。つまり、属性値を固定で扱う『変更不可』のディメンションです",
+    "whyWrong": {
+      "A": "新しい値で既存値を上書きする Type 1 の説明に近いです",
+      "B": "履歴を行として保持する Type 2 の説明に近いです。Type 2 では変更時に新しいレコードを追加して履歴を残します",
+      "D": "過去値を追加列で保持する Type 3 の説明に近いです"
+    },
+    "references": [
+      {
+        "title": "緩やかに変化するディメンション タイプ 1",
+        "url": "https://learn.microsoft.com/ja-jp/fabric/data-factory/slowly-changing-dimension-type-one"
+      },
+      {
+        "title": "緩やかに変化するディメンション タイプ 2",
+        "url": "https://learn.microsoft.com/ja-jp/fabric/data-factory/slowly-changing-dimension-type-two"
+      }
+    ],
+    "notes": "分類問題としては Type 0/1/2/3 の定義対比で解くのが自然"
+  },
+  {
+    "id": "DEP-Q232",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Performance",
+    "tags": ["Delta Lake", "partitioning", "over-partitioning", "OPTIMIZE", "performance tuning"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "パーティション分割されたDelta Lakeテーブルのパフォーマンスが著しく低下していることに気づきました。このテーブルに対するほとんどの一般的なクエリで処理速度の低下が発生しています\n\nチームはテーブルに対して OPTIMIZE コマンドを実行しようと試みたが、問題解決には至れていません。次のうち、これらの速度低下の原因として最も可能性が高いのはどれですか？",
+    "choices": {
+      "A": "テーブル全体に OPTIMIZE コマンドを適用していますが、これは各パーティションごとに個別に適用する必要があります",
+      "B": "テーブルが過剰にパーティション分割されているか、パーティション分割が間違っています。この問題を解決するには、全てのデータファイルを完全に書き換える必要があります",
+      "C": "テーブルには削除する必要のある古いデータファイルが多すぎます。代わりに VACUUM コマンドを実行する必要があります",
+      "D": "Z-ORDER を指定せずに OPTIMIZE コマンドを実行しています。パーティショニング列には Z-ORDER が必要です"
+    },
+    "answer": "B",
+    "explanation": "正解は **テーブルが過剰にパーティション分割されているか、パーティション分割が間違っている** です\n\nDatabricks は、Delta テーブルのパーティションは少ない方が良く、各パーティションは少なくとも 1 GB 程度あることを推奨しています。過剰に細かいパーティションや不適切なパーティション列は、一般的なクエリ全体の性能低下を招きます\n\n更に Databricks は、悪いパーティション戦略は downstream performance に大きな悪影響を与え、修正にはデータの完全な書き換えが必要になることがあると説明しています\n\nデータの完全な書き換えは次の2種類のオペレーションが代表的です\n\n- **1. 新しいテーブルを作って入れ替える**\n\nCTASステートメントで作り変えるのがベターです。新規テーブルでは、細かいパーティションより liquid clustering の適用を推奨しています\n\n```sql\nCREATE TABLE sales_new\nUSING DELTA\nAS\nSELECT * FROM sales_old;\n```\n\n- **2. 既存テーブルを overwriteSchema 付きで上書き再作成する**\n\n既存テーブル名を維持したいときに使う方法です。パーティション変更には overwriteSchema=true を使うようDatabricksは説明しています\n\n```python\n(\n  spark.table(\"sales_old\")\n    .write\n    .format(\"delta\")\n    .mode(\"overwrite\")\n    .option(\"overwriteSchema\", \"true\")\n    .saveAsTable(\"sales_old\")\n)\n```\n\n一方、`OPTIMIZE` はデータファイルをより良いレイアウトへ再編成するコマンドですが、パーティション定義そのものを変更する機能ではありません。Databricks 公式でも、パーティションがあるテーブルでは `OPTIMIZE` は各パーティション内でファイル compaction とデータレイアウト改善を行うだけであり、パーティション設計自体の問題は解決しません",
+    "whyWrong": {
+      "A": "`OPTIMIZE table_name` はテーブル全体に適用できます。必要に応じて `WHERE` 句で特定パーティションだけを対象にもできますが、各パーティションへ個別適用しないと効かない、という制約ではありません",
+      "C": "`VACUUM` は不要な古いファイルの削除に使いますが、一般的なクエリ性能低下の主因が過剰パーティションである場合、その根本解決にはなりません。`OPTIMIZE` と `VACUUM` は役割が異なります",
+      "D": "Databricks は、パーティション列に対して Z-ORDER を使うのではなく、むしろ **パーティション列には Z-ORDER できない** と説明しています"
+    },
+    "references": [
+      {
+        "title": "Azure Databricks でテーブルをパーティション分割するタイミング",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/partitions"
+      },
+      {
+        "title": "データ ファイル レイアウトを最適化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/optimize"
+      }
+    ],
+    "notes": "論点は『OPTIMIZEで直るのはファイルレイアウトであって、悪いパーティション設計そのものではない』こと。パーティション戦略ミスは、全データ書き換えを伴う再設計が必要になる場合がある"
+  },
+  {
+    "id": "DEP-Q233",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Spark",
+    "tags": ["Spark DataFrame", "join", "overwrite", "Delta Lake", "batch processing"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、3つのDeltaテーブル間で以下の結合ロジックを維持しています\n\n```python\ndf_students =  spark.table(\"students\")\ndf_courses =  spark.table(\"courses\")\ndf_enrollments =  spark.table(\"enrollments\")\n\ndf_join_1  = (df_students.join(df_enrollments, df_students.student_id == df_enrollments.student_id)\n                        .select(df_students.student_id,\n                                df_students.student_name,\n                                df_enrollments.course_id)\n              )\n\ndf_join_2 = (df_join_1.join(df_courses, df_join_1.course_id == df_courses.course_id)\n                       .select(df_join_1.student_id,\n                               df_join_1.student_name,\n                               df_courses.course_name)\n        )\n\n(df_join_2.write\n.mode(\"overwrite\")\n.table(\"students_courses_details\"))```このコードブロックが実行されるたびに、その結​​果を正しく表しているのは次の内どれですか？",
+    "choices": {
+      "A": "結合操作では、ソーステーブルに新しく追加されたレコードのみが考慮されます。一致したレコードはstudents_courses_detailsテーブルを上書きします",
+      "B": "結合操作では、ソーステーブルに新しく追加されたレコードのみが考慮されます。一致しないレコードはstudents_courses_detailsテーブルを上書きします",
+      "C": "結合操作では、ソーステーブルの現在のバージョンに含まれるすべてのレコードが考慮されます。一致しないレコードはstudents_courses_detailsテーブルを上書きします",
+      "D": "結合操作では、ソーステーブルの現行バージョンに含まれるすべてのレコードが考慮されます。一致したレコードはstudents_courses_detailsテーブルを上書きします"
+    },
+    "answer": "D",
+    "explanation": "正解は **結合操作では、ソーステーブルの現行バージョンに含まれるすべてのレコードが考慮されます。一致したレコードはstudents_courses_detailsテーブルを上書きします** です\n\nこのコードは Structured Streaming や増分処理ではなく、通常のバッチ DataFrame 処理です。`spark.table(\"students\")`、`spark.table(\"courses\")`、`spark.table(\"enrollments\")` により、各ソーステーブルの実行時点の現在データを読み込みます。その後、`students` と `enrollments`、さらに `courses` を内部結合しているため、結合条件に一致したレコードのみが結果に残ります。\n\n最後に `df_join_2.write.mode(\"overwrite\").table(\"students_courses_details\")` を実行しているため、結果は既存の `students_courses_details` テーブルを上書きします。`overwrite` は既存データを置き換える書き込みモードです。",
+    "whyWrong": {
+      "A": "このコードは増分処理ではないため、新しく追加されたレコードのみを考慮するわけではありません",
+      "B": "新規追加分のみを扱う処理ではありません。また、内部結合のため一致しないレコードは結果に含まれません",
+      "C": "ソーステーブルの現在データ全体を考慮する点は近いですが、内部結合なので一致しないレコードではなく、一致したレコードが出力されます"
+    },
+    "references": [
+      {
+        "title": "pyspark.sql.DataFrameWriter.mode - Apache Spark",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrameWriter.mode.html"
+      },
+      {
+        "title": "pyspark.sql.DataFrameWriter.mode - Databricks",
+        "url": "https://api-docs.databricks.com/python/pyspark/latest/pyspark.sql/api/pyspark.sql.DataFrameWriter.mode.html"
+      }
+    ],
+    "notes": "論点は、通常のバッチDataFrame処理は毎回ソースの現行バージョン全体を読み、内部結合に一致した結果を作り、overwriteで出力テーブルを置き換える点。増分処理やMERGEではない"
+  },
+  {
+    "id": "DEP-Q234",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Auto Loader", "cloudFiles", "binaryFile", "pathGlobFilter", "file filtering"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "本番環境では、S3バケットに毎日数千もの画像ファイルがさまざまな形式（.png、.jpg、.gif）で受信しています。データエンジニアは、.png ファイルのみを処理するように、以下のストリーミング取り込みスクリプトを修正します\n\n```python\ndf = spark.readStream.format(\"cloudFiles\") \\\n          .option(\"cloudFiles.format\", \"binaryFile\") \\\n          .option(\"_____________\", \"*.png\") \\\n          .load(\"s3://shop/raw/invoices/\")```要件を満たす為、空欄に正しく記入できる選択肢はどれですか？",
+    "choices": {
+      "A": "pathGlobFilter",
+      "B": "cloudFiles.pathGlobFilter",
+      "C": "cloudFiles.fileExtension",
+      "D": "fileExtension"
+    },
+    "answer": "A",
+    "explanation": "正解は **pathGlobFilter** です\n\nAuto Loader で、同じディレクトリ内に `.png`、`.jpg`、`.gif` など複数形式のファイルが存在し、その中から `.png` ファイルだけを処理したい場合は、`pathGlobFilter` オプションを使用します。Databricks 公式ドキュメントでも、suffix pattern を明示的に指定するには `pathGlobFilter` を使う必要があり、`binaryFile` 形式で `.png` だけを読み込む例として `.option(\"pathGlobFilter\", \"*.png\")` が示されています。`cloudFiles.pathGlobFilter` ではなく、`pathGlobFilter` として指定する点が重要です。",
+    "whyWrong": {
+      "B": "`cloudFiles.pathGlobFilter` ではありません",
+      "C": "`cloudFiles.fileExtension` という Auto Loader の標準オプションはありません",
+      "D": "`fileExtension` という標準オプションではありません"
+    },
+    "references": [
+      {
+        "title": "glob パターンを使用したディレクトリまたはファイルのフィルター処理",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/patterns#filtering-directories-or-files-using-glob-patterns"
+      },
+      {
+        "title": "自動ローダーのオプション",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/options"
+      }
+    ],
+    "notes": "論点は Auto Loader でもファイル名パターン指定には Spark 汎用オプション `pathGlobFilter` を使うこと。`cloudFiles.` プレフィックスを付けない点が引っかけ"
+  },
+  {
+    "id": "DEP-Q235",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "CI/CD",
+    "tags": ["Databricks Asset Bundles", "Databricks CLI", "bundle generate", "existing job", "YAML"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアがDatabricksジョブを所有しており、Databricksアセットバンドルによるジョブ管理を考えています。彼らはDatabricks CLIを使用してジョブのYAML定義を取得し、参照先の成果物をダウンロードしようとしています。以下のコマンドのうち、この要件を実現できるのはどれですか？",
+    "choices": {
+      "A": "`databricks bundle clone job --existing-job-id`",
+      "B": "`databricks bundle get job --existing-job-id`",
+      "C": "`databricks bundle generate job --existing-job-id`",
+      "D": "`databricks bundle download job --existing-job-id`"
+    },
+    "answer": "C",
+    "explanation": "正解は **databricks bundle generate job --existing-job-id** です\n\nDatabricks CLI では、既存のジョブ定義を Databricks Asset Bundles の構成として取り込むために `databricks bundle generate job --existing-job-id <job-id>` を使用します。このコマンドは、既存ジョブの YAML 構成を bundle の `resources` フォルダに生成し、ジョブが参照しているノートブックなどの成果物を `src` フォルダにダウンロードします\n\nしたがって、既存ジョブを Asset Bundles で管理するために、ジョブの YAML 定義取得と参照成果物のダウンロードを行いたい場合は、`databricks bundle generate job` が正しいコマンドです",
+    "whyWrong": {
+      "A": "`databricks bundle clone job` という標準コマンドはありません",
+      "B": "`databricks bundle get job` という標準コマンドはありません",
+      "D": "`databricks bundle download job` という標準コマンドはありません"
+    },
+    "references": [
+      {
+        "title": "既存のリソースをバンドルに移行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/migrate-resources"
+      },
+      {
+        "title": "bundle コマンド グループ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/cli/bundle-commands"
+      }
+    ],
+    "notes": "現行ドキュメントでは Databricks Asset Bundles は Declarative Automation Bundles とも表記される。`bundle generate job --existing-job-id` は既存ジョブの bundle YAML を生成し、参照されるノートブック等を `src` にダウンロードする。必要に応じて `--bind` を付けると、生成したリソースを既存ジョブにバインドできる"
+  },
+  {
+    "id": "DEP-Q236",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "Delta Lake",
+    "tags": ["MERGE INTO", "insert-only merge", "Delta Lake", "deduplication", "WHEN NOT MATCHED"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "以下のコマンドのうち、挿入のみマージが実行できるのはどれですか？",
+    "choices": {
+      "A": "```sql\nMERGE INTO orders\nUSING new_orders\nON orders.orders_id = new_orders.orders_id\nWHEN MATCHED\n    INSERT *```",
+      "B": "```sql\nMERGE INTO orders\nUSING new_orders\nON orders.orders_id = new_orders.orders_id\nWHEN NOT MATCHED\n    INSERT *\nWHEN MATCHED\n    IGNORE *```",
+      "C": "```sql\nMERGE INTO orders\nUSING new_orders\nON orders.orders_id = new_orders.orders_id\nWHEN MATCHED\n    INSERT *\nWHEN NOT MATCHED\n    IGNORE *```",
+      "D": "```sql\nMERGE INTO orders\nUSING new_orders\nON orders.orders_id = new_orders.orders_id\nWHEN NOT MATCHED\n    INSERT *```"
+    },
+    "answer": "D",
+    "explanation": "正解は **WHEN NOT MATCHED INSERT *** です\n\ninsert-only merge は、ソース行がターゲットに存在しない場合だけ挿入し、既に一致するターゲット行がある場合は更新も削除も行わない MERGE です。Databricks の MERGE 構文では、新規行の挿入は `WHEN NOT MATCHED THEN INSERT` で指定します。したがって、`WHEN NOT MATCHED INSERT *` のみを指定しているのが、挿入のみマージを表す正しい構文です\n\nこのパターンは、すでにターゲットテーブルに存在するキーを再挿入しないようにする重複排除用途でも使われます。Databricks 公式でも、insert-only merge はデータ重複排除のために使えると説明されています。",
+    "whyWrong": {
+      "A": "`WHEN MATCHED INSERT *` は不適切です。`WHEN MATCHED` は既存ターゲット行に一致した場合の処理であり、通常は `UPDATE` または `DELETE` を指定します",
+      "B": "`WHEN NOT MATCHED INSERT *` は正しい方向ですが、`WHEN MATCHED IGNORE *` という MERGE 句は Databricks の正式構文ではありません。一致した行に何もしない場合は、`WHEN MATCHED` 句を書かなければよいです",
+      "C": "`WHEN MATCHED INSERT *` と `WHEN NOT MATCHED IGNORE *` はどちらも不適切です"
+    },
+    "references": [
+      {
+        "title": "MERGE INTO",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-merge-into"
+      },
+      {
+        "title": "Delta Lake テーブルへのマージを使用したアップサート",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/merge"
+      }
+    ],
+    "notes": "論点は insert-only merge の最小構文。`WHEN MATCHED` 側に `IGNORE` を明示するのではなく、単に `WHEN MATCHED` 句を書かないことで既存一致行には何もしない"
+  },
+  {
+    "id": "DEP-Q237",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Structured Streaming", "stream-static join", "Delta Lake", "micro-batch", "static table"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "Stream-Static joins における Static Deltaテーブルに関する正しい記述はどれですか？",
+    "choices": {
+      "A": "Static Deltaテーブルは、Stream-Static joins の各マイクロバッチごとに REFRESH TABLE コマンドで更新する必要があります",
+      "B": "Static Deltaテーブルの最新バージョンは、Stream-Static joins の最初のマイクロバッチに対してのみ返されます。以降のすべてのマイクロバッチでは、キャッシュが使用されます",
+      "C": "Static Deltaテーブルは、クラスタ内のすべてのワーカーノードにブロードキャストできる程度に小さくなければなりません",
+      "D": "Stream-Static joinsのマイクロバッチによってクエリされる度、Static Deltaテーブルの最新バージョンが返されます"
+    },
+    "answer": "D",
+    "explanation": "正解は **Stream-Static joinsのマイクロバッチによってクエリされる度、Static Deltaテーブルの最新バージョンを返す** です\n\nStream-Static join は、絶え間なく流れてくる「ストリーミングデータ」と、更新頻度の低い「静的なテーブル」を掛け合わせる実装手法の1種です。各マイクロバッチの処理時点で static Delta テーブルの最新の有効なバージョンで joinが走ります\n\nStream-static join は stateless join であり、マイクロバッチ処理時に static Delta table の latest valid version が、ストリームレコードと結合するものです。これにより **低レイテンシーを維持しつつ拡張性を持ち、リアルタイムに取り込む処理** が実現できます\n\nただし、静的テーブルの更新だけで新しいマイクロバッチが自動起動する訳ではありません。トリガーはストリーミング側の新着データです",
+    "whyWrong": {
+      "A": "各マイクロバッチごとに `REFRESH TABLE` を実行する必要はありません",
+      "B": "static Delta テーブルは最初のマイクロバッチだけで固定される訳ではありません",
+      "C": "static 側が小さければブロードキャスト結合が有効な場合はありますが、stream-static join の要件として、全てのワーカーノードへブロードキャストできるほど小さい必要がある訳ではありません"
+    },
+    "references": [
+      {
+        "title": "MERGE INTO",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-merge-into"
+      },
+      {
+        "title": "Databricks Stream-Static Join実装 - Note",
+        "url": "https://note.com/mellow_launch/n/n98b0f9d0828d"
+      },
+      {
+        "title": "ストリーム静的結合（Stream-Static Join）とは",
+        "url": "https://www.google.com/search?q=%E3%82%B9%E3%83%88%E3%83%AA%E3%83%BC%E3%83%A0%E9%9D%99%E7%9A%84%E7%B5%90%E5%90%88"
+      }
+    ],
+    "notes": "static Delta table は各マイクロバッチで最新バージョンが参照されるが、static 側の更新だけではマイクロバッチは起動しない。トリガーはあくまで stream 側の新着データ"
   }
 ]
