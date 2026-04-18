@@ -1294,5 +1294,329 @@
       }
     ],
     "notes": "static Delta table は各マイクロバッチで最新バージョンが参照されるが、static 側の更新だけではマイクロバッチは起動しない。トリガーはあくまで stream 側の新着データ"
+  },
+  {
+    "id": "DEP-Q238",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "expectations", "data quality", "ON VIOLATION DROP ROW", "SQL"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "LDPパイプラインにおいて以下のデータ品質制約を定義しました\n\n```sql\nCONSTRAINT valid_id EXPECT (id IS NOT NULL) ___________```この制約に違反するレコードが削除され、メトリクスに報告されるようにするには、どの条項が空欄を正しく埋めますか？",
+    "choices": {
+      "A": "`ON VIOLATION DELETE ROW`",
+      "B": "`ON VIOLATION DISCARD ROW`",
+      "C": "`ON VIOLATION DROP ROW`",
+      "D": "`ON VIOLATION FAIL UPDATE`"
+    },
+    "answer": "C",
+    "explanation": "正解は **ON VIOLATION DROP ROW** です\n\nLakeflow Declarative Pipelines の SQL expectation では、違反レコードを破棄して処理を継続する句として `ON VIOLATION DROP ROW` を使います。Databricks の SQL ドキュメントとチュートリアルでも、`CONSTRAINT valid_id EXPECT (id IS NOT NULL) ON VIOLATION DROP ROW` という形が示されています。\n\nまた、Databricks は expectations について、違反時の動作として warn、drop、fail を説明しており、drop の場合は無効レコードを除外しつつメトリクスを追跡できます。一方、fail は更新自体を失敗させます",
+    "whyWrong": {
+      "A": "`ON VIOLATION DELETE ROW` は正式な SQL expectation 句ではありません",
+      "B": "`ON VIOLATION DISCARD ROW` という句は Databricks の expectation 構文にはありません。",
+      "D": "`ON VIOLATION FAIL UPDATE` は有効な句ですが、これは違反レコードを削除して継続するのではなく、更新自体を失敗させます"
+    },
+    "references": [
+      {
+        "title": "パイプラインの期待値を使用してデータ品質を管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/expectations"
+      }
+    ],
+    "notes": "期待値違反時の代表動作は warn / drop / fail。SQL では `ON VIOLATION DROP ROW` と `ON VIOLATION FAIL UPDATE` が代表的"
+  },
+  {
+    "id": "DEP-Q239",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Delta Lake",
+    "tags": ["Delta Lake", "file statistics", "data skipping", "transaction log", "nested fields"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "Delta Lake のファイル統計に関する記述のうち、正しくないものはどれですか？",
+    "choices": {
+      "A": "Delta Lakeは、追加されたデータファイルごとにトランザクションログに統計情報を記録します",
+      "B": "文字列フィールドの要素数が非常に多い場合、統計情報は一般的に役に立たない",
+      "C": "テーブルの最初の32列を決定する際、ネストされたフィールドはカウントされません",
+      "D": "統計情報は、選択的なクエリを実行する際に、データのスキップに活用されます"
+    },
+    "answer": "C",
+    "explanation": "正解は **テーブルの最初の32列を決定する際、ネストされたフィールドはカウントされない** です\n\nDelta Lake では、追加された各データファイルに対して統計情報が transaction log に記録されます。Databricks の公式 docs でも、file-skipping statistics として min、max、null count、total records per file が自動収集され、選択的なクエリで data skipping に使われると説明されています\n\n試験文脈では、first 32 columns の扱いにおいて nested fields も影響すると考えるのが一般的であり、『ネストされたフィールドはカウントされない』という説明は不適切です。\n\nなお、文字列列については current docs では『長い文字列は統計収集時に切り詰められる』『頻繁にフィルタしない長い文字列フィールドは stats から外すことを検討できる』とされています。そのため** 『文字列フィールドの要素数が非常に多い場合、統計情報は一般的に役に立たない』は、やや強い言い方**です。試験の意図としては **高カーディナリティな文字列フィールドの stats は有用性が低いことが多い** という整理です\n\nなお、『ネストされたフィールドとは』struct / array / map形式のフィールドを指します。このような形式のフィールドは `payload.name` のように . (ドット) を扱うことで子フィールドにアクセスできます",
+    "whyWrong": {
+      "A": "正しい記述です。data skipping information はテーブルへの書き込み時に自動収集され、各データファイルについて transaction log に記録されます",
+      "B": "試験文脈では正しい寄りの記述です。長い文字列は統計収集時に切り詰められ、頻繁にフィルタしない長い文字列フィールドは stats 収集対象から外すことは検討できるとされています",
+      "D": "正しい記述です。収集された file statistics を query time に利用して faster queries を実現すると説明しています"
+    },
+    "references": [
+      {
+        "title": "データのスキップ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/data-skipping"
+      }
+    ],
+    "notes": "試験対策上は『nested fields も first 32 columns の扱いに影響しうる』として 覚えるのが実践的"
+  },
+  {
+    "id": "DEP-Q240",
+    "section": "7",
+    "sectionTitle": "Ensuring Data Security and Compliance",
+    "domain": "Compute",
+    "tags": ["cluster access mode", "Standard", "interactive cluster", "multi-user", "data isolation"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "複数のデータアナリストで構成したチームが、基本的なデータ探索、小規模データセットへのクエリ実行、PythonとSQLを用いた分析を行う分析プロジェクトに取り組みたいと考えています\n\n彼らはデータエンジニアに、ワークロードをサポートするためにインタラクティブなクラスターを構成するよう依頼したい。このユースケースを最適にサポートするために、エンジニアは以下のどのクラスタアクセスモードを設定すべきでしょうか？",
+    "choices": {
+      "A": "NO_ISOLATION_SHARED",
+      "B": "SINGLE USER",
+      "C": "STANDARD",
+      "D": "DEDICATED"
+    },
+    "answer": "C",
+    "explanation": "正解は **STANDARD** です\n\nDatabricks の現行ドキュメントでは、Standard access mode は『複数ユーザーで利用でき、ユーザー間のデータ分離がある』モードです。さらに Databricks は、必要な機能で制約がない限り Standard access mode を推奨しています。\n\nこの問題のユースケースは、複数のデータアナリストがインタラクティブに、基本的な探索・小規模クエリ・Python と SQL による分析を行うものです。そのため、単一ユーザー専用モード(SINGLE USER)ではなく、複数ユーザーで安全に共有利用できる Standard access mode が最適です。",
+    "whyWrong": {
+      "A": "NO_ISOLATION_SHARED は旧来の共有モード系の選択肢です。現行の推奨としては Standard access mode が優先されます",
+      "B": "SINGLE USER は単一ユーザー向けであり、複数アナリストの共同利用には適しません",
+      "D": "DEDICATED は単一ユーザーまたは単一グループに割り当てるモードです。今回のような一般的な複数ユーザー向け対話分析用途には合いません"
+    },
+    "references": [
+      {
+        "title": "コンピューティング構成リファレンス - アクセスモード",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/configure#access-mode"
+      }
+    ],
+    "notes": "現行Databricksでは Access mode は Standard と Dedicated が中心で、Databricks は Standard の利用を推奨している。複数アナリストが共有で使うインタラクティブ分析用途には Standard が最も自然"
+  },
+  {
+    "id": "DEP-Q241",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "Notebook Operations",
+    "tags": ["notebook", "production scheduling", "display", "interactive analysis", "job hygiene"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "一般的に、ノートブックを本番環境でスケジュールする前に、以下のコマンドのうちどれをコードから削除すべきでしょうか？",
+    "choices": {
+      "A": "Display commands",
+      "B": "Import commands",
+      "C": "Magic commands",
+      "D": "Markup language commands"
+    },
+    "answer": "A",
+    "explanation": "正解は **Display commands** です\n\n`display()` のような 表示系のコマンドは、ノートブック上で表やグラフを対話的に確認するためのものです。Databricks のドキュメントでも、ノートブック出力は対話的な利用を前提に説明されています。本番ジョブとしてスケジュール実行する前には、こうした対話用の表示コードは不要な出力や実行コストにつながるため、削除または最小化するのが一般的です",
+    "whyWrong": {
+      "B": "Import commands はライブラリ利用のために必要であり、通常は削除すべき対象ではありません",
+      "C": "Magic commands は用途次第で残る場合があります。たとえば言語切替や環境設定で必要なことがあります",
+      "D": "Markup language commands は説明やドキュメント用途であり、実行ロジックに直接悪影響を与える代表例ではありません"
+    },
+    "references": [
+      {
+        "title": "ノートブックの出力と結果",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/notebook-outputs"
+      }
+    ],
+    "notes": "論点は、対話分析向けコードと本番ジョブ向けコードの切り分け。display は開発中には有用だが、本番スケジュール実行前には削除・整理対象になりやすい"
+  },
+  {
+    "id": "DEP-Q242",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "AUTO CDC", "SEQUENCE BY", "tombstone", "out-of-order data", "apply changes storage"],
+    "difficulty": "hard",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、Lakeflow Declarative PipelinesでCDCデータを処理するために、以下のコードを使用します\n```sql\nCREATE OR REFRESH STREAMING TABLE cdc_target;\n\nCREATE FLOW cdc_flow AS AUTO CDC INTO users_target\nFROM stream(users_raw)\nKEYS (user_id)\nAPPLY AS DELETE WHEN operation = \"DELETE\"\nSEQUENCE BY updated_timestamp\nCOLUMNS *;```このコードを実行した後、データエンジニアは、users_targetテーブルに加えて、メタストアに2つのオブジェクトが作成されていることに気づきました\n\n  ・「users_target」という名前のビュー\n\n  ・「__apply_changes_storage_users_target」という名前のテーブル\n\n次のうち、これらのオブジェクトの目的を正しく説明しているのはどれですか？",
+    "choices": {
+      "A": "users_target ビュー と __apply_changes_storage_users_target テーブルは、書き込み最適化のために作成される一時オブジェクトであり、パイプラインの実行後すぐに削除されます",
+      "B": "これらのオブジェクトは、SEQUENCE BY を活用した内部CDC処理に使用され、順不同データを処理するために必要な tombstone や version などの追加情報も使用されます",
+      "C": "users_target ビューは、クエリを高速化するためのターゲット テーブル上の仮想インデックスであり、__apply_changes_storage_users_target テーブルは元の users_target インデックスのバックアップです",
+      "D": "users_target ビューは、生データを具体化したスナップショットであり、__apply_changes_storage_users_target テーブルは、監査目的でユーザーアクティビティログを保存します"
+    },
+    "answer": "B",
+    "explanation": "正解は **これらのオブジェクトは、SEQUENCE BY を活用した内部CDC処理に使用され、順不同データを処理するために必要な tombstone や version などの追加情報も使用される** です\n\nLakeflow Declarative Pipelines の AUTO CDC は、CDC ソースからのイベントを **KEYS** と **SEQUENCE BY** に基づいて順序制御しながらターゲットへ適用します。`INSERT` と `UPDATE` のデフォルト動作は upsert であり、キー一致時は更新、未一致時は挿入として処理します\n\n一方、この設問のコードでは `APPLY AS DELETE WHEN operation = \"DELETE\"` を指定している為、DELETE イベントも変更処理として対象になります。Databricks は、順不同データを正しく処理するため、削除された行を基底の Delta テーブルに tombstone（削除マーカー）として一時保持し、その tombstone を利用者に見せないためのビューをメタストアに作成すると説明しています。`users_target` ビューはこの“利用者向けの見せ方”を担い、`__apply_changes_storage_users_target` テーブルは tombstone を含む内部 CDC ストレージを担います\n\nつまり、これらの追加オブジェクトは単なる一時オブジェクトやインデックスではなく、`SEQUENCE BY` による順序制御、DELETE の適用、順不同イベントへの耐性を実現するための内部実装です。なお、tombstone は AUTO CDC 全般で常に前面に出る概念ではなく、 DELETE を扱う場合に重要になる内部表現です。INSERT / UPDATE だけの CDC では、主な動作は upsert です\n\n 各々の要素は次の役割を持ちます\n\n- `SEQUENCE BY` : どのイベントが新しいかを決める物差し\n\n- `tombstone` : DELETE を即時完全消去せず、順序比較のために一時保持する内部記録\n\n- 隠しビュー : tombstone を利用者に見せず、正しい現在像だけ公開するためのビュー\n\n- 保持期間(pipelines.cdc.tombstoneGCThresholdInSeconds) : 想定される遅延到着期間を超える長さにする",
+    "whyWrong": {
+      "A": "これらは『実行後すぐ削除される一時オブジェクト』ではありません。Databricks 公式は、基底 Delta テーブルに tombstone を保持し、それを隠すビューをメタストアに作成すると説明しています",
+      "C": "`users_target` ビューは仮想インデックスではなく、tombstone を隠すための公開ビューです。`__apply_changes_storage_users_target` もインデックスのバックアップではありません。AUTO CDC の内部ストレージです",
+      "D": "`users_target` は raw データのスナップショットではなく、CDC 処理結果を利用者向けに見せるビューです。`__apply_changes_storage_users_target` も監査専用ログではなく、CDC 処理のための内部 Delta ストレージです"
+    },
+    "references": [
+      {
+        "title": "AUTO CDC API: パイプラインを使用して変更データ キャプチャを簡略化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/cdc"
+      },
+      {
+        "title": "AUTO CDC INTO (パイプライン)",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/developer/ldp-sql-ref-apply-changes-into"
+      },
+      {
+        "title": "create_auto_cdc_flow",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/developer/ldp-python-ref-apply-changes"
+      }
+    ],
+    "notes": "論点は AUTO CDC が内部的に基底 Delta テーブルと公開ビューを分けて持つ点。`__apply_changes_storage_*` は順不同 CDC と削除処理のための内部ストレージ、公開名のオブジェクトは tombstone を隠すビュー"
+  },
+  {
+    "id": "DEP-Q243",
+    "section": "5",
+    "sectionTitle": "Monitoring and Alerting",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "event log", "data quality", "flow_progress", "expectations"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、LDPパイプラインのデータ品質結果を、関連するイベントログテーブルからプログラムによって抽出する必要があります\n\nこの要件を満たすコードスニペットは次のうちどれですか？",
+    "choices": {
+      "A": "```sql\nSELECT details:flow_progress.data_quality.expectations\nFROM catalog.schema.event_log\nWHERE event_type = 'flow_progress'```",
+      "B": "```sql\nSELECT data_quality\nFROM catalog.schema.event_log\nWHERE event_type = 'metrics'```",
+      "C": "```sql\nSELECT expectations\nFROM catalog.schema.event_log\nWHERE event_type = 'flow_progress'```",
+      "D": "```sql\nSELECT expectations\nFROM catalog.schema.event_log\nWHERE event_type = 'metrics'```"
+    },
+    "answer": "A",
+    "explanation": "正解は **SELECT details:flow_progress.data_quality.expectations FROM catalog.schema.event_log WHERE event_type = 'flow_progress'** です\n\nDatabricks の LDP event log では、データ品質や expectation の結果は `flow_progress` イベントに記録されます。公式ドキュメントでは、期待値メトリクスは `details:flow_progress.data_quality.expectations` オブジェクトに保存されると説明されています。したがって、event log からプログラム的に抽出するには、`event_type = 'flow_progress'` で絞り込み、この JSON パスを参照するのが正しいです",
+    "whyWrong": {
+      "B": "データ品質の結果は flow_progress イベントに入ります。また、data_quality をトップレベル列として直接引く形でもありません",
+      "C": "expectations はトップレベル列ではありません",
+      "D": "`event_type = 'metrics'` ではなく `flow_progress` が正しいイベント種別です"
+    },
+    "references": [
+      {
+        "title": "データ品質または期待値のメトリックに対してクエリを実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/monitor-event-logs#data-quality-metrics"
+      },
+      {
+        "title": "パイプライン イベント ログ スキーマ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/monitor-event-log-schema"
+      }
+    ],
+    "notes": "論点は、expectation 結果が `flow_progress` イベントの `details:flow_progress.data_quality.expectations` に入る点。トップレベル列ではなく details JSON をたどる"
+  },
+  {
+    "id": "DEP-Q244",
+    "section": "4",
+    "sectionTitle": "Data Sharing and Federation",
+    "domain": "column filtering",
+    "tags": ["Delta Sharing", "views", "dynamic views", "row filtering", "column filtering"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、大規模なDelta Lakeテーブルの一部をデータサイエンスチームと共有するためのシンプルな解決策を探しています\n\nテーブル内の部門固有の列のみを共有する必要がありますが、その名前は部門ごとに異なります。更に共有する前にフィルタリングする必要のある機密データも含まれています。本要件を満たすように作成できるものはどれですか？",
+    "choices": {
+      "A": "既存のテーブルから SHALLOW CLONE を使用して新しい Delta テーブルを作成する",
+      "B": "既存のテーブルから DEEP CLONE を使用して新しい Delta テーブルを作成する",
+      "C": "既存のテーブルからビューを作成する",
+      "D": "既存のテーブルに対してCTASステートメントを使用して新しい Delta テーブルを作成する"
+    },
+    "answer": "C",
+    "explanation": "正解は **既存のテーブルからビューを作成する** です\n\nこの要件では、部門ごとに共有する列が異なり、さらに共有前に機密データをフィルタする必要があります。Databricks の Delta Sharing は、共有対象としてテーブルだけでなく **views, including dynamic views that restrict access at the row and column level** をサポートしています。そのため、元テーブルに対して必要な列だけを選択し、機密データを除外するビューを作成して共有するのが最も適切です\n\n一方、SHALLOW CLONE、DEEP CLONE、CTAS は新しいテーブルを作る方法ですが、部門ごとに異なる列の出し分けや機密データの柔軟なフィルタリングを共有時にシンプルに実現する方法としては、ビューほど適していません。ビューならロジックを1か所に集約でき、共有先ごとに別ビューを作る設計もしやすいです\n\nなお、通常のビューでも必要列の選択と機密データの除外は可能だが、共有先ごとの行・列制御やデータマスキングまで含めてシンプルに実現するには、Delta Sharing で共有可能な **動的ビュー** がより適している。マテリアライズドビューは主に事前計算と高速化のための仕組みであり、本要件の中心ではない",
+    "whyWrong": {
+      "A": "SHALLOW CLONE は元テーブルのデータファイルを参照するコピーであり、部門ごとの列選択や機密データの柔軟なフィルタを表現する仕組みではありません",
+      "B": "DEEP CLONE は独立した物理コピーを作成しますが、共有したい列や行を柔軟に出し分ける用途にはビューの方が適しています",
+      "D": "CTAS でもフィルタ済みテーブルを作れますが、部門ごとに異なる列構成や条件を管理するには、再作成コストの低いビューの方がシンプルです"
+    },
+    "references": [
+      {
+        "title": "動的ビューを共有に追加して行と列のフィルター処理を行う",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/create-share#dynamic-views"
+      },
+      {
+        "title": "ビューとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/views/"
+      }
+    ],
+    "notes": "共有前に列・行を制御したい要件では、ビュー、とくに dynamic view が自然。clone や CTAS は複製手段であり、共有ロジックの柔軟性では劣る"
+  },
+  {
+    "id": "DEP-Q245",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "Notebook Operations",
+    "tags": ["%sh", "magic commands", "driver node", "notebook refactoring", "performance"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "若手データエンジニアが、`%sh` マジックコマンドを使って古いコードを実行しています。上流データエンジニアは、代わりにコードをリファクタリングすることを推奨しました。`%sh` マジックコマンドを避ける理由として考えられるのは、次のうちどれでしょうか？",
+    "choices": {
+      "A": "本選択肢の全ての理由が %sh を避けるべき理由です",
+      "B": "%sh は出力を永続化するためのストレージにアクセスできません",
+      "C": "%sh は Python インタープリタを再起動します。これにより、ノートブックで宣言されたすべての変数がクリアされます",
+      "D": "%sh はローカルドライバマシン上でのみシェルコードを実行する為、パフォーマンスに大きなオーバーヘッドが発生します"
+    },
+    "answer": "D",
+    "explanation": "正解は **%sh はローカルドライバマシン上でのみシェルコードを実行する為、パフォーマンスに大きなオーバーヘッドが発生します** です\n\nDatabricks の `%sh` は、ノートブックからシェルコマンドを実行できる補助マジックですが、実行先は Apache Spark の driver ノードのみであり、worker ノードでは実行できない為、パフォーマンスが上がらない点が懸念です。Databricks 公式にも `%sh` は driverノード上だけで動作し、全ノードで実行したい場合は init script を使うよう記載されています。したがって、分散処理を前提とする本番コードでは `%sh` に依存すると構成が不自然になりやすい点が、リファクタリング対象になりやすいです",
+    "whyWrong": {
+      "A": "`%sh` が driver 上だけで動く点は正しい論点ですが、すべての選択肢が正しい訳ではありません",
+      "B": "Databricks 公式は `%sh` が driver 上でシェルコードを実行すると説明していますが、『出力を永続化するためのストレージにアクセスできない』とはしていません",
+      "C": "Python state のリセットが問題になるのは `%pip` の一部ランタイム条件であり、`%sh` についてそのような説明はありません。Databricks 公式で state reset に言及しているのは `%pip` です"
+    },
+    "references": [
+      {
+        "title": "マジック コマンドを使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/notebooks-code#magic-commands-reference"
+      }
+    ],
+    "notes": "論点は `%sh` が driver node 上だけで動作すること。分散実行を期待できないため、本番処理では Python / Spark / SQL での実装へ寄せる方が自然。C は `%pip` の挙動との混同を狙った引っかけ"
+  },
+  {
+    "id": "DEP-Q246",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Spark",
+    "tags": ["PySpark", "window function", "partitionBy", "orderBy", "rowsBetween", "cumulative average"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、以下のPySparkコードを実装しました\n\n```python\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import avg, col\n\nwindow_spec = Window.partitionBy(\"student_id\").orderBy(\"exam_date\")\\\n                .rowsBetween(Window.unboundedPreceding, Window.currentRow)\n\ndf_new = df_student_results.withColumn(\"avg_score\", avg(\"score\").over(window_spec))```このコードの動作を正しく説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "各生徒の最初の試験から現在の試験までの累積平均点を示す列が追加されます",
+      "B": "最初に入学した学生から現在の学生までの各試験の累積平均点を示す列が追加されます",
+      "C": "試験日順に、各生徒の総合平均点を表示する列を追加します",
+      "D": "生徒に関係なく、各試験の総合平均点を示す列が追加されます"
+    },
+    "answer": "A",
+    "explanation": "正解は **各生徒の最初の試験から現在の試験までの累積平均点を示す列が追加される** です\n\nこのコードでは、`partitionBy(\"student_id\")` により生徒ごとに独立したウィンドウを作り、`orderBy(\"exam_date\")` により試験日順に並べています。さらに `rowsBetween(Window.unboundedPreceding, Window.currentRow)` によって、各行について『その生徒の最初の行から現在行まで』がウィンドウ範囲になります。その範囲に対して `avg(\"score\")` を適用しているため、avg_score は各生徒の累積平均点になります",
+    "whyWrong": {
+      "B": "生徒ごとに `partitionBy(\"student_id\")` で区切られているため、全学生をまたいだ累積平均にはなりません",
+      "C": "各生徒の全期間平均ではなく、試験日順に現在行までの累積平均です",
+      "D": "生徒に関係なく全体平均を出しているわけではありません。`partitionBy(\"student_id\")` があるため、生徒単位で計算されます"
+    },
+    "references": [
+      {
+        "title": "pyspark.sql.Window.rowsBetween",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.Window.rowsBetween.html"
+      },
+      {
+        "title": "pyspark.sql.Window.partitionBy",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.Window.partitionBy.html"
+      },
+      {
+        "title": "pyspark.sql.functions.avg",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.avg.html"
+      }
+    ],
+    "notes": "論点は `partitionBy` で生徒単位、`orderBy` で試験日順、`rowsBetween(unboundedPreceding, currentRow)` で累積範囲になること"
+  },
+  {
+    "id": "DEP-Q247",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Delta Lake",
+    "tags": ["Delta Lake", "file skipping", "statistics", "string columns", "performance", "Z-ORDER"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、「user_messages」という名前の大きなDeltaテーブルを持っており、そのスキーマは以下の通りです\n\n```sql\nmsg_id INT, user_id INT, msg_time TIMESTAMP, msg_title STRING, msg_body STRING```msg_bodyフィールドは、自由形式のテキストでユーザーメッセージを表します。このフィールドをフィルターとしてテーブルをクエリすると、パフォーマンスの問題が発生します。このパフォーマンス問題の原因として考えられるのは、次のうちどれでしょうか？",
+    "choices": {
+      "A": "このテーブルは file skipping を利用していません。なぜなら、Delta Lakeの統計情報は、カーディナリティが非常に高い文字列フィールドについては役に立たないからです",
+      "B": "このテーブルは msg_body列でパーティション分割されていないため、file skipping を利用していません",
+      "C": "このテーブルは msg_body列に対して Z-ORDER による最適化が行われていないため、file skipping を利用していません",
+      "D": "Delta Lake の統計情報は STRING型の列には記録されないため、このテーブルでは file skipping は利用されません"
+    },
+    "answer": "A",
+    "explanation": "正解は **このテーブルは file skipping を利用していません。なぜなら、Delta Lakeの統計情報は、カーディナリティが非常に高い文字列フィールドについては役に立たないから** です\n\nDelta Lake の file skipping は、各データファイルに記録された統計情報を使って、読まなくてよいファイルをスキップする最適化です。ただし、`msg_body` のような自由形式テキスト列は、値のバリエーションが非常に多く、ほぼ各行で異なる内容になりやすいため、カーディナリティが高い列といえます。\n\nこのような列では、ファイルごとの min / max などの統計が実用的な絞り込み条件になりにくく、file skipping の効果が小さくなり、パフォーマンス問題が起きやすくなります。更に Databricks では長い文字列は統計収集時に切り詰められるため、自由形式の長文テキスト列では統計がより効きにくくなります",
+    "whyWrong": {
+      "B": "file skipping はパーティション分割していなくても利用できます",
+      "C": "Z-ORDER は file skipping を強化できる手法ですが、Z-ORDER していないと file skipping が全く使えないわけではありません。まず file statistics があり、その上で Z-ORDER によって関連データを同じファイル群へ寄せると効果が高まります",
+      "D": "STRING 列も統計は収集できます。しかし、長い文字列は切り詰められるとDatabricks 公式は説明しており、これは STRING 列にも stats がある前提です"
+    },
+    "references": [
+      {
+        "title": "データのスキップ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/data-skipping"
+      }
+    ],
+    "notes": "自由形式テキスト列は file skipping の効きが弱い代表例。STRING 列でも stats はあり得るが、長文・高カーディナリティでは min/max が実用になりにくい"
   }
 ]
