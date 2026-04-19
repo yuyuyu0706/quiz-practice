@@ -1618,5 +1618,355 @@
       }
     ],
     "notes": "自由形式テキスト列は file skipping の効きが弱い代表例。STRING 列でも stats はあり得るが、長文・高カーディナリティでは min/max が実用になりにくい"
+  },
+  {
+    "id": "DEP-Q248",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "CI/CD",
+    "tags": ["Databricks Jobs", "For each task", "parameterization", "notebook tasks", "scalability"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "若手データエンジニアが、15個のノートブックタスクを含むDatabricksジョブを作成します。各タスクは、15個の異なるテーブルに対して同じデータ検証ロジックを実行します\n\n各タスクは前のタスクの完了に依存しているため、ワークフローが長くなり、維持管理が困難になります。このユースケースにおいて、より効率的で拡張性の高いソリューションは次の内どれでしょうか？",
+    "choices": {
+      "A": "15個のノートブックタスクを並列実行するように構成し、それぞれに個別のクラスタ構成を設定します",
+      "B": "すべてのテーブル検証を1つの大きなノートブックにまとめ、すべてのテーブルを順番にループ処理します",
+      "C": "1つのジョブに複数のタスクをまとめるのではなく、15個のジョブを別々にスケジュールします",
+      "D": "foreachタスクを使用して、テーブル名をパラメータとして渡しながら、各テーブルに対して同じ検証ノートブックを並列実行します"
+    },
+    "answer": "D",
+    "explanation": "正解は **foreachタスクを使用して、テーブル名をパラメータとして渡しながら、各テーブルに対して同じ検証ノートブックを並列実行する** です\n\nDatabricks Jobs の `For each` task は、1つのネストタスクをループ実行し、各反復へ異なる入力パラメータを渡すための機能です。Databricks の公式ドキュメントでも、『複数テーブルに対して共通の変換を実行する』用途が代表例として示されており、各反復で `{{input}}` や `{{input.<key>}}` を使って値を渡せます。さらに、相互依存のないネストタスクは並列実行できます\n\nこのユースケースでは、15個のテーブルに対して同じ検証ロジックを実行したいので、テーブル名だけを変えて同じノートブックを再利用するのが自然です。foreachタスク を使えば、ジョブ定義を簡潔に保ちつつ、拡張しやすい設計にできます",
+    "whyWrong": {
+      "A": "並列化の方向性は一部合っていますが、15個の個別タスクを並べるとジョブ定義の重複や保守負荷が残ります",
+      "B": "1つの大きなノートブックに全部のロジックを詰め込むと、再利用性や失敗時の切り分け、並列性が落ちます",
+      "C": "15個のジョブへ分割すると、スケジュール管理や依存関係、監視対象が増えて運用が複雑になります"
+    },
+    "references": [
+      {
+        "title": "For each タスクを使用してループ内で別のタスクを実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/for-each"
+      },
+      {
+        "title": "制御テーブルを使用してFor eachジョブを駆動します",
+        "url": "https://docs.databricks.com/aws/ja/jobs/how-to/foreach-sql-lookup-tutorial"
+      },
+      {
+        "title": "タスク パラメーターを構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/task-parameters"
+      }
+    ],
+    "notes": "論点は、同一ロジックを複数対象へ適用するジョブ設計。For each task はネストタスクへ入力を渡してループ実行でき、独立反復は並列化も可能。長い依存チェーンを持つ個別ノートブックタスク群より、保守性と拡張性に優れる"
+  },
+  {
+    "id": "DEP-Q249",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Auto Loader", "schema evolution", "cloudFiles.schemaEvolutionMode", "addNewColumns", "JSON"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、S3バケットからJSONデータを取り込むために、以下のDatabricks Auto Loaderストリームを設定しています\n\n```python\nspark.readStream \\\n     .format(\"cloudFiles\") \\\n     .option(\"cloudFiles.format\", \"json\") \\\n     .option(\"cloudFiles.schemaLocation\", \"s3://shop/checkpoints/orders\")\n     .option(\"cloudFiles.schemaEvolutionMode\", \"_______________\") \\\n     .load(\"s3://shop/raw/orders/json/\") \\\n    .writeStream \\\n     .option(\"checkpointLocation\", \"s3://shop/checkpoints/orders\") \\\n     .start(\"orders_table\")```パイプラインは、受信データに新しい列が検出された場合、失敗させます。しかし、新しい列はスキーマに追加され、更新したスキーマで正常に後続処理が再開できます。また、既存の列は、データ型を維持して欲しい。要件を満たすために、空欄に正しく記入できる選択肢はどれですか？",
+    "choices": {
+      "A": "rescue",
+      "B": "addNewColumns",
+      "C": "failOnNewColumns",
+      "D": "none"
+    },
+    "answer": "B",
+    "explanation": "正解は **addNewColumns** です\n\nDatabricks Auto Loader では、`cloudFiles.schemaEvolutionMode` に `addNewColumns` を指定すると、新しい列が検出された際にストリームは `UnknownFieldException` で停止します。ただし、その停止前に最新マイクロバッチをもとにスキーマ推論が行われ、新しい列は既存スキーマの末尾へ追加されます。その後、更新済みスキーマで後続処理を再開できます。また、既存列のデータ型は変更されません。これは設問の『新しい列が検出された場合、失敗させる』『新しい列はスキーマに追加される』『既存の列はデータ型を維持してほしい』という要件に一致します",
+    "whyWrong": {
+      "A": "`rescue` はストリームを失敗させず、新しい列を `_rescued_data` に退避します。新列を正式なスキーマへ追加して再開する動きにはなりません",
+      "C": "`failOnNewColumns` では新しい列を検出するとストリームは失敗しますが、スキーマは自動更新されません。ユーザーが明示的にスキーマを更新するか、問題ファイルを除去しない限り再開できません",
+      "D": "`none` はスキーマを進化させず、新しい列は無視されます。`rescuedDataColumn` を設定しない限り救済もされず、設問の要件である『新列をスキーマへ追加』を満たしません"
+    },
+    "references": [
+      {
+        "title": "自動ローダーでスキーマの推論と進化を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+      }
+    ],
+    "notes": "設問の条件は Auto Loader の `addNewColumns` の説明と一致する。『失敗するが、新列は追加され、既存列の型は変わらない』が決め手。"
+  },
+  {
+    "id": "DEP-Q250",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "DLT",
+    "tags": ["Lakeflow Declarative Pipelines", "expectations", "data quality", "ON VIOLATION FAIL UPDATE", "SQL"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、LDPパイプラインにおいて以下のデータ品質制約を定義しました\n\n```sql\nCONSTRAINT valid_id EXPECT (id IS NOT NULL) _____________```レコードがこの制約に違反した場合に実行を即座に停止させるには、どの条項が空欄に正しく当てはまりますか？",
+    "choices": {
+      "A": "ON VIOLATION STOP",
+      "B": "ON VIOLATION FAIL UPDATE",
+      "C": "ON VIOLATION FAIL PIPELINE",
+      "D": "ON VIOLATION DROP ROW"
+    },
+    "answer": "B",
+    "explanation": "正解は **`ON VIOLATION FAIL UPDATE`** です\n\nLakeflow Declarative Pipelines の expectation では、違反レコードが見つかったときの動作として warn、drop、fail が用意されています。このうち実行を即時停止する fail 動作に対応する SQL 句は `ON VIOLATION FAIL UPDATE` です。Databricks 公式でも、`expect_or_fail` の SQL 例として `CONSTRAINT valid_count EXPECT (count > 0) ON VIOLATION FAIL UPDATE` が示されています。違反が発生すると update は失敗し、手動対応が必要になります\n\nON VIOLATION FAIL UPDATE は、違反検知の flow の update 全体を対象にロールバックさせます。しかし、複数の並列 flow がある場合、他の 正常な flow は影響せず失敗しません。\n\nなお、Bronze作成処理としては厳し過ぎる設定となる為、Silver以降の処理での適用が推奨です。Bronzeでは、warn や dropなど継続前提の検証が有効です",
+    "whyWrong": {
+      "A": "`ON VIOLATION STOP` という SQL expectation 句はありません",
+      "C": "`ON VIOLATION FAIL PIPELINE` という句はありません。また、単一 flow の failure は他の flow を巻き込まないと説明されています",
+      "D": "`ON VIOLATION DROP ROW` は違反レコードを除外して処理を継続する句であり、即時停止ではありません"
+    },
+    "references": [
+      {
+        "title": "無効なレコードに対するアクション",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/expectations#action-on-invalid-record"
+      }
+    ],
+    "notes": "DROP と FAIL の対比問題。`DROP ROW` は継続、`FAIL UPDATE` は flow が即時停止"
+  },
+  {
+    "id": "DEP-Q251",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "Compute",
+    "tags": ["init scripts", "DBFS", "workspace files", "Volumes", "cloud storage"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "以下のソースロケーションのうち、初期化スクリプトの保存に使用できなくなったのはどれですか？",
+    "choices": {
+      "A": "Workspace files",
+      "B": "Cloud storage",
+      "C": "DBFS",
+      "D": "Volumes"
+    },
+    "answer": "C",
+    "explanation": "正解は **DBFS** です\n\nDatabricks の現行ドキュメントでは、DBFS 上の init scripts は end-of-life に達しており、現在は使用できません。公式には『Init scripts on DBFS have reached end-of-life and can no longer be used.』と明記されています。そのため、既存の DBFS 配置 init script は、Workspace files、Unity Catalog Volumes、または cloud object storage へ移行する必要があります\n\nDBFS は “Databricks 内の便利な共通ファイル置き場” という初期思想の名残となっています。しかし、2026年昨今の Databricks は「Unity Catalog volumes」「External locations経由の Cloud storage」「Workspace files」を推奨しており、 “ガバナンスされた用途別ファイル管理” に軸足をシフトしている最中ということです",
+    "whyWrong": {
+      "A": "Workspace files は現在も init script の保存先としてサポートされています。推奨条件やアクセスモード制約はありますが、使用不可ではありません",
+      "B": "Cloud storage は現在もサポートされています。Databricks Runtime や access mode の条件に応じて利用可能です",
+      "D": "Volumes は現行の推奨保存先です。特に Databricks Runtime 13.3 LTS 以上 + Unity Catalog 環境で推奨されています"
+    },
+    "references": [
+      {
+        "title": "init スクリプトとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/init-scripts/"
+      }
+    ],
+    "notes": "DBFS 上の init script は現在使用不可。現行の保存先は Workspace files、Volumes、Cloud storage"
+  },
+  {
+    "id": "DEP-Q252",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Auto Loader", "schema inference", "schema evolution", "cloudFiles.schemaLocation", "JSON"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、クラウドストレージから大量のJSONファイルを段階的に取り込むために、以下のオートローダーストリームを実装しました\n\n```python\n(spark.readStream.format(\"cloudFiles\")\n        .option(\"cloudFiles.format\", \"json\")\n        ____________________________\n        .load(\"/path/to/files\")\n)```デフォルトでは、Auto Loader は検出した最初の 50 GB または 1000 個のファイルをサンプリングすることでスキーマを推測します。しかし、データエンジニアは、再サンプリングを避け、後続の実行におけるスキーマ推論のコストを削減しつつ、時間の経過に伴うスキーマの変化を追跡したいと考えています\n\n指定された要件を満たすために、空欄に正しく記入できる選択肢はどれですか？",
+    "choices": {
+      "A": ".option(\"mergeSchema\", true)",
+      "B": ".option(\"cloudFiles.schemaLocation\", \"/path/to/checkpoint\")",
+      "C": ".option(\"cloudFiles.schemaEvolutionMode\", \"addNewColumns\")",
+      "D": ".option(\"checkpointLocation\", \"/path/to/checkpoint\")"
+    },
+    "answer": "B",
+    "explanation": "正解は **.option(\"cloudFiles.schemaLocation\", \"/path/to/checkpoint\")** です\n\nAuto Loader は、最初の 50 GB または 1000 ファイルをサンプリングしてスキーマを推論しますが、`cloudFiles.schemaLocation` を設定すると、その推論結果を保存し、後続実行で再利用できます。Databricks 公式では、このオプションを指定すると schema inference と schema evolution が有効になり、推論済みスキーマは `_schemas` ディレクトリに保存されます。これにより、毎回の再サンプリングを避けながら、時間経過に伴うスキーマ変化が追跡できます\n\nAuto Loader のスキーマ推論は、**将来の schema evolution を安全に扱うための仕組み** です。単なる先読み最適化ではなく、入力ファイル群から継続取り込み可能な基準スキーマを確立し、それを schemaLocation に保存しておきます\n\nまた、ファイル形式毎に挙動が違います。JSON/XML/CSV では型情報をファイル自体が強く持っていないので、デフォルトでは すべての列を string として推論します。Avro/Parquet ではファイル側に型付きスキーマを持つので、Auto Loader がサンプルしたファイル群の Avro schema をマージして全体スキーマを作りだす「統合」という意味合いが強いものです",
+    "whyWrong": {
+      "A": "`mergeSchema` は主に Delta 書き込み時のスキーマ進化で使う設定であり、Auto Loader のスキーマ推論結果の保存先指定ではありません",
+      "C": "`cloudFiles.schemaEvolutionMode` は新しい列が見つかったときに fail / add / rescue などどう振る舞うかを決める設定です",
+      "D": "`checkpointLocation` はストリーミングの進捗や状態を保存するための設定です"
+    },
+    "references": [
+      {
+        "title": "自動ローダー スキーマ推論のしくみ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema#how-does-auto-loader-schema-inference-work"
+      }
+    ],
+    "notes": "論点は `schemaLocation` と `checkpointLocation` の役割分担。`schemaLocation` は推論済みスキーマを `_schemas` に保持し、後続実行で再利用する。`schemaEvolutionMode` は新列検出時の振る舞いを制御する"
+  },
+  {
+    "id": "DEP-Q253",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Auto Loader", "micro-batch", "cloudFiles.maxBytesPerTrigger", "JSON", "stability"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、以下の Auto Loader を使用して、大きなJSONファイルを段階的に取り込んでいます\n\nこれらのファイルが原因で、マイクロバッチ処理に時間がかかり、時折メモリの問題が発生します\n\n```python\ndf = (spark.readStream\n            .format(\"cloudFiles\")\n            .option(\"cloudFiles.format\", \"json\")\n            _______________________\n            .load(\"s3://project/source/\"))```彼らは、マイクロバッチ毎にデータの一部のみを処理することで、安定性を向上させ、バッチ処理時間を予測可能にしたいと考えています。マイクロバッチ毎に128MBのデータのみを処理するには、どの選択肢が空欄に正しく当てはまりますか？",
+    "choices": {
+      "A": ".option(‘cloudFiles.maxDataPerTrigger’, ‘128mb’)",
+      "B": ".option(‘cloudFiles.maxBytesPerTrigger’, ‘128mb’)",
+      "C": ".option(‘batchSize’, ‘128mb’)",
+      "D": ".option(‘triggerInterval’, ‘128mb’)"
+    },
+    "answer": "B",
+    "explanation": "正解は **.option(‘cloudFiles.maxBytesPerTrigger’, ‘128mb’)** です\n\nAuto Loader では、各トリガーで処理する新規データ量の上限をバイト単位で制御するために `cloudFiles.maxBytesPerTrigger` を使用します。Databricks 公式でも、このオプションは『各トリガーで処理する新しいバイト数の最大値』と説明されており、`10g` のような byte string を指定できるため、`128mb` のような指定でマイクロバッチのサイズを抑えられます。これにより、大きな JSON ファイルによる処理時間のばらつきやメモリ負荷を抑え、安定性を高められます",
+    "whyWrong": {
+      "A": "`cloudFiles.maxDataPerTrigger` というオプションは Databricks の Auto Loader にはありません",
+      "C": "`batchSize` は Auto Loader の正式オプションではありません",
+      "D": "`triggerInterval` はデータ量上限を示すオプションではありません。設問は『128MBだけ処理する』要件なので、必要なのは時間間隔ではなくバイト上限です"
+    },
+    "references": [
+      {
+        "title": "Auto Loader の一般的なオプション",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/options#common-auto-loader-options"
+      }
+    ],
+    "notes": "公式では `cloudFiles.maxBytesPerTrigger` は soft maximum。巨大ファイルがある場合は厳密に 128MB で止まるとは限らない"
+  },
+  {
+    "id": "DEP-Q254",
+    "section": "8",
+    "sectionTitle": "Data Governance",
+    "domain": "Governance",
+    "tags": ["dynamic view", "row-level security", "is_member", "CASE", "Unity Catalog"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、以下の定義に基づく動的ビューを持っています\n\n```sql\nCREATE VIEW students_vw AS\nSELECT * FROM students\nWHERE\n    CASE\n        WHEN is_member(\"instructors\") THEN TRUE\n        ELSE is_active IS FALSE\n    END```このビューをクエリした結果を説明しているのは、次のどれですか？",
+    "choices": {
+      "A": "instructors グループのメンバーは、アクティブな学生の記録のみを閲覧できます。一方、指定グループのメンバーではないユーザーは、非アクティブな学生の記録に対して null 値を閲覧できます",
+      "B": "instructors グループのメンバーは、アクティブな学生の記録のみを閲覧できます。一方、指定グループのメンバーではないユーザーは、非アクティブな学生の記録のみ閲覧できます",
+      "C": "instructors グループのメンバーのみが、アクティブか非アクティブかを問わず、全ての学生の記録を閲覧できます。一方、指定グループのメンバーではないユーザーは、非アクティブな学生の記録のみ閲覧できます",
+      "D": "instructors グループのメンバーのみが、学生の活動状況に関わらず、全ての学生の記録を閲覧できます。一方、指定グループのメンバーではないユーザーは、非アクティブな学生の記録に対してnull値が表示されます"
+    },
+    "answer": "C",
+    "explanation": "正解は **instructors グループのメンバーのみが、アクティブか非アクティブかを問わず、全ての学生の記録を閲覧できます。一方、指定グループのメンバーではないユーザーは、非アクティブな学生の記録のみ閲覧できます** です\n\nこのビューの `WHERE` 句では、`is_member(\"instructors\")` が TRUE の場合は `TRUE` を返すため、 **instructors グループのメンバーにはすべての行が返されます**。一方、それ以外のユーザーには `is_active IS FALSE` が適用されるため、非アクティブな学生の行だけが返されます。Databricks の動的ビュー例でも、`CASE WHEN <group> THEN TRUE ELSE <条件>` という書き方で、特定グループには全行を見せ、それ以外のユーザーには条件に一致する行だけを見せる行レベル制御が説明されています",
+    "whyWrong": {
+      "A": "instructors グループのメンバーには `TRUE` が返るため、アクティブな学生だけでなく全学生の記録が見えます。また、このビューは null 値でマスキングするのではなく、行を返すか返さないかを制御しています",
+      "B": "instructors グループのメンバーはアクティブな学生のみではなく、全学生の記録を閲覧できます",
+      "D": "指定グループのメンバーではないユーザーに対して null 値を表示するのではなく、`is_active IS FALSE` を満たす行だけを返します。"
+    },
+    "references": [
+      {
+        "title": "動的ビューを作成する-行レベルのアクセス許可",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/views/dynamic#row-level-permissions"
+      }
+    ],
+    "notes": "この問題は列マスキングではなく行レベル制御。`CASE WHEN is_member(...) THEN TRUE ELSE 条件 END` は、特定グループに全件、それ以外に条件一致行のみを返すパターン"
+  },
+  {
+    "id": "DEP-Q255",
+    "section": "7",
+    "sectionTitle": "Ensuring Data Security and Compliance",
+    "domain": "Security",
+    "tags": ["PySpark", "sha2", "withColumn", "masking", "hashing", "PII"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、社会保障番号を含むデータセットを外部の分析ベンダーと共有する必要があります。彼らは、ベンダーが照合操作を実行できるようにしつつ、元の値が漏洩しないようにしたいと考えています。これを実現するために、彼らは以下のコードを実装しました\n\n```python\ndf_masked = df_original.withColumn(\"ssn_hash\", sha2(\"ssn\", 256))\ndf_masked.write.saveAsTable(\"masked_analytics\")```しかし、このコードでは元の値が依然として公開されていました。次のうち、この解決策を正しく説明しているのはどれですか？",
+    "choices": {
+      "A": "PySparkではsha2関数は利用できません。masked_analytics テーブルは、Spark SQLでCTASステートメントで作成する必要があります",
+      "B": "sha2関数は数値には適用できません。代わりに withColumn(\"ssn_hash\", sha1(\"ssn\")) を使用する必要があります",
+      "C": "このコードは、元の値を上書きするのではなく、df_masked に新しい列を追加しています。代わりに、withColumn(\"ssn\", sha2(\"ssn\", 256)) を使用する必要があります",
+      "D": "このコードは、元の値を削除せずに df_masked に新しい列を追加します。このコードの後に​​は、.drop(\"ssn_hash\") を記述する必要があります"
+    },
+    "answer": "C",
+    "explanation": "正解は **このコードは、元の値を上書きするのではなく、df_masked に新しい列を追加しています。代わりに、withColumn(\"ssn\", sha2(\"ssn\", 256)) を使用する必要があります** です\n\nPySpark の `withColumn` は、新しい列を追加するか、同じ名前の既存列がある場合はその列を置き換えます。したがって、`withColumn(\"ssn_hash\", sha2(\"ssn\", 256))` は `ssn` を消さずに `ssn_hash` を追加するだけなので、元の社会保障番号は引き続き残ります。元の値を公開したくないなら、`ssn` 列そのものをハッシュで置き換える必要があります\n\nまた、sha2 関数は PySpark で正式に利用可能で、SHA-256 を含む SHA-2 系ハッシュを返します。そのため、関数自体が使えないわけではありません",
+    "whyWrong": {
+      "A": "`sha2` は PySpark で利用可能です。関数が使えないことが原因ではありません",
+      "B": "`sha2` は列に適用でき、社会保障番号のような値にも使えます。この問題の本質はアルゴリズム選択ではなく、元の列が残っていることです",
+      "D": "`ssn_hash` を drop してしまうと、追加したハッシュ列の方が消えます。消したいのは元の `ssn` 列であり、この選択肢は逆です"
+    },
+    "references": [
+      {
+        "title": "pyspark.sql.DataFrame.withColumn",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.withColumn.html"
+      },
+      {
+        "title": "pyspark.sql.functions.sha2",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.sha2.html"
+      }
+    ],
+    "notes": "本質は `withColumn` の挙動。新列追加と既存列置換の違いを問う問題。実務ではハッシュ化だけで十分か、ソルトや鍵付き変換が必要かは要件次第"
+  },
+  {
+    "id": "DEP-Q256",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Spark",
+    "tags": ["Spark SQL", "timestamp", "date_part", "day-of-month", "date_trunc", "to_date"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "以下の Spark 関数のうち、タイムスタンプ列から「日（day-of-month）」を抽出するのに有効なものはどれですか？",
+    "choices": {
+      "A": "date_part('day', ts)",
+      "B": "CAST(ts AS DATE)",
+      "C": "date_trunc('day', ts)",
+      "D": "TO_DATE(ts)"
+    },
+    "answer": "A",
+    "explanation": "正解は **date_part('day', ts)** です\n\n`date_part('day', ts)` は、タイムスタンプ列から day-of-month の数値を返す関数です。一方、`CAST(ts AS DATE)` と `TO_DATE(ts)` は DATE 型へ変換し、`date_trunc('day', ts)` は日単位に切り詰めた TIMESTAMP を返します。Example: '2025-10-21 15:42:30' becomes '21'",
+    "whyWrong": {
+      "B": "`CAST(ts AS DATE)` は DATE 型へ変換するものです。Example: '2025-10-21 15:42:30' becomes '2025-10-21'",
+      "C": "`date_trunc('day', ts)` は日単位に切り詰めた TIMESTAMP を返す関数です。Example: '2025-10-21 15:42:30' becomes '2025-10-21 00:00:00'",
+      "D": "`TO_DATE(ts)` は DATE 型へ変換する関数です。Example: '2025-10-21 15:42:30' becomes '2025-10-21'"
+    },
+    "references": [
+      {
+        "title": "Built-in Functions",
+        "url": "https://spark.apache.org/docs/latest/sql-ref-functions-builtin.html"
+      }
+    ],
+    "notes": "この問題は『DATE型への変換』ではなく、『day-of-month の数値抽出』を問う点が重要。`date_part` は要素抽出、`to_date` と `cast(... as date)` は型変換、`date_trunc` は TIMESTAMP の切り詰め"
+  },
+  {
+    "id": "DEP-Q257",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "CI/CD",
+    "tags": ["Jobs API", "REST API", "jobs/create", "job_id", "idempotency"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、Databricks REST APIを使用して「process-sales」というジョブを作成したいと考えています。しかし、彼らは誤ってエンドポイント「api/2.2/jobs/create」に2件のPOSTリクエストを送信しました。これらのリクエストの結果を最も適切に表しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "ワークスペース内に2つのジョブが作成されますが、2つ目のジョブの名前は「process-sales (1)」に変更されます",
+      "B": "ワークスペースには最初のジョブのみが作成されます。2番目のリクエストは、「process-sales」という名前のジョブが既に作成されていることを示すエラーで失敗します",
+      "C": "ワークスペースには「process-sales」という名前のジョブが2つ作成されますが、 job_id は異なります",
+      "D": "2番目のジョブは、最初のリクエストで作成された以前のジョブを上書きします"
+    },
+    "answer": "C",
+    "explanation": "正解は **ワークスペースには「process-sales」という名前のジョブが2つ作成されますが、job_id は異なる** です\n\nDatabricks Jobs API の `POST /api/2.2/jobs/create` は、新しい job を作成して `job_id` を返す API です。公式ドキュメントには、job 名に一意制約があるという説明や、同名作成時にエラーになるという記述はありません。また、Jobs API のドキュメントでは workspace が最大 12000 saved jobs を持てることが示されています。一方で、`run-now` や `runs/submit` には idempotency token の記述がありますが、`create` にはその仕組みが示されていません。したがって、同じ create リクエストを2回送ると、同名でも別 job_id を持つ job が2つ作成されると考えるのが最も妥当です",
+    "whyWrong": {
+      "A": "Databricks Jobs API の create に、重複名を自動で `process-sales (1)` のように改名する仕様は公式に示されていません",
+      "B": "同名 job の存在を理由に create が失敗するという一意制約は、Jobs API の公式 docs には示されていません",
+      "D": "Jobs API の create は新規作成 API であり、既存 job を上書きする API ではありません。既存 job を変更する場合は update/reset 系 API を使います"
+    },
+    "references": [
+      {
+        "title": "Jobs API 2.0",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/reference/jobs-2.0-api"
+      },
+      {
+        "title": "Create a new job",
+        "url": "https://docs.databricks.com/api/workspace/jobs/create"
+      }
+    ],
+    "notes": "公式 docs は create の job 名重複時挙動を明示していないため、正答は API の性質と idempotency 記述の有無からの推論。単発 create を重複送信すると、同名・別 job_id の job が複数作られる前提で理解するのが自然"
+  },
+  {
+    "id": "DEP-Q258",
+    "section": "4",
+    "sectionTitle": "Data Sharing and Federation",
+    "domain": "Lakehouse Federation",
+    "tags": ["Lakehouse Federation", "Unity Catalog", "PostgreSQL", "connection", "foreign catalog"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、アナリストやデータサイエンティストが、外部のPostgreSQLデータベースに保存されているテーブルを、データの移動や複製を行うことなく、Databricksから直接クエリできるようにしたい。彼らは、Lakehouse FederationとUnity Catalogを使用して外部カタログを構築し、外部データへのシームレスなアクセスを実現する予定です。このプロセスにおいて最初にとるべきステップは何でしょうか？",
+    "choices": {
+      "A": "アカウント管理者としてアカウントコンソールに移動し、「組織外の関係者との Delta Sharing を許可する」オプションを有効にしてください",
+      "B": "Unity Catalog で connection を設定し、PostgreSQLデータベースに安全に接続できるようにして、必要な認証情報とネットワークアクセスを確立します",
+      "C": "メタストア管理者に対して、メタストアに対する CREATE SHARE 権限と CREATE RECIPIENT 権限を付与します",
+      "D": "Unity Catalog で外部 Location とストレージ認証情報を設定して、PostgreSQL の基盤となるストレージに安全に接続します"
+    },
+    "answer": "B",
+    "explanation": "正解は **Unity Catalog で connection を設定し、PostgreSQLデータベースに安全に接続できるようにして、必要な認証情報とネットワークアクセスを確立する** です\n\nLakehouse Federation で外部の PostgreSQL を Databricks から直接クエリする場合、最初の手順は Unity Catalog に connection を作成することです。Databricks の公式ドキュメントでは、Lakehouse Federation の初手として、まず Unity Catalog に接続オブジェクトを作成し、その後でその connection を使って 外部カタログを作成し、最後に権限を付与すると説明されています。PostgreSQL 向けの個別手順でも、connection 作成時に認証情報とネットワーク接続を準備する必要があります",
+    "whyWrong": {
+      "A": "これは Delta Sharing に関する設定であり、Lakehouse Federation で PostgreSQL を直接参照する最初の手順ではありません",
+      "C": "CREATE SHARE と CREATE RECIPIENT は Delta Sharing 用の権限であり、Lakehouse Federation で PostgreSQL に接続する初手ではありません",
+      "D": "External location と storage credential は、主にオブジェクトストレージや一部の federation シナリオで使うもので、PostgreSQL のような外部データベース接続の最初の手順ではありません"
+    },
+    "references": [
+      {
+        "title": "Lakehouse フェデレーションとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/query-federation/"
+      },
+      {
+        "title": "PostgreSQL でフェデレーテッド クエリを実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/query-federation/postgresql"
+      }
+    ],
+    "notes": "Lakehouse Federation の基本順序は『connection 作成 → foreign catalog 作成 → 権限付与 → クエリ実行』。External location は PostgreSQL 接続の初手ではなく、ストレージ系や一部別シナリオの要素"
   }
 ]
