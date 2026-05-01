@@ -91,11 +91,11 @@
       "D": "spark.readStreamを使用してinventory_updatesテーブルを直接読み込み、新しい更新内容を下流のテーブルに段階的に伝播させます"
     },
     "answer": "B",
-    "explanation": "正解は **spark.readStreamを使用してinventory_updatesテーブルのCDFを読み込み、AUTO CDC APIを使用して変更内容を下流のテーブルに適用** です\n\nLakeflow Declarative Pipelinesでは、CDFを使った変更データの継続的な反映にAUTO CDCを利用します。Databricks公式では、AUTO CDCはCDFを処理するためのAPIとして説明されており、変更の適用先に対して順序付けやキーを指定して反映できます。\n\nまた、Delta Change Data Feedを段階的に処理する際は、Structured Streaming で `readChangeFeed=true` を使う形が基本です",
+    "explanation": "正解は **spark.readStream を使用して inventory_updates テーブルの CDF を読み込み、AUTO CDC API を使用して変更内容を下流のテーブルに適用** です\n\nこの問題の本質は、『通常のストリーミング読込』に加えて『CDFとして変更イベントを読むこと』、更に『変更イベントを正しいキー・順序で下流へ適用すること』の3点です。\n\nDelta Lake の CDF（Change Data Feed）は、`readChangeFeed=true` を使うことで INSERT / UPDATE / DELETE といった変更イベントを `_change_type` などのメタデータ付きで段階的に読み取れます。これにより、単なる行の追加ではなく、『何がどう変化したか』をイベントとして扱えます\n\nLakeflow Declarative Pipelines の AUTO CDC API は、このCDFイベントを対象に、`KEYS` や `SEQUENCE BY` を使って順序付きで下流テーブルへ適用するためのベストプラクティスです。つまり、AUTO CDC は単なるストリーム読込ではなく、『変更イベントを意味どおりにターゲット状態へ反映する Apply 層』として機能します\n\n在庫データのように、更新・削除・順不同イベントを含み得る業務データでは、`spark.readStream.table(...)` のような直接読込だけでは変更種別を明示的に扱えず不十分です。`readChangeFeed=true` による CDF 読込と AUTO CDC の組み合わせが、全変更を正確に下流へ伝播させる為に最も適切です。\n\n要するに、\n- `readStream` → 継続処理\n- `readChangeFeed=true` → 変更イベント化\n- `AUTO CDC` → キー・順序付き適用\n\nという “会わせ技” で実現するものです",
     "whyWrong": {
-      "A": "spark.read はバッチ読込であり、継続的・段階的な変更伝播の実装としては不適切です。CDFの増分処理ではStructured Streamingの利用が基本です。",
-      "C": "skipChangeCommits は更新・削除を無視し、appendのみを処理するため、在庫変更をすべて下流へ伝播する要件を満たせません。",
-      "D": "ストリーミングテーブルを直接読むだけでは、CDFとしての変更イベントを明示的に扱う実装になっておらず、更新内容の適用方法として不十分です。"
+      "A": "`spark.read` はバッチ処理であり、一時点の読込には使えても、継続的・段階的な変更伝播には不向きです。CDFを活用しても、Lakeflow Declarative Pipelines におけるリアルタイムな増分伝播には Structured Streaming が前提です。MERGE INTO を手動構築すること自体は可能ですが、AUTO CDC のような順序制御・キー管理・SCD対応を宣言的に扱うベストプラクティスではありません",
+      "C": "`skipChangeCommits` は update / delete / merge などの変更コミットを無視し、append-only 的に新規追加のみを読むためのオプションです。今回の要件は『全ての在庫変更』を下流へ伝播することであり、変更イベントを意図的に無視するこの方法では不適切です",
+      "D": "`spark.readStream.table(...)` の直接読込は、テーブルをストリーミングソースとして読むだけであり、CDFとして INSERT / UPDATE / DELETE の変更種別を明示的に扱う設計ではありません。つまり、『新しい行を読む』ことはできても、『変更イベントをキー・順序付きで適用する』ことには不足があります。在庫のような状態変化データでは、単純読込だけでは下流が現在状態を正しく再現できない可能性があります"
     },
     "references": [
       {
@@ -1968,5 +1968,345 @@
       }
     ],
     "notes": "Lakehouse Federation の基本順序は『connection 作成 → foreign catalog 作成 → 権限付与 → クエリ実行』。External location は PostgreSQL 接続の初手ではなく、ストレージ系や一部別シナリオの要素"
+  },
+  {
+    "id": "DEP-Q259",
+    "section": "7",
+    "sectionTitle": "Ensuring Data Security and Compliance",
+    "domain": "Security",
+    "tags": ["Databricks Secrets", "secret scope", "ACL", "workspace admins", "secret creators", "permissions"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、「prod-scope」という名前の秘密のスコープを持っており、そこには本番環境のワークスペース内の機密情報が含まれています\n\nデータエンジニアがセキュリティとコンプライアンスに関するドキュメントを作成しており、secret の利用範囲について説明したいと考えています。以下のうち、Databricks の secret scope 内の secret を利用できる主体の説明として、最も適切なものはどれですか？",
+    "choices": {
+      "A": "Workspace administrators、secret creators、およびその scope に対して権限を付与されたユーザー",
+      "B": "Workspace Administrators のみ",
+      "C": "scope に対して READ 権限を持つユーザーのみ",
+      "D": "Secret creators のみ"
+    },
+    "answer": "A",
+    "explanation": "正解は **Workspace administrators、secret creators、およびその scope に対して権限を付与されたユーザー** です\n\nDatabricks の公式ドキュメントでは、Workspace admins、secret creators、および permission を付与された users は Databricks secrets にアクセスして読み取れると説明されています。また、scope 作成者には既定で MANAGE permission が付与され、この権限には read、write、grant permissions が含まれます",
+    "whyWrong": {
+      "B": "Workspace Administrators は利用できますが、それだけに限定されません",
+      "C": "READ 権限を持つユーザーは利用できますが、それだけに限定されません",
+      "D": "Secret creators は利用できますが、それだけに限定されません"
+    },
+    "references": [
+      {
+        "title": "シークレットの管理",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/security/secrets/"
+      }
+    ],
+    "notes": "権限モデルの詳細としては、scope creator には既定で MANAGE permission が付与され、MANAGE は read / write / grant permissions を含む"
+  },
+  {
+    "id": "DEP-Q260",
+    "section": "5",
+    "sectionTitle": "Monitoring and Alerting",
+    "domain": "Delta Lake",
+    "tags": ["Delta Lake", "Time Travel", "DESCRIBE HISTORY", "EXCEPT", "version comparison"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、Delta Lake上に「daily_activities」という名前のテーブルを持っており、このテーブルは毎晩、ソースシステムから受信した新しいデータで完全に上書きされます\n\n監査目的で、チームはDelta Lake Time Travel機能を使用して、テーブルの新しいバージョンと以前のバージョンとの差分を特定する後処理タスクを設定したいと考えています。まず、以下のコードを使用して現在のテーブルバージョンを取得します\n\n```python\ncurrent_version = spark.sql(\"SELECT max(version) FROM (DESCRIBE HISTORY daily_activities)\").collect()[0][0]```チームがこのタスクを完了するために使用できるクエリは次のうちどれですか？",
+    "choices": {
+      "A": "```sql\nSELECT * FROM daily_activities\nEXCEPT\nSELECT * FROM daily_activities@v{current_version-1}```",
+      "B": "```sql\nSELECT * FROM daily_activities\nINTERSECT\nSELECT * FROM daily_activities AS VERSION = {current_version-1}```",
+      "C": "```sql\nSELECT * FROM daily_activities\nMINUS\nSELECT * FROM daily_activities AS VERSION = {current_version-1}```",
+      "D": "```sql\nSELECT * FROM daily_activities\nUNION\nSELECT * FROM daily_activities AS VERSION = {current_version-1}```"
+    },
+    "answer": "A",
+    "explanation": "正解は **SELECT * FROM daily_activities EXCEPT SELECT * FROM daily_activities@v{current_version-1}** です\n\nDelta Lake では、各更新操作ごとに新しい table version が作られ、Time Travel によって過去バージョンを参照できます。設問では、現在のテーブルバージョンと1つ前のバージョンとの差分を特定したいので、『現在には存在するが前バージョンには存在しない行』を返す集合差演算が適切です。そのため、`EXCEPT` を使う A が最も妥当です。Databricks の公式ドキュメントでも、`DESCRIBE HISTORY` でバージョン履歴を取得でき、過去バージョンを time travel で参照できると説明されています\n\nなお、設問の前提はテーブルが毎晩フル上書きされることなので、新旧テーブルの差分比較では `EXCEPT` による行集合比較が自然です。`INTERSECT` は共通行、`UNION` は結合集合を返すため要件に合いません",
+    "whyWrong": {
+      "B": "`INTERSECT` は現在バージョンと前バージョンの共通行を返すため、差分抽出にはなりません",
+      "C": "`MINUS` は一部 SQL 方言では集合差ですが、Databricks / Spark SQL では標準的な説明は `EXCEPT` です",
+      "D": "`UNION` は両バージョンの行をまとめて返すため、差分特定には使えません"
+    },
+    "references": [
+      {
+        "title": "テーブル履歴の操作",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/history"
+      }
+    ],
+    "notes": "差分比較の意図なら `EXCEPT` が自然。time travel の正式構文としては `VERSION AS OF n` または `@v<n>` が使える。正解は `@v{current_version-1}` でその意図を表している"
+  },
+  {
+    "id": "DEP-Q261",
+    "section": "8",
+    "sectionTitle": "Data Governance",
+    "domain": "Governance",
+    "tags": ["Unity Catalog", "column mask", "UDF", "ALTER TABLE", "sensitive data", "masking"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、Delta Lakeテーブル customer_accounts を管理しており、そのテーブルには以下の列が含まれています\n\n- customer_id, name, account_number, credit_card\n\n彼らはcredit_card列にマスクを適用し、不正検出部門のアナリストのみが実際の値を閲覧できるようにしたいと考えています。これを実現するために、以下のユーザー定義関数を実装しました\n\n```python\nCREATE FUNCTION card_mask(credit_card STRING)\nRETURN CASE WHEN is_account_group_member('FraudDetectionDept') THEN credit_card\n        ELSE '****-****-****-****' END;```データエンジニアは、どのコマンドを使用して、この機能をテーブルの列マスクとして適用できますか？",
+    "choices": {
+      "A": "`SET MASK card_mask ON TABLE customer_accounts TO COLUMN credit_card;`",
+      "B": "`ALTER TABLE customer_accounts SET MASK card_mask ON (credit_card);`",
+      "C": "`ALTER TABLE customer_accounts ALTER COLUMN credit_card SET MASK card_mask;`",
+      "D": "`ALTER TABLE customer_accounts SET MASK card_mask;`"
+    },
+    "answer": "C",
+    "explanation": "正解は **ALTER TABLE customer_accounts ALTER COLUMN credit_card SET MASK card_mask;** です\n\nDatabricks の column mask は、既存テーブルへ後から適用する場合 `ALTER TABLE <table> ALTER COLUMN <column> SET MASK <function>` という構文を使います。Databricks の公式ドキュメントでも、既存テーブルに対して `ALTER TABLE users ALTER COLUMN ssn SET MASK ssn_mask;` を実行する例が示されています\n\nまた、column mask は Unity Catalog テーブルで使う機能で、マスク関数は SQL UDF として定義され、クエリ時に元の列値の代わりに評価結果が返されます。今回の `card_mask` は `is_account_group_member('FraudDetectionDept')` を使って、不正検出部門だけに実値を見せ、それ以外にはマスク値を返す設計です",
+    "whyWrong": {
+      "A": "`SET MASK ... ON TABLE ... TO COLUMN ...` という構文は Databricks SQL の正式構文ではありません",
+      "B": "`ALTER TABLE ... SET MASK ... ON (...)` という構文も正式ではありません",
+      "D": "`ALTER TABLE customer_accounts SET MASK card_mask;` では、どの列に適用するかが指定されておらず、Databricks の column mask 構文に合致しません"
+    },
+    "references": [
+      {
+        "title": "行フィルターと列マスクを手動で適用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/filters-and-masks/manually-apply"
+      },
+      {
+        "title": "列マスク句",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-column-mask"
+      },
+      {
+        "title": "行フィルターと列マスク",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/filters-and-masks/"
+      }
+    ],
+    "notes": "論点は既存テーブル列への column mask 適用構文。新規作成時は列定義で `MASK func_name` を付けられるが、後付けは `ALTER TABLE ... ALTER COLUMN ... SET MASK ...` を使う。Unity Catalog が必要"
+  },
+  {
+    "id": "DEP-Q262",
+    "section": "6",
+    "sectionTitle": "Cost & Performance Optimisation",
+    "domain": "Delta Lake",
+    "tags": ["Delta Lake", "deletion vectors", "liquid clustering", "CDC", "MERGE", "Unity Catalog"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、UCが管理する大規模なDeltaテーブル（約750GB）が、集中的なCDCフィードを適用した際に動作が遅くなることに気づきました\n\nパフォーマンスを向上させるために、次のうちどの行動を取るべきでしょうか？",
+    "choices": {
+      "A": "テーブルをパーティション分割し、主キーを使用して Liquid Clustering を適用します",
+      "B": "テーブル上で Deletion vectors を有効にし、主キーを使用して Liquid Clustering を適用します",
+      "C": "テーブルをパーティション分割し、主キーに Z-order indexing を適用します",
+      "D": "テーブルに対して Deletion vectors を有効にし、主キーに Z-order indexing を適用します"
+    },
+    "answer": "B",
+    "explanation": "正解は **テーブル上で Deletion vectors を有効にし、主キーを使用して Liquid Clustering を適用する** です\n\nDatabricks の Deletion vectors は、`DELETE`、`UPDATE`、`MERGE` などの変更系処理を高速化するための機能です。公式ドキュメントでは、deletion vectors を有効にすると、変更対象の行を含む Parquet ファイル全体を書き換える代わりに、変更を deletion vectors として記録できるため、変更処理のオーバーヘッドが減ると説明されています。CDC フィードを集中的に適用するワークロードでは、この効果が特に重要です\n\nまた、Databricks は liquid clustering を、従来の table partitioning や Z-ORDER を置き換えるデータレイアウト最適化として説明しています。したがって、Unity Catalog 管理の大規模 Delta テーブルに対しては、partitioning や Z-order を新たに選ぶより、deletion vectors と liquid clustering の組み合わせが最も適切です。主キーを clustering key として使うことで、CDC の更新・参照の局所性改善も期待できます",
+    "whyWrong": {
+      "A": "Databricks は liquid clustering を table partitioning と Z-ORDER を置き換えるものとして説明しています。したがって、partitioning と liquid clustering を併用する方向は最適解として不自然です",
+      "C": "partitioning と Z-order は従来の最適化手法ですが、現行推奨は liquid clustering です。また、CDC 適用性能の改善には deletion vectors がより直接的に効きます",
+      "D": "deletion vectors は有効ですが、liquid clustering が partitioning と Z-ORDER を置き換えると説明しています。現行の推奨としては Z-order より liquid clustering が適切です"
+    },
+    "references": [
+      {
+        "title": "Databricks の Deletion vectors",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/deletion-vectors"
+      },
+      {
+        "title": "テーブルに Liquid Clustering を使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/clustering"
+      },
+      {
+        "title": "行レベルの同時実行",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/optimizations/isolation/row-level-concurrency"
+      }
+    ],
+    "notes": "CDC 適用のような更新系ワークロードには deletion vectors が直接効く。Databricks の現行設計では liquid clustering が partitioning と Z-order の後継として推奨される"
+  },
+  {
+    "id": "DEP-Q263",
+    "section": "7",
+    "sectionTitle": "Ensuring Data Security and Compliance",
+    "domain": "Governance",
+    "tags": ["Delta Lake", "appendOnly", "table properties", "Unity Catalog", "Bronze"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、Unityカタログ内のブロンズDelta Lakeテーブルを管理する責任を負います\n\nデータ整合性の維持とガバナンスポリシーの適用の一環として、エンジニアはUPDATEおよびDELETE操作を無効にすることで、テーブルへの変更を制限したいと考えています。この制限を適用するために、どのコマンドが使用できますか？",
+    "choices": {
+      "A": "```sql\nALTER TABLE bronze_raw SET TBLPROPERTIES ('delta.preventModification' = true);```",
+      "B": "```sql\nALTER TABLE bronze_raw SET TBLPROPERTIES ('delta.appendOnly' = true);```",
+      "C": "```sql\nALTER TABLE bronze_raw SET TBLPROPERTIES ('delta.disableUpdate' = true);\nALTER TABLE bronze_raw SET TBLPROPERTIES ('delta.disableDelete' = true);```",
+      "D": "```sql\nALTER TABLE bronze_raw SET TBLPROPERTIES ('delta.disableUpdate' = true, 'delta.disableDelete' = true);```"
+    },
+    "answer": "B",
+    "explanation": "正解は **ALTER TABLE bronze_raw SET TBLPROPERTIES ('delta.appendOnly' = true);** です\n\nDatabricks の Delta テーブルでは、`delta.appendOnly = true` を設定すると append-only table になります。公式ドキュメントでは、append-only tables は『既存レコードの削除や既存値の更新を許可しない』と説明されています。そのため、Bronze テーブルに対して `UPDATE` と `DELETE` を禁止し、追記中心の運用に制限したい要件に最も適しています。なお、参照は可能です\n\nまた、既存テーブルの table properties は `ALTER TABLE ... SET TBLPROPERTIES` で変更できると Databricks は説明しています",
+    "whyWrong": {
+      "A": "`delta.preventModification` というテーブルプロパティは、Databricks には存在しません",
+      "C": "`delta.disableUpdate` と `delta.disableDelete` というテーブルプロパティは、Databricks に存在しません",
+      "D": "`delta.disableUpdate` と `delta.disableDelete` というテーブルプロパティは、Databricks に存在しません"
+    },
+    "references": [
+      {
+        "title": "テーブル プロパティ リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/table-properties"
+      },
+      {
+        "title": "テーブル プロパティとテーブル オプション",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-tblproperties"
+      }
+    ],
+    "notes": "Bronze のような原本保持寄りテーブルでは append-only 制約と相性がよい。`delta.appendOnly = true` は既存レコードの UPDATE/DELETE を禁止するが、追記は許可する"
+  },
+  {
+    "id": "DEP-Q264",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "Notebook Operations",
+    "tags": ["Databricks notebooks", "source format", "GitHub", "Databricks notebook source", "workspace files"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが、GitHubにプッシュされた各Databricks Pythonファイルのソースコードの最初の行に「# Databricks notebook source」というコメントがあることに気づきました\n\nこのコメントの目的を説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "このコメントは、Pythonの自動生成ドキュメントに使用されます",
+      "B": "このコメントは、Databricksワークスペースの検索インデックスにPythonファイルを追加します",
+      "C": "このコメントは、Python ファイルが Databricks ノートブックとして登録されます",
+      "D": "このコメントは、Databricks から生成されたコードのソースを人間が理解しやすくなります"
+    },
+    "answer": "C",
+    "explanation": "正解は **このコメントは、Python ファイルが Databricks ノートブックとして登録される** です\n\nDatabricks 公式ドキュメントでは、`.py`、`.sql`、`.scala`、`.r` ファイルについて、先頭行コメントに `# Databricks notebook source` を含むと、そのファイルは単一の Databricks notebook として識別されると説明されています。このコメントを先頭に追加すると、スクリプトを single-cell notebook に変換できるとも記載されています。したがって、このコメントの役割は、ファイルを Databricks ノートブックとして扱うためのメタ情報です。人間向け説明や検索インデックス追加ではありません",
+    "whyWrong": {
+      "A": "このコメントは Python の自動生成ドキュメント用ではありません",
+      "B": "このコメントは検索インデックス追加のためではありません",
+      "D": "人間の理解補助が主目的ではありません"
+    },
+    "references": [
+      {
+        "title": "Databricks ノートブックのインポートとエクスポート",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/notebook-export-import"
+      }
+    ],
+    "notes": "公式には『先頭行コメントに `Databricks notebook source` を含み、拡張子が .py/.sql/.scala/.r なら notebook として識別される』とある。Git 連携時にこのコメントが見えるのは source notebook 形式のため"
+  },
+  {
+    "id": "DEP-Q265",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Testing",
+    "tags": ["unit testing", "assertion", "testing fundamentals", "boolean expression"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "次の記述のうち、単体テストにおけるアサーションを正しく説明しているのはどれですか？",
+    "choices": {
+      "A": "アサーションとは、コード内で立てられた仮定が開発中に真であり続けること(期待通りか)をチェックする真偽値の式のことです",
+      "B": "アサーションとは、本番環境で失敗したコードユニットをログに記録し、後でデバッグや分析に役立てるためのコマンドです",
+      "C": "アサーションとは、コードユニットの現在のバージョンと最後に編集されたバージョンとの差異を示すコマンドです",
+      "D": "アサーションとは、2つのコードブロックが論理的に統合され、グループとして相互作用しているかどうかをチェックする真偽値の式のことです"
+    },
+    "answer": "A",
+    "explanation": "正解は **アサーションとは、コード内で立てられた仮定が開発中に真であり続けるかどうかをチェックするブール式のこと** です\n\n単体テストにおけるアサーションは、処理結果が期待通りか、ある前提条件や不変条件が成り立っているかを確認するための検証です。たとえば『関数の戻り値が期待値と一致するか』『変換後のデータ件数が想定通りか』のような条件を真偽で判定します\n\nそのため、アサーションはログ取得や差分比較のためのコマンドではなく、期待される状態が成り立つかを確認する判定だと理解するのが適切です",
+    "whyWrong": {
+      "B": "これはログ記録や障害解析の説明に近く、アサーションそのものの定義ではありません",
+      "C": "これはソースコードの差分確認やバージョン比較の説明に近く、単体テストのアサーションではありません",
+      "D": "これは統合テストや結合テストの観点に近く、アサーション自体の定義としては不適切です"
+    },
+    "references": [
+      {
+        "title": "アサーション = 表明 (プログラミング概念)",
+        "url": "https://ja.wikipedia.org/wiki/%E8%A1%A8%E6%98%8E_(%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0)"
+      }
+    ],
+    "notes": "基礎的なテスト用語の確認問題。アサーションは『期待条件が真かどうかを判定するもの』として押さえるとよい"
+  },
+  {
+    "id": "DEP-Q266",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "CI/CD",
+    "tags": ["Databricks Asset Bundles", "bundle deployment bind", "existing job", "Databricks CLI", "YAML"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアが既存のDatabricksジョブを所有しており、Databricks Asset Bundles でジョブを管理したいと考えています\n\n彼らは既にジョブのYAML定義を生成し、参照される成果物をダウンロード済みです。しかし、彼らはバンドルのYAMLへの更新が、新しいジョブを作成するのではなく、既存のジョブを変更することを確実にしたいと考えています。以下のコマンドのうち、データエンジニアがこれを実現できるのはどれですか？",
+    "choices": {
+      "A": "databricks bundle deployment match <bundle_job> <remote-job-id>",
+      "B": "databricks bundle deployment bind <bundle_job> <remote-job-id>",
+      "C": "databricks bundle deployment link <bundle_job> <remote-job-id>",
+      "D": "databricks bundle deployment mirror <bundle_job> <remote-job-id>"
+    },
+    "answer": "B",
+    "explanation": "正解は **databricks bundle deployment bind <bundle_job> <remote-job-id>** です\n\n既存ジョブの YAML 定義を生成し、参照成果物をダウンロードした後、そのバンドル定義をリモートワークスペース上の既存ジョブに紐付けるには `databricks bundle deployment bind` を使用します。Databricks 公式では、このコマンドにより bundle-defined resource を workspace 内の既存リソースへリンクし、次回の `bundle deploy` 以降、その既存リソースがバンドル定義に基づいて更新すると説明しています\n\nしたがって、バンドルの YAML 更新によって新しいジョブを作成するのではなく、既存の `remote-job-id` のジョブを管理・更新対象にしたい場合は、`bundle deployment bind` が正しいコマンドです",
+    "whyWrong": {
+      "A": "`databricks bundle deployment match` という標準コマンドはありません",
+      "C": "`databricks bundle deployment link` という標準コマンドはありません",
+      "D": "`databricks bundle deployment mirror` という標準コマンドはありません"
+    },
+    "references": [
+      {
+        "title": "bundle コマンド グループ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/cli/bundle-commands"
+      },
+      {
+        "title": "既存のリソースをバンドルに移行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/migrate-resources"
+      }
+    ],
+    "notes": "`bundle generate job --existing-job-id` は定義生成と成果物ダウンロード、`bundle deployment bind` は生成済みバンドルリソースを既存ワークスペースリソースへ紐付ける操作"
+  },
+  {
+    "id": "DEP-Q267",
+    "section": "7",
+    "sectionTitle": "Ensuring Data Security and Compliance",
+    "domain": "Delta Sharing",
+    "tags": ["Delta Sharing", "D2D", "D2O", "authentication", "OIDC", "bearer token", "Unity Catalog"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "ある多国籍企業は、販売分析データを、別の国に拠点を置く社内のDatabricksチームと、外部のコンサルティングパートナーの両方と共有したいと考えています\n\n社内チームはDatabricks間データ共有（D2D）を介してデータにアクセスし、外部パートナーはオープンなDelta Sharing（D2O）プロトコルを使用します。このシナリオでは、D2D共有とD2Oプロトコルの認証はどのように異なるのでしょうか？",
+    "choices": {
+      "A": "Databricks間共有（D2D）はシングルサインオン（SSO）による統一ログインに依存する一方、オープンデルタ共有（D2O）はOIDCフェデレーションによる外部ログインを使用します",
+      "B": "Databricks間共有（D2D）はOIDCフェデレーションに依存する一方、オープンデルタ共有（D2O）はベアラートークンによる認証を必要とします",
+      "C": "Databricks間共有（D2D）とオープンデルタ共有（D2O）はどちらも同じ認証を使用する為、違いはありません",
+      "D": "Databricks間共有（D2D）はトークン交換なしの組み込み認証を使用するのに対し、オープンデルタ共有（D2O）はベアラートークンまたはOIDCフェデレーションによる外部認証を必要とします"
+    },
+    "answer": "D",
+    "explanation": "正解は **Databricks間共有（D2D）はトークン交換なしの組み込み認証を使用するのに対し、オープンデルタ共有（D2O）はベアラートークンまたはOIDCフェデレーションによる外部認証を必要とする** です\n\nこの問題の本質は、『Databricks内部のネイティブ共有』と『Databricks外部へのオープン共有』で、認証モデルが異なる点です\n\nDatabricks-to-Databricks（D2D）共有では、共有先が Databricks workspace / metastore として Unity Catalog 上で認識され、Databricks プラットフォーム内でネイティブに認証・認可されます。つまり、受信側 Databricks ユーザーは通常の Databricks 認証コンテキスト内で共有データへアクセスでき、外部向け credential file や bearer token を明示的に管理する必要はありません。\n\n一方、Databricks-to-Open（D2O）共有では、外部システムや非Databricksクライアントが Delta Sharing open protocol を使って共有データへアクセスします。この場合、Databricks 内部ユーザーとしては扱えないため、外部向け認証が必要になります。その代表が **Bearer Token（ベアラートークン）** または **OIDC federation** です\n\nBearer Token とは、『そのトークン（秘密文字列）を提示できる者が、その権限を持つ利用者として扱われる』方式です。HTTP API では一般的に `Authorization: Bearer <token>` の形式で利用され、Delta Sharing では credential file に含まれる bearer token を使って共有データへアクセスします。重要なのは、Bearer は“トークンそのもの”ではなく、“トークンの提示方式”である点です。つまり、D2O は Databricks 外部利用者向けに、APIベースで bearer token または OIDC による認証を必要とします。\n\n整理すると、\n- **D2D** → Databricks ネイティブ共有（組み込み認証）\n- **D2O** → 外部共有（Bearer Token または OIDC）\n\nしたがって、D2D は Databricks 内部の信頼関係を活用し、D2O は外部共有のため追加の外部認証方式を必要とする、という点が最大の違いです",
+    "whyWrong": {
+      "A": "D2D の本質は SSO 統一ログインではなく、Databricks ネイティブなプラットフォーム内共有です",
+      "B": "D2D は OIDC federation 前提ではありません。OIDC は主に D2O の外部共有で使われます",
+      "C": "D2D と D2O は認証方式が異なります"
+    },
+    "references": [
+      {
+        "title": "Delta Sharing とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/"
+      },
+      {
+        "title": "Delta Sharing オープン共有プロトコルを使用してデータを共有する (プロバイダーの場合)",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/share-data-open"
+      },
+      {
+        "title": "Delta Sharing の共有を作成および管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/create-share"
+      }
+    ],
+    "notes": "D2D は Databricks workspace / metastore 間のネイティブ共有で、受信者は Databricks 内認証を利用。D2O は Databricks 外部システム向けで、credential file（bearer token）または OIDC federation を利用する。試験では『D2D = 組み込み / D2O = 外部認証』で整理すると覚えやすい"
+  },
+  {
+    "id": "DEP-Q268",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "Collaboration & Source Control",
+    "tags": ["Git folders", "Databricks Repos", "branching", "collaboration", "version control", "notebooks"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "2人の若手データアナリストが、Databricksノートブックを使用してデータ分析プロジェクトで協力しています\n\n現在、彼らは変更管理と一定レベルのバージョン管理を維持するために、Databricksに組み込まれているノートブックのバージョン管理機能を利用しています。しかし、この方法は小規模な個人作業には有効だが、複数の人が同時にノートブックを編集する場合、チームは課題に直面します\n\nある上級データエンジニアは、ノートブックに組み込まれているバージョン管理システムだけに頼るのではなく、ソースコード管理にGitフォルダを検討するよう提案しました。共同作業において、Databricksノートブックのバージョン管理よりもGitフォルダーを推奨する理由として考えられるのは、次のうちどれでしょうか？",
+    "choices": {
+      "A": "Gitフォルダを使用すると、コミットやプッシュを必要とせずに全てのプロジェクトノートブックを自動的に同期できる為、チームは常に最新のノートブックバージョンが利用できます",
+      "B": "Gitフォルダは、開発作業のためのブランチの作成と管理をサポートしており、意図しない上書きを防ぎ、複数のチームメンバーが同時に機能開発に取り組むことを可能にします",
+      "C": "Gitフォルダは、他のチームメンバーの貢献内容やコーディングパターンを分析することで、AIが生成したコード候補を提供し、開発者が互換性のあるコードを書くのに役立ちます",
+      "D": "Gitフォルダはマージの競合を自動的に解決する機能をサポートしている為、頻繁な手動介入なしに、異なるチームメンバーの成果をより迅速に統合できます"
+    },
+    "answer": "B",
+    "explanation": "正解は **Gitフォルダは、開発作業のためのブランチの作成と管理をサポートしており、意図しない上書きを防ぎ、複数のチームメンバーが同時に機能開発に取り組むことを可能にする** です\n\nDatabricks ノートブックには組み込みの revision history（ノートブック履歴）がありますが、これは主に個人作業や軽微な変更追跡向けであり、本格的なチーム開発に必要な branch 戦略、pull request、merge workflow、コードレビューには不十分です\n\nDatabricks の Git folders（旧 Repos）は Git プロバイダー（GitHub / Azure DevOps / GitLab / Bitbucket など）と統合され、ブランチ作成・切替・コミット・プッシュ・プルをサポートします。これにより、各メンバーが独立したブランチで安全に作業し、main ブランチへの直接上書きを避けながら並行開発できます。\n\nつまり、Git folders の最大の利点は、『複数人が同時に変更しても、ブランチベースで変更管理し、安全に統合できること』です。ノートブック単体のバージョン履歴よりも、共同開発・レビュー・変更統制に適しています",
+    "whyWrong": {
+      "A": "Git folders は自動同期システムではありません。変更反映には commit / pull / push などの Git 操作が必要です",
+      "C": "Git folders 自体に AI コード生成やチーム分析機能はありません。これは Git の目的ではなく、選択肢として不適切です",
+      "D": "Git は merge conflict を管理しますが、自動的に全競合を解決するわけではありません。競合時には手動解決が必要な場合があります"
+    },
+    "references": [
+      {
+        "title": "Azure Databricks Git フォルダー",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/repos/"
+      },
+      {
+        "title": "Azure Databricks Git フォルダーの基本知識",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/repos/git-folders-concepts"
+      },
+      {
+        "title": "CI/CD を Databricks Git フォルダーで実施する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/repos/ci-cd"
+      }
+    ],
+    "notes": "Databricks notebook revision history は個人レベルの変更追跡には便利だが、複数人共同開発では Git folders（Repos）の branch / merge / PR モデルが本命。試験では『ノートブック履歴 = 軽量』『Git folders = チーム開発』で整理すると分かりやすい"
   }
 ]
