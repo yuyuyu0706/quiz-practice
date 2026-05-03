@@ -17,7 +17,7 @@
       "D": "`BROADCAST ON (c)`"
     },
     "answer": "C",
-    "explanation": "正解は **/*+ BROADCAST(c) */** です\n\nDatabricks SQL および Spark SQL では、結合戦略ヒントは `SELECT` 句の直後に `/*+ ... */` 形式で記述します。したがって、`customers` テーブルの別名 `c` に対してブロードキャスト結合を指示したい場合は `SELECT /*+ BROADCAST(c) */` と書きます。Databricks のヒント構文でも `BROADCAST(table_name)` が join hint として定義されています\n\nこのヒントを指定すると、オプティマイザに対して `c` 側をブロードキャストする方針を強く示せます。売上テーブルが非常に大きく、顧客テーブルが比較的小さい今回のようなケースでは、ブロードキャスト結合が有効な典型例です。Databricks のベストプラクティスでも、小さい次元テーブル側にブロードキャストヒントを付ける例が示されています",
+    "explanation": "正解は **/*+ BROADCAST(c) */** です\n\nDatabricks SQL および Spark SQL では、結合戦略ヒント（join hint）は `SELECT` 句の直後に `/*+ ... */` 構文で記述します。そのため、`customers` テーブル（別名 `c`）をブロードキャスト対象として指定するには、`SELECT /*+ BROADCAST(c) */` と記述する必要があります\n\nこの問題の本質は、単なる構文暗記だけでなく、**『大きいFactテーブル + 小さいDimensionテーブル』という典型的な性能最適化パターンを理解しているか** にあります。\n\n今回、`sales` テーブルは約100億件の巨大Factテーブルであり、`customers` テーブルは約500万件の比較的小さなDimensionテーブルです。通常のJOIN（特に SortMergeJoin や Shuffle Join）では、両テーブルを結合キー（customer_id）ごとに再分配（shuffle）する必要があり、この shuffle が非常に高コストです\n\nShuffle Join の主な負荷:\n- 大量ネットワークI/O\n- データ再配置コスト\n- ディスクspill\n- executorメモリ消費\n- クエリ遅延\n\nつまり、巨大な `sales` テーブルまで動かしてしまうことが重いのです。\n\n一方、Broadcast Join では、小さい `customers` テーブル全体を各 executor に配布（broadcast）し、各ノード上でローカルに `sales` と結合します。\n\nつまり、\n- 小さい `customers` を配る\n- 巨大 `sales` を動かさない\n- Shuffle を大幅削減する\n\nという構造になります。\n\nこれにより、\n- ネットワーク負荷削減\n- 実行速度向上\n- リソース効率改善\n\nが期待できます。\n\n要するに、Broadcast Join は **『小さい表を全員に配る方が、大きい表を全体移動させるより圧倒的に安い』** というSpark分散処理最適化です。\n\nしたがって、このような Fact × Dimension 結合では、小さいDimension側（customers）に `/*+ BROADCAST(c) */` を付けるのが典型的な最適化手法です",
     "whyWrong": {
       "A": "`-- ... --` は SQL のヒント構文ではありません",
       "B": "`BROADCAST(c)` だけを単独で `SELECT` 句に置く構文は使えません",
@@ -209,10 +209,10 @@
     "estimatedTimeSec": 180,
     "question": "以下の内、`Delta Lake Auto Compaction` を最もよく表しているのはどれですか？",
     "choices": {
-      "A": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用せずに OPTIMIZE を実行し、ファイルサイズを128MBに調整します",
-      "B": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用して OPTIMIZE を実行し、ファイルサイズを1GBに調整します",
-      "C": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用せず OPTIMIZE を実行し、ファイルサイズを1GBに調整します",
-      "D": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用して OPTIMIZE を実行し、ファイルサイズを128MBに調整します。"
+      "A": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用せずに OPTIMIZE を実行し、ファイルサイズを 128MB に調整します",
+      "B": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用して OPTIMIZE を実行し、ファイルサイズを 1GB に調整します",
+      "C": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用せずに OPTIMIZE を実行し、ファイルサイズを 1GB に調整します",
+      "D": "自動圧縮は、テーブルへの書込み成功後に実行し、ファイルが更に圧縮可能か確認します。圧縮可能であれば、Z-Orderを使用して OPTIMIZE を実行し、ファイルサイズを 128MB に調整します。"
     },
     "answer": "A",
     "explanation": "正解は **Z-Orderを使用せずに OPTIMIZE を実行し、ファイルサイズを128MBに調整** です\n\nDatabricks の Auto Compaction は、小さいファイルを自動的にまとめて small file 問題を軽減する仕組みです。公式ドキュメントでは、書き込み成功後に同期的に実行され、まだ圧縮されていない小さいファイルだけを圧縮すると説明されています\n\nまた、Databricks は Auto Compaction で自動的に Z-ORDER を実行しません。Z-ORDER は別途 `OPTIMIZE ... ZORDER BY` で明示的に実行するものです\n\nさらに、Auto Compaction の説明では従来から既定の目標ファイルサイズは 128 MB と整理されます。一方で、1 GB は **手動OPTIMIZE** の文脈で語られることが多く、Auto Compaction の代表値としては不適切です",
@@ -255,7 +255,7 @@
       "D": "`SEQUENCE BY STRUCT (transaction_timestamp, version_number)`"
     },
     "answer": "D",
-    "explanation": "正解は `SEQUENCE BY STRUCT (transaction_timestamp, version_number)` です\n\nLakeflow Declarative Pipelines の `AUTO CDC INTO` では、CDC イベントの論理的な処理順序を指定するために `SEQUENCE BY` 句を使用します。Databricks 公式の SQL リファレンスでは、複数列で順序付けしたい場合は `STRUCT` 式を使うと明記されています。つまり、まず `transaction_timestamp` で並べ、同値の場合は `version_number` で並べる、という要件は `SEQUENCE BY STRUCT (transaction_timestamp, version_number)` で表現します\n\nまた、`AUTO CDC` は順不同で到着する CDC イベントを扱うために sequence 列を必須で求めています。そのため、`ORDER BY` ではなく `SEQUENCE BY` を使う必要があります",
+    "explanation": "正解は **SEQUENCE BY STRUCT (transaction_timestamp, version_number)** です\n\nLakeflow Declarative Pipelines の `AUTO CDC INTO` では、CDC イベントの論理的な処理順序を指定するために `SEQUENCE BY` 句を使用します。Databricks 公式の SQL リファレンスでは、複数列で順序付けしたい場合は `STRUCT` 式を使うと明記されています。つまり、まず `transaction_timestamp` で並べ、同値の場合は `version_number` で並べる、という要件は `SEQUENCE BY STRUCT (transaction_timestamp, version_number)` で表現します\n\nまた、`AUTO CDC` は順不同で到着する CDC イベントを扱うために sequence 列を必須で求めています。そのため、`ORDER BY` ではなく `SEQUENCE BY` を使う必要があります",
     "whyWrong": {
       "A": "`SEQUENCE BY` 自体は正しい句ですが、複数列をそのまま括弧で並べる構文ではありません。複数列の順序付けには `STRUCT(...)` を使います",
       "B": "`ORDER BY` は `AUTO CDC INTO` の順序指定構文ではありません。この構文で使うのは `SEQUENCE BY` です",
@@ -288,7 +288,7 @@
       "A": "各バッチ内の重複レコードを削除し、その結果をターゲットテーブルに追加します",
       "B": "各バッチ内の重複レコードを削除し、挿入専用マージを使用して、結果をターゲットテーブルにマージします",
       "C": "各バッチ内の重複レコードを削除し、結果をランク付けし、ランクが1のレコードのみをターゲットテーブルに挿入します",
-      "D": "ウォーターマーク付きの全てのバッチの重複レコードを削除し、その結果でターゲットテーブルを上書きします。"
+      "D": "ウォーターマーク付きの全てのバッチの重複レコードを削除し、その結果でターゲットテーブルを上書きします"
     },
     "answer": "B",
     "explanation": "正解は **各バッチ内の重複レコードを削除し、挿入専用マージを使用して、結果をターゲットテーブルにマージ** です\n\nDatabricks では、ストリーミングの重複排除を Delta Lake に対して実装する方法として、まず `dropDuplicates()` を使って各マイクロバッチ内の重複レコードを除去します\n\nただし、それだけでは過去のバッチで既にターゲットテーブルへ書き込まれたレコードとの重複は防げません。その為、続けて `insert-only MERGE` を使用し、ターゲットに同じキーが存在しない場合のみ挿入する形にします\n\nこの組み合わせにより、マイクロバッチ内の重複と、既存ターゲットとの重複の両方に対応できます",
@@ -473,7 +473,7 @@
       "D": "`Send GET request to the endpoint ‘api/2.2/jobs/runs/get’`"
     },
     "answer": "D",
-    "explanation": "正解は **`Send GET request to the endpoint ‘api/2.2/jobs/runs/get’`** です\n\nDatabricks Jobs API では、`run_id` に基づいてジョブ実行のメタデータを取得するための正式なエンドポイントは `GET /api/2.2/jobs/runs/get` です。Databricks の公式 REST API リファレンスでも、この API は『単一の run の metadata を取得する』操作として定義されています\n\n一方、`get-output` は run の出力取得向けであり、メタデータ取得の主エンドポイントではありません。また、`POST /api/2.2/jobs/runs/get` や `get-metadata` というエンドポイントは公式仕様に一致しません。したがって、本要件に最も適した REST API 呼び出しは D です",
+    "explanation": "正解は **Send GET request to the endpoint ‘api/2.2/jobs/runs/get’** です\n\nDatabricks Jobs API では、`run_id` に基づいてジョブ実行のメタデータを取得するための正式なエンドポイントは `GET /api/2.2/jobs/runs/get` です。Databricks の公式 REST API リファレンスでも、この API は『単一の run の metadata を取得する』操作として定義されています\n\n一方、`get-output` は run の出力取得向けであり、メタデータ取得の主エンドポイントではありません。また、`POST /api/2.2/jobs/runs/get` や `get-metadata` というエンドポイントは公式仕様に一致しません。したがって、本要件に最も適した REST API 呼び出しは D です",
     "whyWrong": {
       "A": "`get-output` は run の出力取得用です。出力には一部メタデータも含まれますが正式なAPIは `GET /api/2.2/jobs/runs/get` です",
       "B": "`jobs/runs/get` のHTTPメソッドは POST ではなく GET です",
@@ -549,7 +549,7 @@
       "D": "`option(”cloudFiles.schemaEvolutionMode”, ”addNewColumns”)`"
     },
     "answer": "A",
-    "explanation": "正解は **`option(”mergeSchema”, True)`** です\n\nこの空欄は `.writeStream` 側にあるため、問われているのは Auto Loader が新しいフィールドを検出する設定ではなく、 **検出済みの新しい列をターゲットの Delta テーブルへ自動反映するための設定** です。Databricks では、`.write` または `.writeStream` に `mergeSchema` を指定することで、書き込み先テーブルのスキーマ進化を有効にできます。`mergeSchema` を有効にすると、新しい列が自動的に追加されます。 \n\n一方、`cloudFiles.schemaEvolutionMode` は Auto Loader の入力側で新しい列をどう扱うかを制御する設定であり、今回の空欄位置には一致しません",
+    "explanation": "正解は **option(”mergeSchema”, True)** です\n\nこの空欄は `.writeStream` 側にあるため、問われているのは Auto Loader が新しいフィールドを検出する設定ではなく、 **検出済みの新しい列をターゲットの Delta テーブルへ自動反映するための設定** です。Databricks では、`.write` または `.writeStream` に `mergeSchema` を指定することで、書き込み先テーブルのスキーマ進化を有効にできます。`mergeSchema` を有効にすると、新しい列が自動的に追加されます。 \n\n一方、`cloudFiles.schemaEvolutionMode` は Auto Loader の入力側で新しい列をどう扱うかを制御する設定であり、今回の空欄位置には一致しません",
     "whyWrong": {
       "B": "`cloudFiles.mergeSchema` という正式な Auto Loader オプションはありません",
       "C": "`schema(schema_definition, mergeSchema=True)` という形は正式な構文ではありません",
@@ -583,7 +583,7 @@
       "D": "`microBatchDF.sparkSession.sql(sql_query)`"
     },
     "answer": "D",
-    "explanation": "正解は **`microBatchDF.sparkSession.sql(sql_query)`** です\n\nDatabricks の公式ドキュメントでは、`foreachBatch` の中で `createOrReplaceTempView()` により作成した一時ビューへ SQL を発行する場合、そのビューを定義した `microBatchDF` と同じ SparkSession を使う必要があります。\n\nまた、Python の例では Databricks Runtime 10.5 and below では `microBatchDF._jdf.sparkSession().sql(...)` を使用し、それより新しいランタイムでは `microBatchDF.sparkSession.sql(...)` を使用します",
+    "explanation": "正解は **microBatchDF.sparkSession.sql(sql_query)** です\n\nDatabricks の公式ドキュメントでは、`foreachBatch` の中で `createOrReplaceTempView()` により作成した一時ビューへ SQL を発行する場合、そのビューを定義した `microBatchDF` と同じ SparkSession を使う必要があります。\n\nまた、Python の例では Databricks Runtime 10.5 and below では `microBatchDF._jdf.sparkSession().sql(...)` を使用し、それより新しいランタイムでは `microBatchDF.sparkSession.sql(...)` を使用します",
     "whyWrong": {
       "A": "これは Databricks Runtime 10.5 and below 向けの書き方です。問題文を新しいランタイム前提に修正した場合は正解になりません",
       "B": "`microBatchDF` は DataFrame であり、`sql()` を直接呼び出す対象ではありません。SQL は SparkSession に対して実行します",
@@ -869,7 +869,7 @@
       "D": "`api_key = dbutils.secrets.read(\"api_scope\", \"api_key\")`"
     },
     "answer": "A",
-    "explanation": "正解は **`api_key = dbutils.secrets.get(\"api_scope\", \"api_key\")`** です\n\nDatabricks ノートブックから Secret を取得する正式なメソッドは `dbutils.secrets.get` で、引数順は `scope, key` です。Databricks の dbutils リファレンスでも、`get(scope: String, key: String): String` と定義され、例として `dbutils.secrets.get(scope=\"my-scope\", key=\"my-key\")` が示されています。したがって、この設問では `api_scope` がスコープ名、`api_key` がキー名になります\n\nまた、`dbutils.secrets.read` というメソッドは Secrets utility には存在せず、利用可能な代表コマンドは `get`、`getBytes`、`list`、`listScopes` です",
+    "explanation": "正解は **api_key = dbutils.secrets.get(\"api_scope\", \"api_key\")** です\n\nDatabricks ノートブックから Secret を取得する正式なメソッドは `dbutils.secrets.get` で、引数順は `scope, key` です。Databricks の dbutils リファレンスでも、`get(scope: String, key: String): String` と定義され、例として `dbutils.secrets.get(scope=\"my-scope\", key=\"my-key\")` が示されています。したがって、この設問では `api_scope` がスコープ名、`api_key` がキー名になります\n\nまた、`dbutils.secrets.read` というメソッドは Secrets utility には存在せず、利用可能な代表コマンドは `get`、`getBytes`、`list`、`listScopes` です",
     "whyWrong": {
       "B": "`dbutils.secrets.read` というメソッドは Databricks Secrets utility にはありません",
       "C": "メソッド名は `get` で合っていますが、引数の順番が逆です。正式な順番は `scope, key` です",
@@ -1703,7 +1703,7 @@
       "D": "ON VIOLATION DROP ROW"
     },
     "answer": "B",
-    "explanation": "正解は **`ON VIOLATION FAIL UPDATE`** です\n\nLakeflow Declarative Pipelines の expectation では、違反レコードが見つかったときの動作として warn、drop、fail が用意されています。このうち実行を即時停止する fail 動作に対応する SQL 句は `ON VIOLATION FAIL UPDATE` です。Databricks 公式でも、`expect_or_fail` の SQL 例として `CONSTRAINT valid_count EXPECT (count > 0) ON VIOLATION FAIL UPDATE` が示されています。違反が発生すると update は失敗し、手動対応が必要になります\n\nON VIOLATION FAIL UPDATE は、違反検知の flow の update 全体を対象にロールバックさせます。しかし、複数の並列 flow がある場合、他の 正常な flow は影響せず失敗しません。\n\nなお、Bronze作成処理としては厳し過ぎる設定となる為、Silver以降の処理での適用が推奨です。Bronzeでは、warn や dropなど継続前提の検証が有効です",
+    "explanation": "正解は **ON VIOLATION FAIL UPDATE** です\n\nLakeflow Declarative Pipelines の expectation では、違反レコードが見つかったときの動作として warn、drop、fail が用意されています。このうち実行を即時停止する fail 動作に対応する SQL 句は `ON VIOLATION FAIL UPDATE` です。Databricks 公式でも、`expect_or_fail` の SQL 例として `CONSTRAINT valid_count EXPECT (count > 0) ON VIOLATION FAIL UPDATE` が示されています。違反が発生すると update は失敗し、手動対応が必要になります\n\nON VIOLATION FAIL UPDATE は、違反検知の flow の update 全体を対象にロールバックさせます。しかし、複数の並列 flow がある場合、他の 正常な flow は影響せず失敗しません。\n\nなお、Bronze作成処理としては厳し過ぎる設定となる為、Silver以降の処理での適用が推奨です。Bronzeでは、warn や dropなど継続前提の検証が有効です",
     "whyWrong": {
       "A": "`ON VIOLATION STOP` という SQL expectation 句はありません",
       "C": "`ON VIOLATION FAIL PIPELINE` という句はありません。また、単一 flow の failure は他の flow を巻き込まないと説明されています",
@@ -2308,5 +2308,491 @@
       }
     ],
     "notes": "Databricks notebook revision history は個人レベルの変更追跡には便利だが、複数人共同開発では Git folders（Repos）の branch / merge / PR モデルが本命。試験では『ノートブック履歴 = 軽量』『Git folders = チーム開発』で整理すると分かりやすい"
+  },
+  {
+    "id": "DEP-Q269",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "PySpark DataFrame Operations",
+    "tags": ["PySpark", "DataFrame", "dropDuplicates", "distinct", "deduplication"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、複数の列に基づいて、指定されたデータフレームから重複のない行を含む新しいデータフレームを返すために、次のうちどの関数を使用できますか？",
+    "choices": {
+      "A": "pyspark.sql.DataFrame.distinct",
+      "B": "pyspark.sql.DataFrame.drop",
+      "C": "pyspark.sql.DataFrame.dropna",
+      "D": "pyspark.sql.DataFrame.dropDuplicates"
+    },
+    "answer": "D",
+    "explanation": "正解は **pyspark.sql.DataFrame.dropDuplicates** です\n\n`dropDuplicates()` は、指定した列（subset）に基づいて重複行を除去し、新しい DataFrame を返す PySpark の標準関数です。複数列を指定することで、『その列の組み合わせが重複している行』を1件にまとめられます\n\n例えば、`df.dropDuplicates([\"customer_id\", \"order_date\"])` のように使うと、customer_id と order_date の組み合わせ単位で重複排除できます。\n\n一方、`distinct()` は DataFrame 全列が完全一致する行のみを重複除去する為、『特定列ベースでの重複排除』には不向きです。設問では『複数の列に基づいて』とある為、subset 指定可能な `dropDuplicates()` が最適です",
+    "whyWrong": {
+      "A": "`distinct()` は DataFrame 全体（全列一致）での完全重複排除です。特定の複数列 subset に基づく重複排除には `dropDuplicates()` の方が適切です",
+      "B": "`drop()` は列を削除する関数であり、重複行削除のための関数ではありません",
+      "C": "`dropna()` は NULL / NaN を含む行を削除する関数であり、重複排除とは無関係です"
+    },
+    "references": [
+      {
+        "title": "pyspark.sql.DataFrame.dropDuplicates",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.dropDuplicates.html"
+      },
+      {
+        "title": "pyspark.sql.DataFrame.distinct",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.distinct.html"
+      }
+    ],
+    "notes": "`distinct()` = 全列一致の完全重複除去、`dropDuplicates(subset)` = 指定列ベース重複除去。試験では『特定列に基づく』なら `dropDuplicates` が基本"
+  },
+  {
+    "id": "DEP-Q270",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "Databricks Utilities",
+    "tags": ["Databricks Jobs", "parameters", "dbutils.widgets", "notebooks", "job configuration"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアは、Databricksジョブからノートブックに複数のパラメータを渡したいと考えています。ジョブの設定では、各パラメータのキーと値は既に設定済みです\n\nデータエンジニアがノートブック内で渡されたパラメータを読み取るために使用できるユーティリティは次のうちどれですか？",
+    "choices": {
+      "A": "dbutils.notebook",
+      "B": "dbutils.library",
+      "C": "dbutils.secrets",
+      "D": "dbutils.widgets"
+    },
+    "answer": "D",
+    "explanation": "正解は **dbutils.widgets** です\n\nDatabricks Jobs では、ジョブ設定で notebook task に key-value 形式の base parameters を設定できます。ノートブック側では `dbutils.widgets` を使ってその値を取得します。\n\n例えば、ジョブで `input_path=/mnt/raw/data` を渡した場合、ノートブック内では以下のように読み取れます\n\n```python\ninput_path = dbutils.widgets.get(\"input_path\")\n```\n\n`dbutils.widgets` は、ジョブパラメータや対話的入力パラメータを notebook 内で受け取るための標準ユーティリティです\n\nつまり、『ジョブ設定済みの複数パラメータをノートブック内で読み取る』という要件には `dbutils.widgets` が適切です。",
+    "whyWrong": {
+      "A": "`dbutils.notebook` は notebook の実行制御（run / exit など）に使われます。ジョブパラメータ取得の主用途ではありません",
+      "B": "`dbutils.library` はライブラリ管理用であり、パラメータ受け取りには使いません",
+      "C": "`dbutils.secrets` は secret scope から機密情報を取得するためのユーティリティであり、ジョブパラメータ取得とは用途が異なります"
+    },
+    "references": [
+      {
+        "title": "Databricks ウィジェット",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/widgets"
+      },
+      {
+        "title": "タスクからパラメーター値にアクセスする",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/parameter-use"
+      }
+    ],
+    "notes": "Databricks Jobs の notebook task parameters は `dbutils.widgets.get()` で取得するのが基本。`dbutils.notebook.run()` 側でも引数を渡せるが、受け取り側は widgets"
+  },
+  {
+    "id": "DEP-Q271",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and Streaming",
+    "domain": "Structured Streaming",
+    "tags": ["Structured Streaming", "window", "watermark", "withWatermark", "aggregation", "Databricks"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "本ストリーミングクエリを最もよく表しているのはどれですか？\n\n```python\nspark.readStream\n        .table(\"orders_cleaned\")\n        .withWatermark(\"order_timestamp\", \"10 minutes\")\n        .groupBy(\n            window(\"order_timestamp\", \"5 minutes\").alias(\"time\"),\n            \"author\")\n        .agg(\n            count(\"order_id\").alias(\"orders_count\"),\n            avg(\"quantity\").alias(\"avg_quantity\"))\n    .writeStream\n        .option(\"checkpointLocation\", \"dbfs:/path/checkpoint\")\n        .table(\"orders_stats\")```",
+    "choices": {
+      "A": "重複しない10分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が5分間保持されます",
+      "B": "重複しない5分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が10分間保持されます",
+      "C": "重複する5分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が10分間保持されます",
+      "D": "重複する10分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が5分間保持されます"
+    },
+    "answer": "B",
+    "explanation": "正解は **重複しない5分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が10分間保持される** です\n\nこのクエリでは、`window(\"order_timestamp\", \"5 minutes\")` を使用しているため、5分単位の **tumbling window**（重複しない固定長ウィンドウ）で集計します。スライド間隔（slide duration）が指定されていないため、Spark はデフォルトで window duration と同じ長さの tumbling window を使用します。\n\nつまり、\n- 00:00–00:05\n- 00:05–00:10\n- 00:10–00:15\n\nのような『重複しない5分区切り』です。\n\nまた、`withWatermark(\"order_timestamp\", \"10 minutes\")` は、遅延データ（late data）を最大10分まで許容し、その間は状態（state）を保持することを意味します。つまり、あるウィンドウ終了後も、最大10分遅れのイベントが到着する可能性を考慮して集計状態が保持されます。\n\nしたがって、\n- 集計単位 → 重複しない5分ウィンドウ\n- 遅延許容 / 状態保持 → 10分\n\nとなります",
+    "whyWrong": {
+      "A": "5分 window を 10分 window と誤解しています。また watermark と window duration が逆です",
+      "C": "重複ウィンドウ（sliding window）ではありません。slide duration が指定されていないため、これは tumbling window（重複なし）です",
+      "D": "window duration を誤って10分と解釈しており、watermark duration も逆です"
+    },
+    "references": [
+      {
+        "title": "構造化ストリーミングの概念",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/concepts"
+      }
+    ],
+    "notes": "`window(col, windowDuration)` のみ指定 → tumbling window（非重複）。`window(col, windowDuration, slideDuration)` 指定時のみ sliding window の可能性。`withWatermark` は late data 許容時間 + state retention の目安"
+  },
+  {
+    "id": "DEP-Q272",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and Streaming",
+    "domain": "Structured Streaming",
+    "tags": ["Structured Streaming", "window", "watermark", "withWatermark", "aggregation", "Databricks"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "本ストリーミングクエリを最もよく表しているのはどれですか？\n\n```python\nspark.readStream\n        .table(\"orders_cleaned\")\n        .withWatermark(\"order_timestamp\", \"10 minutes\")\n        .groupBy(\n            window(\"order_timestamp\", \"5 minutes\").alias(\"time\"),\n            \"author\")\n        .agg(\n            count(\"order_id\").alias(\"orders_count\"),\n            avg(\"quantity\").alias(\"avg_quantity\"))\n    .writeStream\n        .option(\"checkpointLocation\", \"dbfs:/path/checkpoint\")\n        .table(\"orders_stats\")```",
+    "choices": {
+      "A": "重複しない10分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が5分間保持されます",
+      "B": "重複しない5分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が10分間保持されます",
+      "C": "重複する5分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が10分間保持されます",
+      "D": "重複する10分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が5分間保持されます"
+    },
+    "answer": "B",
+    "explanation": "正解は **重複しない5分間隔ごとに、事業レベルの集計値を算出します。遅れて到着するデータについては、増分状態情報が10分間保持される** です\n\nこの問題の本質は、`window` と `watermark` の役割を正しく区別することです\n\nまず、`window(\"order_timestamp\", \"5 minutes\")` は、イベント時刻 `order_timestamp` を基準に **5分単位のタンブリングウィンドウ（重複しない固定長ウィンドウ）** を作成します。スライド間隔（slide duration）が指定されていないため、各レコードは1つの5分ウィンドウのみに属します\n\nつまり、\n- 00:00–00:05\n- 00:05–00:10\n- 00:10–00:15\n\nのように、5分ごとの事業レベル（author単位）の集計値を計算します\n\n次に、`withWatermark(\"order_timestamp\", \"10 minutes\")` は、**集計粒度を決めるものではなく、遅延データをどれだけ受け入れるか（late data tolerance）と、そのためにどれだけ状態を保持するか（state retention）** を指定します\n\n例えば、12:00–12:05 のウィンドウに属するデータでも、イベント時刻ベースで最大10分遅れて到着する可能性を考慮し、その間は集計状態を保持して再計算可能にします。\n\nつまり、\n- `window` = 集計の箱サイズ（5分ごとに何を集計するか）\n- `watermark` = 箱をいつ締め切るか（遅延データを何分待つか）\n\nという役割です\n\nこのクエリでは、`groupBy(window(...), \"author\")` により、**author × 5分ウィンドウ単位** で以下を算出します。\n- 注文数（orders_count）\n- 平均数量（avg_quantity）\n\nその結果を `writeStream.table(\"orders_stats\")` により、ストリーミング集計結果として Delta テーブルへ継続的に書き込みます。\n\n重要なのは、orders_stats は単純な5分ごとの固定結果ではなく、watermark期間中は遅延データに応じて更新される “段階的に確定していく集計結果” である点です。\n\n要するに、\n- 5分ごとに集計（tumbling window）\n- 最大10分遅れまで再集計可能（watermark）\n- その後 state cleanup\n\nとなります",
+    "whyWrong": {
+      "A": "5分 window を 10分 window と誤解しています。また watermark と window duration が逆です",
+      "C": "重複ウィンドウ（sliding window）ではありません。slide duration が指定されていないため、これは tumbling window（重複なし）です",
+      "D": "window duration を誤って10分と解釈しており、watermark duration も逆です"
+    },
+    "references": [
+      {
+        "title": "構造化ストリーミングの概念",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/concepts"
+      }
+    ],
+    "notes": "`window(col, windowDuration)` のみ指定 → tumbling window（非重複）。`window(col, windowDuration, slideDuration)` 指定時のみ sliding window の可能性。`withWatermark` は late data 許容時間 + state retention の目安"
+  },
+  {
+    "id": "DEP-Q273",
+    "section": "8",
+    "sectionTitle": "Managing and Governing Compute Resources",
+    "domain": "Clusters & Permissions",
+    "tags": ["Databricks clusters", "Can Manage", "permissions", "cluster configuration", "access control"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "既存のクラスターの構成を編集するためにデータエンジニアが必要とする最小限の権限を説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "クラスターに対する “Can Restart” 権限",
+      "B": "Cluster creation allowed + クラスターに対する “Can Manage” 権限",
+      "C": "クラスターに対する “Can Manage” 権限",
+      "D": "既存のクラスターの設定を編集できるのは管理者のみ"
+    },
+    "answer": "C",
+    "explanation": "正解は **クラスターに対する “Can Manage” 権限** です\n\nDatabricks において既存クラスターの構成（instance type、autoscaling、libraries、spark config など）を編集するには、そのクラスターに対する **Can Manage** 権限が必要です。`Can Manage` は、そのクラスターに対する最上位レベルの個別管理権限であり、設定変更・再起動・終了・権限管理などを行えます。\n\n重要なのは、『既存クラスターを編集する』場合、必ずしも workspace 全体で `Allow cluster create`（クラスター作成権限）が必要なわけではない点です。新規クラスター作成には cluster creation entitlement が必要ですが、既存クラスターに対して必要なのは、その対象クラスターへの `Can Manage` 権限です。\n\nつまり、\n- 新規作成 → Allow cluster create\n- 既存編集 → Can Manage\n\nこの問題では『既存クラスター構成の編集』が問われているため、最小権限は `Can Manage` です",
+    "whyWrong": {
+      "A": "`Can Restart` はクラスターの開始・停止・再起動は可能ですが、構成編集権限までは含みません",
+      "B": "`Allow cluster create` は新規クラスター作成権限であり、既存クラスター編集には不要です。`Can Manage` 単独で十分です",
+      "D": "管理者専用ではありません。対象クラスターに `Can Manage` 権限が付与されていれば、非管理者でも編集可能です"
+    },
+    "references": [
+      {
+        "title": "ACL のコンピューティング",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/security/auth/access-control/#clusters"
+      },
+      {
+        "title": "クラスターへのアクセス制御",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/clusters/clusters-manage#--control-access-to-clusters"
+      }
+    ],
+    "notes": "試験では『Allow cluster create = 新規作成』『Can Manage = 既存クラスター管理』を切り分けるのが重要。Can Restart は操作権限、Can Manage は設定変更を含む"
+  },
+  {
+    "id": "DEP-Q274",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "Software Testing",
+    "tags": ["End-to-End Testing", "testing strategy", "QA", "integration testing", "acceptance testing"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "question": "次のうち、End-to-End Testing を正しく説明しているのはどれですか？",
+    "choices": {
+      "A": "実際の使用状況下でアプリケーションが適切に動作することを保証するために、ユーザーエクスペリエンスをシミュレートするアプローチです",
+      "B": "アプリケーションの各機能がビジネス要件通りに動作するかを検証するアプローチです",
+      "C": "アプリケーションのサブシステム間の相互作用をテストし、モジュールがグループとして適切に機能することを確認するためのアプローチです",
+      "D": "アプリケーションの信頼性、速度、拡張性、応答性を測定するためのアプローチです"
+    },
+    "answer": "A",
+    "explanation": "正解は **実際の使用状況下でアプリケーションが適切に動作することを保証するために、ユーザーエクスペリエンスをシミュレートするアプローチ** です\n\nEnd-to-End Testing（E2Eテスト）は、システム全体を本番に近い形で通し、ユーザーまたは外部システムの視点から『開始から終了まで』の業務フローが正しく動作するかを確認するテストです。\n\nつまり、個別関数や単一モジュールだけでなく、UI / API / 認証 / DB / 外部サービス連携などを含む一連の利用シナリオを検証します。\n\n例えば、\n- ユーザーがログイン\n- データを入力\n- パイプラインが処理\n- 結果が保存・表示される\n\nといった実利用に近い全体フローを確認します。\n\nE2E の目的は、『ユーザーが実際に使った時に全体として成立するか』を見ることです",
+    "whyWrong": {
+      "B": "主に Functional Testing（機能テスト）や Acceptance Testing に近く、個々の機能が要件通りかを確認する観点です。E2E は複数機能をまたぐ全体フローを重視します",
+      "C": "Integration Testing（統合テスト）の説明です。サブシステム間連携に焦点を当てますが、ユーザー視点の業務全体までには至りません",
+      "D": "Performance Testing（性能テスト）や Load Testing の説明です。E2E の主目的ではありません"
+    },
+    "references": [
+      {
+        "title": "システムテスト",
+        "url": "https://ja.wikipedia.org/wiki/%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%83%86%E3%82%B9%E3%83%88"
+      }
+    ],
+    "notes": "覚え方：Unit = 単体、Integration = モジュール間、Functional = 要件単位、E2E = ユーザー全体体験、Performance = 性能。E2E は『本番利用シナリオ再現』がキーワード"
+  },
+  {
+    "id": "DEP-Q275",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and Streaming",
+    "domain": "Structured Streaming",
+    "tags": ["Structured Streaming", "Window function", "rank", "foreachBatch", "streaming DataFrame", "latest record"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "若手データエンジニアが、前回のテーブル更新以降に「sales」テーブルに追加された各アイテムの最新のエントリを取得するために、以下のコードブロックをテストしています\n\n```python\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.window import Window\n\nwindow = Window.partitionBy(\"item_id\").orderBy(F.col(\"item_time\").desc())\n\nranked_df = (spark.readStream\n                    .table(\"sales\")\n                    .withColumn(\"rank\", F.rank().over(window))\n                    .filter(\"rank == 1\")\n                    .drop(\"rank\")\n            )\n\ndisplay(ranked_df)```しかし、このコマンドを実行すると失敗します。失敗の原因を説明しているのは、次のうちどれですか？",
+    "choices": {
+      "A": "item_id フィールドは一意ではありません。dropDuplicates 関数を使用して、item_id に基づいてレコードの重複を削除する必要があります",
+      "B": "クエリの出力は表示できません。クエリ結果を永続化するには、spark.writeStreamを使用する必要があります",
+      "C": "ストリーミングデータフレームでは、時間ベースではないウィンドウ操作はサポートされていません。代わりに、foreachBatchロジック内で実装する必要があります",
+      "D": "Watermarking が欠落しています。一定期間の状態情報を追跡できるように、Watermarking を追加する必要があります"
+    },
+    "answer": "C",
+    "explanation": "正解は **ストリーミングデータフレームでは、時間ベースではないウィンドウ操作はサポートされていません。代わりに、foreachBatchロジック内で実装する必要がある** です\n\nこのコードでは、`spark.readStream.table(\"sales\")` によってストリーミングDataFrameを作成した後、`Window.partitionBy(\"item_id\").orderBy(F.col(\"item_time\").desc())` と `F.rank().over(window)` を使って、item_idごとの最新レコードを選ぼうとしています\n\nしかし、これは Structured Streaming でいう `window(\"timestamp\", \"5 minutes\")` のような時間ベースの集計ウィンドウではなく、SQLの分析関数で使う通常の Window 関数です。Spark Structured Streaming では、ストリーミングDataFrameに対するこのような非時間ベースのWindow関数、たとえば `rank()`、`row_number()`、`lag()` などの `over(Window...)` はサポートされません。ストリームは無限に続く入力であり、`item_id`ごとに全履歴を並べ替えて順位付けする処理は、そのままでは境界を決められないためです。Apache Spark の JIRA でも、この種の処理では `Non-time-based windows are not supported on streaming DataFrames/Datasets` という AnalysisException が発生することが示されています\n\nこのような『各マイクロバッチ内で最新1件を選び、ターゲットに反映する』処理を行いたい場合は、`foreachBatch` の中で各マイクロバッチを通常のバッチDataFrameとして扱い、`row_number()` や `rank()`、あるいは `MERGE` を組み合わせて実装します。つまり、ストリーミング DataFrame 本体に直接 Window 分析関数を適用するのではなく、マイクロバッチ単位のバッチ処理として実装するのが適切です",
+    "whyWrong": {
+      "A": "`item_id` が一意でないこと自体は、このコードが失敗する直接原因ではありません。むしろ複数レコードがあるからこそ `rank()` で最新1件を選びたい意図があります",
+      "B": "`display(ranked_df)` が本質的な失敗原因ではありません。DatabricksノートブックではストリーミングDataFrameの表示自体は可能な場合があります",
+      "D": "Watermarking は遅延データをどこまで受け入れるか、また状態をいつ削除できるかを制御するための仕組みです。しかし、watermark を追加しても `rank().over(Window...)` のような非時間ベースのWindow分析関数がストリーミングDataFrameで使えるようになる訳ではありません"
+    },
+    "references": [
+      {
+        "title": "foreachBatch を使用した任意のデータ シンクへの書き込み",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/foreach"
+      },
+      {
+        "title": "SPARK-37440: Non-time-based windows are not supported on streaming DataFrames/Datasets",
+        "url": "https://issues.apache.org/jira/browse/SPARK-37440"
+      }
+    ],
+    "notes": "Structured Streamingでサポートされるwindow集計は、`functions.window()` を使うイベント時間ベースのwindow aggregation。`pyspark.sql.window.Window` と `rank().over(...)` のような分析Window関数は、ストリーミングDataFrameへ直接適用できない。最新1件抽出は foreachBatch 内でバッチ処理として実装するのが実務的"
+  },
+  {
+    "id": "DEP-Q276",
+    "section": "9",
+    "sectionTitle": "Debugging and Deploying",
+    "domain": "Databricks Asset Bundles",
+    "tags": ["Databricks Asset Bundles", "permissions", "jobs", "CAN_MANAGE", "CAN_VIEW", "YAML"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアがDatabricksアセットバンドルを使用してジョブを設定しており、そのジョブへのアクセスを許可されたユーザーのみに制限したいと考えています\n\n以下のジョブ定義にはタスクとジョブクラスタが含まれていますが、エンジニアはどのユーザーグループがジョブを管理または閲覧できるかを定義する必要もあります\n\n```python\nresources:\n    jobs:\n        my-job:\n            name: analytics-job\n            tasks: [...]\n            job_clusters: [...]\n            __________:\n                - group_name: devops-team\n                level: CAN_MANAGE\n                - group_name: qa-team\n                level: CAN_VIEW```要件を満たす為に、空欄に正しく記入できる選択肢はどれですか？",
+    "choices": {
+      "A": "access_control",
+      "B": "job_settings",
+      "C": "roles",
+      "D": "permissions"
+    },
+    "answer": "D",
+    "explanation": "正解は **permissions** です\n\nDatabricks Asset Bundles のジョブ定義では、ジョブ自体に対するアクセス権（誰が閲覧・管理できるか）を指定するには `permissions` セクションを使用します。\n\n例えば、\n```yaml\npermissions:\n  - group_name: devops-team\n    level: CAN_MANAGE\n  - group_name: qa-team\n    level: CAN_VIEW\n```\n\nのように定義することで、指定グループごとにジョブ権限を宣言的に管理できます。\n\nこの `permissions` は Databricks workspace 上のジョブACL（Access Control List）に対応しており、バンドルデプロイ時に対象ジョブへ適用されます。\n\nつまり、\n- `CAN_MANAGE` → 編集・実行・管理\n- `CAN_VIEW` → 閲覧のみ\n\nをコード管理（IaC）として扱えるため、アクセス制御要件を満たします",
+    "whyWrong": {
+      "A": "`access_control` は Databricks Asset Bundles の正式なジョブ権限定義キーではありません",
+      "B": "`job_settings` は包括的な設定カテゴリとしては不適切で、ACL定義専用キーではありません",
+      "C": "`roles` は Databricks Asset Bundles のジョブ権限指定構文ではありません"
+    },
+    "references": [
+      {
+        "title": "宣言型オートメーション バンドル リソース - ジョブ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/resources#job"
+      }
+    ],
+    "notes": "Asset Bundles では `permissions` を使って job / pipeline / model などのACLをIaC化できる。試験では `permissions` が正式キーである点が重要"
+  },
+  {
+    "id": "DEP-Q277",
+    "section": "4",
+    "sectionTitle": "Optimizing Performance and Scalability",
+    "domain": "Delta Lake",
+    "tags": ["Delta Lake", "file statistics", "data skipping", "query optimization", "transaction log"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "Delta Lake ファイル統計の利点は次のうちどれですか？",
+    "choices": {
+      "A": "選択的なクエリを実行する際、データスキップに活用されます",
+      "B": "データ圧縮に活用され、Delta Caching の効率向上に役立ちます",
+      "C": "選択的なクエリを実行する際の処理時間予測に活用されます",
+      "D": "Parquetファイル内のデータ破損をチェックするためのチェックサムとして使用されます"
+    },
+    "answer": "A",
+    "explanation": "正解は **選択的なクエリを実行する際、データスキップに活用される** です\n\nDelta Lake は、各データファイルに対して列ごとの統計情報（例: min / max / null count / record count）をトランザクションログに保持します。この統計情報により、クエリ実行時に『このファイルには条件に一致する可能性がない』と判断できるファイルを事前に読み飛ばすことができます。これを **data skipping** と呼びます\n\n例えば、`WHERE order_date = '2026-05-01'` のような条件で、あるファイルの `order_date` の min-max 範囲が `2026-04-01 ～ 2026-04-30` なら、そのファイルは読み込まずにスキップできます\n\nこれにより、\n- I/O削減\n- スキャン対象ファイル削減\n- クエリ高速化\n\nが実現されます。\n\nつまり、Delta Lake ファイル統計の最大の利点は、選択的クエリにおける読み取り最適化です",
+    "whyWrong": {
+      "B": "ファイル統計は主に query pruning / data skipping 用であり、データ圧縮や Delta Cache 自体の効率化を直接目的とするものではありません",
+      "C": "統計情報はクエリ最適化には寄与しますが、処理時間予測そのものを目的とした機能ではありません",
+      "D": "データ破損チェックは Parquet やストレージ層の整合性機構が担うものであり、Delta file statistics の主用途ではありません"
+    },
+    "references": [
+      {
+        "title": "データのスキップ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/data-skipping"
+      },
+      {
+        "title": "Delta transaction log protocol",
+        "url": "https://github.com/delta-io/delta/blob/master/PROTOCOL.md"
+      }
+    ],
+    "notes": "Delta file statistics = 主に min/max/nullCount による data skipping。試験では『file stats → selective query → data skipping』を最重要で覚える"
+  },
+  {
+    "id": "DEP-Q278",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "PySpark Functions",
+    "tags": ["sha2", "Spark SQL", "hashing", "data anonymization", "security"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、ETLパイプラインにおいて機密性の高い顧客データを匿名化する任務を負っています\n\n顧客のクレジットカード番号を格納する列に対して、SHA-2ハッシュを生成する必要があります。チームは、Sparkのsha2関数が特定のビット長をサポートしているものの、任意の数値を全てサポートしている訳ではないと認識しています。以下のsha2関数呼出しの内、ビット長が無効で失敗するのはどれですか？",
+    "choices": {
+      "A": "sha2(credit_card, 128)",
+      "B": "sha2(credit_card, 0)",
+      "C": "sha2(credit_card, 512)",
+      "D": "sha2(credit_card, 256)"
+    },
+    "answer": "A",
+    "explanation": "正解は **sha2(credit_card, 128)** です\n\nSpark の sha2関数は、SHA-2 ファミリーでサポートされる特定のビット長のみ利用できます。許可される値は以下です。\n\n- 224\n- 256\n- 384\n- 512\n- 0（256 のエイリアス）\n\nつまり、`0` は `256` と同義として扱われるため有効です。\n\n一方、`128` は SHA-2 の有効なビット長ではありません。SHA-2 は SHA-1 や MD5 とは異なり、128-bit バージョンを持たないため、Spark の `sha2(col, 128)` は無効でエラーになります\n\nしたがって、\n- `sha2(..., 0)` → 有効（=256）\n- `sha2(..., 256)` → 有効\n- `sha2(..., 512)` → 有効\n- `sha2(..., 128)` → 無効\n\nとなります",
+    "whyWrong": {
+      "B": "`0` は Spark において SHA-256 のエイリアスとして扱われるため有効です",
+      "C": "`512` は SHA-2 の正式サポート長であり有効です",
+      "D": "`256` は最も一般的な SHA-2 長であり有効です"
+    },
+    "references": [
+      {
+        "title": "pyspark.sql.functions.sha2",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.functions.sha2.html"
+      }
+    ],
+    "notes": "Spark sha2 の有効値: 224 / 256 / 384 / 512 / 0(=256)。試験では『0は無効ではなくSHA-256扱い』が引っかけになりやすい"
+  },
+  {
+    "id": "DEP-Q279",
+    "section": "1",
+    "sectionTitle": "Developing Code for Data Processing using Python and SQL",
+    "domain": "PySpark Pandas API",
+    "tags": ["PySpark", "applyInPandas", "groupBy", "pandas", "rolling window", "grouped map"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "ある小売企業のデータエンジニアは、数百店舗にわたる日々の売上動向を分析する任務を負っています\n\n元のPySpark DataFrameには、store_id、date、sales_amountという列が含まれています。エンジニアは、Pandasの便利なローリングウィンドウ操作を利用して、店舗ごとの7日間移動平均売上高を計算したいと考えています。このタスクを達成するために、エンジニアは「calculate_sales」というカスタムPython関数を作成しました。この関数の入力と出力はどちらもpandas.DataFrameです\n\nSparkの効率性を維持しながら、この関数をstore_idの各グループに適用できるのは、次のうちどれですか？",
+    "choices": {
+      "A": "df.groupBy(\"store_id\").applyInPandas(calculate_sales, schema)",
+      "B": "df.mapInPandas(\"store_id\", calculate_sales, schema)",
+      "C": "pandas_udf(calculate_sales, returnType=Series)",
+      "D": "df.selectExpr(\"calculate_sales(store_id)\")"
+    },
+    "answer": "A",
+    "explanation": "正解は **df.groupBy(\"store_id\").applyInPandas(calculate_sales, schema)** です\n\nこの問題のポイントは、『store_id ごとにグループ化した上で、各グループを pandas.DataFrame としてカスタム関数へ渡し、その結果も pandas.DataFrame として返したい』という点です。\n\n`applyInPandas`（Grouped Map Pandas Function）は、Spark DataFrame をグループ単位で分割し、各グループを pandas.DataFrame として Python 関数へ渡します。各店舗（store_id）単位で日付順ソートし、Pandas の rolling 操作を使って7日移動平均を計算するようなケースに最適です。\n\n典型例:\n```python\n(df.groupBy(\"store_id\")\n   .applyInPandas(calculate_sales, schema))\n```\n\nこれにより、\n- Spark の分散 groupBy\n- 各グループ単位で Pandas 処理\n- Spark DataFrame として再統合\n\nが可能になります。\n\nつまり、『グループ単位 × pandas.DataFrame 入出力 × Spark分散維持』という要件に最も適合します",
+    "whyWrong": {
+      "B": "`mapInPandas` は DataFrame 全体をイテレータ単位で処理する用途であり、`groupBy(\"store_id\")` のようなグループ単位適用には適していません。また構文自体も不正です",
+      "C": "`pandas_udf` 単体は通常、列またはSeriesベース処理向けであり、各store_idグループ全体を pandas.DataFrame として扱う grouped map 用途には不十分です",
+      "D": "`selectExpr` はSQL式評価用であり、pandas.DataFrame 入出力のPython関数をグループ単位で適用する用途ではありません"
+    },
+    "references": [
+      {
+        "title": "pyspark.sql.GroupedData.applyInPandas",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.GroupedData.applyInPandas.html"
+      }
+    ],
+    "notes": "applyInPandas = groupBy後に各グループを pandas.DataFrame として処理。mapInPandas = パーティション / iterator 単位。試験では『グループごとのPandas処理』なら applyInPandas が基本"
+  },
+  {
+    "id": "DEP-Q280",
+    "section": "4",
+    "sectionTitle": "Optimizing Performance and Scalability",
+    "domain": "Delta Lake",
+    "tags": ["Delta Lake", "file statistics", "transaction log", "data skipping", "32 columns"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "Delta Lake ファイル統計に関する記述のうち、正しいものはどれですか？",
+    "choices": {
+      "A": "Delta Lake はデフォルトでは、各テーブルの最初の32列に関する統計情報を Hiveメタストアに記録します",
+      "B": "Delta Lake はデフォルトでは、各テーブルの最初の16列の統計情報をトランザクションログに記録します",
+      "C": "Delta Lake はデフォルトでは、各テーブルの最初の32列の統計情報をトランザクションログに記録します",
+      "D": "Delta Lake はデフォルトでは、各テーブルの最初の16列に関する統計情報を Hiveメタストアに記録します"
+    },
+    "answer": "C",
+    "explanation": "正解は **Delta Lake はデフォルトでは、各テーブルの最初の32列の統計情報をトランザクションログに記録する** です\n\nDelta Lake は、data skipping（データスキップ）を可能にするため、各データファイルに対する列統計（min / max / null count など）をトランザクションログに保存します。これらの統計は、クエリ条件に一致しないファイルを事前に除外し、スキャン対象を削減するために利用されます\n\nデフォルトでは、Delta Lake はテーブルの **最初の32列** に対して統計情報を収集します\n\n重要ポイントは以下です。\n- 保存先 → Hive metastore ではなく Delta transaction log\n- デフォルト対象 → 最初の32列\n- 主用途 → data skipping / query optimization\n\nつまり、\n- 16列 → 誤り\n- Hive metastore → 誤り\n- 32列 + transaction log → 正しい\n\nとなります",
+    "whyWrong": {
+      "A": "統計情報は Hive metastore ではなく、Delta transaction log に保存されます",
+      "B": "保存先は transaction log ですが、デフォルト列数は16ではなく32です",
+      "D": "列数（16）が誤りであり、保存先も Hive metastore ではありません"
+    },
+    "references": [
+      {
+        "title": "データのスキップ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/data-skipping"
+      }
+    ],
+    "notes": "試験頻出ポイント：Delta file statistics → first 32 columns → transaction log。『Hive metastore』は典型的な誤答"
+  },
+  {
+    "id": "DEP-Q281",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "domain": "CDC / Delta Lake",
+    "tags": ["CDC", "AUTO CDC", "MERGE INTO", "SEQUENCE BY", "SCD Type 1", "Delta Lake"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、ソースシステムから変更データキャプチャ（CDC）フィードとして顧客データを受け取るパイプラインを構築したいと考えています\n\nCDCがソースで記録するイベントには、レコードのデータとメタデータ情報が含まれています。このメタデータは、指定されたレコードが挿入されたのか、更新されたのか、削除されたのかを示します。変更が発生した順序を示すタイムスタンプ列（update_timeフィールド）に加え、各レコードには customer_id フィールドで識別される主キーがあります\n\n同じバッチ処理内で、同じ顧客に対して複数の変更が、異なる更新時刻で受信される可能性があります。チームは、各顧客について最新の情報のみをターゲットの Delta Lake テーブルに保存したいと考えています。以下の解決策のうち、これらの要件を満たすものはどれですか？",
+    "choices": {
+      "A": "MERGE INTO を使用して、各 customer_id の最新のエントリをテーブルに upsert します",
+      "B": "dropDuplicates 関数を使用して customer_id ごとに重複を削除し、重複レコードをテーブルにマージします",
+      "C": "受信した CDC フィードを自動的にマージするには、対象テーブルで Delta Lake の変更データフィード (CDF) を有効にします",
+      "D": "更新時刻に対して、MERGE INTO 句と SEQUENCE BY 句を使用して、操作の適用順序を指定します"
+    },
+    "answer": "A",
+    "explanation": "正解は **MERGE INTO を使用して、各 customer_id の最新のエントリをテーブルに upsert** です\n\nこの問題では、同じバッチ内に同じ `customer_id` の変更イベントが複数含まれる可能性があります。そのため、まず `update_time` を使って各 `customer_id` ごとの最新レコードを特定し、その最新レコードだけをターゲットの Delta Lake テーブルに `MERGE INTO` で upsert する必要があります。\n\n`MERGE INTO` は、ソーステーブル、ビュー、または DataFrame の内容をターゲット Delta テーブルへ反映するためのコマンドで、条件に一致した行の更新、条件に一致しない行の挿入、必要に応じた削除をサポートします。したがって、CDCフィードから各顧客の最新状態のみを保持したい場合は、最新行に絞ったソースを作成したうえで `MERGE INTO` を使う実装が適切です。\n\nなお、`SEQUENCE BY` は AUTO CDC / APPLY CHANGES INTO で変更イベントの適用順序を指定するための句であり、通常の `MERGE INTO` 句と組み合わせて使用することはできません。 **MERGE INTO ... SEQUENCE BY ...` のように書くと構文エラー** になります",
+    "whyWrong": {
+      "B": "`dropDuplicates` は単純な重複排除のための関数であり、`update_time` に基づいて各 `customer_id` の最新イベントを選ぶ処理には不十分です。同じ顧客に対する複数の変更は、単なる重複ではなく、異なる時刻に発生した有効な変更イベントである可能性があります",
+      "C": "対象テーブルで Delta Lake の CDF を有効にしても、受信したCDCフィードが自動的にターゲットテーブルへマージされるわけではありません。CDF は変更データを読み取るための仕組みであり、最新行の選択やターゲットへの upsert は別途実装する必要があります",
+      "D": "`SEQUENCE BY` は AUTO CDC / APPLY CHANGES INTO で使用する句であり、通常の `MERGE INTO` ステートメントでは使用できません"
+    },
+    "references": [
+      {
+        "title": "Delta Lake テーブルへのマージを使用したアップサート",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/merge"
+      },
+      {
+        "title": "AUTO CDC API: パイプラインを使用して変更データ キャプチャを簡略化する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/cdc"
+      }
+    ],
+    "notes": "この問題はAUTO CDCではなく、Delta Lakeの標準MERGE INTOによるupsert実装を問う問題として読む。ポイントは、各customer_idについてupdate_timeが最新のレコードに絞ってからMERGEすること。SEQUENCE BYはAUTO CDC/APPLY CHANGES INTO専用であり、MERGE INTOには使えない"
+  },
+  {
+    "id": "DEP-Q282",
+    "section": "8",
+    "sectionTitle": "Managing and Orchestrating Workloads",
+    "domain": "Databricks Jobs",
+    "tags": ["Databricks Jobs", "task types", "workflow", "Python wheel", "SQL", "if/else"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "Databricks Jobs において、有効なタスクタイプではないものはどれですか？",
+    "choices": {
+      "A": "Python wheel",
+      "B": "REST API call",
+      "C": "SQL query",
+      "D": "If/else condition"
+    },
+    "answer": "B",
+    "explanation": "正解は **REST API call** です\n\nDatabricks Jobs（Workflows）では、ジョブ内で利用できるタスクタイプとして、代表例は以下があります\n\n- Notebook task\n- Python script task\n- Python wheel task\n- JAR task\n- Spark submit task\n- SQL task（query / dashboard / alert）\n- dbt task\n- Run Job task\n- If/else condition task\n- For each task\n\nこのため、\n- `Python wheel` → 有効\n- `SQL query` → 有効\n- `If/else condition` → 有効\n\nとなります。\n\n一方、**REST API call** は Databricks Jobs におけるネイティブなタスクタイプとしては存在しません。Databricks REST API は、ジョブの作成・更新・実行などを外部から制御するための管理インターフェースであり、ジョブ内部の1タスクとして直接選択するものではありません。REST API をジョブ内で使いたい場合は、通常 Notebook / Python script / Python wheel 内で `requests` などを使って実装します。\n\n特に `Python wheel task` はイメージしづらいですが、これは単一の `.py` スクリプトではなく、**複数のPythonモジュールや依存関係を束ねてビルドした `.whl` パッケージ（Python Wheel）をDatabricks上で実行するタスク** です\n\nつまり、\n- Python script → 単一スクリプト実行\n- Python wheel → パッケージ化された再利用可能なPythonアプリケーション実行\n\nという違いがあります。\n\nPython wheel task では、`package_name` と `entry_point`（開始関数や実行開始位置）を指定して、ビルド済みの Python プロジェクトを本番ジョブとして実行します。これは、CI/CD や Databricks Asset Bundles と相性が良く、大規模開発・チーム開発・再利用性重視のケースで特に有効です\n\n要するに、\n- Python wheel = “製品化されたPythonコード”\n- REST API = “外部からJobsを管理する手段”\n\nであり、REST API call 自体は Jobs の標準 task type ではありません",
+    "whyWrong": {
+      "A": "Python wheel task は正式な Databricks Jobs タスクタイプです。パッケージ化されたPythonアプリケーション実行に使われます",
+      "C": "SQL task（SQL query / dashboard / alert）は正式サポートされています",
+      "D": "If/else condition task は Databricks Workflows の条件分岐制御タスクとして有効です"
+    },
+    "references": [
+      {
+        "title": "タスクの種類",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/configure-task#task-types"
+      },
+      {
+        "title": "Azure Databricks ワークフローの概要",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/workflows/"
+      }
+    ],
+    "notes": "REST API は Databricks Jobs を外部制御する仕組みであり、Jobs 内部のネイティブ task type ではない。試験では『API = 管理手段』『task type = workflow構成要素』を分けて考える"
+  },
+  {
+    "id": "DEP-Q283",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and Streaming",
+    "domain": "Structured Streaming",
+    "tags": ["Structured Streaming", "availableNow", "Delta Lake", "incremental processing", "Bronze to Silver"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "question": "データエンジニアリングチームは、「orders_raw」という名前のシングルプレックスブロンズテーブルを使用しており、そこに毎晩新しい注文データが追加されます\n\n注文データをより詳細に表示するために、「orders_cleaned」という新しい Silver テーブルを作成しました。チームは、orders_raw テーブルに挿入されたすべての新規レコードを処理し、orders_cleaned テーブルに反映させるためのバッチ処理パイプラインを作成したいと考えています。このデータバッチを伝播させるための計算コストを最小限に抑えるソリューションはどれですか？",
+    "choices": {
+      "A": "Spark Structured Streaming を使用して、トリガーの availableNow オプションを使用して orders_raw からの新しいレコードをバッチモードで処理します",
+      "B": "バッチ上書きロジックを使用して、orders_raw のすべてのレコードを再処理し、orders_cleaned テーブルを上書きします",
+      "C": "Spark Structured Streaming の foreachBatch ロジックを使用して、trigger(processingTime=”24 hours”) を使用して orders_raw から新しいレコードを処理します",
+      "D": "Delta Lake のタイムトラベル機能で、orders_raw の最新バージョンと1つ前のバージョンを比較し、その差分を orders_cleaned テーブルに書き込みます"
+    },
+    "answer": "A",
+    "explanation": "正解は **Spark Structured Streaming を使用して、トリガーの availableNow オプションを使用して orders_raw からの新しいレコードをバッチモードで処理する** です\n\nこの問題の要件は、毎晩 orders_raw テーブルに追加される新規レコードだけを処理し、orders_cleanedテーブル へ段階的に反映しつつ、計算コストを最小化することです\n\nStructured Streaming の `availableNow` トリガーは、ソースに存在する未処理データを増分バッチとして処理し、処理が完了すると自動的に停止します。Databricks 公式でも、`Trigger.AvailableNow` は増分バッチ処理ワークロードに推奨されており、すべての利用可能なレコードを処理した後に停止すると説明されています\n\nこのため、常時稼働するストリーミングジョブを持たずに、毎晩の追加分だけを効率よく処理できます。チェックポイントにより処理済み位置が管理されるため、次回実行時は前回以降に追加された未処理レコードだけが対象になります\n\nつまり、`availableNow` は『バッチのように定期実行しながら、ストリーミングの増分処理・チェックポイント管理を利用する』方式です。Bronze から Silver へ append-only な新規データを伝播する今回のケースでは、フル再処理を避けられるため、最も計算コストを抑えられます",
+    "whyWrong": {
+      "B": "毎回 `orders_raw` の全レコードを再処理して `orders_cleaned` を上書きするため、データ量が増えるほど計算コストが増大します。新規追加分だけを処理したい要件には不適切です",
+      "C": "`foreachBatch` と `trigger(processingTime=\"24 hours\")` でも定期的なマイクロバッチ処理は可能ですが、ストリームを継続稼働させる設計になりやすく、今回のような『未処理分を処理して停止する』増分バッチ用途では `availableNow` の方が適しています",
+      "D": "Time Travel で最新バージョンと1つ前のバージョンを比較すれば差分抽出は可能な場合がありますが、毎回バージョン間比較ロジックが必要になり、ストリーミングのチェックポイントによる未処理位置管理を活用できません"
+    },
+    "references": [
+      {
+        "title": "構造化ストリーミングのトリガー間隔を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/triggers"
+      },
+      {
+        "title": "最初の構造化ストリーミング ワークロードを実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/tutorial"
+      },
+      {
+        "title": "実稼働ワークロード用に自動ローダーを構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/production"
+      }
+    ],
+    "notes": "`availableNow` は、未処理データを処理して停止する増分バッチ処理に向く。毎晩追加される Bronze append-only データを Silver に反映する場合、フル再処理より低コストで、常時稼働ストリームより運用コストも抑えやすい"
   }
 ]
