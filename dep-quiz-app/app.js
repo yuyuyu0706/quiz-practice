@@ -28,6 +28,7 @@ const els = {
   questionCount: document.getElementById('question-count'),
   resumeBtn: document.getElementById('resume-btn'),
   discardSessionBtn: document.getElementById('discard-session-btn'),
+  reviewNotesBtn: document.getElementById('review-notes-btn'),
   homeMessage: document.getElementById('home-message'),
   quizSection: document.getElementById('quiz-section'),
   quizProgress: document.getElementById('quiz-progress'),
@@ -98,6 +99,10 @@ function attachEvents() {
     state.session = null;
     els.homeMessage.textContent = '中断データを削除しました。';
     refreshResumeUI();
+  });
+  els.reviewNotesBtn?.addEventListener('click', () => {
+    const ok = saveScopeSettingsFromUI();
+    if (ok) startSession('notesOnly');
   });
 
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
@@ -225,10 +230,14 @@ function startSession(forcedMode = null) {
     pool = selected.filter((q) => (state.progress[q.id]?.wrongCount ?? 0) > 0);
   } else if (mode === 'bookmarks') {
     pool = selected.filter((q) => state.progress[q.id]?.bookmark);
+  } else if (mode === 'notesOnly') {
+    pool = selected.filter((q) => hasNote(q.id));
   }
 
   if (!pool.length) {
-    els.homeMessage.textContent = '対象となる問題がありません。設定を変更してください。';
+    els.homeMessage.textContent = mode === 'notesOnly'
+      ? 'メモが登録された問題がありません。解答後にメモを保存すると、この復習を利用できます。'
+      : '対象となる問題がありません。設定を変更してください。';
     return;
   }
 
@@ -902,6 +911,22 @@ function saveSettingsFromUI() {
   return true;
 }
 
+function saveScopeSettingsFromUI() {
+  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map((input) => input.value);
+  if (!sections.length) {
+    els.homeMessage.textContent = '最低1つのセクションを選択してください。';
+    return false;
+  }
+
+  state.settings = {
+    ...state.settings,
+    sections,
+    count: els.questionCount.value,
+  };
+  saveJSON(STORAGE_KEYS.settings, state.settings);
+  return true;
+}
+
 function updateBookmarkLabel(bookmarkEnabled) {
   els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
 }
@@ -935,6 +960,15 @@ function baseProgress() {
     noteText: '',
     noteUpdatedAt: null,
   };
+}
+
+function getQuestionNote(questionId) {
+  const progress = state.progress[questionId] ?? {};
+  return progress.noteText ?? progress.note ?? progress.memo ?? '';
+}
+
+function hasNote(questionId) {
+  return String(getQuestionNote(questionId)).trim().length > 0;
 }
 
 function saveCurrentQuestionNote() {
