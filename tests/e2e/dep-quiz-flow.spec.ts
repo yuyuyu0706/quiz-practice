@@ -42,5 +42,18 @@ test.describe('dep quiz flow on desktop', () => {
     await expect(page.locator('#result-view')).toBeVisible();
     await expect(page.getByRole('heading', { name: '結果' })).toBeVisible();
     await expect(page.locator('#score-text')).toContainText('スコア:');
+
+    await expect(page.getByRole('button', { name: '間違いのみ復習を開始' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'メモ一覧' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'ホームへ' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'メモ一覧' }).click();
+    await expect(page.locator('#notes-view')).toBeVisible();
+    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await expect(page.locator('#home-view')).toBeVisible();
+
+    await page.getByRole('button', { name: '開始' }).click();
+    await expect(page.locator('#quiz-view')).toBeVisible();
+
   });
 });

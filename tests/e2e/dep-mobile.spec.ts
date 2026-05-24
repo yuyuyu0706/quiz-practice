@@ -22,5 +22,29 @@ test.describe('dep mobile quiz flow', () => {
     const total = Number(progress?.match(/\d+\s*\/\s*(\d+)/)?.[1]);
     expect(total).toBeGreaterThanOrEqual(2);
     await expect(page.locator('#quiz-progress')).toContainText(`2 / ${total}`);
+
+    await page.getByRole('button', { name: '中断してホームへ' }).click();
+    await expect(page.locator('#home-view')).toBeVisible();
+
+    const homeButtons = page.locator('#home-view .button-row button');
+    const buttonCount = await homeButtons.count();
+    expect(buttonCount).toBeGreaterThanOrEqual(3);
+
+    const viewport = page.viewportSize();
+    expect(viewport).not.toBeNull();
+
+    for (let i = 0; i < buttonCount; i += 1) {
+      await expect(homeButtons.nth(i)).toBeVisible();
+      const box = await homeButtons.nth(i).boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height + 200);
+    }
+
+    await page.getByRole('button', { name: 'メモ一覧' }).click();
+    await expect(page.locator('#notes-view')).toBeVisible();
+
   });
 });
