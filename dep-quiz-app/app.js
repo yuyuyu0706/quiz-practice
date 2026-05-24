@@ -22,6 +22,7 @@ const els = {
     home: document.getElementById('home-view'),
     quiz: document.getElementById('quiz-view'),
     result: document.getElementById('result-view'),
+    notes: document.getElementById('notes-view'),
   },
   form: document.getElementById('settings-form'),
   sectionCheckboxes: document.getElementById('section-checkboxes'),
@@ -29,6 +30,11 @@ const els = {
   resumeBtn: document.getElementById('resume-btn'),
   discardSessionBtn: document.getElementById('discard-session-btn'),
   reviewNotesBtn: document.getElementById('review-notes-btn'),
+  notesListBtn: document.getElementById('notes-list-btn'),
+  notesList: document.getElementById('notes-list'),
+  notesEmpty: document.getElementById('notes-empty'),
+  deleteAllNotes: document.getElementById('delete-all-notes'),
+  notesBackHome: document.getElementById('notes-back-home'),
   homeMessage: document.getElementById('home-message'),
   quizSection: document.getElementById('quiz-section'),
   quizProgress: document.getElementById('quiz-progress'),
@@ -59,6 +65,7 @@ const els = {
   sectionScoreText: document.getElementById('section-score-text'),
   wrongList: document.getElementById('wrong-list'),
   retryWrong: document.getElementById('retry-wrong'),
+  resultNotesListBtn: document.getElementById('result-notes-list-btn'),
   backHome: document.getElementById('back-home'),
 };
 
@@ -104,6 +111,10 @@ function attachEvents() {
     const ok = saveScopeSettingsFromUI();
     if (ok) startSession('notesOnly');
   });
+  els.notesListBtn?.addEventListener('click', () => {
+    renderNotesList();
+    showView('notes');
+  });
 
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
   els.prevQuestion.addEventListener('click', () => {
@@ -147,10 +158,18 @@ function attachEvents() {
   els.saveNote.addEventListener('click', saveCurrentQuestionNote);
 
   els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
+  els.resultNotesListBtn?.addEventListener('click', () => {
+    renderNotesList();
+    showView('notes');
+  });
   els.backHome.addEventListener('click', () => {
     showView('home');
     refreshResumeUI();
   });
+  els.notesBackHome?.addEventListener('click', () => {
+    showView('home');
+  });
+  els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
 
   els.suspendToHome.addEventListener('click', () => {
     if (!state.session) return;
@@ -982,6 +1001,7 @@ function saveCurrentQuestionNote() {
 
   const noteText = els.questionNote.value.trim();
   current.noteText = noteText;
+  current.note = noteText;
   current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
 
   state.progress[question.id] = current;
@@ -996,6 +1016,177 @@ function renderQuestionNote(questionId) {
   els.notePanel.classList.toggle('hidden', !graded);
   els.questionNote.value = progress.noteText ?? '';
   els.noteStatus.textContent = progress.noteUpdatedAt ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}` : '';
+}
+
+function getAllNoteItems() {
+  return state.questions
+    .map((question) => {
+      const progress = state.progress[question.id] ?? {};
+      const noteText = String(progress.noteText ?? progress.note ?? '').trim();
+      if (!noteText) return null;
+      return {
+        id: question.id,
+        section: question.section,
+        questionText: question.question,
+        noteText,
+        noteUpdatedAt: progress.noteUpdatedAt ?? null,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aTime = new Date(a.noteUpdatedAt ?? 0).getTime();
+      const bTime = new Date(b.noteUpdatedAt ?? 0).getTime();
+      return bTime - aTime;
+    });
+}
+
+function renderNotesList() {
+  const noteItems = getAllNoteItems();
+  els.notesList.replaceChildren();
+  const hasItems = noteItems.length > 0;
+  els.notesEmpty.classList.toggle('hidden', hasItems);
+  els.deleteAllNotes.disabled = !hasItems;
+  if (!hasItems) return;
+
+  noteItems.forEach((item) => {
+    const article = document.createElement('article');
+    article.className = 'note-card';
+
+    const header = document.createElement('h3');
+    header.className = 'note-card-title';
+    header.textContent = `${item.id} / Section ${item.section}`;
+    article.appendChild(header);
+
+    const question = document.createElement('p');
+    question.className = 'note-card-question';
+    question.textContent = `問題: ${getQuestionPreview(item.questionText)}`;
+    article.appendChild(question);
+
+    const noteText = document.createElement('p');
+    noteText.className = 'note-card-body';
+    noteText.textContent = item.noteText;
+    article.appendChild(noteText);
+
+    const updatedAt = document.createElement('p');
+    updatedAt.className = 'note-card-updated';
+    updatedAt.textContent = `更新日時: ${formatDateTime(item.noteUpdatedAt)}`;
+    article.appendChild(updatedAt);
+
+    const actions = document.createElement('div');
+    actions.className = 'button-row wrap';
+
+    const solveBtn = document.createElement('button');
+    solveBtn.type = 'button';
+    solveBtn.textContent = 'この問題を解く';
+    solveBtn.addEventListener('click', () => startSingleQuestionSession(item.id));
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.textContent = '編集';
+    editBtn.addEventListener('click', () => toggleNoteEdit(article, item.id));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'danger-secondary';
+    deleteBtn.textContent = '削除';
+    deleteBtn.addEventListener('click', () => deleteNote(item.id));
+
+    actions.append(solveBtn, editBtn, deleteBtn);
+    article.appendChild(actions);
+
+    els.notesList.appendChild(article);
+  });
+}
+
+function startSingleQuestionSession(questionId) {
+  state.session = {
+    schemaVersion: 1,
+    app: 'dep-quiz-app',
+    mode: 'single',
+    order: [questionId],
+    currentIndex: 0,
+    answers: {},
+    choiceMap: {},
+    graded: {},
+    completedAt: null,
+    explanationOpen: false,
+    startedAt: new Date().toISOString(),
+    settingsSnapshot: { ...state.settings, mode: 'single' },
+  };
+  persistSession();
+  showView('quiz');
+  renderQuestion({ scrollToTop: true });
+}
+
+function toggleNoteEdit(card, questionId) {
+  const existingEditor = card.querySelector('.note-editor');
+  if (existingEditor) {
+    existingEditor.remove();
+    return;
+  }
+  const editor = document.createElement('div');
+  editor.className = 'note-editor';
+  const textarea = document.createElement('textarea');
+  textarea.rows = 4;
+  textarea.value = getQuestionNote(questionId);
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.textContent = '保存';
+  saveBtn.className = 'primary';
+  saveBtn.addEventListener('click', () => {
+    saveNoteText(questionId, textarea.value);
+    renderNotesList();
+  });
+  editor.append(textarea, saveBtn);
+  card.appendChild(editor);
+}
+
+function saveNoteText(questionId, rawNote) {
+  const current = { ...baseProgress(), ...(state.progress[questionId] ?? {}) };
+  const noteText = String(rawNote ?? '').trim();
+  current.noteText = noteText;
+  current.note = noteText;
+  current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
+  state.progress[questionId] = current;
+  saveJSON(STORAGE_KEYS.progress, state.progress);
+}
+
+function deleteNote(questionId) {
+  if (!window.confirm('このメモを削除しますか？')) return;
+  const current = { ...baseProgress(), ...(state.progress[questionId] ?? {}) };
+  current.noteText = '';
+  current.note = '';
+  current.noteUpdatedAt = null;
+  state.progress[questionId] = current;
+  saveJSON(STORAGE_KEYS.progress, state.progress);
+  renderNotesList();
+}
+
+function handleDeleteAllNotes() {
+  if (!window.confirm('メモをすべて削除しますか？')) return;
+  Object.values(state.progress).forEach((item) => {
+    item.noteText = '';
+    item.note = '';
+    item.noteUpdatedAt = null;
+  });
+  saveJSON(STORAGE_KEYS.progress, state.progress);
+  renderNotesList();
+}
+
+function getQuestionPreview(text) {
+  const normalized = String(text ?? '').trim();
+  if (!normalized) return '';
+
+  const periodIndex = normalized.indexOf('。');
+  const newlineIndex = normalized.indexOf('\n');
+  const cutPoints = [periodIndex, newlineIndex].filter((index) => index >= 0);
+  const sentenceEnd = cutPoints.length ? Math.min(...cutPoints) + 1 : Number.POSITIVE_INFINITY;
+  const maxLen = 50;
+  const cutIndex = Math.min(sentenceEnd, maxLen, normalized.length);
+
+  const preview = normalized.slice(0, cutIndex);
+  const truncated = cutIndex < normalized.length;
+  return `${preview}${truncated ? '…' : ''}`;
 }
 
 function formatDateTime(value) {
