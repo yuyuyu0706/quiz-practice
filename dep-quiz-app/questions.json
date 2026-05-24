@@ -3030,7 +3030,7 @@
       "C": "df.withColumn(\"tier\", rank().over(window_spec))",
       "D": "df.withColumn(\"tier\", row_number().over(window_spec))"
     },
-    "answer": "B",
+    "answer": "A",
     "explanation": "正解は **df.withColumn(\"tier\", dense_rank().over(window_spec))** です\n\nこの問題のポイントは、各 department（部署）ごとに salary（給与）の降順で順位付けしつつ、**同じ給与の従業員は同じ tier（階層）にし、次の順位は欠番なく連番にする** ことです\n\n```python\nwindow_spec = Window.partitionBy(\"department\").orderBy(df[\"salary\"].desc())\n```\n\nこの window_spec により、\n- department ごとに独立ランキング\n- salary 高い順\n\nとなります。`dense_rank()` は同順位に同じランクを付与し、次順位を欠番にしません\n\n### HR例\n給与:\n4000, 4000, 3900\n\n### 結果:\n1, 1, 2\n\n### Sales例\n給与:\n5000, 4800, 4800, 3600\n\n### 結果:\n1, 2, 2, 3\n\nこれは問題文の期待結果と完全一致します。この問題の本質は、**『同順位あり + 欠番なしランキング』 = dense_rank** を理解しているかを問っています",
     "whyWrong": {
       "B": "percent_rank() は順位番号ではなく、0〜1 の相対順位割合を返します。tier番号用途には不適切です",
