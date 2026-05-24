@@ -1059,7 +1059,7 @@ function renderNotesList() {
 
     const question = document.createElement('p');
     question.className = 'note-card-question';
-    question.textContent = `問題: ${item.questionText.slice(0, 50)}${item.questionText.length > 50 ? '…' : ''}`;
+    question.textContent = `問題: ${getQuestionPreview(item.questionText)}`;
     article.appendChild(question);
 
     const noteText = document.createElement('p');
@@ -1171,6 +1171,22 @@ function handleDeleteAllNotes() {
   });
   saveJSON(STORAGE_KEYS.progress, state.progress);
   renderNotesList();
+}
+
+function getQuestionPreview(text) {
+  const normalized = String(text ?? '').trim();
+  if (!normalized) return '';
+
+  const periodIndex = normalized.indexOf('。');
+  const newlineIndex = normalized.indexOf('\n');
+  const cutPoints = [periodIndex, newlineIndex].filter((index) => index >= 0);
+  const sentenceEnd = cutPoints.length ? Math.min(...cutPoints) + 1 : Number.POSITIVE_INFINITY;
+  const maxLen = 50;
+  const cutIndex = Math.min(sentenceEnd, maxLen, normalized.length);
+
+  const preview = normalized.slice(0, cutIndex);
+  const truncated = cutIndex < normalized.length;
+  return `${preview}${truncated ? '…' : ''}`;
 }
 
 function formatDateTime(value) {
