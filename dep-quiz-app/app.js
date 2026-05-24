@@ -65,6 +65,7 @@ const els = {
   sectionScoreText: document.getElementById('section-score-text'),
   wrongList: document.getElementById('wrong-list'),
   retryWrong: document.getElementById('retry-wrong'),
+  resultNotesListBtn: document.getElementById('result-notes-list-btn'),
   backHome: document.getElementById('back-home'),
 };
 
@@ -157,6 +158,10 @@ function attachEvents() {
   els.saveNote.addEventListener('click', saveCurrentQuestionNote);
 
   els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
+  els.resultNotesListBtn?.addEventListener('click', () => {
+    renderNotesList();
+    showView('notes');
+  });
   els.backHome.addEventListener('click', () => {
     showView('home');
     refreshResumeUI();
