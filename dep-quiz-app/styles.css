@@ -739,3 +739,47 @@ input:focus-visible,
   outline: none;
   box-shadow: 0 0 0 3px var(--dep-primary-ring);
 }
+
+.notes-list {
+  display: grid;
+  gap: 12px;
+}
+
+.note-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: linear-gradient(180deg, #fff, var(--dep-surface-tint));
+}
+
+.note-card-title {
+  margin-bottom: 6px;
+}
+
+.note-card-question,
+.note-card-body,
+.note-card-updated {
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+}
+
+.note-card-updated {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.note-editor {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.note-editor textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.notes-footer-actions {
+  margin-top: 16px;
+}

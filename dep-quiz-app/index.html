@@ -44,6 +44,7 @@
         </div>
         <div class="button-row">
           <button type="button" id="review-notes-btn">メモあり問題を復習</button>
+          <button type="button" id="notes-list-btn">メモ一覧</button>
         </div>
       </form>
       <p id="home-message" class="message"></p>
@@ -121,6 +122,16 @@
       <div class="button-row wrap">
         <button id="retry-wrong" class="primary">間違いのみ復習を開始</button>
         <button id="back-home">ホームへ</button>
+      </div>
+    </section>
+
+    <section id="notes-view" class="card view">
+      <h2>メモ一覧</h2>
+      <div id="notes-empty" class="message hidden">保存済みメモはありません</div>
+      <div id="notes-list" class="notes-list"></div>
+      <div class="button-row wrap notes-footer-actions">
+        <button id="delete-all-notes" type="button" class="danger-secondary">メモを全削除</button>
+        <button id="notes-back-home" type="button">ホームへ戻る</button>
       </div>
     </section>
   </main>
