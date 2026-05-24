@@ -86,6 +86,20 @@
         <button id="suspend-to-home" type="button" class="danger-secondary">中断してホームへ</button>
       </div>
       <article id="explanation" class="explanation hidden"></article>
+      <section id="note-panel" class="note-panel hidden" aria-label="自分用メモ">
+        <h3>自分用メモ</h3>
+        <p class="note-help">この問題で迷った点、覚え方、あとで復習したいことを残せます。</p>
+        <textarea
+          id="question-note"
+          class="question-note"
+          rows="5"
+          placeholder="例: schemaLocation と checkpointLocation を混同した。schemaLocation はスキーマ管理、checkpointLocation はストリーム進捗管理。"
+        ></textarea>
+        <div class="note-actions">
+          <button type="button" id="save-note">メモを保存</button>
+          <span id="note-status" class="note-status" role="status" aria-live="polite"></span>
+        </div>
+      </section>
       <div id="explanation-action-row" class="button-group button-group-primary explanation-actions hidden" aria-label="解説後の主要操作">
         <p class="selection-hint explanation-hint">解説を読み終えたら、ここから次の問題へ進めます。</p>
         <div class="button-row button-row-primary">

@@ -48,6 +48,10 @@ const els = {
   suspendMobileSlot: document.getElementById('suspend-mobile-slot'),
   suspendDesktopSlot: document.getElementById('suspend-desktop-slot'),
   explanationActionRow: document.getElementById('explanation-action-row'),
+  notePanel: document.getElementById('note-panel'),
+  questionNote: document.getElementById('question-note'),
+  saveNote: document.getElementById('save-note'),
+  noteStatus: document.getElementById('note-status'),
   bookmarkBtn: document.getElementById('bookmark-btn'),
   suspendToHome: document.getElementById('suspend-to-home'),
   scoreText: document.getElementById('score-text'),
@@ -56,6 +60,8 @@ const els = {
   retryWrong: document.getElementById('retry-wrong'),
   backHome: document.getElementById('back-home'),
 };
+
+let noteStatusTimer = null;
 
 init();
 
@@ -133,6 +139,7 @@ function attachEvents() {
     saveJSON(STORAGE_KEYS.progress, state.progress);
     updateBookmarkLabel(current.bookmark);
   });
+  els.saveNote.addEventListener('click', saveCurrentQuestionNote);
 
   els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
   els.backHome.addEventListener('click', () => {
@@ -305,6 +312,7 @@ function renderQuestion(options = {}) {
   updatePrimaryActions(question.id);
   updateExplanationActions();
   updateBookmarkLabel(state.progress[question.id]?.bookmark);
+  renderQuestionNote(question.id);
   persistSession();
 
   closeSecondaryActions();
@@ -715,7 +723,8 @@ function finishSession() {
   } else {
     wrongItems.forEach((q) => {
       const li = document.createElement('li');
-      li.textContent = `${q.id}: ${q.question.slice(0, 50)}...`;
+      const noteText = (state.progress[q.id]?.noteText ?? '').trim();
+      li.textContent = `${q.id}: ${q.question.slice(0, 50)}...${noteText ? ' 📝メモあり' : ''}`;
       els.wrongList.appendChild(li);
     });
   }
@@ -923,7 +932,53 @@ function baseProgress() {
     wrongCount: 0,
     lastAnsweredAt: null,
     bookmark: false,
+    noteText: '',
+    noteUpdatedAt: null,
   };
+}
+
+function saveCurrentQuestionNote() {
+  const question = getCurrentQuestion();
+  if (!question) return;
+
+  const current = {
+    ...baseProgress(),
+    ...(state.progress[question.id] ?? {}),
+  };
+
+  const noteText = els.questionNote.value.trim();
+  current.noteText = noteText;
+  current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
+
+  state.progress[question.id] = current;
+  saveJSON(STORAGE_KEYS.progress, state.progress);
+  updateNoteStatus(noteText ? 'メモを保存しました。' : 'メモを空にしました。');
+}
+
+function renderQuestionNote(questionId) {
+  const graded = Boolean(state.session?.graded?.[questionId]);
+  const progress = state.progress[questionId] ?? {};
+
+  els.notePanel.classList.toggle('hidden', !graded);
+  els.questionNote.value = progress.noteText ?? '';
+  els.noteStatus.textContent = progress.noteUpdatedAt ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}` : '';
+}
+
+function formatDateTime(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('ja-JP');
+}
+
+function updateNoteStatus(message) {
+  els.noteStatus.textContent = message;
+  if (noteStatusTimer) window.clearTimeout(noteStatusTimer);
+  noteStatusTimer = window.setTimeout(() => {
+    const question = getCurrentQuestion();
+    if (!question) return;
+    renderQuestionNote(question.id);
+  }, 1800);
 }
 
 function shuffle(array) {

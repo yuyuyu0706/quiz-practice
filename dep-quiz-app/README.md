@@ -31,6 +31,8 @@ python -m http.server 8000
 ## localStorage 保存内容
 
 - `depQuizProgress`: 問題ごとの学習履歴
+  - 正答数・誤答数・最終回答日時・ブックマーク状態
+  - Phase 1 以降は問題別メモ `noteText` / `noteUpdatedAt` も保存
 - `depQuizSettings`: ホーム画面の設定値
 - `depQuizActiveSession`: 進行中セッション
 
