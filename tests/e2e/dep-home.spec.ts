@@ -23,20 +23,26 @@ test.describe('dep home screen', () => {
     await expect(page.getByRole('button', { name: 'メモあり問題を復習' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'メモ一覧' })).toBeVisible();
 
-    const homeButtonRow = page.locator('#home-view .button-row').first();
-    const homeButtons = homeButtonRow.locator('button');
-    const buttonCount = await homeButtons.count();
-    expect(buttonCount).toBeGreaterThanOrEqual(3);
+    const primaryHomeButtons = page.locator('#home-view .button-row').first().locator('button:visible');
+    await expect(primaryHomeButtons).toHaveCount(1);
 
-    const rowBox = await homeButtonRow.boundingBox();
-    expect(rowBox).not.toBeNull();
-    for (let i = 0; i < buttonCount; i += 1) {
-      const box = await homeButtons.nth(i).boundingBox();
+    const notesActionButtons = page.locator('#home-view .button-row').nth(1).locator('button:visible');
+    await expect(notesActionButtons).toHaveCount(2);
+
+    const viewport = page.viewportSize();
+    expect(viewport).not.toBeNull();
+    const visibleButtons = [
+      page.getByRole('button', { name: '開始' }),
+      page.getByRole('button', { name: 'メモあり問題を復習' }),
+      page.getByRole('button', { name: 'メモ一覧' }),
+    ];
+    for (const button of visibleButtons) {
+      await expect(button).toBeVisible();
+      const box = await button.boundingBox();
       expect(box).not.toBeNull();
-      expect(box!.x).toBeGreaterThanOrEqual(rowBox!.x - 1);
-      expect(box!.y).toBeGreaterThanOrEqual(rowBox!.y - 1);
-      expect(box!.x + box!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
-      expect(box!.y + box!.height).toBeLessThanOrEqual(rowBox!.y + rowBox!.height + 1);
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width + 1);
     }
 
     await page.getByRole('button', { name: 'メモ一覧' }).click();
