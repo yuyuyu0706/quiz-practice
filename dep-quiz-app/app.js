@@ -1,10 +1,39 @@
-import { loadProgress, saveProgress, loadSettings, saveSettings, loadActiveSession, saveActiveSession, clearActiveSession } from './storage.js';
-import { baseProgress, getQuestionNote, hasNote, saveNote, deleteNote, deleteAllNotes, getAllNoteItems } from './notes.js';
-import { loadQuestions } from './questions.js';
-import { createQuizSession, createSession, getChoiceLabels, getOrCreateChoiceMap, gradeAnswer, buildSessionResult } from './quiz-session.js';
-import { showView as switchView, renderNotesList as renderNotesListView, formatDateTime, renderQuestion as renderQuestionView, renderResult } from './render.js';
+import {
+  loadProgress,
+  saveProgress,
+  loadSettings,
+  saveSettings,
+  loadActiveSession,
+  saveActiveSession,
+  clearActiveSession,
+} from "./storage.js";
+import {
+  baseProgress,
+  getQuestionNote,
+  hasNote,
+  saveNote,
+  deleteNote,
+  deleteAllNotes,
+  getAllNoteItems,
+} from "./notes.js";
+import { loadQuestions } from "./questions.js";
+import {
+  createQuizSession,
+  createSession,
+  getChoiceLabels,
+  getOrCreateChoiceMap,
+  gradeAnswer,
+  buildSessionResult,
+} from "./quiz-session.js";
+import {
+  showView as switchView,
+  renderNotesList as renderNotesListView,
+  formatDateTime,
+  renderQuestion as renderQuestionView,
+  renderResult,
+} from "./render.js";
 
-const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
+const FIXED_CHOICE_LABELS = ["A", "B", "C", "D"];
 
 const state = {
   questions: [],
@@ -15,54 +44,54 @@ const state = {
 
 const els = {
   views: {
-    home: document.getElementById('home-view'),
-    quiz: document.getElementById('quiz-view'),
-    result: document.getElementById('result-view'),
-    notes: document.getElementById('notes-view'),
+    home: document.getElementById("home-view"),
+    quiz: document.getElementById("quiz-view"),
+    result: document.getElementById("result-view"),
+    notes: document.getElementById("notes-view"),
   },
-  form: document.getElementById('settings-form'),
-  sectionCheckboxes: document.getElementById('section-checkboxes'),
-  questionCount: document.getElementById('question-count'),
-  resumeBtn: document.getElementById('resume-btn'),
-  discardSessionBtn: document.getElementById('discard-session-btn'),
-  reviewNotesBtn: document.getElementById('review-notes-btn'),
-  notesListBtn: document.getElementById('notes-list-btn'),
-  notesList: document.getElementById('notes-list'),
-  notesEmpty: document.getElementById('notes-empty'),
-  deleteAllNotes: document.getElementById('delete-all-notes'),
-  notesBackHome: document.getElementById('notes-back-home'),
-  homeMessage: document.getElementById('home-message'),
-  quizSection: document.getElementById('quiz-section'),
-  quizProgress: document.getElementById('quiz-progress'),
-  quizQuestion: document.getElementById('quiz-question'),
-  choicesForm: document.getElementById('choices-form'),
-  resultIndicator: document.getElementById('result-indicator'),
-  explanation: document.getElementById('explanation'),
-  quizMessage: document.getElementById('quiz-message'),
-  selectionHint: document.getElementById('selection-hint'),
-  quizTopAnchor: document.getElementById('quiz-top-anchor'),
-  submitAnswer: document.getElementById('submit-answer'),
-  prevQuestion: document.getElementById('prev-question'),
-  nextQuestion: document.getElementById('next-question'),
-  nextQuestionInline: document.getElementById('next-question-inline'),
-  toggleExplanation: document.getElementById('toggle-explanation'),
-  secondaryActionsToggle: document.getElementById('secondary-actions-toggle'),
-  secondaryActionsPanel: document.getElementById('secondary-actions-panel'),
-  suspendMobileSlot: document.getElementById('suspend-mobile-slot'),
-  suspendDesktopSlot: document.getElementById('suspend-desktop-slot'),
-  explanationActionRow: document.getElementById('explanation-action-row'),
-  notePanel: document.getElementById('note-panel'),
-  questionNote: document.getElementById('question-note'),
-  saveNote: document.getElementById('save-note'),
-  noteStatus: document.getElementById('note-status'),
-  bookmarkBtn: document.getElementById('bookmark-btn'),
-  suspendToHome: document.getElementById('suspend-to-home'),
-  scoreText: document.getElementById('score-text'),
-  sectionScoreText: document.getElementById('section-score-text'),
-  wrongList: document.getElementById('wrong-list'),
-  retryWrong: document.getElementById('retry-wrong'),
-  resultNotesListBtn: document.getElementById('result-notes-list-btn'),
-  backHome: document.getElementById('back-home'),
+  form: document.getElementById("settings-form"),
+  sectionCheckboxes: document.getElementById("section-checkboxes"),
+  questionCount: document.getElementById("question-count"),
+  resumeBtn: document.getElementById("resume-btn"),
+  discardSessionBtn: document.getElementById("discard-session-btn"),
+  reviewNotesBtn: document.getElementById("review-notes-btn"),
+  notesListBtn: document.getElementById("notes-list-btn"),
+  notesList: document.getElementById("notes-list"),
+  notesEmpty: document.getElementById("notes-empty"),
+  deleteAllNotes: document.getElementById("delete-all-notes"),
+  notesBackHome: document.getElementById("notes-back-home"),
+  homeMessage: document.getElementById("home-message"),
+  quizSection: document.getElementById("quiz-section"),
+  quizProgress: document.getElementById("quiz-progress"),
+  quizQuestion: document.getElementById("quiz-question"),
+  choicesForm: document.getElementById("choices-form"),
+  resultIndicator: document.getElementById("result-indicator"),
+  explanation: document.getElementById("explanation"),
+  quizMessage: document.getElementById("quiz-message"),
+  selectionHint: document.getElementById("selection-hint"),
+  quizTopAnchor: document.getElementById("quiz-top-anchor"),
+  submitAnswer: document.getElementById("submit-answer"),
+  prevQuestion: document.getElementById("prev-question"),
+  nextQuestion: document.getElementById("next-question"),
+  nextQuestionInline: document.getElementById("next-question-inline"),
+  toggleExplanation: document.getElementById("toggle-explanation"),
+  secondaryActionsToggle: document.getElementById("secondary-actions-toggle"),
+  secondaryActionsPanel: document.getElementById("secondary-actions-panel"),
+  suspendMobileSlot: document.getElementById("suspend-mobile-slot"),
+  suspendDesktopSlot: document.getElementById("suspend-desktop-slot"),
+  explanationActionRow: document.getElementById("explanation-action-row"),
+  notePanel: document.getElementById("note-panel"),
+  questionNote: document.getElementById("question-note"),
+  saveNote: document.getElementById("save-note"),
+  noteStatus: document.getElementById("note-status"),
+  bookmarkBtn: document.getElementById("bookmark-btn"),
+  suspendToHome: document.getElementById("suspend-to-home"),
+  scoreText: document.getElementById("score-text"),
+  sectionScoreText: document.getElementById("section-score-text"),
+  wrongList: document.getElementById("wrong-list"),
+  retryWrong: document.getElementById("retry-wrong"),
+  resultNotesListBtn: document.getElementById("result-notes-list-btn"),
+  backHome: document.getElementById("back-home"),
 };
 
 let noteStatusTimer = null;
@@ -79,70 +108,74 @@ async function init() {
 }
 
 function attachEvents() {
-  els.form.addEventListener('submit', (event) => {
+  els.form.addEventListener("submit", (event) => {
     event.preventDefault();
     const ok = saveSettingsFromUI();
     if (ok) startSession(state.settings.mode);
   });
 
-  els.resumeBtn.addEventListener('click', () => {
+  els.resumeBtn.addEventListener("click", () => {
     const saved = loadSession();
     if (!saved) {
-      els.homeMessage.textContent = '再開できるセッションがありません。';
+      els.homeMessage.textContent = "再開できるセッションがありません。";
       refreshResumeUI();
       return;
     }
     state.session = saved;
-    showView('quiz');
+    showView("quiz");
     renderQuestion({ scrollToTop: true });
   });
 
-  els.discardSessionBtn.addEventListener('click', () => {
+  els.discardSessionBtn.addEventListener("click", () => {
     clearSession();
     state.session = null;
-    els.homeMessage.textContent = '中断データを削除しました。';
+    els.homeMessage.textContent = "中断データを削除しました。";
     refreshResumeUI();
   });
-  els.reviewNotesBtn?.addEventListener('click', () => {
+  els.reviewNotesBtn?.addEventListener("click", () => {
     const ok = saveScopeSettingsFromUI();
-    if (ok) startSession('notesOnly');
+    if (ok) startSession("notesOnly");
   });
-  els.notesListBtn?.addEventListener('click', () => {
+  els.notesListBtn?.addEventListener("click", () => {
     renderNotesList();
-    showView('notes');
+    showView("notes");
   });
 
-  els.submitAnswer.addEventListener('click', submitCurrentAnswer);
-  els.prevQuestion.addEventListener('click', () => {
+  els.submitAnswer.addEventListener("click", submitCurrentAnswer);
+  els.prevQuestion.addEventListener("click", () => {
     closeSecondaryActions();
     moveQuestion(-1);
   });
-  els.nextQuestion.addEventListener('click', () => {
+  els.nextQuestion.addEventListener("click", () => {
     closeSecondaryActions();
     moveQuestion(1);
   });
-  els.nextQuestionInline.addEventListener('click', () => {
+  els.nextQuestionInline.addEventListener("click", () => {
     closeSecondaryActions();
     moveQuestion(1);
   });
 
-  els.secondaryActionsToggle?.addEventListener('click', () => {
-    const expanded = els.secondaryActionsToggle.getAttribute('aria-expanded') === 'true';
+  els.secondaryActionsToggle?.addEventListener("click", () => {
+    const expanded =
+      els.secondaryActionsToggle.getAttribute("aria-expanded") === "true";
     setSecondaryActionsOpen(!expanded);
   });
 
-  els.choicesForm.addEventListener('change', handleChoiceSelectionChange);
+  els.choicesForm.addEventListener("change", handleChoiceSelectionChange);
 
-  els.toggleExplanation.addEventListener('click', () => {
+  els.toggleExplanation.addEventListener("click", () => {
     closeSecondaryActions();
-    els.explanation.classList.toggle('hidden');
-    state.session.explanationOpen = !els.explanation.classList.contains('hidden');
-    els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
+    els.explanation.classList.toggle("hidden");
+    state.session.explanationOpen =
+      !els.explanation.classList.contains("hidden");
+    els.toggleExplanation.textContent = state.session.explanationOpen
+      ? "解説を非表示"
+      : "解説を表示";
     updateExplanationActions();
     persistSession();
   });
 
-  els.bookmarkBtn.addEventListener('click', () => {
+  els.bookmarkBtn.addEventListener("click", () => {
     closeSecondaryActions();
     const q = getCurrentQuestion();
     const current = state.progress[q.id] ?? baseProgress();
@@ -151,40 +184,41 @@ function attachEvents() {
     saveProgress(state.progress);
     updateBookmarkLabel(current.bookmark);
   });
-  els.saveNote.addEventListener('click', saveCurrentQuestionNote);
+  els.saveNote.addEventListener("click", saveCurrentQuestionNote);
 
-  els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
-  els.resultNotesListBtn?.addEventListener('click', () => {
+  els.retryWrong.addEventListener("click", () => startSession("wrongOnly"));
+  els.resultNotesListBtn?.addEventListener("click", () => {
     renderNotesList();
-    showView('notes');
+    showView("notes");
   });
-  els.backHome.addEventListener('click', () => {
-    showView('home');
+  els.backHome.addEventListener("click", () => {
+    showView("home");
     refreshResumeUI();
   });
-  els.notesBackHome?.addEventListener('click', () => {
-    showView('home');
+  els.notesBackHome?.addEventListener("click", () => {
+    showView("home");
   });
-  els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
+  els.deleteAllNotes?.addEventListener("click", handleDeleteAllNotes);
 
-  els.suspendToHome.addEventListener('click', () => {
+  els.suspendToHome.addEventListener("click", () => {
     if (!state.session) return;
     closeSecondaryActions();
     persistSession();
-    showView('home');
-    els.homeMessage.textContent = '中断状態を保存しました。';
+    showView("home");
+    els.homeMessage.textContent = "中断状態を保存しました。";
     refreshResumeUI();
   });
 
-  document.addEventListener('keydown', handleKeyboard);
-  document.addEventListener('click', handleDocumentClick);
-  window.addEventListener('resize', handleViewportChange);
+  document.addEventListener("keydown", handleKeyboard);
+  document.addEventListener("click", handleDocumentClick);
+  window.addEventListener("resize", handleViewportChange);
 }
-
 
 function handleDocumentClick(event) {
   if (!isMobileViewport()) return;
-  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
+  const secondaryGroup = els.secondaryActionsToggle?.closest(
+    ".button-group-secondary",
+  );
   if (!secondaryGroup || secondaryGroup.contains(event.target)) return;
   closeSecondaryActions();
 }
@@ -197,17 +231,29 @@ function handleViewportChange() {
 }
 
 function syncSecondaryActionLayout() {
-  const targetSlot = isMobileViewport() ? els.suspendMobileSlot : els.suspendDesktopSlot;
-  if (!targetSlot || !els.suspendToHome || targetSlot.contains(els.suspendToHome)) return;
+  const targetSlot = isMobileViewport()
+    ? els.suspendMobileSlot
+    : els.suspendDesktopSlot;
+  if (
+    !targetSlot ||
+    !els.suspendToHome ||
+    targetSlot.contains(els.suspendToHome)
+  )
+    return;
   targetSlot.appendChild(els.suspendToHome);
 }
 
 function setSecondaryActionsOpen(isOpen) {
-  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
+  const secondaryGroup = els.secondaryActionsToggle?.closest(
+    ".button-group-secondary",
+  );
   if (!els.secondaryActionsToggle || !secondaryGroup) return;
   const shouldOpen = Boolean(isOpen) && isMobileViewport();
-  secondaryGroup.classList.toggle('is-open', shouldOpen);
-  els.secondaryActionsToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+  secondaryGroup.classList.toggle("is-open", shouldOpen);
+  els.secondaryActionsToggle.setAttribute(
+    "aria-expanded",
+    shouldOpen ? "true" : "false",
+  );
 }
 
 function closeSecondaryActions(options = {}) {
@@ -217,40 +263,59 @@ function closeSecondaryActions(options = {}) {
 }
 
 function handleKeyboard(event) {
-  if (!state.session || els.views.quiz.className.indexOf('active') === -1) return;
+  if (!state.session || els.views.quiz.className.indexOf("active") === -1)
+    return;
   const key = event.key.toUpperCase();
-  const map = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', A: 'A', B: 'B', C: 'C', D: 'D' };
+  const map = {
+    1: "A",
+    2: "B",
+    3: "C",
+    4: "D",
+    A: "A",
+    B: "B",
+    C: "C",
+    D: "D",
+  };
   if (map[key]) {
-    const choiceInput = els.choicesForm.querySelector(`input[value="${map[key]}"]`);
+    const choiceInput = els.choicesForm.querySelector(
+      `input[value="${map[key]}"]`,
+    );
     if (choiceInput) {
       choiceInput.checked = true;
       handleChoiceSelectionChange();
     }
-  } else if (event.key === 'Enter') {
+  } else if (event.key === "Enter") {
     event.preventDefault();
     submitCurrentAnswer();
-  } else if (event.key === 'ArrowRight') {
+  } else if (event.key === "ArrowRight") {
     moveQuestion(1);
-  } else if (event.key === 'ArrowLeft') {
+  } else if (event.key === "ArrowLeft") {
     moveQuestion(-1);
   }
 }
 
 function startSession(forcedMode = null) {
   const mode = forcedMode ?? state.settings.mode;
-  let { pool, session } = createQuizSession(state.questions, state.settings, mode, state.progress, hasNote);
+  let { pool, session } = createQuizSession(
+    state.questions,
+    state.settings,
+    mode,
+    state.progress,
+    hasNote,
+  );
 
   if (!pool.length) {
-    els.homeMessage.textContent = mode === 'notesOnly'
-      ? 'メモが登録された問題がありません。解答後にメモを保存すると、この復習を利用できます。'
-      : '対象となる問題がありません。設定を変更してください。';
+    els.homeMessage.textContent =
+      mode === "notesOnly"
+        ? "メモが登録された問題がありません。解答後にメモを保存すると、この復習を利用できます。"
+        : "対象となる問題がありません。設定を変更してください。";
     return;
   }
 
   state.session = session;
 
   persistSession();
-  showView('quiz');
+  showView("quiz");
   renderQuestion({ scrollToTop: true });
 }
 
@@ -259,10 +324,28 @@ function renderQuestion(options = {}) {
   const question = getCurrentQuestion();
   const idx = state.session.currentIndex + 1;
   const total = state.session.order.length;
-  const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
-  const chosen = getStoredSelectedLabel(question.id, question.choices, choiceMap);
+  const choiceMap = getOrCreateChoiceMap(
+    state.session,
+    question.id,
+    question.choices,
+  );
+  const chosen = getStoredSelectedLabel(
+    question.id,
+    question.choices,
+    choiceMap,
+  );
   const graded = state.session.graded[question.id];
-  renderQuestionView(els, { question, idx, total, choiceLabels: getChoiceLabels(question.choices), choiceMap, chosen, graded, explanationOpen: state.session.explanationOpen, bookmarkEnabled: state.progress[question.id]?.bookmark });
+  renderQuestionView(els, {
+    question,
+    idx,
+    total,
+    choiceLabels: getChoiceLabels(question.choices),
+    choiceMap,
+    chosen,
+    graded,
+    explanationOpen: state.session.explanationOpen,
+    bookmarkEnabled: state.progress[question.id]?.bookmark,
+  });
   updatePrimaryActions(question.id);
   updateExplanationActions();
   renderQuestionNote(question.id);
@@ -274,19 +357,27 @@ function renderQuestion(options = {}) {
 function submitCurrentAnswer(event) {
   event?.preventDefault?.();
   const question = getCurrentQuestion();
-  const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
+  const selected = els.choicesForm.querySelector(
+    'input[name="choice"]:checked',
+  );
   if (!selected) {
-    els.quizMessage.textContent = '選択肢を1つ選んでから「回答する」を押してください。';
-    els.choicesForm.classList.add('needs-selection');
-    els.selectionHint.textContent = '未選択です。まずは選択肢をタップしてください。';
+    els.quizMessage.textContent =
+      "選択肢を1つ選んでから「回答する」を押してください。";
+    els.choicesForm.classList.add("needs-selection");
+    els.selectionHint.textContent =
+      "未選択です。まずは選択肢をタップしてください。";
     scrollChoiceGroupIntoView();
     return;
   }
 
-  els.choicesForm.classList.remove('needs-selection');
+  els.choicesForm.classList.remove("needs-selection");
 
   const selectedLabel = selected.value;
-  const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
+  const choiceMap = getOrCreateChoiceMap(
+    state.session,
+    question.id,
+    question.choices,
+  );
   state.session.answers[question.id] = selectedLabel;
   state.session.graded[question.id] = true;
   state.session.explanationOpen = true;
@@ -309,7 +400,8 @@ function submitCurrentAnswer(event) {
 function moveQuestion(delta) {
   const question = getCurrentQuestion();
   if (delta > 0 && !state.session.graded[question.id]) {
-    els.quizMessage.textContent = '未回答です。「回答する」で採点してください。';
+    els.quizMessage.textContent =
+      "未回答です。「回答する」で採点してください。";
     return;
   }
   const nextIndex = state.session.currentIndex + delta;
@@ -324,15 +416,16 @@ function moveQuestion(delta) {
   renderQuestion({ scrollToTop: true });
 }
 
-
 function handleChoiceSelectionChange() {
-  els.quizMessage.textContent = '';
-  els.choicesForm.classList.remove('needs-selection');
+  els.quizMessage.textContent = "";
+  els.choicesForm.classList.remove("needs-selection");
   updatePrimaryActions(getCurrentQuestion()?.id);
 }
 
 function updatePrimaryActions(questionId) {
-  const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
+  const selected = els.choicesForm.querySelector(
+    'input[name="choice"]:checked',
+  );
   const graded = Boolean(state.session?.graded?.[questionId]);
   const canSubmit = Boolean(selected) && !graded;
   const canNext = graded;
@@ -343,21 +436,22 @@ function updatePrimaryActions(questionId) {
   els.selectionHint.hidden = graded;
 
   if (selected) {
-    els.selectionHint.textContent = '選択済みです。「回答する」で採点します。';
+    els.selectionHint.textContent = "選択済みです。「回答する」で採点します。";
   } else {
-    els.selectionHint.textContent = '選択肢を選ぶと「回答する」が押せます。';
+    els.selectionHint.textContent = "選択肢を選ぶと「回答する」が押せます。";
   }
 }
 
 function updateExplanationActions() {
   const question = getCurrentQuestion();
   const graded = Boolean(question && state.session?.graded?.[question.id]);
-  const showInlineNext = graded && !els.explanation.classList.contains('hidden');
-  els.explanationActionRow.classList.toggle('hidden', !showInlineNext);
+  const showInlineNext =
+    graded && !els.explanation.classList.contains("hidden");
+  els.explanationActionRow.classList.toggle("hidden", !showInlineNext);
 }
 
 function isMobileViewport() {
-  return window.matchMedia('(max-width: 768px)').matches;
+  return window.matchMedia("(max-width: 768px)").matches;
 }
 
 function scrollQuizIntoView() {
@@ -365,23 +459,28 @@ function scrollQuizIntoView() {
   if (!target) return;
 
   if (isMobileViewport()) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
 
 function scrollChoiceGroupIntoView() {
   if (!isMobileViewport()) return;
-  els.choicesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  els.choicesForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function finishSession() {
-  const result = buildSessionResult(state.session, state.questions, state.progress, getStoredSelectedLabel);
+  const result = buildSessionResult(
+    state.session,
+    state.questions,
+    state.progress,
+    getStoredSelectedLabel,
+  );
   renderResult(els, result);
   state.session.completedAt = new Date().toISOString();
   clearSession();
   state.session = null;
   refreshResumeUI();
-  showView('result');
+  showView("result");
 }
 
 function getCurrentQuestion() {
@@ -389,16 +488,16 @@ function getCurrentQuestion() {
   return state.questions.find((q) => q.id === id);
 }
 
-
 function refreshResumeUI() {
   const saved = loadSession();
   const hasSession = Boolean(saved);
-  els.resumeBtn.classList.toggle('hidden', !hasSession);
-  els.discardSessionBtn.classList.toggle('hidden', !hasSession);
+  els.resumeBtn.classList.toggle("hidden", !hasSession);
+  els.discardSessionBtn.classList.toggle("hidden", !hasSession);
   if (hasSession) {
-    els.homeMessage.textContent = '前回のセッションを検出しました。続きから再開できます。';
-  } else if (els.homeMessage.textContent.includes('前回のセッション')) {
-    els.homeMessage.textContent = '';
+    els.homeMessage.textContent =
+      "前回のセッションを検出しました。続きから再開できます。";
+  } else if (els.homeMessage.textContent.includes("前回のセッション")) {
+    els.homeMessage.textContent = "";
   }
 }
 
@@ -417,8 +516,8 @@ function loadSession() {
 
   const session = {
     schemaVersion: saved.schemaVersion ?? 1,
-    app: saved.app ?? 'dea-quiz-app',
-    mode: saved.mode ?? 'normal',
+    app: saved.app ?? "dea-quiz-app",
+    mode: saved.mode ?? "normal",
     order: saved.order,
     currentIndex: idx,
     answers: saved.answers ?? {},
@@ -438,9 +537,6 @@ function loadSession() {
   return session;
 }
 
-
-
-
 function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
   const stored = state.session.answers[questionId] ?? null;
   if (!stored) return null;
@@ -450,7 +546,8 @@ function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
     return stored;
   }
 
-  const map = choiceMap ?? getOrCreateChoiceMap(state.session, questionId, choices);
+  const map =
+    choiceMap ?? getOrCreateChoiceMap(state.session, questionId, choices);
   return labels.find((label) => map[label] === stored) ?? null;
 }
 
@@ -473,34 +570,42 @@ function buildSectionCheckboxes() {
   const sectionMap = new Map();
   state.questions.forEach((question) => {
     if (!sectionMap.has(question.section)) {
-      sectionMap.set(question.section, question.sectionTitle ?? '');
+      sectionMap.set(question.section, question.sectionTitle ?? "");
     }
   });
 
-  const sections = Array.from(sectionMap.entries()).sort(([sectionA], [sectionB]) => Number(sectionA) - Number(sectionB));
+  const sections = Array.from(sectionMap.entries()).sort(
+    ([sectionA], [sectionB]) => Number(sectionA) - Number(sectionB),
+  );
 
   els.sectionCheckboxes.innerHTML = sections
     .map(
       ([section, sectionTitle]) =>
         `<label><input type="checkbox" name="sections" value="${section}" checked /><span class="section-label"><span class="section-number">Section ${section}</span><span class="section-title">${sectionTitle}</span></span></label>`,
     )
-    .join('');
+    .join("");
 }
 
 function hydrateSettingsUI() {
   els.questionCount.value = state.settings.count;
   const sections = new Set(state.settings.sections);
-  els.sectionCheckboxes.querySelectorAll('input[name="sections"]').forEach((input) => {
-    input.checked = sections.has(input.value);
-  });
-  const modeInput = els.form.querySelector(`input[name="mode"][value="${state.settings.mode}"]`);
+  els.sectionCheckboxes
+    .querySelectorAll('input[name="sections"]')
+    .forEach((input) => {
+      input.checked = sections.has(input.value);
+    });
+  const modeInput = els.form.querySelector(
+    `input[name="mode"][value="${state.settings.mode}"]`,
+  );
   if (modeInput) modeInput.checked = true;
 }
 
 function saveSettingsFromUI() {
-  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map((input) => input.value);
+  const sections = Array.from(
+    els.sectionCheckboxes.querySelectorAll("input:checked"),
+  ).map((input) => input.value);
   if (!sections.length) {
-    els.homeMessage.textContent = '最低1つのセクションを選択してください。';
+    els.homeMessage.textContent = "最低1つのセクションを選択してください。";
     return false;
   }
   state.settings = {
@@ -513,9 +618,11 @@ function saveSettingsFromUI() {
 }
 
 function saveScopeSettingsFromUI() {
-  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map((input) => input.value);
+  const sections = Array.from(
+    els.sectionCheckboxes.querySelectorAll("input:checked"),
+  ).map((input) => input.value);
   if (!sections.length) {
-    els.homeMessage.textContent = '最低1つのセクションを選択してください。';
+    els.homeMessage.textContent = "最低1つのセクションを選択してください。";
     return false;
   }
 
@@ -529,19 +636,16 @@ function saveScopeSettingsFromUI() {
 }
 
 function updateBookmarkLabel(bookmarkEnabled) {
-  els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
+  els.bookmarkBtn.textContent = bookmarkEnabled
+    ? "ブックマーク★"
+    : "ブックマーク☆";
 }
 
 async function legacyLoadQuestions() {
-  const res = await fetch('questions.json');
-  if (!res.ok) throw new Error('questions.json の読み込みに失敗しました');
+  const res = await fetch("questions.json");
+  if (!res.ok) throw new Error("questions.json の読み込みに失敗しました");
   return res.json();
 }
-
-
-
-
-
 
 function saveCurrentQuestionNote() {
   const question = getCurrentQuestion();
@@ -559,47 +663,55 @@ function saveCurrentQuestionNote() {
 
   state.progress[question.id] = current;
   saveProgress(state.progress);
-  updateNoteStatus(noteText ? 'メモを保存しました。' : 'メモを空にしました。');
+  updateNoteStatus(noteText ? "メモを保存しました。" : "メモを空にしました。");
 }
 
 function renderQuestionNote(questionId) {
   const graded = Boolean(state.session?.graded?.[questionId]);
   const progress = state.progress[questionId] ?? {};
 
-  els.notePanel.classList.toggle('hidden', !graded);
-  els.questionNote.value = progress.noteText ?? '';
-  els.noteStatus.textContent = progress.noteUpdatedAt ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}` : '';
+  els.notePanel.classList.toggle("hidden", !graded);
+  els.questionNote.value = progress.noteText ?? "";
+  els.noteStatus.textContent = progress.noteUpdatedAt
+    ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}`
+    : "";
 }
-
 
 function renderNotesList() {
   const noteItems = getAllNoteItems(state.questions, state.progress);
-  renderNotesListView(els, noteItems, { onSolve: startSingleQuestionSession, onEdit: toggleNoteEdit, onDelete: handleDeleteNote });
+  renderNotesListView(els, noteItems, {
+    onSolve: startSingleQuestionSession,
+    onEdit: toggleNoteEdit,
+    onDelete: handleDeleteNote,
+  });
 }
 
 function startSingleQuestionSession(questionId) {
-  state.session = createSession([questionId], 'single', { ...state.settings, mode: 'single' });
+  state.session = createSession([questionId], "single", {
+    ...state.settings,
+    mode: "single",
+  });
   persistSession();
-  showView('quiz');
+  showView("quiz");
   renderQuestion({ scrollToTop: true });
 }
 
 function toggleNoteEdit(card, questionId) {
-  const existingEditor = card.querySelector('.note-editor');
+  const existingEditor = card.querySelector(".note-editor");
   if (existingEditor) {
     existingEditor.remove();
     return;
   }
-  const editor = document.createElement('div');
-  editor.className = 'note-editor';
-  const textarea = document.createElement('textarea');
+  const editor = document.createElement("div");
+  editor.className = "note-editor";
+  const textarea = document.createElement("textarea");
   textarea.rows = 4;
-  textarea.value = getQuestionNote(questionId);
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.textContent = '保存';
-  saveBtn.className = 'primary';
-  saveBtn.addEventListener('click', () => {
+  textarea.value = getQuestionNote(state.progress, questionId);
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.textContent = "保存";
+  saveBtn.className = "primary";
+  saveBtn.addEventListener("click", () => {
     state.progress = saveNote(state.progress, questionId, textarea.value);
     saveProgress(state.progress);
     renderNotesList();
@@ -609,20 +721,18 @@ function toggleNoteEdit(card, questionId) {
 }
 
 function handleDeleteNote(questionId) {
-  if (!window.confirm('このメモを削除しますか？')) return;
+  if (!window.confirm("このメモを削除しますか？")) return;
   state.progress = deleteNote(state.progress, questionId);
   saveProgress(state.progress);
   renderNotesList();
 }
 
 function handleDeleteAllNotes() {
-  if (!window.confirm('メモをすべて削除しますか？')) return;
+  if (!window.confirm("メモをすべて削除しますか？")) return;
   state.progress = deleteAllNotes(state.progress);
   saveProgress(state.progress);
   renderNotesList();
 }
-
-
 
 function updateNoteStatus(message) {
   els.noteStatus.textContent = message;
@@ -633,4 +743,3 @@ function updateNoteStatus(message) {
     renderQuestionNote(question.id);
   }, 1800);
 }
-
