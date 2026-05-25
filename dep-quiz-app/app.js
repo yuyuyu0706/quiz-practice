@@ -4,6 +4,8 @@ import { loadQuestions } from './questions.js';
 import { createQuizSession, createSession, getChoiceLabels, getOrCreateChoiceMap } from './quiz-session.js';
 import { showView as switchView, renderNotesList as renderNotesListView, formatDateTime, getQuestionPreview } from './render.js';
 
+const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
+
 const state = {
   questions: [],
   progress: loadProgress(),
@@ -236,25 +238,13 @@ function handleKeyboard(event) {
 
 function startSession(forcedMode = null) {
   const mode = forcedMode ?? state.settings.mode;
-  const { pool, session } = createQuizSession(state.questions, state.settings, mode, state.progress, hasNote);
-
-  if (mode === 'wrongOnly') {
-    pool = selected.filter((q) => (state.progress[q.id]?.wrongCount ?? 0) > 0);
-  } else if (mode === 'bookmarks') {
-    pool = selected.filter((q) => state.progress[q.id]?.bookmark);
-  } else if (mode === 'notesOnly') {
-    pool = selected.filter((q) => hasNote(state.progress, q.id));
-  }
+  let { pool, session } = createQuizSession(state.questions, state.settings, mode, state.progress, hasNote);
 
   if (!pool.length) {
     els.homeMessage.textContent = mode === 'notesOnly'
       ? 'メモが登録された問題がありません。解答後にメモを保存すると、この復習を利用できます。'
       : '対象となる問題がありません。設定を変更してください。';
     return;
-  }
-
-  if (mode === 'random') {
-    pool = shuffle([...pool]);
   }
 
   state.session = session;
@@ -843,7 +833,7 @@ function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
     return stored;
   }
 
-  const map = choiceMap ?? getOrCreateChoiceMap(questionId, choices);
+  const map = choiceMap ?? getOrCreateChoiceMap(state.session, questionId, choices);
   return labels.find((label) => map[label] === stored) ?? null;
 }
 
@@ -1106,7 +1096,7 @@ function updateNoteStatus(message) {
   }, 1800);
 }
 
-function shuffle(array) {
+function legacyShuffle(array) {
   for (let i = array.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
