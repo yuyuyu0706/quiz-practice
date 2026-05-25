@@ -48,3 +48,31 @@ export function getOrCreateChoiceMap(session, questionId, choices) {
   session.choiceMap[questionId] = generated;
   return generated;
 }
+
+
+export function gradeAnswer(question, selectedLabel, choiceMap) {
+  return choiceMap[selectedLabel] === question.answer;
+}
+
+export function buildSessionResult(session, questions, progress, getStoredSelectedLabel) {
+  const wrongItems = [];
+  const sectionStats = {};
+  let correctCount = 0;
+  session.order.forEach((id) => {
+    const q = questions.find((item) => item.id === id);
+    const choiceMap = getOrCreateChoiceMap(session, id, q.choices);
+    const selectedLabel = getStoredSelectedLabel(id, q.choices, choiceMap);
+    const isCorrect = selectedLabel ? choiceMap[selectedLabel] === q.answer : false;
+    if (isCorrect) correctCount += 1;
+    else {
+      const noteText = (progress[q.id]?.noteText ?? '').trim();
+      wrongItems.push(`${q.id}: ${q.question.slice(0, 50)}...${noteText ? ' 📝メモあり' : ''}`);
+    }
+    if (!sectionStats[q.section]) sectionStats[q.section] = { ok: 0, total: 0 };
+    sectionStats[q.section].total += 1;
+    if (isCorrect) sectionStats[q.section].ok += 1;
+  });
+  const total = session.order.length;
+  const rate = Math.round((correctCount / total) * 100);
+  return { total, correctCount, rate, wrongItems, sectionStats };
+}
