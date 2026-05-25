@@ -1,19 +1,15 @@
-const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
+import { loadProgress, saveProgress, loadSettings, saveSettings, loadActiveSession, saveActiveSession, clearActiveSession } from './storage.js';
+import { baseProgress, getQuestionNote, hasNote, saveNote, deleteNote as removeNote, deleteAllNotes, getAllNoteItems } from './notes.js';
+import { loadQuestions } from './questions.js';
+import { createQuizSession, createSession, getChoiceLabels, getOrCreateChoiceMap } from './quiz-session.js';
+import { showView as switchView, renderNotesList as renderNotesListView, formatDateTime, getQuestionPreview } from './render.js';
 
-const STORAGE_KEYS = {
-  progress: 'depQuizProgress',
-  settings: 'depQuizSettings',
-  session: 'depQuizActiveSession',
-};
+const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
 
 const state = {
   questions: [],
-  progress: loadJSON(STORAGE_KEYS.progress, {}),
-  settings: loadJSON(STORAGE_KEYS.settings, {
-    sections: ['1', '2', '3', '4', '5'],
-    mode: 'normal',
-    count: '50',
-  }),
+  progress: loadProgress(),
+  settings: loadSettings(),
   session: null,
 };
 
@@ -152,7 +148,7 @@ function attachEvents() {
     const current = state.progress[q.id] ?? baseProgress();
     current.bookmark = !current.bookmark;
     state.progress[q.id] = current;
-    saveJSON(STORAGE_KEYS.progress, state.progress);
+    saveProgress(state.progress);
     updateBookmarkLabel(current.bookmark);
   });
   els.saveNote.addEventListener('click', saveCurrentQuestionNote);
@@ -242,16 +238,7 @@ function handleKeyboard(event) {
 
 function startSession(forcedMode = null) {
   const mode = forcedMode ?? state.settings.mode;
-  const selected = state.questions.filter((q) => state.settings.sections.includes(q.section));
-  let pool = selected;
-
-  if (mode === 'wrongOnly') {
-    pool = selected.filter((q) => (state.progress[q.id]?.wrongCount ?? 0) > 0);
-  } else if (mode === 'bookmarks') {
-    pool = selected.filter((q) => state.progress[q.id]?.bookmark);
-  } else if (mode === 'notesOnly') {
-    pool = selected.filter((q) => hasNote(q.id));
-  }
+  let { pool, session } = createQuizSession(state.questions, state.settings, mode, state.progress, hasNote);
 
   if (!pool.length) {
     els.homeMessage.textContent = mode === 'notesOnly'
@@ -260,27 +247,7 @@ function startSession(forcedMode = null) {
     return;
   }
 
-  if (mode === 'random') {
-    pool = shuffle([...pool]);
-  }
-
-  const count = state.settings.count === 'all' ? pool.length : Number(state.settings.count);
-  const finalList = pool.slice(0, Math.min(count, pool.length));
-
-  state.session = {
-    schemaVersion: 1,
-    app: 'dep-quiz-app',
-    mode,
-    order: finalList.map((q) => q.id),
-    currentIndex: 0,
-    answers: {},
-    choiceMap: {},
-    graded: {},
-    completedAt: null,
-    explanationOpen: false,
-    startedAt: new Date().toISOString(),
-    settingsSnapshot: { ...state.settings, mode },
-  };
+  state.session = session;
 
   persistSession();
   showView('quiz');
@@ -292,7 +259,7 @@ function renderQuestion(options = {}) {
   const question = getCurrentQuestion();
   const idx = state.session.currentIndex + 1;
   const total = state.session.order.length;
-  const choiceMap = getOrCreateChoiceMap(question.id, question.choices);
+  const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
   const chosen = getStoredSelectedLabel(question.id, question.choices, choiceMap);
   const graded = state.session.graded[question.id];
 
@@ -612,7 +579,7 @@ function submitCurrentAnswer(event) {
   els.choicesForm.classList.remove('needs-selection');
 
   const selectedLabel = selected.value;
-  const choiceMap = getOrCreateChoiceMap(question.id, question.choices);
+  const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
   state.session.answers[question.id] = selectedLabel;
   state.session.graded[question.id] = true;
   state.session.explanationOpen = true;
@@ -628,7 +595,7 @@ function submitCurrentAnswer(event) {
   currentProgress.lastAnsweredAt = new Date().toISOString();
   state.progress[question.id] = currentProgress;
 
-  saveJSON(STORAGE_KEYS.progress, state.progress);
+  saveProgress(state.progress);
   renderQuestion();
 }
 
@@ -723,7 +690,7 @@ function finishSession() {
 
   ids.forEach((id) => {
     const q = state.questions.find((item) => item.id === id);
-    const choiceMap = getOrCreateChoiceMap(id, q.choices);
+    const choiceMap = getOrCreateChoiceMap(state.session, id, q.choices);
     const selectedLabel = getStoredSelectedLabel(id, q.choices, choiceMap);
     const isCorrect = selectedLabel ? choiceMap[selectedLabel] === q.answer : false;
     if (isCorrect) correctCount += 1;
@@ -783,7 +750,7 @@ function refreshResumeUI() {
 }
 
 function loadSession() {
-  const saved = loadJSON(STORAGE_KEYS.session, null);
+  const saved = loadActiveSession();
   if (!saved) return null;
   if (!Array.isArray(saved.order) || saved.order.length === 0) {
     clearSession();
@@ -818,13 +785,13 @@ function loadSession() {
   return session;
 }
 
-function getChoiceLabels(choices) {
+function legacyGetChoiceLabels(choices) {
   const keys = Object.keys(choices);
   const hasFixedLabels = FIXED_CHOICE_LABELS.every((label) => keys.includes(label));
   return hasFixedLabels ? [...FIXED_CHOICE_LABELS] : [...keys].sort();
 }
 
-function getOrCreateChoiceMap(questionId, choices) {
+function legacyGetOrCreateChoiceMap(questionId, choices) {
   const labels = getChoiceLabels(choices);
   const originalKeys = Object.keys(choices);
   const savedMap = state.session.choiceMap[questionId];
@@ -842,7 +809,7 @@ function getOrCreateChoiceMap(questionId, choices) {
   return generatedMap;
 }
 
-function isValidChoiceMap(map, labels, originalKeys) {
+function legacyIsValidChoiceMap(map, labels, originalKeys) {
   if (!map || typeof map !== 'object' || Array.isArray(map)) {
     return false;
   }
@@ -866,25 +833,23 @@ function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
     return stored;
   }
 
-  const map = choiceMap ?? getOrCreateChoiceMap(questionId, choices);
+  const map = choiceMap ?? getOrCreateChoiceMap(state.session, questionId, choices);
   return labels.find((label) => map[label] === stored) ?? null;
 }
 
 function persistSession() {
   if (!state.session) return;
   state.session.savedAt = new Date().toISOString();
-  saveJSON(STORAGE_KEYS.session, state.session);
+  saveActiveSession(state.session);
 }
 
 function clearSession() {
-  localStorage.removeItem(STORAGE_KEYS.session);
+  clearActiveSession();
 }
 
 function showView(name) {
   closeSecondaryActions({ forceDesktopState: true });
-  Object.entries(els.views).forEach(([key, node]) => {
-    node.classList.toggle('active', key === name);
-  });
+  switchView(els.views, name);
 }
 
 function buildSectionCheckboxes() {
@@ -926,7 +891,7 @@ function saveSettingsFromUI() {
     mode: els.form.querySelector('input[name="mode"]:checked').value,
     count: els.questionCount.value,
   };
-  saveJSON(STORAGE_KEYS.settings, state.settings);
+  saveSettings(state.settings);
   return true;
 }
 
@@ -942,7 +907,7 @@ function saveScopeSettingsFromUI() {
     sections,
     count: els.questionCount.value,
   };
-  saveJSON(STORAGE_KEYS.settings, state.settings);
+  saveSettings(state.settings);
   return true;
 }
 
@@ -950,13 +915,13 @@ function updateBookmarkLabel(bookmarkEnabled) {
   els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
 }
 
-async function loadQuestions() {
+async function legacyLoadQuestions() {
   const res = await fetch('questions.json');
   if (!res.ok) throw new Error('questions.json の読み込みに失敗しました');
   return res.json();
 }
 
-function loadJSON(key, fallback) {
+function legacyLoadJSON(key, fallback) {
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) : fallback;
@@ -965,11 +930,11 @@ function loadJSON(key, fallback) {
   }
 }
 
-function saveJSON(key, value) {
+function legacySaveJSON(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-function baseProgress() {
+function legacyBaseProgress() {
   return {
     seenCount: 0,
     correctCount: 0,
@@ -981,12 +946,12 @@ function baseProgress() {
   };
 }
 
-function getQuestionNote(questionId) {
+function legacyGetQuestionNote(questionId) {
   const progress = state.progress[questionId] ?? {};
   return progress.noteText ?? progress.note ?? progress.memo ?? '';
 }
 
-function hasNote(questionId) {
+function legacyHasNote(questionId) {
   return String(getQuestionNote(questionId)).trim().length > 0;
 }
 
@@ -1005,7 +970,7 @@ function saveCurrentQuestionNote() {
   current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
 
   state.progress[question.id] = current;
-  saveJSON(STORAGE_KEYS.progress, state.progress);
+  saveProgress(state.progress);
   updateNoteStatus(noteText ? 'メモを保存しました。' : 'メモを空にしました。');
 }
 
@@ -1018,7 +983,7 @@ function renderQuestionNote(questionId) {
   els.noteStatus.textContent = progress.noteUpdatedAt ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}` : '';
 }
 
-function getAllNoteItems() {
+function legacyGetAllNoteItems() {
   return state.questions
     .map((question) => {
       const progress = state.progress[question.id] ?? {};
@@ -1041,78 +1006,12 @@ function getAllNoteItems() {
 }
 
 function renderNotesList() {
-  const noteItems = getAllNoteItems();
-  els.notesList.replaceChildren();
-  const hasItems = noteItems.length > 0;
-  els.notesEmpty.classList.toggle('hidden', hasItems);
-  els.deleteAllNotes.disabled = !hasItems;
-  if (!hasItems) return;
-
-  noteItems.forEach((item) => {
-    const article = document.createElement('article');
-    article.className = 'note-card';
-
-    const header = document.createElement('h3');
-    header.className = 'note-card-title';
-    header.textContent = `${item.id} / Section ${item.section}`;
-    article.appendChild(header);
-
-    const question = document.createElement('p');
-    question.className = 'note-card-question';
-    question.textContent = `問題: ${getQuestionPreview(item.questionText)}`;
-    article.appendChild(question);
-
-    const noteText = document.createElement('p');
-    noteText.className = 'note-card-body';
-    noteText.textContent = item.noteText;
-    article.appendChild(noteText);
-
-    const updatedAt = document.createElement('p');
-    updatedAt.className = 'note-card-updated';
-    updatedAt.textContent = `更新日時: ${formatDateTime(item.noteUpdatedAt)}`;
-    article.appendChild(updatedAt);
-
-    const actions = document.createElement('div');
-    actions.className = 'button-row wrap';
-
-    const solveBtn = document.createElement('button');
-    solveBtn.type = 'button';
-    solveBtn.textContent = 'この問題を解く';
-    solveBtn.addEventListener('click', () => startSingleQuestionSession(item.id));
-
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.textContent = '編集';
-    editBtn.addEventListener('click', () => toggleNoteEdit(article, item.id));
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.className = 'danger-secondary';
-    deleteBtn.textContent = '削除';
-    deleteBtn.addEventListener('click', () => deleteNote(item.id));
-
-    actions.append(solveBtn, editBtn, deleteBtn);
-    article.appendChild(actions);
-
-    els.notesList.appendChild(article);
-  });
+  const noteItems = getAllNoteItems(state.questions, state.progress);
+  renderNotesListView(els, noteItems, { onSolve: startSingleQuestionSession, onEdit: toggleNoteEdit, onDelete: deleteNote });
 }
 
 function startSingleQuestionSession(questionId) {
-  state.session = {
-    schemaVersion: 1,
-    app: 'dep-quiz-app',
-    mode: 'single',
-    order: [questionId],
-    currentIndex: 0,
-    answers: {},
-    choiceMap: {},
-    graded: {},
-    completedAt: null,
-    explanationOpen: false,
-    startedAt: new Date().toISOString(),
-    settingsSnapshot: { ...state.settings, mode: 'single' },
-  };
+  state.session = createSession([questionId], 'single', { ...state.settings, mode: 'single' });
   persistSession();
   showView('quiz');
   renderQuestion({ scrollToTop: true });
@@ -1134,21 +1033,12 @@ function toggleNoteEdit(card, questionId) {
   saveBtn.textContent = '保存';
   saveBtn.className = 'primary';
   saveBtn.addEventListener('click', () => {
-    saveNoteText(questionId, textarea.value);
+    state.progress = saveNote(state.progress, questionId, textarea.value);
+    saveProgress(state.progress);
     renderNotesList();
   });
   editor.append(textarea, saveBtn);
   card.appendChild(editor);
-}
-
-function saveNoteText(questionId, rawNote) {
-  const current = { ...baseProgress(), ...(state.progress[questionId] ?? {}) };
-  const noteText = String(rawNote ?? '').trim();
-  current.noteText = noteText;
-  current.note = noteText;
-  current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
-  state.progress[questionId] = current;
-  saveJSON(STORAGE_KEYS.progress, state.progress);
 }
 
 function deleteNote(questionId) {
@@ -1158,7 +1048,7 @@ function deleteNote(questionId) {
   current.note = '';
   current.noteUpdatedAt = null;
   state.progress[questionId] = current;
-  saveJSON(STORAGE_KEYS.progress, state.progress);
+  saveProgress(state.progress);
   renderNotesList();
 }
 
@@ -1169,11 +1059,11 @@ function handleDeleteAllNotes() {
     item.note = '';
     item.noteUpdatedAt = null;
   });
-  saveJSON(STORAGE_KEYS.progress, state.progress);
+  saveProgress(state.progress);
   renderNotesList();
 }
 
-function getQuestionPreview(text) {
+function legacyGetQuestionPreview(text) {
   const normalized = String(text ?? '').trim();
   if (!normalized) return '';
 
@@ -1189,7 +1079,7 @@ function getQuestionPreview(text) {
   return `${preview}${truncated ? '…' : ''}`;
 }
 
-function formatDateTime(value) {
+function legacyFormatDateTime(value) {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
@@ -1206,7 +1096,7 @@ function updateNoteStatus(message) {
   }, 1800);
 }
 
-function shuffle(array) {
+function legacyShuffle(array) {
   for (let i = array.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
