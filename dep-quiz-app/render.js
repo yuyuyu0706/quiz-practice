@@ -399,3 +399,27 @@ export function renderNotesList(els, noteItems, handlers) {
     els.notesList.appendChild(article);
   });
 }
+
+export function toggleNoteEditor(card, noteText, onSave) {
+  const existingEditor = card.querySelector(".note-editor");
+  if (existingEditor) {
+    existingEditor.remove();
+    return;
+  }
+
+  const editor = document.createElement("div");
+  editor.className = "note-editor";
+
+  const textarea = document.createElement("textarea");
+  textarea.rows = 4;
+  textarea.value = noteText;
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.textContent = "保存";
+  saveBtn.className = "primary";
+  saveBtn.addEventListener("click", () => onSave(textarea.value));
+
+  editor.append(textarea, saveBtn);
+  card.appendChild(editor);
+}

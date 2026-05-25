@@ -9,7 +9,6 @@ import {
 } from "./storage.js";
 import {
   baseProgress,
-  getQuestionNote,
   hasNote,
   saveNote,
   deleteNote,
@@ -31,6 +30,7 @@ import {
   formatDateTime,
   renderQuestion as renderQuestionView,
   renderResult,
+  toggleNoteEditor,
 } from "./render.js";
 
 const FIXED_CHOICE_LABELS = ["A", "B", "C", "D"];
@@ -641,12 +641,6 @@ function updateBookmarkLabel(bookmarkEnabled) {
     : "ブックマーク☆";
 }
 
-async function legacyLoadQuestions() {
-  const res = await fetch("questions.json");
-  if (!res.ok) throw new Error("questions.json の読み込みに失敗しました");
-  return res.json();
-}
-
 function saveCurrentQuestionNote() {
   const question = getCurrentQuestion();
   if (!question) return;
@@ -681,7 +675,7 @@ function renderNotesList() {
   const noteItems = getAllNoteItems(state.questions, state.progress);
   renderNotesListView(els, noteItems, {
     onSolve: startSingleQuestionSession,
-    onEdit: toggleNoteEdit,
+    onEdit: handleToggleNoteEdit,
     onDelete: handleDeleteNote,
   });
 }
@@ -696,28 +690,13 @@ function startSingleQuestionSession(questionId) {
   renderQuestion({ scrollToTop: true });
 }
 
-function toggleNoteEdit(card, questionId) {
-  const existingEditor = card.querySelector(".note-editor");
-  if (existingEditor) {
-    existingEditor.remove();
-    return;
-  }
-  const editor = document.createElement("div");
-  editor.className = "note-editor";
-  const textarea = document.createElement("textarea");
-  textarea.rows = 4;
-  textarea.value = getQuestionNote(state.progress, questionId);
-  const saveBtn = document.createElement("button");
-  saveBtn.type = "button";
-  saveBtn.textContent = "保存";
-  saveBtn.className = "primary";
-  saveBtn.addEventListener("click", () => {
-    state.progress = saveNote(state.progress, questionId, textarea.value);
+function handleToggleNoteEdit(card, questionId) {
+  const currentNote = state.progress[questionId]?.noteText ?? "";
+  toggleNoteEditor(card, currentNote, (noteText) => {
+    state.progress = saveNote(state.progress, questionId, noteText);
     saveProgress(state.progress);
     renderNotesList();
   });
-  editor.append(textarea, saveBtn);
-  card.appendChild(editor);
 }
 
 function handleDeleteNote(questionId) {
