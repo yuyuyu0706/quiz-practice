@@ -125,3 +125,51 @@ export function buildSessionResult(
   const rate = Math.round((correctCount / total) * 100);
   return { total, correctCount, rate, wrongItems, sectionStats };
 }
+
+export function getCurrentQuestion(session, questions) {
+  if (!session) return null;
+  const id = session.order[session.currentIndex];
+  return questions.find((q) => q.id === id) ?? null;
+}
+
+export function getStoredSelectedLabel(session, questionId, choices, choiceMap = null) {
+  const stored = session?.answers?.[questionId] ?? null;
+  if (!stored) return null;
+
+  const labels = getChoiceLabels(choices);
+  if (labels.includes(stored)) {
+    return stored;
+  }
+
+  const map = choiceMap ?? getOrCreateChoiceMap(session, questionId, choices);
+  return labels.find((label) => map[label] === stored) ?? null;
+}
+
+export function normalizeLoadedSession(saved) {
+  if (!saved) return null;
+  if (!Array.isArray(saved.order) || saved.order.length === 0) {
+    return null;
+  }
+
+  const idx = Number(saved.currentIndex);
+  if (!Number.isInteger(idx) || idx < 0 || idx >= saved.order.length) {
+    return null;
+  }
+
+  const session = {
+    schemaVersion: saved.schemaVersion ?? 1,
+    app: saved.app ?? "dea-quiz-app",
+    mode: saved.mode ?? "normal",
+    order: saved.order,
+    currentIndex: idx,
+    answers: saved.answers ?? {},
+    choiceMap: saved.choiceMap ?? {},
+    graded: saved.graded ?? {},
+    completedAt: saved.completedAt ?? null,
+    explanationOpen: Boolean(saved.explanationOpen),
+    startedAt: saved.startedAt ?? new Date().toISOString(),
+    settingsSnapshot: saved.settingsSnapshot ?? null,
+  };
+
+  return session.completedAt ? null : session;
+}

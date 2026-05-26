@@ -23,6 +23,9 @@ import {
   getOrCreateChoiceMap,
   gradeAnswer,
   buildSessionResult,
+  getCurrentQuestion as getCurrentQuestionFromSession,
+  getStoredSelectedLabel as getStoredSelectedLabelFromSession,
+  normalizeLoadedSession,
 } from "./quiz-session.js";
 import {
   showView as switchView,
@@ -32,8 +35,6 @@ import {
   renderResult,
   toggleNoteEditor,
 } from "./render.js";
-
-const FIXED_CHOICE_LABELS = ["A", "B", "C", "D"];
 
 const state = {
   questions: [],
@@ -484,8 +485,7 @@ function finishSession() {
 }
 
 function getCurrentQuestion() {
-  const id = state.session.order[state.session.currentIndex];
-  return state.questions.find((q) => q.id === id);
+  return getCurrentQuestionFromSession(state.session, state.questions);
 }
 
 function refreshResumeUI() {
@@ -502,34 +502,8 @@ function refreshResumeUI() {
 }
 
 function loadSession() {
-  const saved = loadActiveSession();
-  if (!saved) return null;
-  if (!Array.isArray(saved.order) || saved.order.length === 0) {
-    clearSession();
-    return null;
-  }
-  const idx = Number(saved.currentIndex);
-  if (!Number.isInteger(idx) || idx < 0 || idx >= saved.order.length) {
-    clearSession();
-    return null;
-  }
-
-  const session = {
-    schemaVersion: saved.schemaVersion ?? 1,
-    app: saved.app ?? "dea-quiz-app",
-    mode: saved.mode ?? "normal",
-    order: saved.order,
-    currentIndex: idx,
-    answers: saved.answers ?? {},
-    choiceMap: saved.choiceMap ?? {},
-    graded: saved.graded ?? {},
-    completedAt: saved.completedAt ?? null,
-    explanationOpen: Boolean(saved.explanationOpen),
-    startedAt: saved.startedAt ?? new Date().toISOString(),
-    settingsSnapshot: saved.settingsSnapshot ?? null,
-  };
-
-  if (session.completedAt) {
+  const session = normalizeLoadedSession(loadActiveSession());
+  if (!session) {
     clearSession();
     return null;
   }
@@ -538,17 +512,12 @@ function loadSession() {
 }
 
 function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
-  const stored = state.session.answers[questionId] ?? null;
-  if (!stored) return null;
-
-  const labels = getChoiceLabels(choices);
-  if (labels.includes(stored)) {
-    return stored;
-  }
-
-  const map =
-    choiceMap ?? getOrCreateChoiceMap(state.session, questionId, choices);
-  return labels.find((label) => map[label] === stored) ?? null;
+  return getStoredSelectedLabelFromSession(
+    state.session,
+    questionId,
+    choices,
+    choiceMap,
+  );
 }
 
 function persistSession() {
@@ -644,19 +613,9 @@ function updateBookmarkLabel(bookmarkEnabled) {
 function saveCurrentQuestionNote() {
   const question = getCurrentQuestion();
   if (!question) return;
-
-  const current = {
-    ...baseProgress(),
-    ...(state.progress[question.id] ?? {}),
-  };
-
-  const noteText = els.questionNote.value.trim();
-  current.noteText = noteText;
-  current.note = noteText;
-  current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
-
-  state.progress[question.id] = current;
+  state.progress = saveNote(state.progress, question.id, els.questionNote.value);
   saveProgress(state.progress);
+  const noteText = state.progress[question.id]?.noteText?.trim();
   updateNoteStatus(noteText ? "メモを保存しました。" : "メモを空にしました。");
 }
 
