@@ -1,10 +1,39 @@
-import { loadProgress, saveProgress, loadSettings, saveSettings, loadActiveSession, saveActiveSession, clearActiveSession } from './storage.js';
-import { baseProgress, getQuestionNote, hasNote, saveNote, deleteNote as removeNote, deleteAllNotes, getAllNoteItems } from './notes.js';
-import { loadQuestions } from './questions.js';
-import { createQuizSession, createSession, getChoiceLabels, getOrCreateChoiceMap } from './quiz-session.js';
-import { showView as switchView, renderNotesList as renderNotesListView, formatDateTime, getQuestionPreview } from './render.js';
+import {
+  loadProgress,
+  saveProgress,
+  loadSettings,
+  saveSettings,
+  loadActiveSession,
+  saveActiveSession,
+  clearActiveSession,
+} from "./storage.js";
+import {
+  baseProgress,
+  hasNote,
+  saveNote,
+  deleteNote,
+  deleteAllNotes,
+  getAllNoteItems,
+} from "./notes.js";
+import { loadQuestions } from "./questions.js";
+import {
+  createQuizSession,
+  createSession,
+  getChoiceLabels,
+  getOrCreateChoiceMap,
+  gradeAnswer,
+  buildSessionResult,
+} from "./quiz-session.js";
+import {
+  showView as switchView,
+  renderNotesList as renderNotesListView,
+  formatDateTime,
+  renderQuestion as renderQuestionView,
+  renderResult,
+  toggleNoteEditor,
+} from "./render.js";
 
-const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
+const FIXED_CHOICE_LABELS = ["A", "B", "C", "D"];
 
 const state = {
   questions: [],
@@ -15,54 +44,54 @@ const state = {
 
 const els = {
   views: {
-    home: document.getElementById('home-view'),
-    quiz: document.getElementById('quiz-view'),
-    result: document.getElementById('result-view'),
-    notes: document.getElementById('notes-view'),
+    home: document.getElementById("home-view"),
+    quiz: document.getElementById("quiz-view"),
+    result: document.getElementById("result-view"),
+    notes: document.getElementById("notes-view"),
   },
-  form: document.getElementById('settings-form'),
-  sectionCheckboxes: document.getElementById('section-checkboxes'),
-  questionCount: document.getElementById('question-count'),
-  resumeBtn: document.getElementById('resume-btn'),
-  discardSessionBtn: document.getElementById('discard-session-btn'),
-  reviewNotesBtn: document.getElementById('review-notes-btn'),
-  notesListBtn: document.getElementById('notes-list-btn'),
-  notesList: document.getElementById('notes-list'),
-  notesEmpty: document.getElementById('notes-empty'),
-  deleteAllNotes: document.getElementById('delete-all-notes'),
-  notesBackHome: document.getElementById('notes-back-home'),
-  homeMessage: document.getElementById('home-message'),
-  quizSection: document.getElementById('quiz-section'),
-  quizProgress: document.getElementById('quiz-progress'),
-  quizQuestion: document.getElementById('quiz-question'),
-  choicesForm: document.getElementById('choices-form'),
-  resultIndicator: document.getElementById('result-indicator'),
-  explanation: document.getElementById('explanation'),
-  quizMessage: document.getElementById('quiz-message'),
-  selectionHint: document.getElementById('selection-hint'),
-  quizTopAnchor: document.getElementById('quiz-top-anchor'),
-  submitAnswer: document.getElementById('submit-answer'),
-  prevQuestion: document.getElementById('prev-question'),
-  nextQuestion: document.getElementById('next-question'),
-  nextQuestionInline: document.getElementById('next-question-inline'),
-  toggleExplanation: document.getElementById('toggle-explanation'),
-  secondaryActionsToggle: document.getElementById('secondary-actions-toggle'),
-  secondaryActionsPanel: document.getElementById('secondary-actions-panel'),
-  suspendMobileSlot: document.getElementById('suspend-mobile-slot'),
-  suspendDesktopSlot: document.getElementById('suspend-desktop-slot'),
-  explanationActionRow: document.getElementById('explanation-action-row'),
-  notePanel: document.getElementById('note-panel'),
-  questionNote: document.getElementById('question-note'),
-  saveNote: document.getElementById('save-note'),
-  noteStatus: document.getElementById('note-status'),
-  bookmarkBtn: document.getElementById('bookmark-btn'),
-  suspendToHome: document.getElementById('suspend-to-home'),
-  scoreText: document.getElementById('score-text'),
-  sectionScoreText: document.getElementById('section-score-text'),
-  wrongList: document.getElementById('wrong-list'),
-  retryWrong: document.getElementById('retry-wrong'),
-  resultNotesListBtn: document.getElementById('result-notes-list-btn'),
-  backHome: document.getElementById('back-home'),
+  form: document.getElementById("settings-form"),
+  sectionCheckboxes: document.getElementById("section-checkboxes"),
+  questionCount: document.getElementById("question-count"),
+  resumeBtn: document.getElementById("resume-btn"),
+  discardSessionBtn: document.getElementById("discard-session-btn"),
+  reviewNotesBtn: document.getElementById("review-notes-btn"),
+  notesListBtn: document.getElementById("notes-list-btn"),
+  notesList: document.getElementById("notes-list"),
+  notesEmpty: document.getElementById("notes-empty"),
+  deleteAllNotes: document.getElementById("delete-all-notes"),
+  notesBackHome: document.getElementById("notes-back-home"),
+  homeMessage: document.getElementById("home-message"),
+  quizSection: document.getElementById("quiz-section"),
+  quizProgress: document.getElementById("quiz-progress"),
+  quizQuestion: document.getElementById("quiz-question"),
+  choicesForm: document.getElementById("choices-form"),
+  resultIndicator: document.getElementById("result-indicator"),
+  explanation: document.getElementById("explanation"),
+  quizMessage: document.getElementById("quiz-message"),
+  selectionHint: document.getElementById("selection-hint"),
+  quizTopAnchor: document.getElementById("quiz-top-anchor"),
+  submitAnswer: document.getElementById("submit-answer"),
+  prevQuestion: document.getElementById("prev-question"),
+  nextQuestion: document.getElementById("next-question"),
+  nextQuestionInline: document.getElementById("next-question-inline"),
+  toggleExplanation: document.getElementById("toggle-explanation"),
+  secondaryActionsToggle: document.getElementById("secondary-actions-toggle"),
+  secondaryActionsPanel: document.getElementById("secondary-actions-panel"),
+  suspendMobileSlot: document.getElementById("suspend-mobile-slot"),
+  suspendDesktopSlot: document.getElementById("suspend-desktop-slot"),
+  explanationActionRow: document.getElementById("explanation-action-row"),
+  notePanel: document.getElementById("note-panel"),
+  questionNote: document.getElementById("question-note"),
+  saveNote: document.getElementById("save-note"),
+  noteStatus: document.getElementById("note-status"),
+  bookmarkBtn: document.getElementById("bookmark-btn"),
+  suspendToHome: document.getElementById("suspend-to-home"),
+  scoreText: document.getElementById("score-text"),
+  sectionScoreText: document.getElementById("section-score-text"),
+  wrongList: document.getElementById("wrong-list"),
+  retryWrong: document.getElementById("retry-wrong"),
+  resultNotesListBtn: document.getElementById("result-notes-list-btn"),
+  backHome: document.getElementById("back-home"),
 };
 
 let noteStatusTimer = null;
@@ -79,70 +108,74 @@ async function init() {
 }
 
 function attachEvents() {
-  els.form.addEventListener('submit', (event) => {
+  els.form.addEventListener("submit", (event) => {
     event.preventDefault();
     const ok = saveSettingsFromUI();
     if (ok) startSession(state.settings.mode);
   });
 
-  els.resumeBtn.addEventListener('click', () => {
+  els.resumeBtn.addEventListener("click", () => {
     const saved = loadSession();
     if (!saved) {
-      els.homeMessage.textContent = '再開できるセッションがありません。';
+      els.homeMessage.textContent = "再開できるセッションがありません。";
       refreshResumeUI();
       return;
     }
     state.session = saved;
-    showView('quiz');
+    showView("quiz");
     renderQuestion({ scrollToTop: true });
   });
 
-  els.discardSessionBtn.addEventListener('click', () => {
+  els.discardSessionBtn.addEventListener("click", () => {
     clearSession();
     state.session = null;
-    els.homeMessage.textContent = '中断データを削除しました。';
+    els.homeMessage.textContent = "中断データを削除しました。";
     refreshResumeUI();
   });
-  els.reviewNotesBtn?.addEventListener('click', () => {
+  els.reviewNotesBtn?.addEventListener("click", () => {
     const ok = saveScopeSettingsFromUI();
-    if (ok) startSession('notesOnly');
+    if (ok) startSession("notesOnly");
   });
-  els.notesListBtn?.addEventListener('click', () => {
+  els.notesListBtn?.addEventListener("click", () => {
     renderNotesList();
-    showView('notes');
+    showView("notes");
   });
 
-  els.submitAnswer.addEventListener('click', submitCurrentAnswer);
-  els.prevQuestion.addEventListener('click', () => {
+  els.submitAnswer.addEventListener("click", submitCurrentAnswer);
+  els.prevQuestion.addEventListener("click", () => {
     closeSecondaryActions();
     moveQuestion(-1);
   });
-  els.nextQuestion.addEventListener('click', () => {
+  els.nextQuestion.addEventListener("click", () => {
     closeSecondaryActions();
     moveQuestion(1);
   });
-  els.nextQuestionInline.addEventListener('click', () => {
+  els.nextQuestionInline.addEventListener("click", () => {
     closeSecondaryActions();
     moveQuestion(1);
   });
 
-  els.secondaryActionsToggle?.addEventListener('click', () => {
-    const expanded = els.secondaryActionsToggle.getAttribute('aria-expanded') === 'true';
+  els.secondaryActionsToggle?.addEventListener("click", () => {
+    const expanded =
+      els.secondaryActionsToggle.getAttribute("aria-expanded") === "true";
     setSecondaryActionsOpen(!expanded);
   });
 
-  els.choicesForm.addEventListener('change', handleChoiceSelectionChange);
+  els.choicesForm.addEventListener("change", handleChoiceSelectionChange);
 
-  els.toggleExplanation.addEventListener('click', () => {
+  els.toggleExplanation.addEventListener("click", () => {
     closeSecondaryActions();
-    els.explanation.classList.toggle('hidden');
-    state.session.explanationOpen = !els.explanation.classList.contains('hidden');
-    els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
+    els.explanation.classList.toggle("hidden");
+    state.session.explanationOpen =
+      !els.explanation.classList.contains("hidden");
+    els.toggleExplanation.textContent = state.session.explanationOpen
+      ? "解説を非表示"
+      : "解説を表示";
     updateExplanationActions();
     persistSession();
   });
 
-  els.bookmarkBtn.addEventListener('click', () => {
+  els.bookmarkBtn.addEventListener("click", () => {
     closeSecondaryActions();
     const q = getCurrentQuestion();
     const current = state.progress[q.id] ?? baseProgress();
@@ -151,40 +184,41 @@ function attachEvents() {
     saveProgress(state.progress);
     updateBookmarkLabel(current.bookmark);
   });
-  els.saveNote.addEventListener('click', saveCurrentQuestionNote);
+  els.saveNote.addEventListener("click", saveCurrentQuestionNote);
 
-  els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
-  els.resultNotesListBtn?.addEventListener('click', () => {
+  els.retryWrong.addEventListener("click", () => startSession("wrongOnly"));
+  els.resultNotesListBtn?.addEventListener("click", () => {
     renderNotesList();
-    showView('notes');
+    showView("notes");
   });
-  els.backHome.addEventListener('click', () => {
-    showView('home');
+  els.backHome.addEventListener("click", () => {
+    showView("home");
     refreshResumeUI();
   });
-  els.notesBackHome?.addEventListener('click', () => {
-    showView('home');
+  els.notesBackHome?.addEventListener("click", () => {
+    showView("home");
   });
-  els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
+  els.deleteAllNotes?.addEventListener("click", handleDeleteAllNotes);
 
-  els.suspendToHome.addEventListener('click', () => {
+  els.suspendToHome.addEventListener("click", () => {
     if (!state.session) return;
     closeSecondaryActions();
     persistSession();
-    showView('home');
-    els.homeMessage.textContent = '中断状態を保存しました。';
+    showView("home");
+    els.homeMessage.textContent = "中断状態を保存しました。";
     refreshResumeUI();
   });
 
-  document.addEventListener('keydown', handleKeyboard);
-  document.addEventListener('click', handleDocumentClick);
-  window.addEventListener('resize', handleViewportChange);
+  document.addEventListener("keydown", handleKeyboard);
+  document.addEventListener("click", handleDocumentClick);
+  window.addEventListener("resize", handleViewportChange);
 }
-
 
 function handleDocumentClick(event) {
   if (!isMobileViewport()) return;
-  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
+  const secondaryGroup = els.secondaryActionsToggle?.closest(
+    ".button-group-secondary",
+  );
   if (!secondaryGroup || secondaryGroup.contains(event.target)) return;
   closeSecondaryActions();
 }
@@ -197,17 +231,29 @@ function handleViewportChange() {
 }
 
 function syncSecondaryActionLayout() {
-  const targetSlot = isMobileViewport() ? els.suspendMobileSlot : els.suspendDesktopSlot;
-  if (!targetSlot || !els.suspendToHome || targetSlot.contains(els.suspendToHome)) return;
+  const targetSlot = isMobileViewport()
+    ? els.suspendMobileSlot
+    : els.suspendDesktopSlot;
+  if (
+    !targetSlot ||
+    !els.suspendToHome ||
+    targetSlot.contains(els.suspendToHome)
+  )
+    return;
   targetSlot.appendChild(els.suspendToHome);
 }
 
 function setSecondaryActionsOpen(isOpen) {
-  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
+  const secondaryGroup = els.secondaryActionsToggle?.closest(
+    ".button-group-secondary",
+  );
   if (!els.secondaryActionsToggle || !secondaryGroup) return;
   const shouldOpen = Boolean(isOpen) && isMobileViewport();
-  secondaryGroup.classList.toggle('is-open', shouldOpen);
-  els.secondaryActionsToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+  secondaryGroup.classList.toggle("is-open", shouldOpen);
+  els.secondaryActionsToggle.setAttribute(
+    "aria-expanded",
+    shouldOpen ? "true" : "false",
+  );
 }
 
 function closeSecondaryActions(options = {}) {
@@ -217,40 +263,59 @@ function closeSecondaryActions(options = {}) {
 }
 
 function handleKeyboard(event) {
-  if (!state.session || els.views.quiz.className.indexOf('active') === -1) return;
+  if (!state.session || els.views.quiz.className.indexOf("active") === -1)
+    return;
   const key = event.key.toUpperCase();
-  const map = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', A: 'A', B: 'B', C: 'C', D: 'D' };
+  const map = {
+    1: "A",
+    2: "B",
+    3: "C",
+    4: "D",
+    A: "A",
+    B: "B",
+    C: "C",
+    D: "D",
+  };
   if (map[key]) {
-    const choiceInput = els.choicesForm.querySelector(`input[value="${map[key]}"]`);
+    const choiceInput = els.choicesForm.querySelector(
+      `input[value="${map[key]}"]`,
+    );
     if (choiceInput) {
       choiceInput.checked = true;
       handleChoiceSelectionChange();
     }
-  } else if (event.key === 'Enter') {
+  } else if (event.key === "Enter") {
     event.preventDefault();
     submitCurrentAnswer();
-  } else if (event.key === 'ArrowRight') {
+  } else if (event.key === "ArrowRight") {
     moveQuestion(1);
-  } else if (event.key === 'ArrowLeft') {
+  } else if (event.key === "ArrowLeft") {
     moveQuestion(-1);
   }
 }
 
 function startSession(forcedMode = null) {
   const mode = forcedMode ?? state.settings.mode;
-  let { pool, session } = createQuizSession(state.questions, state.settings, mode, state.progress, hasNote);
+  let { pool, session } = createQuizSession(
+    state.questions,
+    state.settings,
+    mode,
+    state.progress,
+    hasNote,
+  );
 
   if (!pool.length) {
-    els.homeMessage.textContent = mode === 'notesOnly'
-      ? 'メモが登録された問題がありません。解答後にメモを保存すると、この復習を利用できます。'
-      : '対象となる問題がありません。設定を変更してください。';
+    els.homeMessage.textContent =
+      mode === "notesOnly"
+        ? "メモが登録された問題がありません。解答後にメモを保存すると、この復習を利用できます。"
+        : "対象となる問題がありません。設定を変更してください。";
     return;
   }
 
   state.session = session;
 
   persistSession();
-  showView('quiz');
+  showView("quiz");
   renderQuestion({ scrollToTop: true });
 }
 
@@ -259,332 +324,65 @@ function renderQuestion(options = {}) {
   const question = getCurrentQuestion();
   const idx = state.session.currentIndex + 1;
   const total = state.session.order.length;
-  const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
-  const chosen = getStoredSelectedLabel(question.id, question.choices, choiceMap);
+  const choiceMap = getOrCreateChoiceMap(
+    state.session,
+    question.id,
+    question.choices,
+  );
+  const chosen = getStoredSelectedLabel(
+    question.id,
+    question.choices,
+    choiceMap,
+  );
   const graded = state.session.graded[question.id];
-
-  els.quizSection.textContent = `Section ${question.section}: ${question.sectionTitle}`;
-  els.quizProgress.textContent = `${idx} / ${total}`;
-  els.quizQuestion.replaceChildren();
-  const questionId = document.createElement('span');
-  questionId.className = 'quiz-question-id';
-  questionId.textContent = question.id;
-  els.quizQuestion.appendChild(questionId);
-  els.quizQuestion.appendChild(document.createElement('br'));
-  appendFormattedTextWithCodeBlocks(els.quizQuestion, question.question);
-  els.resultIndicator.textContent = '';
-  els.resultIndicator.className = 'indicator';
-  els.quizMessage.textContent = '';
-  els.choicesForm.classList.remove('needs-selection');
-
-  els.choicesForm.replaceChildren();
-  getChoiceLabels(question.choices).forEach((label) => {
-    const originalKey = choiceMap[label];
-    const text = question.choices[originalKey];
-
-    const choiceLabel = document.createElement('label');
-    choiceLabel.dataset.choice = label;
-
-    const input = document.createElement('input');
-    input.type = 'radio';
-    input.name = 'choice';
-    input.value = label;
-    input.checked = chosen === label;
-    choiceLabel.appendChild(input);
-
-    appendFormattedTextWithCodeBlocks(choiceLabel, ` ${label}. ${text}`);
-    els.choicesForm.appendChild(choiceLabel);
+  renderQuestionView(els, {
+    question,
+    idx,
+    total,
+    choiceLabels: getChoiceLabels(question.choices),
+    choiceMap,
+    chosen,
+    graded,
+    explanationOpen: state.session.explanationOpen,
+    bookmarkEnabled: state.progress[question.id]?.bookmark,
   });
-
-  renderExplanation(question, choiceMap);
-  els.explanation.classList.toggle('hidden', !state.session.explanationOpen);
-  els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
-
-  if (graded) {
-    applyGradedState(question, chosen, choiceMap);
-  }
-
   updatePrimaryActions(question.id);
   updateExplanationActions();
-  updateBookmarkLabel(state.progress[question.id]?.bookmark);
   renderQuestionNote(question.id);
   persistSession();
-
   closeSecondaryActions();
-
-  if (scrollToTop) {
-    scrollQuizIntoView();
-  }
-}
-
-function renderExplanation(question, choiceMap) {
-  const explanation = typeof question.explanation === 'string' ? question.explanation : '';
-  const references = Array.isArray(question.references) ? question.references : [];
-  const whyWrongEntries = getWhyWrongEntries(question.whyWrong, choiceMap);
-  els.explanation.replaceChildren();
-
-  const body = renderMarkdownToFragment(explanation);
-  els.explanation.appendChild(body);
-
-  if (whyWrongEntries.length) {
-    const section = document.createElement('section');
-    section.className = 'why-wrong';
-
-    const title = document.createElement('h3');
-    title.textContent = 'なぜ、間違いか？';
-    section.appendChild(title);
-
-    const list = document.createElement('ul');
-    whyWrongEntries.forEach(({ label, reason }) => {
-      const li = document.createElement('li');
-
-      const key = document.createElement('strong');
-      key.textContent = `${label}: `;
-      li.appendChild(key);
-      appendInlineFormattedText(li, reason);
-      list.appendChild(li);
-    });
-
-    section.appendChild(list);
-    els.explanation.appendChild(section);
-  }
-
-  const validReferences = references.filter(
-    (item) => item && typeof item.title === 'string' && typeof item.url === 'string' && item.title && item.url,
-  );
-  if (!validReferences.length) return;
-
-  const section = document.createElement('section');
-  section.className = 'references';
-
-  const title = document.createElement('h3');
-  title.textContent = '参考リンク';
-  section.appendChild(title);
-
-  const list = document.createElement('ul');
-  validReferences.forEach((item) => {
-    const li = document.createElement('li');
-    const link = document.createElement('a');
-    link.textContent = item.title;
-    link.href = item.url;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    li.appendChild(link);
-    list.appendChild(li);
-  });
-  section.appendChild(list);
-  els.explanation.appendChild(section);
-}
-
-function getWhyWrongEntries(whyWrong, choiceMap = {}) {
-  if (!whyWrong || typeof whyWrong !== 'object' || Array.isArray(whyWrong)) {
-    return [];
-  }
-
-  const normalizedChoiceMap = choiceMap && typeof choiceMap === 'object' ? choiceMap : {};
-  const originalToDisplayed = Object.entries(normalizedChoiceMap).reduce((acc, [displayedLabel, originalLabel]) => {
-    acc[String(originalLabel)] = String(displayedLabel);
-    return acc;
-  }, {});
-
-  const entries = Object.entries(whyWrong)
-    .map(([label, value]) => ({
-      label: String(originalToDisplayed[String(label)] ?? label).trim(),
-      reason: typeof value === 'string' ? value.trim() : '',
-    }))
-    .filter((item) => item.label && item.reason);
-
-  if (!entries.length) return [];
-
-  const fixedOrder = new Map(FIXED_CHOICE_LABELS.map((label, index) => [label, index]));
-  return entries.sort((a, b) => {
-    const rankA = fixedOrder.has(a.label) ? fixedOrder.get(a.label) : Number.POSITIVE_INFINITY;
-    const rankB = fixedOrder.has(b.label) ? fixedOrder.get(b.label) : Number.POSITIVE_INFINITY;
-    if (rankA !== rankB) return rankA - rankB;
-    return a.label.localeCompare(b.label);
-  });
-}
-
-function renderMarkdownToFragment(markdownText) {
-  const fragment = document.createDocumentFragment();
-  if (!markdownText.trim()) {
-    const empty = document.createElement('p');
-    empty.textContent = '解説はまだ登録されていません。';
-    fragment.appendChild(empty);
-    return fragment;
-  }
-
-  const lines = markdownText.replace(/\r\n/g, '\n').split('\n');
-  const paragraphBuffer = [];
-  const listBuffer = [];
-  let inCodeBlock = false;
-  let codeLanguage = '';
-  let codeBuffer = [];
-
-  const flushParagraph = () => {
-    if (!paragraphBuffer.length) return;
-    const p = document.createElement('p');
-    appendInlineFormattedText(p, paragraphBuffer.join('\n').trim());
-    fragment.appendChild(p);
-    paragraphBuffer.length = 0;
-  };
-
-  const flushList = () => {
-    if (!listBuffer.length) return;
-    const ul = document.createElement('ul');
-    listBuffer.forEach((text) => {
-      const li = document.createElement('li');
-      appendInlineFormattedText(li, text);
-      ul.appendChild(li);
-    });
-    fragment.appendChild(ul);
-    listBuffer.length = 0;
-  };
-
-  const flushCode = () => {
-    const pre = document.createElement('pre');
-    pre.className = `code-block${codeLanguage ? ` lang-${codeLanguage}` : ''}`;
-    const code = document.createElement('code');
-    if (codeLanguage) code.className = `language-${codeLanguage}`;
-    code.textContent = codeBuffer.join('\n');
-    pre.appendChild(code);
-    fragment.appendChild(pre);
-    codeBuffer = [];
-    codeLanguage = '';
-  };
-
-  lines.forEach((line) => {
-    const fence = line.match(/^```\s*([a-zA-Z0-9_-]+)?\s*$/);
-    if (fence) {
-      if (inCodeBlock) {
-        flushCode();
-        inCodeBlock = false;
-      } else {
-        flushParagraph();
-        flushList();
-        inCodeBlock = true;
-        codeLanguage = (fence[1] ?? '').toLowerCase();
-      }
-      return;
-    }
-
-    if (inCodeBlock) {
-      codeBuffer.push(line);
-      return;
-    }
-
-    if (!line.trim()) {
-      flushParagraph();
-      flushList();
-      return;
-    }
-
-    const listItem = line.match(/^\s*-\s+(.*)$/);
-    if (listItem) {
-      flushParagraph();
-      listBuffer.push(listItem[1].trim());
-      return;
-    }
-
-    flushList();
-    paragraphBuffer.push(line);
-  });
-
-  if (inCodeBlock) {
-    flushCode();
-  }
-  flushParagraph();
-  flushList();
-
-  return fragment;
-}
-
-function appendInlineFormattedText(element, text) {
-  const inlinePattern = /(\*\*(.+?)\*\*)|(`([^`\n]+)`)/g;
-  const source = String(text ?? '');
-  let currentIndex = 0;
-  let match = inlinePattern.exec(source);
-
-  while (match) {
-    if (match.index > currentIndex) {
-      element.appendChild(document.createTextNode(source.slice(currentIndex, match.index)));
-    }
-
-    if (match[2] !== undefined) {
-      const strong = document.createElement('strong');
-      strong.textContent = match[2];
-      element.appendChild(strong);
-    } else if (match[4] !== undefined) {
-      const code = document.createElement('code');
-      code.className = 'inline-code';
-      code.textContent = match[4];
-      element.appendChild(code);
-    }
-
-    currentIndex = inlinePattern.lastIndex;
-    match = inlinePattern.exec(source);
-  }
-
-  if (currentIndex < source.length) {
-    element.appendChild(document.createTextNode(source.slice(currentIndex)));
-  }
-}
-
-function appendFormattedTextWithCodeBlocks(element, text) {
-  const normalized = String(text ?? '').replace(/\r\n/g, '\n');
-  const segments = normalized.split(/(```[\s\S]*?```)/g).filter(Boolean);
-
-  segments.forEach((segment) => {
-    const codeMatch = segment.match(/^```\s*([a-zA-Z0-9_-]+)?\n([\s\S]*?)\n?```$/);
-    if (codeMatch) {
-      const language = (codeMatch[1] ?? '').toLowerCase();
-      const pre = document.createElement('pre');
-      pre.className = `code-block${language ? ` lang-${language}` : ''}`;
-
-      const code = document.createElement('code');
-      if (language) code.className = `language-${language}`;
-      code.textContent = codeMatch[2];
-
-      pre.appendChild(code);
-      element.appendChild(pre);
-      return;
-    }
-
-    appendInlineFormattedTextWithLineBreaks(element, segment);
-  });
-}
-
-function appendInlineFormattedTextWithLineBreaks(element, text) {
-  const lines = String(text).split('\n');
-  lines.forEach((line, index) => {
-    appendInlineFormattedText(element, line);
-    if (index < lines.length - 1) {
-      element.appendChild(document.createElement('br'));
-    }
-  });
+  if (scrollToTop) scrollQuizIntoView();
 }
 
 function submitCurrentAnswer(event) {
   event?.preventDefault?.();
   const question = getCurrentQuestion();
-  const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
+  const selected = els.choicesForm.querySelector(
+    'input[name="choice"]:checked',
+  );
   if (!selected) {
-    els.quizMessage.textContent = '選択肢を1つ選んでから「回答する」を押してください。';
-    els.choicesForm.classList.add('needs-selection');
-    els.selectionHint.textContent = '未選択です。まずは選択肢をタップしてください。';
+    els.quizMessage.textContent =
+      "選択肢を1つ選んでから「回答する」を押してください。";
+    els.choicesForm.classList.add("needs-selection");
+    els.selectionHint.textContent =
+      "未選択です。まずは選択肢をタップしてください。";
     scrollChoiceGroupIntoView();
     return;
   }
 
-  els.choicesForm.classList.remove('needs-selection');
+  els.choicesForm.classList.remove("needs-selection");
 
   const selectedLabel = selected.value;
-  const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
+  const choiceMap = getOrCreateChoiceMap(
+    state.session,
+    question.id,
+    question.choices,
+  );
   state.session.answers[question.id] = selectedLabel;
   state.session.graded[question.id] = true;
   state.session.explanationOpen = true;
 
-  const correct = choiceMap[selectedLabel] === question.answer;
+  const correct = gradeAnswer(question, selectedLabel, choiceMap);
   const currentProgress = state.progress[question.id] ?? baseProgress();
   currentProgress.seenCount += 1;
   if (correct) {
@@ -599,25 +397,11 @@ function submitCurrentAnswer(event) {
   renderQuestion();
 }
 
-function applyGradedState(question, chosenLabel, choiceMap) {
-  const correctLabel = getChoiceLabels(question.choices).find((label) => choiceMap[label] === question.answer);
-  const correct = chosenLabel === correctLabel;
-  els.resultIndicator.textContent = correct
-    ? `✅ 正解（正答: ${correctLabel}）`
-    : `❌ 不正解（正答: ${correctLabel}）`;
-  els.resultIndicator.classList.add(correct ? 'ok' : 'ng');
-
-  els.choicesForm.querySelectorAll('label').forEach((label) => {
-    const labelKey = label.dataset.choice;
-    if (labelKey === correctLabel) label.classList.add('correct');
-    if (labelKey === chosenLabel && labelKey !== correctLabel) label.classList.add('wrong');
-  });
-}
-
 function moveQuestion(delta) {
   const question = getCurrentQuestion();
   if (delta > 0 && !state.session.graded[question.id]) {
-    els.quizMessage.textContent = '未回答です。「回答する」で採点してください。';
+    els.quizMessage.textContent =
+      "未回答です。「回答する」で採点してください。";
     return;
   }
   const nextIndex = state.session.currentIndex + delta;
@@ -632,15 +416,16 @@ function moveQuestion(delta) {
   renderQuestion({ scrollToTop: true });
 }
 
-
 function handleChoiceSelectionChange() {
-  els.quizMessage.textContent = '';
-  els.choicesForm.classList.remove('needs-selection');
+  els.quizMessage.textContent = "";
+  els.choicesForm.classList.remove("needs-selection");
   updatePrimaryActions(getCurrentQuestion()?.id);
 }
 
 function updatePrimaryActions(questionId) {
-  const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
+  const selected = els.choicesForm.querySelector(
+    'input[name="choice"]:checked',
+  );
   const graded = Boolean(state.session?.graded?.[questionId]);
   const canSubmit = Boolean(selected) && !graded;
   const canNext = graded;
@@ -651,21 +436,22 @@ function updatePrimaryActions(questionId) {
   els.selectionHint.hidden = graded;
 
   if (selected) {
-    els.selectionHint.textContent = '選択済みです。「回答する」で採点します。';
+    els.selectionHint.textContent = "選択済みです。「回答する」で採点します。";
   } else {
-    els.selectionHint.textContent = '選択肢を選ぶと「回答する」が押せます。';
+    els.selectionHint.textContent = "選択肢を選ぶと「回答する」が押せます。";
   }
 }
 
 function updateExplanationActions() {
   const question = getCurrentQuestion();
   const graded = Boolean(question && state.session?.graded?.[question.id]);
-  const showInlineNext = graded && !els.explanation.classList.contains('hidden');
-  els.explanationActionRow.classList.toggle('hidden', !showInlineNext);
+  const showInlineNext =
+    graded && !els.explanation.classList.contains("hidden");
+  els.explanationActionRow.classList.toggle("hidden", !showInlineNext);
 }
 
 function isMobileViewport() {
-  return window.matchMedia('(max-width: 768px)').matches;
+  return window.matchMedia("(max-width: 768px)").matches;
 }
 
 function scrollQuizIntoView() {
@@ -673,62 +459,28 @@ function scrollQuizIntoView() {
   if (!target) return;
 
   if (isMobileViewport()) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
 
 function scrollChoiceGroupIntoView() {
   if (!isMobileViewport()) return;
-  els.choicesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  els.choicesForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function finishSession() {
-  const ids = state.session.order;
-  let correctCount = 0;
-  const wrongItems = [];
-  const sectionStats = {};
-
-  ids.forEach((id) => {
-    const q = state.questions.find((item) => item.id === id);
-    const choiceMap = getOrCreateChoiceMap(state.session, id, q.choices);
-    const selectedLabel = getStoredSelectedLabel(id, q.choices, choiceMap);
-    const isCorrect = selectedLabel ? choiceMap[selectedLabel] === q.answer : false;
-    if (isCorrect) correctCount += 1;
-    else wrongItems.push(q);
-
-    if (!sectionStats[q.section]) {
-      sectionStats[q.section] = { ok: 0, total: 0 };
-    }
-    sectionStats[q.section].total += 1;
-    if (isCorrect) sectionStats[q.section].ok += 1;
-  });
-
-  const total = ids.length;
-  const rate = Math.round((correctCount / total) * 100);
-  els.scoreText.textContent = `スコア: ${correctCount} / ${total}（${rate}%）`;
-
-  const sectionText = Object.entries(sectionStats)
-    .map(([sec, stat]) => `S${sec}: ${Math.round((stat.ok / stat.total) * 100)}%`)
-    .join(' / ');
-  els.sectionScoreText.textContent = `セクション別: ${sectionText}`;
-
-  els.wrongList.innerHTML = '';
-  if (!wrongItems.length) {
-    els.wrongList.innerHTML = '<li>全問正解です！</li>';
-  } else {
-    wrongItems.forEach((q) => {
-      const li = document.createElement('li');
-      const noteText = (state.progress[q.id]?.noteText ?? '').trim();
-      li.textContent = `${q.id}: ${q.question.slice(0, 50)}...${noteText ? ' 📝メモあり' : ''}`;
-      els.wrongList.appendChild(li);
-    });
-  }
-
+  const result = buildSessionResult(
+    state.session,
+    state.questions,
+    state.progress,
+    getStoredSelectedLabel,
+  );
+  renderResult(els, result);
   state.session.completedAt = new Date().toISOString();
   clearSession();
   state.session = null;
   refreshResumeUI();
-  showView('result');
+  showView("result");
 }
 
 function getCurrentQuestion() {
@@ -736,16 +488,16 @@ function getCurrentQuestion() {
   return state.questions.find((q) => q.id === id);
 }
 
-
 function refreshResumeUI() {
   const saved = loadSession();
   const hasSession = Boolean(saved);
-  els.resumeBtn.classList.toggle('hidden', !hasSession);
-  els.discardSessionBtn.classList.toggle('hidden', !hasSession);
+  els.resumeBtn.classList.toggle("hidden", !hasSession);
+  els.discardSessionBtn.classList.toggle("hidden", !hasSession);
   if (hasSession) {
-    els.homeMessage.textContent = '前回のセッションを検出しました。続きから再開できます。';
-  } else if (els.homeMessage.textContent.includes('前回のセッション')) {
-    els.homeMessage.textContent = '';
+    els.homeMessage.textContent =
+      "前回のセッションを検出しました。続きから再開できます。";
+  } else if (els.homeMessage.textContent.includes("前回のセッション")) {
+    els.homeMessage.textContent = "";
   }
 }
 
@@ -764,8 +516,8 @@ function loadSession() {
 
   const session = {
     schemaVersion: saved.schemaVersion ?? 1,
-    app: saved.app ?? 'dea-quiz-app',
-    mode: saved.mode ?? 'normal',
+    app: saved.app ?? "dea-quiz-app",
+    mode: saved.mode ?? "normal",
     order: saved.order,
     currentIndex: idx,
     answers: saved.answers ?? {},
@@ -785,45 +537,6 @@ function loadSession() {
   return session;
 }
 
-function legacyGetChoiceLabels(choices) {
-  const keys = Object.keys(choices);
-  const hasFixedLabels = FIXED_CHOICE_LABELS.every((label) => keys.includes(label));
-  return hasFixedLabels ? [...FIXED_CHOICE_LABELS] : [...keys].sort();
-}
-
-function legacyGetOrCreateChoiceMap(questionId, choices) {
-  const labels = getChoiceLabels(choices);
-  const originalKeys = Object.keys(choices);
-  const savedMap = state.session.choiceMap[questionId];
-  if (isValidChoiceMap(savedMap, labels, originalKeys)) {
-    return savedMap;
-  }
-
-  const shuffled = shuffle([...originalKeys]);
-  const generatedMap = labels.reduce((acc, label, index) => {
-    acc[label] = shuffled[index];
-    return acc;
-  }, {});
-
-  state.session.choiceMap[questionId] = generatedMap;
-  return generatedMap;
-}
-
-function legacyIsValidChoiceMap(map, labels, originalKeys) {
-  if (!map || typeof map !== 'object' || Array.isArray(map)) {
-    return false;
-  }
-
-  const mapLabels = Object.keys(map);
-  if (mapLabels.length !== labels.length || !labels.every((label) => mapLabels.includes(label))) {
-    return false;
-  }
-
-  const values = Object.values(map);
-  const valueSet = new Set(values);
-  return valueSet.size === originalKeys.length && originalKeys.every((key) => valueSet.has(key));
-}
-
 function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
   const stored = state.session.answers[questionId] ?? null;
   if (!stored) return null;
@@ -833,7 +546,8 @@ function getStoredSelectedLabel(questionId, choices, choiceMap = null) {
     return stored;
   }
 
-  const map = choiceMap ?? getOrCreateChoiceMap(state.session, questionId, choices);
+  const map =
+    choiceMap ?? getOrCreateChoiceMap(state.session, questionId, choices);
   return labels.find((label) => map[label] === stored) ?? null;
 }
 
@@ -856,34 +570,42 @@ function buildSectionCheckboxes() {
   const sectionMap = new Map();
   state.questions.forEach((question) => {
     if (!sectionMap.has(question.section)) {
-      sectionMap.set(question.section, question.sectionTitle ?? '');
+      sectionMap.set(question.section, question.sectionTitle ?? "");
     }
   });
 
-  const sections = Array.from(sectionMap.entries()).sort(([sectionA], [sectionB]) => Number(sectionA) - Number(sectionB));
+  const sections = Array.from(sectionMap.entries()).sort(
+    ([sectionA], [sectionB]) => Number(sectionA) - Number(sectionB),
+  );
 
   els.sectionCheckboxes.innerHTML = sections
     .map(
       ([section, sectionTitle]) =>
         `<label><input type="checkbox" name="sections" value="${section}" checked /><span class="section-label"><span class="section-number">Section ${section}</span><span class="section-title">${sectionTitle}</span></span></label>`,
     )
-    .join('');
+    .join("");
 }
 
 function hydrateSettingsUI() {
   els.questionCount.value = state.settings.count;
   const sections = new Set(state.settings.sections);
-  els.sectionCheckboxes.querySelectorAll('input[name="sections"]').forEach((input) => {
-    input.checked = sections.has(input.value);
-  });
-  const modeInput = els.form.querySelector(`input[name="mode"][value="${state.settings.mode}"]`);
+  els.sectionCheckboxes
+    .querySelectorAll('input[name="sections"]')
+    .forEach((input) => {
+      input.checked = sections.has(input.value);
+    });
+  const modeInput = els.form.querySelector(
+    `input[name="mode"][value="${state.settings.mode}"]`,
+  );
   if (modeInput) modeInput.checked = true;
 }
 
 function saveSettingsFromUI() {
-  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map((input) => input.value);
+  const sections = Array.from(
+    els.sectionCheckboxes.querySelectorAll("input:checked"),
+  ).map((input) => input.value);
   if (!sections.length) {
-    els.homeMessage.textContent = '最低1つのセクションを選択してください。';
+    els.homeMessage.textContent = "最低1つのセクションを選択してください。";
     return false;
   }
   state.settings = {
@@ -896,9 +618,11 @@ function saveSettingsFromUI() {
 }
 
 function saveScopeSettingsFromUI() {
-  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map((input) => input.value);
+  const sections = Array.from(
+    els.sectionCheckboxes.querySelectorAll("input:checked"),
+  ).map((input) => input.value);
   if (!sections.length) {
-    els.homeMessage.textContent = '最低1つのセクションを選択してください。';
+    els.homeMessage.textContent = "最低1つのセクションを選択してください。";
     return false;
   }
 
@@ -912,47 +636,9 @@ function saveScopeSettingsFromUI() {
 }
 
 function updateBookmarkLabel(bookmarkEnabled) {
-  els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
-}
-
-async function legacyLoadQuestions() {
-  const res = await fetch('questions.json');
-  if (!res.ok) throw new Error('questions.json の読み込みに失敗しました');
-  return res.json();
-}
-
-function legacyLoadJSON(key, fallback) {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function legacySaveJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function legacyBaseProgress() {
-  return {
-    seenCount: 0,
-    correctCount: 0,
-    wrongCount: 0,
-    lastAnsweredAt: null,
-    bookmark: false,
-    noteText: '',
-    noteUpdatedAt: null,
-  };
-}
-
-function legacyGetQuestionNote(questionId) {
-  const progress = state.progress[questionId] ?? {};
-  return progress.noteText ?? progress.note ?? progress.memo ?? '';
-}
-
-function legacyHasNote(questionId) {
-  return String(getQuestionNote(questionId)).trim().length > 0;
+  els.bookmarkBtn.textContent = bookmarkEnabled
+    ? "ブックマーク★"
+    : "ブックマーク☆";
 }
 
 function saveCurrentQuestionNote() {
@@ -971,119 +657,60 @@ function saveCurrentQuestionNote() {
 
   state.progress[question.id] = current;
   saveProgress(state.progress);
-  updateNoteStatus(noteText ? 'メモを保存しました。' : 'メモを空にしました。');
+  updateNoteStatus(noteText ? "メモを保存しました。" : "メモを空にしました。");
 }
 
 function renderQuestionNote(questionId) {
   const graded = Boolean(state.session?.graded?.[questionId]);
   const progress = state.progress[questionId] ?? {};
 
-  els.notePanel.classList.toggle('hidden', !graded);
-  els.questionNote.value = progress.noteText ?? '';
-  els.noteStatus.textContent = progress.noteUpdatedAt ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}` : '';
-}
-
-function legacyGetAllNoteItems() {
-  return state.questions
-    .map((question) => {
-      const progress = state.progress[question.id] ?? {};
-      const noteText = String(progress.noteText ?? progress.note ?? '').trim();
-      if (!noteText) return null;
-      return {
-        id: question.id,
-        section: question.section,
-        questionText: question.question,
-        noteText,
-        noteUpdatedAt: progress.noteUpdatedAt ?? null,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => {
-      const aTime = new Date(a.noteUpdatedAt ?? 0).getTime();
-      const bTime = new Date(b.noteUpdatedAt ?? 0).getTime();
-      return bTime - aTime;
-    });
+  els.notePanel.classList.toggle("hidden", !graded);
+  els.questionNote.value = progress.noteText ?? "";
+  els.noteStatus.textContent = progress.noteUpdatedAt
+    ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}`
+    : "";
 }
 
 function renderNotesList() {
   const noteItems = getAllNoteItems(state.questions, state.progress);
-  renderNotesListView(els, noteItems, { onSolve: startSingleQuestionSession, onEdit: toggleNoteEdit, onDelete: deleteNote });
+  renderNotesListView(els, noteItems, {
+    onSolve: startSingleQuestionSession,
+    onEdit: handleToggleNoteEdit,
+    onDelete: handleDeleteNote,
+  });
 }
 
 function startSingleQuestionSession(questionId) {
-  state.session = createSession([questionId], 'single', { ...state.settings, mode: 'single' });
+  state.session = createSession([questionId], "single", {
+    ...state.settings,
+    mode: "single",
+  });
   persistSession();
-  showView('quiz');
+  showView("quiz");
   renderQuestion({ scrollToTop: true });
 }
 
-function toggleNoteEdit(card, questionId) {
-  const existingEditor = card.querySelector('.note-editor');
-  if (existingEditor) {
-    existingEditor.remove();
-    return;
-  }
-  const editor = document.createElement('div');
-  editor.className = 'note-editor';
-  const textarea = document.createElement('textarea');
-  textarea.rows = 4;
-  textarea.value = getQuestionNote(questionId);
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.textContent = '保存';
-  saveBtn.className = 'primary';
-  saveBtn.addEventListener('click', () => {
-    state.progress = saveNote(state.progress, questionId, textarea.value);
+function handleToggleNoteEdit(card, questionId) {
+  const currentNote = state.progress[questionId]?.noteText ?? "";
+  toggleNoteEditor(card, currentNote, (noteText) => {
+    state.progress = saveNote(state.progress, questionId, noteText);
     saveProgress(state.progress);
     renderNotesList();
   });
-  editor.append(textarea, saveBtn);
-  card.appendChild(editor);
 }
 
-function deleteNote(questionId) {
-  if (!window.confirm('このメモを削除しますか？')) return;
-  const current = { ...baseProgress(), ...(state.progress[questionId] ?? {}) };
-  current.noteText = '';
-  current.note = '';
-  current.noteUpdatedAt = null;
-  state.progress[questionId] = current;
+function handleDeleteNote(questionId) {
+  if (!window.confirm("このメモを削除しますか？")) return;
+  state.progress = deleteNote(state.progress, questionId);
   saveProgress(state.progress);
   renderNotesList();
 }
 
 function handleDeleteAllNotes() {
-  if (!window.confirm('メモをすべて削除しますか？')) return;
-  Object.values(state.progress).forEach((item) => {
-    item.noteText = '';
-    item.note = '';
-    item.noteUpdatedAt = null;
-  });
+  if (!window.confirm("メモをすべて削除しますか？")) return;
+  state.progress = deleteAllNotes(state.progress);
   saveProgress(state.progress);
   renderNotesList();
-}
-
-function legacyGetQuestionPreview(text) {
-  const normalized = String(text ?? '').trim();
-  if (!normalized) return '';
-
-  const periodIndex = normalized.indexOf('。');
-  const newlineIndex = normalized.indexOf('\n');
-  const cutPoints = [periodIndex, newlineIndex].filter((index) => index >= 0);
-  const sentenceEnd = cutPoints.length ? Math.min(...cutPoints) + 1 : Number.POSITIVE_INFINITY;
-  const maxLen = 50;
-  const cutIndex = Math.min(sentenceEnd, maxLen, normalized.length);
-
-  const preview = normalized.slice(0, cutIndex);
-  const truncated = cutIndex < normalized.length;
-  return `${preview}${truncated ? '…' : ''}`;
-}
-
-function legacyFormatDateTime(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleString('ja-JP');
 }
 
 function updateNoteStatus(message) {
@@ -1094,12 +721,4 @@ function updateNoteStatus(message) {
     if (!question) return;
     renderQuestionNote(question.id);
   }, 1800);
-}
-
-function legacyShuffle(array) {
-  for (let i = array.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
 }
