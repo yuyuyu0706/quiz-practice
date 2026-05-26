@@ -119,7 +119,9 @@ function attachEvents() {
     closeSecondaryActions();
     els.explanation.classList.toggle('hidden');
     state.session.explanationOpen = !els.explanation.classList.contains('hidden');
-    els.toggleExplanation.textContent = state.session.explanationOpen ? '解説を非表示' : '解説を表示';
+    els.toggleExplanation.textContent = state.session.explanationOpen
+      ? '解説を非表示'
+      : '解説を表示';
     updateExplanationActions();
     persistSession();
   });
@@ -153,7 +155,6 @@ function attachEvents() {
   document.addEventListener('click', handleDocumentClick);
   window.addEventListener('resize', handleViewportChange);
 }
-
 
 function handleDocumentClick(event) {
   if (!isMobileViewport()) return;
@@ -192,7 +193,7 @@ function closeSecondaryActions(options = {}) {
 function handleKeyboard(event) {
   if (!state.session || els.views.quiz.className.indexOf('active') === -1) return;
   const key = event.key.toUpperCase();
-  const map = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', A: 'A', B: 'B', C: 'C', D: 'D' };
+  const map = { 1: 'A', 2: 'B', 3: 'C', 4: 'D', A: 'A', B: 'B', C: 'C', D: 'D' };
   if (map[key]) {
     const choiceInput = els.choicesForm.querySelector(`input[value="${map[key]}"]`);
     if (choiceInput) {
@@ -318,7 +319,12 @@ function renderExplanation(question) {
   els.explanation.appendChild(body);
 
   const validReferences = references.filter(
-    (item) => item && typeof item.title === 'string' && typeof item.url === 'string' && item.title && item.url,
+    (item) =>
+      item &&
+      typeof item.title === 'string' &&
+      typeof item.url === 'string' &&
+      item.title &&
+      item.url
   );
   if (!validReferences.length) return;
 
@@ -531,7 +537,9 @@ function submitCurrentAnswer(event) {
 }
 
 function applyGradedState(question, chosenLabel, choiceMap) {
-  const correctLabel = getChoiceLabels(question.choices).find((label) => choiceMap[label] === question.answer);
+  const correctLabel = getChoiceLabels(question.choices).find(
+    (label) => choiceMap[label] === question.answer
+  );
   const correct = chosenLabel === correctLabel;
   els.resultIndicator.textContent = correct
     ? `✅ 正解（正答: ${correctLabel}）`
@@ -562,7 +570,6 @@ function moveQuestion(delta) {
   state.session.explanationOpen = false;
   renderQuestion({ scrollToTop: true });
 }
-
 
 function handleChoiceSelectionChange() {
   els.quizMessage.textContent = '';
@@ -665,7 +672,6 @@ function getCurrentQuestion() {
   const id = state.session.order[state.session.currentIndex];
   return state.questions.find((q) => q.id === id);
 }
-
 
 function refreshResumeUI() {
   const saved = loadSession();
@@ -789,7 +795,7 @@ function buildSectionCheckboxes() {
   els.sectionCheckboxes.innerHTML = sections
     .map(
       (section) =>
-        `<label><input type="checkbox" name="sections" value="${section}" checked /> Section ${section}</label>`,
+        `<label><input type="checkbox" name="sections" value="${section}" checked /> Section ${section}</label>`
     )
     .join('');
 }
@@ -805,7 +811,9 @@ function hydrateSettingsUI() {
 }
 
 function saveSettingsFromUI() {
-  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map((input) => input.value);
+  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map(
+    (input) => input.value
+  );
   if (!sections.length) {
     els.homeMessage.textContent = '最低1つのセクションを選択してください。';
     return false;

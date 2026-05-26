@@ -1,4 +1,4 @@
-const FIXED_CHOICE_LABELS = ["A", "B", "C", "D"];
+const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
 
 export function shuffle(array) {
   const out = [...array];
@@ -12,7 +12,7 @@ export function shuffle(array) {
 export function createSession(order, mode, settingsSnapshot) {
   return {
     schemaVersion: 1,
-    app: "dep-quiz-app",
+    app: 'dep-quiz-app',
     mode,
     order,
     currentIndex: 0,
@@ -26,29 +26,20 @@ export function createSession(order, mode, settingsSnapshot) {
   };
 }
 
-export function createQuizSession(
-  questions,
-  settings,
-  mode,
-  progress,
-  hasNoteFn,
-) {
+export function createQuizSession(questions, settings, mode, progress, hasNoteFn) {
   let pool = questions.filter((q) => settings.sections.includes(q.section));
-  if (mode === "wrongOnly")
-    pool = pool.filter((q) => (progress[q.id]?.wrongCount ?? 0) > 0);
-  else if (mode === "bookmarks")
-    pool = pool.filter((q) => progress[q.id]?.bookmark);
-  else if (mode === "notesOnly")
-    pool = pool.filter((q) => hasNoteFn(progress, q.id));
-  if (mode === "random") pool = shuffle(pool);
-  const count = settings.count === "all" ? pool.length : Number(settings.count);
+  if (mode === 'wrongOnly') pool = pool.filter((q) => (progress[q.id]?.wrongCount ?? 0) > 0);
+  else if (mode === 'bookmarks') pool = pool.filter((q) => progress[q.id]?.bookmark);
+  else if (mode === 'notesOnly') pool = pool.filter((q) => hasNoteFn(progress, q.id));
+  if (mode === 'random') pool = shuffle(pool);
+  const count = settings.count === 'all' ? pool.length : Number(settings.count);
   const finalList = pool.slice(0, Math.min(count, pool.length));
   return {
     pool,
     session: createSession(
       finalList.map((q) => q.id),
       mode,
-      { ...settings, mode },
+      { ...settings, mode }
     ),
   };
 }
@@ -61,19 +52,13 @@ export function getChoiceLabels(choices) {
 }
 
 export function isValidChoiceMap(map, labels, originalKeys) {
-  if (!map || typeof map !== "object" || Array.isArray(map)) return false;
+  if (!map || typeof map !== 'object' || Array.isArray(map)) return false;
   const mapLabels = Object.keys(map);
-  if (
-    mapLabels.length !== labels.length ||
-    !labels.every((label) => mapLabels.includes(label))
-  )
+  if (mapLabels.length !== labels.length || !labels.every((label) => mapLabels.includes(label)))
     return false;
   const values = Object.values(map);
   const set = new Set(values);
-  return (
-    set.size === originalKeys.length &&
-    originalKeys.every((key) => set.has(key))
-  );
+  return set.size === originalKeys.length && originalKeys.every((key) => set.has(key));
 }
 
 export function getOrCreateChoiceMap(session, questionId, choices) {
@@ -82,10 +67,7 @@ export function getOrCreateChoiceMap(session, questionId, choices) {
   const savedMap = session.choiceMap[questionId];
   if (isValidChoiceMap(savedMap, labels, originalKeys)) return savedMap;
   const shuffled = shuffle(originalKeys);
-  const generated = labels.reduce(
-    (acc, label, i) => ({ ...acc, [label]: shuffled[i] }),
-    {},
-  );
+  const generated = labels.reduce((acc, label, i) => ({ ...acc, [label]: shuffled[i] }), {});
   session.choiceMap[questionId] = generated;
   return generated;
 }
@@ -94,12 +76,7 @@ export function gradeAnswer(question, selectedLabel, choiceMap) {
   return choiceMap[selectedLabel] === question.answer;
 }
 
-export function buildSessionResult(
-  session,
-  questions,
-  progress,
-  getStoredSelectedLabel,
-) {
+export function buildSessionResult(session, questions, progress, getStoredSelectedLabel) {
   const wrongItems = [];
   const sectionStats = {};
   let correctCount = 0;
@@ -107,15 +84,11 @@ export function buildSessionResult(
     const q = questions.find((item) => item.id === id);
     const choiceMap = getOrCreateChoiceMap(session, id, q.choices);
     const selectedLabel = getStoredSelectedLabel(id, q.choices, choiceMap);
-    const isCorrect = selectedLabel
-      ? choiceMap[selectedLabel] === q.answer
-      : false;
+    const isCorrect = selectedLabel ? choiceMap[selectedLabel] === q.answer : false;
     if (isCorrect) correctCount += 1;
     else {
-      const noteText = (progress[q.id]?.noteText ?? "").trim();
-      wrongItems.push(
-        `${q.id}: ${q.question.slice(0, 50)}...${noteText ? " 📝メモあり" : ""}`,
-      );
+      const noteText = (progress[q.id]?.noteText ?? '').trim();
+      wrongItems.push(`${q.id}: ${q.question.slice(0, 50)}...${noteText ? ' 📝メモあり' : ''}`);
     }
     if (!sectionStats[q.section]) sectionStats[q.section] = { ok: 0, total: 0 };
     sectionStats[q.section].total += 1;
@@ -158,8 +131,8 @@ export function normalizeLoadedSession(saved) {
 
   const session = {
     schemaVersion: saved.schemaVersion ?? 1,
-    app: saved.app ?? "dea-quiz-app",
-    mode: saved.mode ?? "normal",
+    app: saved.app ?? 'dea-quiz-app',
+    mode: saved.mode ?? 'normal',
     order: saved.order,
     currentIndex: idx,
     answers: saved.answers ?? {},

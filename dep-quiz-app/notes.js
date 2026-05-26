@@ -5,14 +5,14 @@ export function baseProgress() {
     wrongCount: 0,
     lastAnsweredAt: null,
     bookmark: false,
-    noteText: "",
+    noteText: '',
     noteUpdatedAt: null,
   };
 }
 
 export function getQuestionNote(progress, questionId) {
   const item = progress[questionId] ?? {};
-  return item.noteText ?? item.note ?? item.memo ?? "";
+  return item.noteText ?? item.note ?? item.memo ?? '';
 }
 
 export function hasNote(progress, questionId) {
@@ -21,7 +21,7 @@ export function hasNote(progress, questionId) {
 
 export function saveNote(progress, questionId, rawNote) {
   const current = { ...baseProgress(), ...(progress[questionId] ?? {}) };
-  const noteText = String(rawNote ?? "").trim();
+  const noteText = String(rawNote ?? '').trim();
   current.noteText = noteText;
   current.note = noteText;
   current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
@@ -29,7 +29,7 @@ export function saveNote(progress, questionId, rawNote) {
 }
 
 export function deleteNote(progress, questionId) {
-  return saveNote(progress, questionId, "");
+  return saveNote(progress, questionId, '');
 }
 
 export function deleteAllNotes(progress) {
@@ -38,8 +38,8 @@ export function deleteAllNotes(progress) {
     next[key] = {
       ...baseProgress(),
       ...value,
-      noteText: "",
-      note: "",
+      noteText: '',
+      note: '',
       noteUpdatedAt: null,
     };
   });
@@ -50,7 +50,7 @@ export function getAllNoteItems(questions, progress) {
   return questions
     .map((question) => {
       const item = progress[question.id] ?? {};
-      const noteText = String(item.noteText ?? item.note ?? "").trim();
+      const noteText = String(item.noteText ?? item.note ?? '').trim();
       if (!noteText) return null;
       return {
         id: question.id,
@@ -61,7 +61,5 @@ export function getAllNoteItems(questions, progress) {
       };
     })
     .filter(Boolean)
-    .sort(
-      (a, b) => new Date(b.noteUpdatedAt ?? 0) - new Date(a.noteUpdatedAt ?? 0),
-    );
+    .sort((a, b) => new Date(b.noteUpdatedAt ?? 0) - new Date(a.noteUpdatedAt ?? 0));
 }
