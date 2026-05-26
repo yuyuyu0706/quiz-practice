@@ -5,7 +5,9 @@ const appName = process.argv[2] ?? 'dea';
 const supportedApps = new Set(['dea', 'dep']);
 
 if (!supportedApps.has(appName)) {
-  throw new Error(`Unsupported app name: ${appName}. Use one of ${Array.from(supportedApps).join(', ')}.`);
+  throw new Error(
+    `Unsupported app name: ${appName}. Use one of ${Array.from(supportedApps).join(', ')}.`
+  );
 }
 
 const questionPath = resolve(`${appName}-quiz-app/questions.json`);
@@ -23,7 +25,15 @@ if (!Array.isArray(questions)) {
   throw new Error('questions.json must export an array of questions.');
 }
 
-const requiredFields = ['id', 'section', 'sectionTitle', 'question', 'choices', 'answer', 'explanation'];
+const requiredFields = [
+  'id',
+  'section',
+  'sectionTitle',
+  'question',
+  'choices',
+  'answer',
+  'explanation',
+];
 const answerLabels = ['A', 'B', 'C', 'D'];
 const difficultyValues = ['easy', 'medium', 'hard'];
 const sourceTypeValues = ['original', 'official-inspired', 'scenario-based'];
@@ -48,7 +58,8 @@ const isNonEmptyString = (value) => typeof value === 'string' && value.trim() !=
 const isPlainObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
 
 questions.forEach((question, index) => {
-  const questionId = isPlainObject(question) && typeof question.id === 'string' ? question.id : null;
+  const questionId =
+    isPlainObject(question) && typeof question.id === 'string' ? question.id : null;
   let lineNumber;
   if (questionId) {
     const idLines = idLineHints.get(questionId);
@@ -110,7 +121,10 @@ questions.forEach((question, index) => {
     errors.push(`${label} must have a choices object.`);
   } else {
     const choiceKeys = Object.keys(question.choices).sort();
-    if (choiceKeys.length !== answerLabels.length || !answerLabels.every((key) => choiceKeys.includes(key))) {
+    if (
+      choiceKeys.length !== answerLabels.length ||
+      !answerLabels.every((key) => choiceKeys.includes(key))
+    ) {
       errors.push(`${label} choices must contain exactly A/B/C/D.`);
     }
 
@@ -161,11 +175,19 @@ questions.forEach((question, index) => {
     }
   }
 
-  if ('difficulty' in question && question.difficulty !== undefined && !difficultyValues.includes(question.difficulty)) {
+  if (
+    'difficulty' in question &&
+    question.difficulty !== undefined &&
+    !difficultyValues.includes(question.difficulty)
+  ) {
     errors.push(`${label} difficulty must be one of ${difficultyValues.join('/')}.`);
   }
 
-  if ('sourceType' in question && question.sourceType !== undefined && !sourceTypeValues.includes(question.sourceType)) {
+  if (
+    'sourceType' in question &&
+    question.sourceType !== undefined &&
+    !sourceTypeValues.includes(question.sourceType)
+  ) {
     errors.push(`${label} sourceType must be one of ${sourceTypeValues.join('/')}.`);
   }
 
@@ -191,7 +213,11 @@ questions.forEach((question, index) => {
     errors.push(`${label} notes must be a string when present.`);
   }
 
-  if ('scenarioType' in question && question.scenarioType !== undefined && !scenarioTypeValues.includes(question.scenarioType)) {
+  if (
+    'scenarioType' in question &&
+    question.scenarioType !== undefined &&
+    !scenarioTypeValues.includes(question.scenarioType)
+  ) {
     errors.push(`${label} scenarioType must be one of ${scenarioTypeValues.join('/')}.`);
   }
 
@@ -203,9 +229,13 @@ questions.forEach((question, index) => {
 });
 
 if (errors.length > 0) {
-  console.error(`${appName.toUpperCase()} question validation failed with ${errors.length} error(s):`);
+  console.error(
+    `${appName.toUpperCase()} question validation failed with ${errors.length} error(s):`
+  );
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log(`${appName.toUpperCase()} question validation passed (${questions.length} questions checked).`);
+  console.log(
+    `${appName.toUpperCase()} question validation passed (${questions.length} questions checked).`
+  );
 }

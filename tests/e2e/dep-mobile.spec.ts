@@ -6,13 +6,21 @@ test.describe('dep mobile quiz flow', () => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile-only coverage.');
     await startDepQuiz(page, 'all');
 
-    await expect(page.locator('#section-checkboxes .section-title').first()).not.toHaveText(/^\s*$/);
+    await expect(page.locator('#section-checkboxes .section-title').first()).not.toHaveText(
+      /^\s*$/
+    );
     await expect(page.getByRole('button', { name: '回答する' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'その他の操作' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'その他の操作' })).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('button', { name: 'その他の操作' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
 
     await page.getByRole('button', { name: 'その他の操作' }).click();
-    await expect(page.getByRole('button', { name: 'その他の操作' })).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByRole('button', { name: 'その他の操作' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
     await expect(page.getByRole('button', { name: '中断してホームへ' })).toBeVisible();
 
     await answerCurrentQuestion(page);
@@ -45,6 +53,5 @@ test.describe('dep mobile quiz flow', () => {
 
     await page.getByRole('button', { name: 'メモ一覧' }).click();
     await expect(page.locator('#notes-view')).toBeVisible();
-
   });
 });

@@ -2,12 +2,16 @@ import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
 test.describe('dep notes list on desktop', () => {
-  test('can create, edit, and delete a note while preserving progress data', async ({ page }, testInfo) => {
+  test('can create, edit, and delete a note while preserving progress data', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');
 
-    const questionId = (await page.locator('#quiz-question .quiz-question-id').textContent())?.trim();
+    const questionId = (
+      await page.locator('#quiz-question .quiz-question-id').textContent()
+    )?.trim();
     expect(questionId).toBeTruthy();
 
     await answerCurrentQuestion(page);
@@ -34,7 +38,9 @@ test.describe('dep notes list on desktop', () => {
     await card.getByRole('button', { name: '削除' }).click();
     await expect(page.locator('#notes-empty')).toBeVisible();
 
-    const progress = await page.evaluate(() => JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}'));
+    const progress = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}')
+    );
     const questionProgress = progress[questionId as string];
     expect(questionProgress).toBeTruthy();
     expect(questionProgress.note).toBe('');

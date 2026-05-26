@@ -8,8 +8,8 @@
     "test:e2e": "playwright test",
     "test": "npm run validate:dea-questions && npm run validate:dep-questions && npm run test:e2e",
     "validate:dep-questions": "node scripts/validate-dep-questions.mjs",
-    "format": "prettier --write \"**/*.{js,css,html,json,md}\"",
-    "format:check": "prettier --check \"**/*.{js,css,html,json,md}\""
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",

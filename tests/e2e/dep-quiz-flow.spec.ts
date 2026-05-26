@@ -15,9 +15,13 @@ test.describe('dep quiz flow on desktop', () => {
     const total = Number(initialProgress?.match(/\d+\s*\/\s*(\d+)/)?.[1]);
     expect(total).toBeGreaterThanOrEqual(3);
 
-    const questionFontSize = await question.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+    const questionFontSize = await question.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize)
+    );
     expect(questionFontSize).toBeGreaterThanOrEqual(15);
-    const questionFontWeight = await question.evaluate((element) => getComputedStyle(element).fontWeight);
+    const questionFontWeight = await question.evaluate(
+      (element) => getComputedStyle(element).fontWeight
+    );
     expect(Number.parseInt(questionFontWeight, 10)).toBeGreaterThanOrEqual(700);
 
     await answerCurrentQuestion(page);
@@ -54,6 +58,5 @@ test.describe('dep quiz flow on desktop', () => {
 
     await page.getByRole('button', { name: '開始' }).click();
     await expect(page.locator('#quiz-view')).toBeVisible();
-
   });
 });
