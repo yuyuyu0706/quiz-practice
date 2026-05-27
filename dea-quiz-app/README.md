@@ -5,6 +5,7 @@ Databricks Certified Data Engineer Associate（DEA）対策向けの、HTML/CSS/
 ## 起動方法
 
 ### 推奨（ローカルサーバ）
+
 `file://` 直接オープンでは `questions.json` の読み込み時にCORS制約が出る場合があります。
 以下のいずれかでローカルサーバ起動を推奨します。
 
@@ -45,7 +46,7 @@ python -m http.server 8000
 
 `questions.json` は以下形式の配列です。
 
-```json
+````json
 [
   {
     "id": "Q1",
@@ -60,12 +61,10 @@ python -m http.server 8000
     },
     "answer": "C",
     "explanation": "Markdown形式の解説（段落・箇条書き・```sql / ```python のコードフェンス対応）",
-    "references": [
-      { "title": "公式ドキュメント名", "url": "https://docs.databricks.com/..." }
-    ]
+    "references": [{ "title": "公式ドキュメント名", "url": "https://docs.databricks.com/..." }]
   }
 ]
-```
+````
 
 - `id` は重複しない値にしてください（例: `Q1`〜`Q50`）
 - `answer` は `A/B/C/D` のいずれか
@@ -89,7 +88,6 @@ localStorage.removeItem('deaQuizActiveSession');
 ```
 
 または、対象サイトのストレージをブラウザ設定から削除してください。
-
 
 ## 高度解説（Markdown）と参考リンク
 

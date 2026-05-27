@@ -3424,7 +3424,7 @@
     },
     "answer": "B",
     "explanation": "正解は、**既存テーブルは維持しつつ、date と customer_id をクラスタリングキー候補とする新しい非パーティションテーブルを作成し、バックフィル後に段階的に切り替える** です。\n\nliquid clustering は、既存の **パーティション分割テーブルと併用できない** ため、date列でパーティション分割された既存テーブルにそのまま適用するのは適切ではありません。そのため、既存運用への影響を抑えるには、既存テーブルを残したまま **date と customer_id をクラスタリングキー候補にした新しい非パーティションの Delta テーブル** を用意し、履歴データをバックフィルしながら段階的に参照先や書き込み先を切り替える方法が最も安全です。\n\nDatabricks では、partitioning から liquid clustering に移行する場合、**元の partition 列を clustering key に使う**ことが推奨されています。また、クラスタリングキーは、頻繁にフィルタされる列に基づいて選ぶのが基本です。このため、本問では既存の date アクセスを考慮しつつ、customer_id フィルタ改善も狙える **date + customer_id** が最も自然な候補です。\n\nA は、既存の partitioned table にそのまま liquid clustering を追加する案ですが、両者は互換性がないため不適切です。C は高カーディナリティになりやすい customer_id を追加パーティションにする案で、一般に管理負荷や性能面の問題を招きやすく、本問の意図である liquid clustering 導入ともずれます。D の DESCRIBE HISTORY は履歴確認用であり、データ配置改善の対応案ではありません。",
-  "references": [
+    "references": [
       {
         "title": "Use liquid clustering for tables - Azure Databricks",
         "url": "https://learn.microsoft.com/en-us/azure/databricks/delta/clustering"

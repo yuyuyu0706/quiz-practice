@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 import { gotoDepHome } from './helpers';
 
 test.describe('dep home screen', () => {
-  test('renders DEP learning settings and home action buttons without layout issues', async ({ page }) => {
+  test('renders DEP learning settings and home action buttons without layout issues', async ({
+    page,
+  }) => {
     await gotoDepHome(page);
 
     await expect(page.getByText('Professional 試験対策・4択・解説つき')).toBeVisible();
@@ -23,10 +25,16 @@ test.describe('dep home screen', () => {
     await expect(page.getByRole('button', { name: 'メモあり問題を復習' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'メモ一覧' })).toBeVisible();
 
-    const primaryHomeButtons = page.locator('#home-view .button-row').first().locator('button:visible');
+    const primaryHomeButtons = page
+      .locator('#home-view .button-row')
+      .first()
+      .locator('button:visible');
     await expect(primaryHomeButtons).toHaveCount(1);
 
-    const notesActionButtons = page.locator('#home-view .button-row').nth(1).locator('button:visible');
+    const notesActionButtons = page
+      .locator('#home-view .button-row')
+      .nth(1)
+      .locator('button:visible');
     await expect(notesActionButtons).toHaveCount(2);
 
     const viewport = page.viewportSize();
@@ -49,6 +57,5 @@ test.describe('dep home screen', () => {
     await expect(page.locator('#notes-view')).toBeVisible();
     await page.getByRole('button', { name: 'ホームへ戻る' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
-
   });
 });

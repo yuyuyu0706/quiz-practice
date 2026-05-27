@@ -7,10 +7,13 @@
     "validate:dea-questions": "node scripts/validate-dea-questions.mjs",
     "test:e2e": "playwright test",
     "test": "npm run validate:dea-questions && npm run validate:dep-questions && npm run test:e2e",
-    "validate:dep-questions": "node scripts/validate-dep-questions.mjs"
+    "validate:dep-questions": "node scripts/validate-dep-questions.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "prettier": "^3.8.3"
   }
 }

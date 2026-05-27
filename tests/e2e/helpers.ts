@@ -6,7 +6,9 @@ async function gotoHome(page: Page, app: 'dea' | 'dep') {
   if (app === 'dea') {
     await expect(page.getByRole('heading', { name: 'Databricks DEA 練習問題' })).toBeVisible();
   } else {
-    await expect(page.getByRole('heading', { name: 'Databricks Certified DEP 練習問題' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Databricks Certified DEP 練習問題' })
+    ).toBeVisible();
   }
 
   await expect(page.getByRole('heading', { name: '学習設定' })).toBeVisible();
@@ -15,7 +17,7 @@ async function gotoHome(page: Page, app: 'dea' | 'dep') {
 async function startQuizInternal(
   page: Page,
   app: 'dea' | 'dep',
-  count: '10' | '20' | '50' | 'all' = '10',
+  count: '10' | '20' | '50' | 'all' = '10'
 ) {
   await gotoHome(page, app);
   await page.locator('#question-count').selectOption(count);

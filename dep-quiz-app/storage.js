@@ -1,13 +1,13 @@
 export const STORAGE_KEYS = {
-  progress: "depQuizProgress",
-  settings: "depQuizSettings",
-  session: "depQuizActiveSession",
+  progress: 'depQuizProgress',
+  settings: 'depQuizSettings',
+  session: 'depQuizActiveSession',
 };
 
 const DEFAULT_SETTINGS = {
-  sections: ["1", "2", "3", "4", "5"],
-  mode: "normal",
-  count: "50",
+  sections: ['1', '2', '3', '4', '5'],
+  mode: 'normal',
+  count: '50',
 };
 
 export function loadProgress() {
