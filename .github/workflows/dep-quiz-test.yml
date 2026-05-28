@@ -13,36 +13,36 @@ jobs:
       # ======================
       # Prepare Phase
       # ======================
-      - name: "Prepare: Checkout repository"
+      - name: 'Prepare: Checkout repository'
         uses: actions/checkout@v4
 
-      - name: "Prepare: Setup Node.js runtime"
+      - name: 'Prepare: Setup Node.js runtime'
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: "Prepare: Install npm dependencies"
+      - name: 'Prepare: Install npm dependencies'
         run: npm ci
 
-      - name: "Prepare: Install Playwright browser"
+      - name: 'Prepare: Install Playwright browser'
         run: npx playwright install --with-deps chromium
 
       # ======================
       # Quality Gates
       # ======================
-      - name: "Quality Gate: Check code formatting"
+      - name: 'Quality Gate: Check code formatting'
         run: npm run format:check
 
-      - name: "Quality Gate: Validate DEP question schema"
+      - name: 'Quality Gate: Validate DEP question schema'
         run: npm run validate:dep-questions
 
-      - name: "Quality Gate: Run DEP E2E tests"
+      - name: 'Quality Gate: Run DEP E2E tests'
         run: npx playwright test tests/e2e/dep-*.spec.ts
 
       # ======================
       # Reporting
       # ======================
-      - name: "Report: Upload Playwright artifacts"
+      - name: 'Report: Upload Playwright artifacts'
         if: always()
         uses: actions/upload-artifact@v4
         with:
