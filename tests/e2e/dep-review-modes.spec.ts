@@ -14,7 +14,9 @@ test.describe('dep review modes on desktop', () => {
 
     await startDepQuiz(page, '10');
 
-    const bookmarkedId = (await page.locator('#quiz-question .quiz-question-id').textContent())?.trim();
+    const bookmarkedId = (
+      await page.locator('#quiz-question .quiz-question-id').textContent()
+    )?.trim();
     expect(bookmarkedId).toBeTruthy();
 
     await answerCurrentQuestion(page);
@@ -48,12 +50,16 @@ test.describe('dep review modes on desktop', () => {
     }
   });
 
-  test('starts wrong-only review with only wrong-answered questions', async ({ page }, testInfo) => {
+  test('starts wrong-only review with only wrong-answered questions', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');
 
-    const wrongQuestionId = (await page.locator('#quiz-question .quiz-question-id').textContent())?.trim();
+    const wrongQuestionId = (
+      await page.locator('#quiz-question .quiz-question-id').textContent()
+    )?.trim();
     expect(wrongQuestionId).toBeTruthy();
 
     await page.locator('#choices-form label').nth(1).click();
@@ -63,7 +69,7 @@ test.describe('dep review modes on desktop', () => {
     const progressAfterAnswer = await page.evaluate(() =>
       JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}')
     );
-    expect((progressAfterAnswer[wrongQuestionId as string]?.wrongCount ?? 0)).toBeGreaterThan(0);
+    expect(progressAfterAnswer[wrongQuestionId as string]?.wrongCount ?? 0).toBeGreaterThan(0);
 
     await page.getByRole('button', { name: 'ホームへ' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
@@ -83,11 +89,13 @@ test.describe('dep review modes on desktop', () => {
     expect(reviewSession.order.length).toBeGreaterThan(0);
     expect(reviewSession.order).toContain(wrongQuestionId);
     for (const id of reviewSession.order as string[]) {
-      expect((reviewProgress[id]?.wrongCount ?? 0)).toBeGreaterThan(0);
+      expect(reviewProgress[id]?.wrongCount ?? 0).toBeGreaterThan(0);
     }
   });
 
-  test('shows empty state when starting notes-only review with no notes', async ({ page }, testInfo) => {
+  test('shows empty state when starting notes-only review with no notes', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await gotoDepHome(page);
@@ -97,7 +105,9 @@ test.describe('dep review modes on desktop', () => {
     await expect(page.locator('#home-view')).toBeVisible();
   });
 
-  test('shows empty state when starting bookmark-only review with no bookmarks', async ({ page }, testInfo) => {
+  test('shows empty state when starting bookmark-only review with no bookmarks', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await gotoDepHome(page);
@@ -108,7 +118,9 @@ test.describe('dep review modes on desktop', () => {
     await expect(page.locator('#home-view')).toBeVisible();
   });
 
-  test('shows empty state when starting wrong-only review with no wrong answers', async ({ page }, testInfo) => {
+  test('shows empty state when starting wrong-only review with no wrong answers', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await gotoDepHome(page);

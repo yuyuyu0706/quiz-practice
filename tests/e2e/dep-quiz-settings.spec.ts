@@ -18,7 +18,9 @@ test.describe('dep quiz settings on desktop', () => {
     expect(session.order).toHaveLength(5);
   });
 
-  test('applies section filter so all session questions belong to selected section', async ({ page }, testInfo) => {
+  test('applies section filter so all session questions belong to selected section', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await gotoDepHome(page);
