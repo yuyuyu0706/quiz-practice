@@ -18,6 +18,10 @@ test.describe('dep notes bulk delete on desktop', () => {
     await expect(page.locator('#note-status')).toContainText('メモを保存しました。');
 
     await page.locator('#next-question').click();
+    await expect(page.locator('#quiz-question .quiz-question-id')).not.toHaveText(
+      firstQuestionId as string
+    );
+
     const secondQuestionId = (
       await page.locator('#quiz-question .quiz-question-id').textContent()
     )?.trim();
@@ -25,9 +29,15 @@ test.describe('dep notes bulk delete on desktop', () => {
     expect(secondQuestionId).not.toBe(firstQuestionId);
 
     await answerCurrentQuestion(page);
-    await page.locator('#question-note').fill('メモ2');
+    const secondNoteInput = page.locator('#question-note');
+    await secondNoteInput.fill('メモ2');
+    await expect(secondNoteInput).toHaveValue('メモ2');
     await page.getByRole('button', { name: 'メモを保存' }).click();
-    await expect(page.locator('#note-status')).toContainText('メモを保存しました。');
+
+    const progressAfterSecondSave = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}')
+    );
+    expect(progressAfterSecondSave[secondQuestionId as string]?.noteText).toBe('メモ2');
 
     await page.getByRole('button', { name: 'ホームへ' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
