@@ -17,7 +17,7 @@ test.describe('dep notes bulk delete on desktop', () => {
     await page.getByRole('button', { name: 'メモを保存' }).click();
     await expect(page.locator('#note-status')).toContainText('メモを保存しました。');
 
-    await page.getByRole('button', { name: '次へ' }).click();
+    await page.locator('#next-question').click();
     const secondQuestionId = (
       await page.locator('#quiz-question .quiz-question-id').textContent()
     )?.trim();
