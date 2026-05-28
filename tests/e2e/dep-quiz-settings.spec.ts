@@ -2,11 +2,13 @@ import { test, expect } from '@playwright/test';
 import { gotoDepHome } from './helpers';
 
 test.describe('dep quiz settings on desktop', () => {
-  test('applies question count setting to session.order length', async ({ page }, testInfo) => {
+  test('applies question count setting (10) to session.order length', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await gotoDepHome(page);
-    await page.locator('#question-count').selectOption('5');
+    await page.locator('#question-count').selectOption('10');
     await page.getByRole('button', { name: '開始' }).click();
     await expect(page.locator('#quiz-view')).toBeVisible();
 
@@ -15,7 +17,7 @@ test.describe('dep quiz settings on desktop', () => {
     );
 
     expect(session).toBeTruthy();
-    expect(session.order).toHaveLength(5);
+    expect(session.order).toHaveLength(10);
   });
 
   test('applies section filter so all session questions belong to selected section', async ({
