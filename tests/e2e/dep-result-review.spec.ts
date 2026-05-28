@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
 test.describe('dep result review entrypoint', () => {
-  test('can start wrong-only review from result screen when button is available', async ({ page }, testInfo) => {
+  test('can start wrong-only review from result screen when button is available', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');
@@ -15,7 +17,10 @@ test.describe('dep result review entrypoint', () => {
     await expect(page.locator('#result-view')).toBeVisible();
     const reviewButton = page.getByRole('button', { name: '間違いのみ復習を開始' });
 
-    test.skip(!(await reviewButton.isVisible()), 'Result review button is not available in this UI variant.');
+    test.skip(
+      !(await reviewButton.isVisible()),
+      'Result review button is not available in this UI variant.'
+    );
 
     const prevSession = await page.evaluate(() =>
       JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null')
