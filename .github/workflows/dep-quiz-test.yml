@@ -10,30 +10,39 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout repository
+      # ======================
+      # Prepare Phase
+      # ======================
+      - name: 'Prepare: Checkout repository'
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 'Prepare: Setup Node.js runtime'
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: 'Prepare: Install npm dependencies'
         run: npm ci
 
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Install Playwright browsers
+      - name: 'Prepare: Install Playwright browser'
         run: npx playwright install --with-deps chromium
 
-      - name: Validate DEP questions.json
+      # ======================
+      # Quality Gates
+      # ======================
+      - name: 'Quality Gate: Check code formatting'
+        run: npm run format:check
+
+      - name: 'Quality Gate: Validate DEP question schema'
         run: npm run validate:dep-questions
 
-      - name: Run DEP Playwright tests
+      - name: 'Quality Gate: Run DEP E2E tests'
         run: npx playwright test tests/e2e/dep-*.spec.ts
 
-      - name: Upload Playwright artifacts
+      # ======================
+      # Reporting
+      # ======================
+      - name: 'Report: Upload Playwright artifacts'
         if: always()
         uses: actions/upload-artifact@v4
         with:
