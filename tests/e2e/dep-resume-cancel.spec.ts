@@ -14,9 +14,10 @@ test.describe('dep resume cancel flow', () => {
 
     await page.getByRole('button', { name: '中断してホームへ' }).click();
     await expect(page.getByRole('button', { name: '続きから再開' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '再開しない' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '中断データを削除' })).toBeVisible();
 
-    await page.getByRole('button', { name: '再開しない' }).click();
+    await page.getByRole('button', { name: '中断データを削除' }).click();
+    await expect(page.getByRole('button', { name: '続きから再開' })).toBeHidden();
     await expect(page.locator('#quiz-view')).toBeVisible();
     await expect(page.locator('#quiz-progress')).toContainText(/1\s*\/\s*10/);
 

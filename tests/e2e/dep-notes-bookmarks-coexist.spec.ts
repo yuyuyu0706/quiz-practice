@@ -26,7 +26,8 @@ test.describe('dep notes and bookmarks coexistence', () => {
     expect(beforeDelete.bookmark).toBe(true);
     expect(beforeDelete.note || beforeDelete.noteText).toBeTruthy();
 
-    await page.getByRole('button', { name: 'メモを削除' }).click();
+    await page.locator('#question-note').fill('');
+    await page.getByRole('button', { name: 'メモを保存' }).click();
 
     const afterNoteDelete = await page.evaluate((id) => {
       const progress = JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}');
