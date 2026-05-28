@@ -27,8 +27,8 @@ jobs:
       - name: Validate DEA questions.json
         run: npm run validate:dea-questions
 
-      - name: Run Playwright tests
-        run: npm run test:e2e
+      - name: Run DEA Playwright tests
+        run: npx playwright test tests/e2e/dea-*.spec.ts
 
       - name: Upload Playwright artifacts
         if: always()
