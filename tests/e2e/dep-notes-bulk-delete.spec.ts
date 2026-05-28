@@ -29,15 +29,19 @@ test.describe('dep notes bulk delete on desktop', () => {
     expect(secondQuestionId).not.toBe(firstQuestionId);
 
     await answerCurrentQuestion(page);
-    const secondNoteInput = page.locator('#question-note');
+    const secondNoteInput = page.locator('#question-note:visible');
+    await secondNoteInput.click();
     await secondNoteInput.fill('メモ2');
     await expect(secondNoteInput).toHaveValue('メモ2');
     await page.getByRole('button', { name: 'メモを保存' }).click();
 
-    const progressAfterSecondSave = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}')
+    await page.waitForFunction(
+      ({ questionId, expected }) => {
+        const progress = JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}');
+        return progress?.[questionId]?.noteText === expected;
+      },
+      { questionId: secondQuestionId, expected: 'メモ2' }
     );
-    expect(progressAfterSecondSave[secondQuestionId as string]?.noteText).toBe('メモ2');
 
     await page.getByRole('button', { name: 'ホームへ' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
