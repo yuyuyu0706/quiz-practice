@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { answerCurrentQuestion } from './helpers';
 
 test.describe('dep storage resilience', () => {
   test('recovers from corrupted localStorage payloads without crashing', async ({
@@ -47,8 +48,14 @@ test.describe('dep storage resilience', () => {
 
     if (!canParseProgress) {
       await page.getByRole('button', { name: '開始' }).click();
-      const progressAfterStart = await page.evaluate(() => localStorage.getItem('depQuizProgress'));
-      expect(() => JSON.parse(progressAfterStart ?? '{}')).not.toThrow();
+      await expect(page.locator('#quiz-view')).toBeVisible();
+      await answerCurrentQuestion(page);
+      const progressAfterAnswer = await page.evaluate(() =>
+        localStorage.getItem('depQuizProgress')
+      );
+      expect(() => JSON.parse(progressAfterAnswer ?? '{}')).not.toThrow();
+      await page.getByRole('button', { name: '中断してホームへ' }).click();
+      await expect(page.locator('#home-view')).toBeVisible();
     }
 
     if (!canParseSettings) {
