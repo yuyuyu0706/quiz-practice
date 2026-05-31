@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { gotoDepHome } from './helpers';
 
-test.describe('dep quiz settings on desktop', () => {
-  test('applies question count setting (10) to session.order length', async ({
+test.describe('[DEP][DATA] Quiz settings / Session filters', () => {
+  test('guarantees question count setting limits active session order length', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
@@ -20,7 +20,7 @@ test.describe('dep quiz settings on desktop', () => {
     expect(session.order).toHaveLength(10);
   });
 
-  test('applies section filter so all session questions belong to selected section', async ({
+  test('guarantees section filter limits active session to the selected section', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');

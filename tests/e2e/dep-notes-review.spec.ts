@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep notes review on desktop', () => {
-  test('starts a review session with only noted questions', async ({ page }, testInfo) => {
+test.describe('[DEP][FLOW] Review / Notes-only session', () => {
+  test('guarantees notes-only review starts with only questions that have notes', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');

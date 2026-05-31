@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startQuiz } from './helpers';
 
-test.describe('dea quiz flow on desktop', () => {
-  test('completes the main flow from start to result', async ({ page }, testInfo) => {
+test.describe('[DEA][FLOW] Quiz / Desktop result', () => {
+  test('guarantees a desktop quiz can be completed from start to result summary', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only flow coverage.');
     await startQuiz(page, '10');
 

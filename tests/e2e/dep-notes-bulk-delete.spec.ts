@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep notes bulk delete on desktop', () => {
-  test('clears all notes while preserving progress data', async ({ page }, testInfo) => {
+test.describe('[DEP][DATA] Notes / Bulk delete', () => {
+  test('guarantees bulk note deletion preserves progress records', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');

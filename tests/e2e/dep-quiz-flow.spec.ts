@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep quiz flow on desktop', () => {
-  test('completes the main flow and keeps key UI rendering stable', async ({ page }, testInfo) => {
+test.describe('[DEP][FLOW] Quiz / Desktop result', () => {
+  test('guarantees desktop quiz completion keeps progress explanation and result UI stable', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only flow coverage.');
     await startDepQuiz(page, 'all');
 

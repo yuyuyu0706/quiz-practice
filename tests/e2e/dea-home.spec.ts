@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { gotoDeaHome } from './helpers';
 
-test.describe('dea home screen', () => {
-  test('renders the initial learning settings UI', async ({ page }) => {
+test.describe('[DEA][UI] Home / Learning settings', () => {
+  test('guarantees initial learning settings, modes, and hidden resume controls are visible states', async ({
+    page,
+  }) => {
     await gotoDeaHome(page);
 
     await expect(page.getByText('4択・解説つき')).toBeVisible();

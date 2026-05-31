@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep notes and bookmarks coexistence', () => {
-  test('keeps bookmark when note is removed and keeps note when bookmark is removed', async ({
+test.describe('[DEP][DATA] Notes / Bookmark coexistence', () => {
+  test('guarantees note deletion preserves bookmarks and bookmark deletion preserves notes', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
