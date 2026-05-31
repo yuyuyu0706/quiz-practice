@@ -42,6 +42,7 @@ jobs:
       - name: 'Quality Gate: E2E: Run DEA suites listed in docs/testing/e2e-test-catalog.md'
         run: |
           echo "Catalog: docs/testing/e2e-test-catalog.md"
+          echo "Catalog URL: https://github.com/yuyuyu0706/quiz-practice/blob/codex/main/docs/testing/e2e-test-catalog.md"
           echo "Suite naming: [DEA][UI|FLOW|DATA] Feature / Screen"
           npx playwright test tests/e2e/dea-*.spec.ts
 

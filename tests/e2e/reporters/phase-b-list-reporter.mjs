@@ -29,10 +29,9 @@ function specFileName(test) {
   return path.basename(test.location.file);
 }
 
-function suiteAndTestTitle(test) {
+function suiteTitle(test) {
   const titlePath = test.titlePath();
-  const suiteTitles = titlePath.slice(3, -1);
-  return [...suiteTitles, test.title].join(' › ');
+  return titlePath.slice(3, -1).join(' › ');
 }
 
 function isRetryFailure(test, result) {
@@ -100,7 +99,7 @@ export default class PhaseBListReporter {
 
     const mark = resultMark(test, result);
     const number = String(this.#completed).padStart(3, ' ');
-    const title = suiteAndTestTitle(test);
+    const title = suiteTitle(test);
     const location = specFileName(test);
     console.log(
       `  ${mark} ${number} [${projectName(test)}] › ${title} › ${location}${resultSuffix(test, result)}`
