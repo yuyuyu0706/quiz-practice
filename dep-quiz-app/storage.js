@@ -10,6 +10,8 @@ const DEFAULT_SETTINGS = {
   count: '50',
 };
 
+const repairedStorageKeys = new Set();
+
 export function loadProgress() {
   return loadJSON(STORAGE_KEYS.progress, {});
 }
@@ -31,14 +33,43 @@ export function saveActiveSession(session) {
 export function clearActiveSession() {
   localStorage.removeItem(STORAGE_KEYS.session);
 }
+export function getRepairedStorageKeys() {
+  return [...repairedStorageKeys];
+}
 
 function loadJSON(key, fallback) {
   try {
     const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
+
+    if (value === null) {
+      saveJSON(key, fallback);
+      return fallback;
+    }
+
+    if (value === '') {
+      throw new Error('Empty storage value');
+    }
+
+    const parsed = JSON.parse(value);
+    if (!isValidStoredJSON(parsed, fallback)) {
+      throw new Error('Invalid JSON structure');
+    }
+
+    return parsed;
   } catch {
+    saveJSON(key, fallback);
+    recordStorageRepair(key);
     return fallback;
   }
+}
+
+function isValidStoredJSON(value, fallback) {
+  if (fallback === null && value === null) return true;
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function recordStorageRepair(key) {
+  repairedStorageKeys.add(key);
 }
 
 function saveJSON(key, value) {

@@ -1,3 +1,48 @@
+const STORAGE_KEY_LABELS = {
+  depQuizProgress: '学習進捗データ',
+  depQuizSettings: '設定データ',
+  depQuizActiveSession: '前回セッションデータ',
+};
+
+export function renderStorageRepairNotice(homeView, repairedKeys) {
+  if (!homeView || !repairedKeys?.length) return;
+
+  homeView.querySelector('.storage-repair-notice')?.remove();
+
+  const uniqueKeys = [...new Set(repairedKeys)];
+  const notice = document.createElement('div');
+  notice.className = 'storage-repair-notice';
+  notice.setAttribute('role', 'status');
+  notice.setAttribute('aria-live', 'polite');
+
+  const content = document.createElement('div');
+  content.className = 'storage-repair-notice__content';
+
+  const message = document.createElement('p');
+  message.className = 'storage-repair-notice__message';
+  message.textContent = '保存データの一部が破損していたため、自動修復しました。';
+
+  const target = document.createElement('p');
+  target.className = 'storage-repair-notice__target';
+  target.textContent = `対象: ${uniqueKeys.map(formatStorageRepairTarget).join('、')}`;
+
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'storage-repair-notice__close';
+  closeButton.setAttribute('aria-label', '保存データ修復通知を閉じる');
+  closeButton.textContent = '閉じる';
+  closeButton.addEventListener('click', () => notice.remove());
+
+  content.append(message, target);
+  notice.append(content, closeButton);
+  homeView.prepend(notice);
+}
+
+function formatStorageRepairTarget(key) {
+  const label = STORAGE_KEY_LABELS[key] ?? '保存データ';
+  return `${label}（${key}）`;
+}
+
 export function showView(views, name) {
   Object.entries(views).forEach(([key, node]) => node.classList.toggle('active', key === name));
 }
