@@ -36,10 +36,13 @@ jobs:
       - name: 'Quality Gate: Validate DEP question schema'
         run: npm run validate:dep-questions
 
+      - name: 'Quality Gate: Validate E2E test catalog'
+        run: npm run validate:e2e-catalog
+
       # ======================
       # E2E Coverage
       # ======================
-      - name: 'Quality Gate: E2E: Run DEP suites listed in docs/testing/e2e-test-catalog.md'
+      - name: 'Quality Gate: Run DEP E2E tests'
         run: |
           echo "Catalog: docs/testing/e2e-test-catalog.md"
           echo "Catalog URL: https://github.com/yuyuyu0706/quiz-practice/blob/main/docs/testing/e2e-test-catalog.md"

@@ -9,7 +9,8 @@
     "test": "npm run validate:dea-questions && npm run validate:dep-questions && npm run test:e2e",
     "validate:dep-questions": "node scripts/validate-dep-questions.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "validate:e2e-catalog": "node scripts/validate-e2e-catalog.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
