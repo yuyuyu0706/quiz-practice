@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+const failureStatuses = new Set(['failed', 'timedOut', 'interrupted']);
 const statusMarks = {
   passed: '✓',
   failed: '✘',
@@ -35,19 +36,46 @@ function suiteAndTestTitle(test) {
   return [...suiteTitles, test.title].join(' › ');
 }
 
-function resultSuffix(result) {
+function isRetryFailure(test, result) {
+  return failureStatuses.has(result.status) && result.retry < test.retries;
+}
+
+function resultMark(test, result) {
+  if (isRetryFailure(test, result)) {
+    return '↻';
+  }
+
+  return statusMarks[result.status] ?? '•';
+}
+
+function resultSuffix(test, result) {
+  const parts = [];
+
+  if (test.retries > 0) {
+    parts.push(`attempt ${result.retry + 1}/${test.retries + 1} ${result.status}`);
+  }
+
   const duration = formatDuration(result.duration);
-  return duration ? ` (${duration})` : '';
+  if (duration) {
+    parts.push(duration);
+  }
+
+  return parts.length > 0 ? ` (${parts.join(', ')})` : '';
+}
+
+function countRecoveredRetryFailures(test) {
+  if (test.outcome() !== 'flaky') {
+    return 0;
+  }
+
+  return test.results.filter((result) => failureStatuses.has(result.status)).length;
 }
 
 export default class PhaseBListReporter {
   #completed = 0;
   #total = 0;
   #workers = 0;
-  #passed = 0;
-  #failed = 0;
-  #skipped = 0;
-  #flaky = 0;
+  #tests = new Map();
 
   printsToStdio() {
     return true;
@@ -69,23 +97,14 @@ export default class PhaseBListReporter {
 
   onTestEnd(test, result) {
     this.#completed += 1;
+    this.#tests.set(test.id, test);
 
-    if (result.status === 'skipped') {
-      this.#skipped += 1;
-    } else if (test.outcome() === 'flaky') {
-      this.#flaky += 1;
-    } else if (result.status === 'passed') {
-      this.#passed += 1;
-    } else {
-      this.#failed += 1;
-    }
-
-    const mark = statusMarks[result.status] ?? '•';
+    const mark = resultMark(test, result);
     const number = String(this.#completed).padStart(3, ' ');
     const title = suiteAndTestTitle(test);
     const location = fileLocation(test);
     console.log(
-      `  ${mark} ${number} [${projectName(test)}] › ${title} › ${location}${resultSuffix(result)}`
+      `  ${mark} ${number} [${projectName(test)}] › ${title} › ${location}${resultSuffix(test, result)}`
     );
 
     if (result.errors.length > 0) {
@@ -97,18 +116,45 @@ export default class PhaseBListReporter {
   }
 
   onEnd(result) {
+    let passed = 0;
+    let failed = 0;
+    let skipped = 0;
+    let flaky = 0;
+    let recoveredRetryFailures = 0;
+
+    for (const test of this.#tests.values()) {
+      switch (test.outcome()) {
+        case 'skipped':
+          skipped += 1;
+          break;
+        case 'flaky':
+          flaky += 1;
+          recoveredRetryFailures += countRecoveredRetryFailures(test);
+          break;
+        case 'unexpected':
+          failed += 1;
+          break;
+        case 'expected':
+          passed += 1;
+          break;
+      }
+    }
+
     const parts = [];
-    if (this.#failed) {
-      parts.push(`${this.#failed} failed`);
+    if (failed) {
+      parts.push(`${failed} failed`);
     }
-    if (this.#flaky) {
-      parts.push(`${this.#flaky} flaky`);
+    if (flaky) {
+      const retryNote = recoveredRetryFailures
+        ? ` (${recoveredRetryFailures} recovered retry failures)`
+        : '';
+      parts.push(`${flaky} flaky${retryNote}`);
     }
-    if (this.#skipped) {
-      parts.push(`${this.#skipped} skipped`);
+    if (skipped) {
+      parts.push(`${skipped} skipped`);
     }
-    if (this.#passed) {
-      parts.push(`${this.#passed} passed`);
+    if (passed) {
+      parts.push(`${passed} passed`);
     }
 
     console.log(`\n  ${parts.join(', ') || result.status} (${formatDuration(result.duration)})`);
