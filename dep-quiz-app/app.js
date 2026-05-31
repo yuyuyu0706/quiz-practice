@@ -6,6 +6,7 @@ import {
   loadActiveSession,
   saveActiveSession,
   clearActiveSession,
+  getRepairedStorageKeys,
 } from './storage.js';
 import {
   baseProgress,
@@ -34,6 +35,7 @@ import {
   renderQuestion as renderQuestionView,
   renderResult,
   toggleNoteEditor,
+  renderStorageRepairNotice,
 } from './render.js';
 
 const state = {
@@ -106,6 +108,10 @@ async function init() {
   attachEvents();
   syncSecondaryActionLayout();
   refreshResumeUI();
+  const repairedKeys = getRepairedStorageKeys();
+  if (repairedKeys.length > 0) {
+    renderStorageRepairNotice(els.views.home, repairedKeys);
+  }
 }
 
 function attachEvents() {
@@ -462,9 +468,12 @@ function refreshResumeUI() {
 }
 
 function loadSession() {
-  const session = normalizeLoadedSession(loadActiveSession());
+  const rawSession = loadActiveSession();
+  const session = normalizeLoadedSession(rawSession);
   if (!session) {
-    clearSession();
+    if (rawSession !== null) {
+      clearSession();
+    }
     return null;
   }
 
