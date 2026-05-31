@@ -64,7 +64,18 @@ test.describe('[DEP][FLOW] Review / Desktop modes', () => {
     )?.trim();
     expect(wrongQuestionId).toBeTruthy();
 
-    await page.locator('#choices-form label').nth(1).click();
+    const wrongChoiceLabel = await page.evaluate(async (questionId) => {
+      const session = JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null');
+      const response = await fetch('/dep-quiz-app/questions.json');
+      const questions = await response.json();
+      const question = questions.find((item) => item.id === questionId);
+      return Object.keys(session.choiceMap[questionId]).find(
+        (label) => session.choiceMap[questionId][label] !== question.answer
+      );
+    }, wrongQuestionId);
+    expect(wrongChoiceLabel).toBeTruthy();
+
+    await page.locator(`input[name="choice"][value="${wrongChoiceLabel}"]`).check();
     await page.getByRole('button', { name: '回答する' }).click();
     await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);
 
