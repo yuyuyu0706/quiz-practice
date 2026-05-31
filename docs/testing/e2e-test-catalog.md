@@ -43,4 +43,4 @@ All E2E suites use the following `test.describe` format so Actions logs show the
 
 - Workflow step names are grouped by phase: `Prepare`, `Quality Gate`, and `Report`; E2E execution remains under the `Quality Gate: E2E:` prefix.
 - E2E steps print the catalog path before running Playwright so maintainers can map failures to the documented intent.
-- The custom Phase B reporter prints each result as `number [project] › suite › guarantee › file:line:column`, so the purpose appears before the source location in Actions logs. Retry failures use the `↻` mark and are summarized as recovered retry failures when the test passes on a later retry.
+- The custom Phase B reporter prints each result as `number [project] › suite › guarantee › spec-file`, so the purpose appears before the source location in Actions logs. Retry failures use the `↻` mark with `current/total status` retry details, and are summarized as recovered retry failures when the test passes on a later retry.

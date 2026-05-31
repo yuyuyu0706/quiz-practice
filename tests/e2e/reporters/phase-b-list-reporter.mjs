@@ -25,9 +25,8 @@ function projectName(test) {
   return test.parent.project()?.name ?? 'unknown-project';
 }
 
-function fileLocation(test) {
-  const file = path.relative(process.cwd(), test.location.file);
-  return `${file}:${test.location.line}:${test.location.column}`;
+function specFileName(test) {
+  return path.basename(test.location.file);
 }
 
 function suiteAndTestTitle(test) {
@@ -52,7 +51,7 @@ function resultSuffix(test, result) {
   const parts = [];
 
   if (test.retries > 0) {
-    parts.push(`attempt ${result.retry + 1}/${test.retries + 1} ${result.status}`);
+    parts.push(`${result.retry + 1}/${test.retries + 1} ${result.status}`);
   }
 
   const duration = formatDuration(result.duration);
@@ -102,7 +101,7 @@ export default class PhaseBListReporter {
     const mark = resultMark(test, result);
     const number = String(this.#completed).padStart(3, ' ');
     const title = suiteAndTestTitle(test);
-    const location = fileLocation(test);
+    const location = specFileName(test);
     console.log(
       `  ${mark} ${number} [${projectName(test)}] › ${title} › ${location}${resultSuffix(test, result)}`
     );
