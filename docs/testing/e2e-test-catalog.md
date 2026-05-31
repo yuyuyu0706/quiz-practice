@@ -41,6 +41,6 @@ All E2E suites use the following `test.describe` format so Actions logs show the
 
 ## GitHub Actions log expectations
 
-- Workflow step names are grouped by phase: `Prepare`, `Quality Gate`, `E2E`, and `Report`.
+- Workflow step names are grouped by phase: `Prepare`, `Quality Gate`, and `Report`; E2E execution remains under the `Quality Gate: E2E:` prefix.
 - E2E steps print the catalog path before running Playwright so maintainers can map failures to the documented intent.
-- Playwright uses the list reporter in CI, so each log line includes the suite name and guarantee-oriented test name.
+- The custom Phase B reporter prints each result as `number [project] › suite › guarantee › file:line:column`, so the purpose appears before the source location in Actions logs.

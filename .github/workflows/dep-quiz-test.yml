@@ -39,11 +39,11 @@ jobs:
       # ======================
       # E2E Coverage
       # ======================
-      - name: 'E2E: Run DEP suites listed in docs/testing/e2e-test-catalog.md'
+      - name: 'Quality Gate: E2E: Run DEP suites listed in docs/testing/e2e-test-catalog.md'
         run: |
           echo "Catalog: docs/testing/e2e-test-catalog.md"
           echo "Suite naming: [DEP][UI|FLOW|DATA] Feature / Screen"
-          npx playwright test tests/e2e/dep-*.spec.ts --reporter=list
+          npx playwright test tests/e2e/dep-*.spec.ts
 
       # ======================
       # Reporting
