@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep resume cancel flow', () => {
-  test('discards suspended session and starts a fresh one', async ({ page }, testInfo) => {
+test.describe('[DEP][FLOW] Resume / Cancel suspended session', () => {
+  test('guarantees discarding a suspended session starts fresh progress', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');

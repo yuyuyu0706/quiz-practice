@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep result review entrypoint', () => {
-  test('can start wrong-only review from result screen when button is available', async ({
+test.describe('[DEP][FLOW] Review / Result entrypoint', () => {
+  test('guarantees result screen can launch wrong-only review when wrong answers exist', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');

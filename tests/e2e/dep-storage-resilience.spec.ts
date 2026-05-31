@@ -18,8 +18,8 @@ async function expectStorageKeysToBeParseable(page, keys: readonly string[]) {
   expect(parseResults).toEqual(keys.map((key) => ({ key, canParse: true })));
 }
 
-test.describe('dep storage resilience', () => {
-  test('recovers from corrupted localStorage payloads without crashing', async ({
+test.describe('[DEP][DATA] Storage / Corruption recovery', () => {
+  test('guarantees corrupted localStorage payloads recover without app crash', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
@@ -39,7 +39,7 @@ test.describe('dep storage resilience', () => {
     await expectStorageKeysToBeParseable(page, DEP_STORAGE_KEYS);
   });
 
-  test('auto-recovers corrupted progress data and shows repaired key', async ({
+  test('guarantees corrupted progress data repair shows the repaired key', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
@@ -58,7 +58,7 @@ test.describe('dep storage resilience', () => {
     await expectStorageKeysToBeParseable(page, ['depQuizProgress']);
   });
 
-  test('auto-recovers multiple corrupted storage keys and lists all keys', async ({
+  test('guarantees multiple corrupted storage keys are repaired and listed', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
@@ -79,7 +79,7 @@ test.describe('dep storage resilience', () => {
     await expectStorageKeysToBeParseable(page, DEP_STORAGE_KEYS);
   });
 
-  test('storage repair notice can be dismissed', async ({ page }, testInfo) => {
+  test('guarantees storage repair notice can be dismissed', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await page.addInitScript(() => {

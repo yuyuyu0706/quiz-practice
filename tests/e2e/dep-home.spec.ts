@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { gotoDepHome } from './helpers';
 
-test.describe('dep home screen', () => {
-  test('renders DEP learning settings and home action buttons without layout issues', async ({
+test.describe('[DEP][UI] Home / Learning settings', () => {
+  test('guarantees DEP learning settings and home actions render without layout issues', async ({
     page,
   }) => {
     await gotoDepHome(page);

@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep notes list on desktop', () => {
-  test('can create, edit, and delete a note while preserving progress data', async ({
-    page,
-  }, testInfo) => {
+test.describe('[DEP][DATA] Notes / Desktop CRUD', () => {
+  test('guarantees note create edit delete preserves progress data', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');

@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startQuiz } from './helpers';
 
-test.describe('dea resume flow', () => {
-  test('can suspend to home and resume the same progress', async ({ page }, testInfo) => {
+test.describe('[DEA][FLOW] Resume / Suspend and restore', () => {
+  test('guarantees suspended progress resumes at the same answered question', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only resume coverage.');
     await startQuiz(page, '10');
     await answerCurrentQuestion(page);

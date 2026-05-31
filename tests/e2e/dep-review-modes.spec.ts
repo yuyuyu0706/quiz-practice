@@ -8,8 +8,10 @@ type ProgressItem = {
   noteText?: string;
 };
 
-test.describe('dep review modes on desktop', () => {
-  test('starts bookmark-only review with only bookmarked questions', async ({ page }, testInfo) => {
+test.describe('[DEP][FLOW] Review / Desktop modes', () => {
+  test('guarantees bookmark-only review includes only bookmarked questions', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
 
     await startDepQuiz(page, '10');
@@ -50,7 +52,7 @@ test.describe('dep review modes on desktop', () => {
     }
   });
 
-  test('starts wrong-only review with only wrong-answered questions', async ({
+  test('guarantees wrong-only review includes only questions with wrong answer history', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
@@ -93,7 +95,7 @@ test.describe('dep review modes on desktop', () => {
     }
   });
 
-  test('shows empty state when starting notes-only review with no notes', async ({
+  test('guarantees notes-only review empty state appears when no notes exist', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
@@ -105,7 +107,7 @@ test.describe('dep review modes on desktop', () => {
     await expect(page.locator('#home-view')).toBeVisible();
   });
 
-  test('shows empty state when starting bookmark-only review with no bookmarks', async ({
+  test('guarantees bookmark-only review empty state appears when no bookmarks exist', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');
@@ -118,7 +120,7 @@ test.describe('dep review modes on desktop', () => {
     await expect(page.locator('#home-view')).toBeVisible();
   });
 
-  test('shows empty state when starting wrong-only review with no wrong answers', async ({
+  test('guarantees wrong-only review empty state appears when no wrong answers exist', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only coverage.');

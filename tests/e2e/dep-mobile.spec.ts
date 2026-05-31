@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep mobile quiz flow', () => {
-  test('supports mobile primary flow and secondary actions menu', async ({ page }, testInfo) => {
+test.describe('[DEP][FLOW] Quiz / Mobile controls', () => {
+  test('guarantees mobile secondary actions open and quiz progress advances', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile-only coverage.');
     await startDepQuiz(page, 'all');
 

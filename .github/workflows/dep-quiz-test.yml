@@ -36,8 +36,14 @@ jobs:
       - name: 'Quality Gate: Validate DEP question schema'
         run: npm run validate:dep-questions
 
-      - name: 'Quality Gate: Run DEP E2E tests'
-        run: npx playwright test tests/e2e/dep-*.spec.ts
+      # ======================
+      # E2E Coverage
+      # ======================
+      - name: 'E2E: Run DEP suites listed in docs/testing/e2e-test-catalog.md'
+        run: |
+          echo "Catalog: docs/testing/e2e-test-catalog.md"
+          echo "Suite naming: [DEP][UI|FLOW|DATA] Feature / Screen"
+          npx playwright test tests/e2e/dep-*.spec.ts --reporter=list
 
       # ======================
       # Reporting

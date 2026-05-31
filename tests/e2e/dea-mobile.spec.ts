@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startQuiz } from './helpers';
 
-test.describe('dea mobile quiz flow', () => {
-  test('supports the main controls and collapsible secondary actions on mobile', async ({
+test.describe('[DEA][FLOW] Quiz / Mobile controls', () => {
+  test('guarantees mobile secondary actions expand and quiz progress advances', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile-only coverage.');

@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep resume flow', () => {
-  test('saves and restores progress with DEP-specific storage keys', async ({ page }, testInfo) => {
+test.describe('[DEP][DATA] Resume / Storage restore', () => {
+  test('guarantees DEP-specific storage keys save and restore suspended progress', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop-only resume coverage.');
     await startDepQuiz(page, 'all');
     await answerCurrentQuestion(page);

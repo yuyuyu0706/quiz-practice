@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
-test.describe('dep notes list on mobile', () => {
-  test('shows note cards and supports edit/delete buttons on mobile', async ({
+test.describe('[DEP][UI] Notes / Mobile list', () => {
+  test('guarantees mobile note cards expose edit and delete actions', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile-only coverage.');

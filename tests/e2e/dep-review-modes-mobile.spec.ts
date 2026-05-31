@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { gotoDepHome } from './helpers';
 
-test.describe('dep mobile review mode navigation', () => {
-  test('shows review mode controls and allows transitions on mobile', async ({
+test.describe('[DEP][FLOW] Review / Mobile mode navigation', () => {
+  test('guarantees mobile review mode controls are visible and navigable', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile-only coverage.');
