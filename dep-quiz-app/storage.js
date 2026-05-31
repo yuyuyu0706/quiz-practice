@@ -42,7 +42,9 @@ function loadJSON(key, fallback) {
     const value = localStorage.getItem(key);
 
     if (value === null) {
-      saveJSON(key, fallback);
+      if (fallback !== null) {
+        saveJSON(key, fallback);
+      }
       return fallback;
     }
 
