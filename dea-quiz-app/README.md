@@ -2,6 +2,21 @@
 
 Databricks Certified Data Engineer Associate（DEA）対策向けの、HTML/CSS/JavaScriptのみで動作する学習用Webアプリです。
 
+## 運用方針
+
+この `dea-quiz-app` は、DEA クイズアプリの MVP / legacy stable 版として凍結します。
+
+今後の機能追加・拡張開発は、別フォルダの `dea-quiz-app-plus` で行います。
+
+このフォルダへの変更は、原則として以下に限定します。
+
+- 重大な不具合修正
+- 誤字修正
+- 表示崩れ修正
+- README 等の軽微な説明補足
+
+新機能追加は行いません。
+
 ## 起動方法
 
 ### 推奨（ローカルサーバ）
