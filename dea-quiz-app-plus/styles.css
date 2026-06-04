@@ -4,22 +4,22 @@
   --bg: #f5f7fb;
   --card: #ffffff;
   --text: #1d2433;
-  --dea-plus-primary: #2f7d4b;
-  --dea-plus-primary-strong: #25633b;
-  --dea-plus-primary-soft: #eaf5ee;
-  --dea-plus-primary-soft-strong: #d5eadc;
-  --dea-plus-primary-ring: rgba(47, 125, 75, 0.16);
-  --dea-plus-primary-shadow: rgba(47, 125, 75, 0.2);
-  --dea-plus-primary-border: #b9d8c4;
-  --dea-plus-surface-tint: #f4faf6;
-  --dea-plus-link: #1f5f38;
+  --dea-plus-primary: #4f46e5;
+  --dea-plus-primary-strong: #4338ca;
+  --dea-plus-primary-soft: #eef2ff;
+  --dea-plus-primary-soft-strong: #e0e7ff;
+  --dea-plus-primary-ring: rgba(79, 70, 229, 0.16);
+  --dea-plus-primary-shadow: rgba(79, 70, 229, 0.18);
+  --dea-plus-primary-border: #cdd5ff;
+  --dea-plus-surface-tint: #f8faff;
+  --dea-plus-link: #312e81;
   --primary: var(--dea-plus-primary);
   --primary-strong: var(--dea-plus-primary-strong);
   --primary-soft: var(--dea-plus-primary-soft);
   --ok: #0f9d58;
   --ng: #d93025;
   --muted: #5f6b7a;
-  --border: #d6e0d9;
+  --border: #d5dbe7;
   --danger-soft: #fff1f2;
 }
 
@@ -64,7 +64,7 @@ h1 {
   border-radius: 14px;
   padding: 18px;
   box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
-  border: 1px solid rgba(185, 216, 196, 0.55);
+  border: 1px solid rgba(205, 213, 255, 0.55);
 }
 .view {
   display: none;
@@ -189,7 +189,7 @@ button.primary:hover:not(:disabled) {
 }
 .button-group-secondary {
   padding-top: 8px;
-  border-top: 1px dashed #cddccf;
+  border-top: 1px dashed #d7ddf0;
 }
 .secondary-actions-toggle {
   display: none;
@@ -383,7 +383,7 @@ button.primary:hover:not(:disabled) {
   font-weight: 400;
 }
 .code-block.lang-sql {
-  border: 1px solid #4f9f6f;
+  border: 1px solid #5b7cfa;
 }
 .code-block.lang-python {
   border: 1px solid #22c55e;
@@ -391,7 +391,7 @@ button.primary:hover:not(:disabled) {
 .references {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid #d7e8dc;
+  border-top: 1px solid #d9d9ff;
 }
 .references h3 {
   margin: 0 0 6px;
@@ -615,7 +615,7 @@ button.primary:hover:not(:disabled) {
     position: sticky;
     bottom: 8px;
     z-index: 5;
-    box-shadow: 0 14px 24px rgba(47, 125, 75, 0.16);
+    box-shadow: 0 14px 24px rgba(79, 70, 229, 0.16);
     backdrop-filter: blur(8px);
   }
 
