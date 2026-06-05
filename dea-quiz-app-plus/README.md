@@ -33,7 +33,7 @@ python -m http.server 8000
 - `render.js`: 問題・選択肢・解説・結果などの描画統合
 - `markdown-renderer.js`: DEA Plus 内で利用する軽量な Markdown 風描画（inline code、太字、箇条書き、code fence）
 - `storage.js`: DEA Plus 専用 localStorage の読み書き
-- `notes.js`: Phase 0 ではメモ機能を実装せず、進捗初期値のみを提供
+- `notes.js`: 進捗初期値と問題単位メモの保存・削除補助
 - `questions.json`: 既存 DEA 版からコピーした問題データ
 
 ## Markdown風記法
@@ -89,6 +89,8 @@ DEA Plus は以下の専用キーを使用します。
 
 - `deaPlusQuizProgress`: 問題ごとの学習履歴
   - 正答数・誤答数・最終回答日時・ブックマーク状態
+  - 自分用メモ本文 `noteText`
+  - メモ最終保存日時 `noteUpdatedAt`
 - `deaPlusQuizSettings`: ホーム画面の設定値
 - `deaPlusQuizActiveSession`: 進行中セッション
 
@@ -106,8 +108,9 @@ localStorage.removeItem('deaPlusQuizActiveSession');
 
 ## Phase 0 で意図的に実装しないもの
 
+Phase 1A で問題単位メモの保存・編集・削除は追加済みです。以下は Phase 0 時点で意図的に未実装としていたもの、または Phase 1A 以降も後続 PR に回しているものです。
+
 - 新機能追加
-- メモ機能
 - メモあり問題の復習
 - `whyWrong` 対応
 - 5肢選択2解答問題への対応
@@ -137,7 +140,7 @@ Phase 1 では、既存 `questions.json` の構造を大きく変えずに進め
 | ---: | --------- | --------------------------------------- | ------------------------------------------------------------------- |
 |    1 | Phase 1A  | app.js 追加分割・責務整理               | `layout.js` / `settings-view.js` へ UI 補助・設定 UI 責務を分割済み |
 |    2 | Phase 1A  | inline code / code fence 描画確認・強化 | 既存文字列の Markdown 風描画として扱い、スキーマ変更は行わない      |
-|    3 | Phase 1A  | メモ機能                                | localStorage を拡張し、問題単位でメモを保存・編集できるようにする   |
+|    3 | Phase 1A  | メモ機能                                | 問題画面で回答済み問題への問題単位メモ保存・編集・削除を追加済み    |
 |    4 | Phase 1A  | メモあり復習                            | メモがある問題だけを復習できるモードを追加する                      |
 |    5 | Phase 1B  | スマホ操作性改善                        | メモ UI 追加後の実利用を踏まえて操作性を改善する                    |
 |    6 | Phase 2   | 問題スキーマ拡張設計                    | `whyWrong`、複数正答、問題タイプなどの拡張方針を定義する            |

@@ -1,5 +1,4 @@
-// Phase 0 ではメモ機能を実装しない。
-// 参考元アプリと同じモジュール分割構成を保つため、学習進捗の初期値だけを提供する。
+// 問題単位の学習進捗と自分用メモの初期値・更新補助を提供する。
 export function baseProgress() {
   return {
     seenCount: 0,
@@ -7,5 +6,30 @@ export function baseProgress() {
     wrongCount: 0,
     lastAnsweredAt: null,
     bookmark: false,
+    noteText: '',
+    noteUpdatedAt: null,
   };
+}
+
+export function getQuestionNote(progress, questionId) {
+  const item = progress?.[questionId] ?? {};
+  return item.noteText ?? item.note ?? item.memo ?? '';
+}
+
+export function hasNote(progress, questionId) {
+  return String(getQuestionNote(progress, questionId)).trim().length > 0;
+}
+
+export function saveNote(progress, questionId, rawNote) {
+  const current = { ...baseProgress(), ...(progress?.[questionId] ?? {}) };
+  const noteText = String(rawNote ?? '').trim();
+
+  current.noteText = noteText;
+  current.noteUpdatedAt = noteText ? new Date().toISOString() : null;
+
+  return { ...(progress ?? {}), [questionId]: current };
+}
+
+export function deleteNote(progress, questionId) {
+  return saveNote(progress, questionId, '');
 }

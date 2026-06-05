@@ -88,6 +88,21 @@
           </button>
         </div>
         <article id="explanation" class="explanation hidden"></article>
+        <section id="note-panel" class="note-panel hidden" aria-label="自分用メモ">
+          <h3>自分用メモ</h3>
+          <p class="note-help">この問題で迷った点、覚え方、あとで復習したいことを残せます。</p>
+          <textarea
+            id="question-note"
+            class="question-note"
+            rows="5"
+            placeholder="例: schemaLocation と checkpointLocation を混同した。"
+          ></textarea>
+          <div class="note-actions">
+            <button type="button" id="save-note" class="primary">メモを保存</button>
+            <button type="button" id="clear-note">メモを削除</button>
+            <span id="note-status" class="note-status" role="status" aria-live="polite"></span>
+          </div>
+        </section>
         <div
           id="explanation-action-row"
           class="button-group button-group-primary explanation-actions hidden"

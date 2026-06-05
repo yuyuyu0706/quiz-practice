@@ -8,7 +8,7 @@ import {
   clearActiveSession,
   getRepairedStorageKeys,
 } from './storage.js';
-import { baseProgress } from './notes.js';
+import { baseProgress, deleteNote, getQuestionNote, saveNote } from './notes.js';
 import { loadQuestions } from './questions.js';
 import {
   createQuizSession,
@@ -25,6 +25,7 @@ import {
   renderQuestion as renderQuestionView,
   renderResult,
   renderStorageRepairNotice,
+  formatDateTime,
 } from './render.js';
 import {
   createSecondaryActionLayoutController,
@@ -71,6 +72,11 @@ const els = {
   suspendMobileSlot: document.getElementById('suspend-mobile-slot'),
   suspendDesktopSlot: document.getElementById('suspend-desktop-slot'),
   explanationActionRow: document.getElementById('explanation-action-row'),
+  notePanel: document.getElementById('note-panel'),
+  questionNote: document.getElementById('question-note'),
+  saveNote: document.getElementById('save-note'),
+  clearNote: document.getElementById('clear-note'),
+  noteStatus: document.getElementById('note-status'),
   bookmarkBtn: document.getElementById('bookmark-btn'),
   suspendToHome: document.getElementById('suspend-to-home'),
   scoreText: document.getElementById('score-text'),
@@ -81,6 +87,7 @@ const els = {
 };
 
 const secondaryActionLayout = createSecondaryActionLayoutController(els);
+let noteStatusTimer = null;
 
 init();
 
@@ -142,6 +149,9 @@ function attachEvents() {
   });
 
   els.choicesForm.addEventListener('change', handleChoiceSelectionChange);
+  els.saveNote.addEventListener('click', saveCurrentQuestionNote);
+  els.clearNote.addEventListener('click', clearCurrentQuestionNote);
+  els.questionNote.addEventListener('input', clearNoteStatusMessage);
 
   els.toggleExplanation.addEventListener('click', () => {
     closeSecondaryActions();
@@ -157,7 +167,7 @@ function attachEvents() {
   els.bookmarkBtn.addEventListener('click', () => {
     closeSecondaryActions();
     const q = getCurrentQuestion();
-    const current = state.progress[q.id] ?? baseProgress();
+    const current = { ...baseProgress(), ...(state.progress[q.id] ?? {}) };
     current.bookmark = !current.bookmark;
     state.progress[q.id] = current;
     saveProgress(state.progress);
@@ -188,6 +198,7 @@ function closeSecondaryActions(options = {}) {
 
 function handleKeyboard(event) {
   if (!state.session || els.views.quiz.className.indexOf('active') === -1) return;
+  if (event.target === els.questionNote) return;
   const key = event.key.toUpperCase();
   const map = {
     1: 'A',
@@ -252,6 +263,7 @@ function renderQuestion(options = {}) {
   });
   updatePrimaryActions(question.id);
   updateExplanationActions();
+  renderQuestionNote(question.id);
   persistSession();
   closeSecondaryActions();
   if (scrollToTop) scrollQuizIntoView(els.quizTopAnchor, els.views.quiz);
@@ -278,7 +290,7 @@ function submitCurrentAnswer(event) {
   state.session.explanationOpen = true;
 
   const correct = gradeAnswer(question, selectedLabel, choiceMap);
-  const currentProgress = state.progress[question.id] ?? baseProgress();
+  const currentProgress = { ...baseProgress(), ...(state.progress[question.id] ?? {}) };
   currentProgress.seenCount += 1;
   if (correct) {
     currentProgress.correctCount += 1;
@@ -290,6 +302,55 @@ function submitCurrentAnswer(event) {
 
   saveProgress(state.progress);
   renderQuestion();
+}
+
+function renderQuestionNote(questionId) {
+  const graded = Boolean(state.session?.graded?.[questionId]);
+  const progress = { ...baseProgress(), ...(state.progress?.[questionId] ?? {}) };
+
+  els.notePanel.classList.toggle('hidden', !graded);
+  els.questionNote.value = getQuestionNote(state.progress, questionId);
+  els.noteStatus.textContent = progress.noteUpdatedAt
+    ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}`
+    : '';
+}
+
+function saveCurrentQuestionNote() {
+  const question = getCurrentQuestion();
+  if (!question || !state.session?.graded?.[question.id]) return;
+
+  state.progress = saveNote(state.progress, question.id, els.questionNote.value);
+  saveProgress(state.progress);
+
+  const noteText = state.progress[question.id]?.noteText?.trim();
+  updateNoteStatus(noteText ? 'メモを保存しました。' : 'メモを空にしました。');
+}
+
+function clearCurrentQuestionNote() {
+  const question = getCurrentQuestion();
+  if (!question || !state.session?.graded?.[question.id]) return;
+
+  state.progress = deleteNote(state.progress, question.id);
+  saveProgress(state.progress);
+  els.questionNote.value = '';
+  updateNoteStatus('メモを削除しました。');
+}
+
+function clearNoteStatusMessage() {
+  if (noteStatusTimer) {
+    window.clearTimeout(noteStatusTimer);
+    noteStatusTimer = null;
+  }
+  els.noteStatus.textContent = '';
+}
+
+function updateNoteStatus(message) {
+  els.noteStatus.textContent = message;
+  if (noteStatusTimer) window.clearTimeout(noteStatusTimer);
+  noteStatusTimer = window.setTimeout(() => {
+    const question = getCurrentQuestion();
+    if (question) renderQuestionNote(question.id);
+  }, 1800);
 }
 
 function moveQuestion(delta) {

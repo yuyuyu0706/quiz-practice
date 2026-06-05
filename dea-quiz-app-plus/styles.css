@@ -426,6 +426,51 @@ button.primary:hover:not(:disabled) {
   overflow-wrap: anywhere;
   display: inline-block;
 }
+
+.note-panel {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--dea-plus-primary-border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, var(--dea-plus-surface-tint));
+}
+.note-panel h3 {
+  margin-bottom: 6px;
+}
+.note-help {
+  color: var(--muted);
+  font-size: 0.94rem;
+  margin-bottom: 10px;
+}
+.question-note {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  line-height: 1.6;
+  background: #fff;
+  color: var(--text);
+}
+.question-note:focus {
+  border-color: var(--dea-plus-primary-border);
+}
+.note-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.note-status {
+  color: var(--muted);
+  font-size: 0.92rem;
+  min-height: 1.4em;
+}
 .hidden {
   display: none;
 }
@@ -678,6 +723,19 @@ button.primary:hover:not(:disabled) {
     font-size: 0.9rem;
   }
 
+  .note-panel {
+    padding: 12px;
+  }
+
+  .note-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .note-actions button {
+    width: 100%;
+  }
+
   .explanation {
     padding: 10px;
   }
@@ -722,6 +780,7 @@ button.primary:hover:not(:disabled) {
 button:focus-visible,
 select:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
 .chips label:has(input:focus-visible),
 .choices label:has(input:focus-visible) {
   outline: none;
