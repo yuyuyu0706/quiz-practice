@@ -26,6 +26,12 @@ import {
   renderResult,
   renderStorageRepairNotice,
 } from './render.js';
+import {
+  createSecondaryActionLayoutController,
+  scrollChoiceGroupIntoView,
+  scrollQuizIntoView,
+} from './layout.js';
+import { buildSectionCheckboxes, hydrateSettingsUI, readSettingsFromUI } from './settings-view.js';
 
 const state = {
   questions: [],
@@ -74,14 +80,16 @@ const els = {
   backHome: document.getElementById('back-home'),
 };
 
+const secondaryActionLayout = createSecondaryActionLayoutController(els);
+
 init();
 
 async function init() {
   state.questions = await loadQuestions();
-  buildSectionCheckboxes();
-  hydrateSettingsUI();
+  buildSectionCheckboxes(els.sectionCheckboxes, state.questions);
+  hydrateSettingsUI(els, state.settings);
   attachEvents();
-  syncSecondaryActionLayout();
+  secondaryActionLayout.syncLayout();
   refreshResumeUI();
   const repairedKeys = getRepairedStorageKeys();
   if (repairedKeys.length > 0) {
@@ -130,7 +138,7 @@ function attachEvents() {
 
   els.secondaryActionsToggle?.addEventListener('click', () => {
     const expanded = els.secondaryActionsToggle.getAttribute('aria-expanded') === 'true';
-    setSecondaryActionsOpen(!expanded);
+    secondaryActionLayout.setOpen(!expanded);
   });
 
   els.choicesForm.addEventListener('change', handleChoiceSelectionChange);
@@ -170,42 +178,12 @@ function attachEvents() {
   });
 
   document.addEventListener('keydown', handleKeyboard);
-  document.addEventListener('click', handleDocumentClick);
-  window.addEventListener('resize', handleViewportChange);
-}
-
-function handleDocumentClick(event) {
-  if (!isMobileViewport()) return;
-  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
-  if (!secondaryGroup || secondaryGroup.contains(event.target)) return;
-  closeSecondaryActions();
-}
-
-function handleViewportChange() {
-  syncSecondaryActionLayout();
-  if (!isMobileViewport()) {
-    closeSecondaryActions({ forceDesktopState: true });
-  }
-}
-
-function syncSecondaryActionLayout() {
-  const targetSlot = isMobileViewport() ? els.suspendMobileSlot : els.suspendDesktopSlot;
-  if (!targetSlot || !els.suspendToHome || targetSlot.contains(els.suspendToHome)) return;
-  targetSlot.appendChild(els.suspendToHome);
-}
-
-function setSecondaryActionsOpen(isOpen) {
-  const secondaryGroup = els.secondaryActionsToggle?.closest('.button-group-secondary');
-  if (!els.secondaryActionsToggle || !secondaryGroup) return;
-  const shouldOpen = Boolean(isOpen) && isMobileViewport();
-  secondaryGroup.classList.toggle('is-open', shouldOpen);
-  els.secondaryActionsToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+  document.addEventListener('click', secondaryActionLayout.handleDocumentClick);
+  window.addEventListener('resize', secondaryActionLayout.handleViewportChange);
 }
 
 function closeSecondaryActions(options = {}) {
-  const { forceDesktopState = false } = options;
-  if (!isMobileViewport() && !forceDesktopState) return;
-  setSecondaryActionsOpen(false);
+  secondaryActionLayout.close(options);
 }
 
 function handleKeyboard(event) {
@@ -276,7 +254,7 @@ function renderQuestion(options = {}) {
   updateExplanationActions();
   persistSession();
   closeSecondaryActions();
-  if (scrollToTop) scrollQuizIntoView();
+  if (scrollToTop) scrollQuizIntoView(els.quizTopAnchor, els.views.quiz);
 }
 
 function submitCurrentAnswer(event) {
@@ -287,7 +265,7 @@ function submitCurrentAnswer(event) {
     els.quizMessage.textContent = '選択肢を1つ選んでから「回答する」を押してください。';
     els.choicesForm.classList.add('needs-selection');
     els.selectionHint.textContent = '未選択です。まずは選択肢をタップしてください。';
-    scrollChoiceGroupIntoView();
+    scrollChoiceGroupIntoView(els.choicesForm);
     return;
   }
 
@@ -363,24 +341,6 @@ function updateExplanationActions() {
   els.explanationActionRow.classList.toggle('hidden', !showInlineNext);
 }
 
-function isMobileViewport() {
-  return window.matchMedia('(max-width: 768px)').matches;
-}
-
-function scrollQuizIntoView() {
-  const target = els.quizTopAnchor ?? els.views.quiz;
-  if (!target) return;
-
-  if (isMobileViewport()) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
-function scrollChoiceGroupIntoView() {
-  if (!isMobileViewport()) return;
-  els.choicesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 function finishSession() {
   const result = buildSessionResult(
     state.session,
@@ -444,49 +404,14 @@ function showView(name) {
   switchView(els.views, name);
 }
 
-function buildSectionCheckboxes() {
-  const sectionMap = new Map();
-  state.questions.forEach((question) => {
-    if (!sectionMap.has(question.section)) {
-      sectionMap.set(question.section, question.sectionTitle ?? '');
-    }
-  });
-
-  const sections = Array.from(sectionMap.entries()).sort(
-    ([sectionA], [sectionB]) => Number(sectionA) - Number(sectionB)
-  );
-
-  els.sectionCheckboxes.innerHTML = sections
-    .map(
-      ([section, sectionTitle]) =>
-        `<label><input type="checkbox" name="sections" value="${section}" checked /><span class="section-label"><span class="section-number">Section ${section}</span><span class="section-title">${sectionTitle}</span></span></label>`
-    )
-    .join('');
-}
-
-function hydrateSettingsUI() {
-  els.questionCount.value = state.settings.count;
-  const sections = new Set(state.settings.sections);
-  els.sectionCheckboxes.querySelectorAll('input[name="sections"]').forEach((input) => {
-    input.checked = sections.has(input.value);
-  });
-  const modeInput = els.form.querySelector(`input[name="mode"][value="${state.settings.mode}"]`);
-  if (modeInput) modeInput.checked = true;
-}
-
 function saveSettingsFromUI() {
-  const sections = Array.from(els.sectionCheckboxes.querySelectorAll('input:checked')).map(
-    (input) => input.value
-  );
-  if (!sections.length) {
-    els.homeMessage.textContent = '最低1つのセクションを選択してください。';
+  const result = readSettingsFromUI(els);
+  if (!result.ok) {
+    els.homeMessage.textContent = result.message;
     return false;
   }
-  state.settings = {
-    sections,
-    mode: els.form.querySelector('input[name="mode"]:checked').value,
-    count: els.questionCount.value,
-  };
+
+  state.settings = result.settings;
   saveSettings(state.settings);
   return true;
 }
