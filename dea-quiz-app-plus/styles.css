@@ -134,7 +134,9 @@ label {
   background: #e8edf5;
   border: 1px solid #d5dce8;
   vertical-align: baseline;
+  overflow-wrap: anywhere;
 }
+
 select,
 button {
   font-size: 1rem;
@@ -353,11 +355,13 @@ button.primary:hover:not(:disabled) {
   margin: 0 0 10px;
   line-height: 1.75;
 }
-.explanation ul {
+.explanation ul,
+.explanation-list {
   margin: 0 0 10px 20px;
   padding: 0;
 }
-.explanation li {
+.explanation li,
+.explanation-list li {
   margin-bottom: 6px;
   line-height: 1.7;
 }
@@ -365,19 +369,32 @@ button.primary:hover:not(:disabled) {
   margin-top: 12px;
 }
 .code-block {
+  max-width: 100%;
+  min-width: 0;
   margin: 0 0 12px;
   padding: 10px;
   border-radius: 8px;
   background: #111827;
   color: #e5e7eb;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
+
 .code-block code {
   font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
   font-size: 0.9rem;
+  display: block;
+  min-width: max-content;
   white-space: pre;
 }
+
+.choices .code-block {
+  flex: 1 1 100%;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
 #quiz-question .code-block,
 #quiz-question .code-block code {
   font-weight: 400;

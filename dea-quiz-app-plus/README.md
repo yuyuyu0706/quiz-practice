@@ -30,10 +30,58 @@ python -m http.server 8000
 - `settings-view.js`: 設定フォームの生成・反映・読取
 - `questions.js`: `questions.json` の読み込みと正規化
 - `quiz-session.js`: 出題順、選択肢表示、採点、結果集計
-- `render.js`: 問題・解説・結果などの描画
+- `render.js`: 問題・選択肢・解説・結果などの描画統合
+- `markdown-renderer.js`: DEA Plus 内で利用する軽量な Markdown 風描画（inline code、太字、箇条書き、code fence）
 - `storage.js`: DEA Plus 専用 localStorage の読み書き
 - `notes.js`: Phase 0 ではメモ機能を実装せず、進捗初期値のみを提供
 - `questions.json`: 既存 DEA 版からコピーした問題データ
+
+## Markdown風記法
+
+DEA Plus では、問題文・選択肢・解説の表示で、以下の軽量な Markdown風記法を利用できます。外部 Markdown ライブラリは使わず、HTML 断片は実行せずにテキストとして扱います。
+
+| 記法                            | 用途                          | 対応箇所             |
+| ------------------------------- | ----------------------------- | -------------------- |
+| `` `text` ``                    | inline code                   | 問題文・選択肢・解説 |
+| `**text**`                      | 太字                          | 問題文・選択肢・解説 |
+| `- item`                        | 箇条書き                      | 解説                 |
+| code fence                      | コードブロック                | 問題文・選択肢・解説 |
+| ` ```sql ` / ` ```python ` など | 言語 class つきコードブロック | 問題文・選択肢・解説 |
+
+### inline code
+
+文中の関数名、設定値、カラム名などはバッククォートで囲みます。
+
+```text
+`print`
+```
+
+### 太字
+
+強調したい短い語句は `**` で囲みます。
+
+```text
+**Delta Lake**
+```
+
+### 箇条書き
+
+解説では、行頭に `- ` を置いた行を箇条書きとして表示します。
+
+```text
+- Bronze テーブルに取り込む
+- Silver テーブルでクレンジングする
+```
+
+### code fence
+
+SQL や Python などの複数行コードは code fence で表現します。言語指定がある場合は、`lang-sql` / `language-sql`、`lang-python` / `language-python` のような class として DOM に維持します。シンタックスハイライトは行いません。
+
+````text
+```sql
+SELECT * FROM samples;
+```
+````
 
 ## localStorage 保存内容
 
