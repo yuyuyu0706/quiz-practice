@@ -30,6 +30,9 @@ export function createQuizSession(questions, settings, mode, progress) {
   let pool = questions.filter((q) => settings.sections.includes(q.section));
   if (mode === 'wrongOnly') pool = pool.filter((q) => (progress[q.id]?.wrongCount ?? 0) > 0);
   else if (mode === 'bookmarks') pool = pool.filter((q) => progress[q.id]?.bookmark);
+  else if (mode === 'notesOnly') {
+    pool = pool.filter((q) => String(progress[q.id]?.noteText ?? '').trim().length > 0);
+  }
   if (mode === 'random') pool = shuffle(pool);
   const count = settings.count === 'all' ? pool.length : Number(settings.count);
   const finalList = pool.slice(0, Math.min(count, pool.length));
