@@ -23,46 +23,10 @@ jobs:
           rm -rf swa-site
           mkdir -p swa-site
 
+          cp -R swa-root/. swa-site/
           cp -R dea-quiz-app swa-site/dea-quiz-app
+          cp -R dea-quiz-app-plus swa-site/dea-quiz-app-plus
           cp -R dep-quiz-app swa-site/dep-quiz-app
-
-          cat > swa-site/index.html <<'EOF'
-          <!doctype html>
-          <html lang="ja">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Quiz Practice</title>
-            <style>
-              body {
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                max-width: 720px;
-                margin: 48px auto;
-                padding: 0 20px;
-                line-height: 1.7;
-              }
-              a {
-                display: block;
-                padding: 16px 20px;
-                margin: 12px 0;
-                border: 1px solid #ddd;
-                border-radius: 12px;
-                text-decoration: none;
-                color: inherit;
-              }
-              a:hover {
-                background: #f7f7f7;
-              }
-            </style>
-          </head>
-          <body>
-            <h1>Quiz Practice</h1>
-            <p>利用する練習アプリを選択してください。</p>
-            <a href="./dea-quiz-app/">Databricks DEA 練習アプリ</a>
-            <a href="./dep-quiz-app/">Databricks DEP 練習アプリ</a>
-          </body>
-          </html>
-          EOF
 
           echo "Deploy artifact:"
           find swa-site -maxdepth 2 -type f | sort
