@@ -10,6 +10,12 @@ const caseLabels = new Map([
   ['guarantees mobile secondary actions expand and quiz progress advances', 'mobile-actions'],
   ['guarantees a desktop quiz can be completed from start to result summary', 'complete-result'],
   ['guarantees suspended progress resumes at the same answered question', 'resume-progress'],
+  ['guarantees DEA Plus note create restore and delete preserves progress data', 'plus-note-crud'],
+  [
+    'guarantees DEA Plus notes-only review includes only questions with saved notes',
+    'plus-notes-only',
+  ],
+  ['guarantees DEA Plus mobile notes controls remain usable after answering', 'plus-mobile-notes'],
   ['guarantees DEP learning settings and home actions render without layout issues', 'home-layout'],
   ['guarantees mobile secondary actions open and quiz progress advances', 'mobile-actions'],
   [
