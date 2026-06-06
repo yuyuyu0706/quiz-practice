@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quiz Practice</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --surface-muted: #f8fafc;
+        --text: #172033;
+        --muted: #64748b;
+        --accent: #1d4ed8;
+        --accent-soft: #dbeafe;
+        --border: #d9e2ef;
+        --shadow: 0 18px 45px rgb(15 23 42 / 10%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        line-height: 1.7;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgb(37 99 235 / 16%), transparent 32rem), var(--bg);
+      }
+
+      .container {
+        width: min(100%, 980px);
+        margin: 0 auto;
+        padding: 56px 20px 72px;
+      }
+
+      .hero {
+        margin-bottom: 40px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 12px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        color: var(--accent);
+        background: var(--accent-soft);
+        font-size: 0.86rem;
+        font-weight: 700;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        font-size: clamp(2rem, 5vw, 3.3rem);
+        line-height: 1.15;
+        letter-spacing: -0.04em;
+      }
+
+      .lead {
+        max-width: 720px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
+      section + section {
+        margin-top: 36px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      h2 {
+        margin-bottom: 0;
+        font-size: 1.35rem;
+      }
+
+      .section-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .app-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .app-card {
+        display: flex;
+        min-height: 150px;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 22px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        color: inherit;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        text-decoration: none;
+        transition:
+          transform 160ms ease,
+          border-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      a.app-card:hover,
+      a.app-card:focus-visible {
+        border-color: rgb(29 78 216 / 48%);
+        box-shadow: 0 22px 50px rgb(29 78 216 / 16%);
+        transform: translateY(-3px);
+      }
+
+      a.app-card:focus-visible {
+        outline: 3px solid rgb(29 78 216 / 28%);
+        outline-offset: 3px;
+      }
+
+      .app-card strong {
+        display: block;
+        font-size: 1.16rem;
+        line-height: 1.45;
+      }
+
+      .app-card span {
+        display: block;
+        color: var(--muted);
+      }
+
+      .app-card .path {
+        align-self: flex-start;
+        padding: 3px 9px;
+        border-radius: 999px;
+        color: var(--accent);
+        background: var(--accent-soft);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .app-card.disabled {
+        color: #718096;
+        background: var(--surface-muted);
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      .app-card.disabled .path {
+        color: #64748b;
+        background: #e2e8f0;
+      }
+
+      @media (max-width: 720px) {
+        .container {
+          padding-top: 36px;
+        }
+
+        .section-header {
+          display: block;
+        }
+
+        .section-note {
+          margin-top: 4px;
+        }
+
+        .app-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero">
+        <p class="eyebrow">Azure Static Web Apps</p>
+        <h1>Quiz Practice</h1>
+        <p class="lead">利用するDatabricks認定資格向け練習アプリを選択してください。</p>
+      </header>
+
+      <section aria-labelledby="standard-menu-title">
+        <div class="section-header">
+          <h2 id="standard-menu-title">標準メニュー</h2>
+          <p class="section-note">既存の安定版アプリ</p>
+        </div>
+        <div class="app-grid">
+          <a class="app-card" href="./dea-quiz-app/">
+            <span class="path">dea-quiz-app</span>
+            <strong>Databricks DEA 練習アプリ</strong>
+            <span>MVP / legacy stable 版</span>
+          </a>
+          <a class="app-card" href="./dep-quiz-app/">
+            <span class="path">dep-quiz-app</span>
+            <strong>Databricks DEP 練習アプリ</strong>
+            <span>Databricks Professional 対策版</span>
+          </a>
+        </div>
+      </section>
+
+      <section aria-labelledby="enhanced-menu-title">
+        <div class="section-header">
+          <h2 id="enhanced-menu-title">強化メニュー</h2>
+          <p class="section-note">復習や学習補助を強化したアプリ</p>
+        </div>
+        <div class="app-grid">
+          <a class="app-card" href="./dea-quiz-app-plus/">
+            <span class="path">dea-quiz-app-plus</span>
+            <strong>Databricks DEA Quiz Plus</strong>
+            <span>メモ・復習機能を備えたDEA対策強化版</span>
+          </a>
+          <div class="app-card disabled" aria-disabled="true">
+            <span class="path">coming soon</span>
+            <strong>Databricks DEP Quiz Plus</strong>
+            <span>今後開発予定</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
