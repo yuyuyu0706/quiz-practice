@@ -34,12 +34,26 @@ export async function gotoDepHome(page: Page) {
   await gotoHome(page, 'dep');
 }
 
+export async function gotoDeaPlusHome(page: Page) {
+  await page.goto('/dea-quiz-app-plus/');
+  await expect(page.getByRole('heading', { name: /Databricks.*DEA.*Quiz Plus/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '学習設定' })).toBeVisible();
+}
+
 export async function startQuiz(page: Page, count: '10' | '20' | '50' | 'all' = '10') {
   await startQuizInternal(page, 'dea', count);
 }
 
 export async function startDepQuiz(page: Page, count: '10' | '20' | '50' | 'all' = 'all') {
   await startQuizInternal(page, 'dep', count);
+}
+
+export async function startDeaPlusQuiz(page: Page, count: '10' | '20' | '50' | 'all' = '10') {
+  await gotoDeaPlusHome(page);
+  await page.locator('#question-count').selectOption(count);
+  await page.getByRole('button', { name: '開始' }).click();
+  await expect(page.locator('#quiz-view')).toBeVisible();
+  await expect(page.locator('#quiz-progress')).toContainText(/1\s*\/\s*/);
 }
 
 export async function answerCurrentQuestion(page: Page) {
