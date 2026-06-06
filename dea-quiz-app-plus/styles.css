@@ -34,11 +34,13 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
+  overflow-x: hidden;
 }
 .container {
   max-width: 840px;
   margin: 0 auto;
   padding: 16px;
+  width: 100%;
 }
 h1,
 h2,
@@ -65,6 +67,7 @@ h1 {
   padding: 18px;
   box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
   border: 1px solid rgba(205, 213, 255, 0.55);
+  min-width: 0;
 }
 .view {
   display: none;
@@ -100,6 +103,9 @@ label {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   min-height: 64px;
 }
 .chips label input[type='checkbox'] {
@@ -124,7 +130,7 @@ label {
   overflow-wrap: break-word;
 }
 .inline-code {
-  display: inline-block;
+  display: inline;
   padding: 0.08em 0.38em;
   border-radius: 6px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
@@ -135,6 +141,7 @@ label {
   border: 1px solid #d5dce8;
   vertical-align: baseline;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 select,
@@ -184,7 +191,7 @@ button.primary:hover:not(:disabled) {
   margin-top: 14px;
 }
 .button-group-primary {
-  padding: 14px;
+  padding: 12px 14px;
   border-radius: 14px;
   background: linear-gradient(180deg, var(--primary-soft), #fff 88%);
   border: 1px solid var(--dea-plus-primary-border);
@@ -248,7 +255,7 @@ button.primary:hover:not(:disabled) {
   color: #9f1239;
 }
 .selection-hint {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: 0.94rem;
   color: #394150;
 }
@@ -275,6 +282,7 @@ button.primary:hover:not(:disabled) {
   flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 #quiz-progress {
   flex-shrink: 0;
@@ -283,6 +291,7 @@ button.primary:hover:not(:disabled) {
 }
 #quiz-question {
   overflow-wrap: anywhere;
+  word-break: break-word;
   font-size: 1rem;
   font-weight: 700;
 }
@@ -291,6 +300,7 @@ button.primary:hover:not(:disabled) {
 }
 .choices {
   margin-top: 8px;
+  min-width: 0;
 }
 .choices label {
   border: 1px solid var(--border);
@@ -301,6 +311,9 @@ button.primary:hover:not(:disabled) {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease,
@@ -312,7 +325,11 @@ button.primary:hover:not(:disabled) {
 }
 .choices input[type='radio'] {
   margin-top: 4px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+}
+
+.choices label > :not(input) {
+  min-width: 0;
 }
 .choices label:has(input:checked) {
   border-color: var(--primary);
@@ -350,6 +367,10 @@ button.primary:hover:not(:disabled) {
   padding: 12px;
   background: var(--dea-plus-primary-soft);
   overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.explanation > *:last-child {
+  margin-bottom: 0;
 }
 .explanation p {
   margin: 0 0 10px;
@@ -369,6 +390,7 @@ button.primary:hover:not(:disabled) {
   margin-top: 12px;
 }
 .code-block {
+  width: 100%;
   max-width: 100%;
   min-width: 0;
   margin: 0 0 12px;
@@ -379,6 +401,7 @@ button.primary:hover:not(:disabled) {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .code-block code {
@@ -391,6 +414,8 @@ button.primary:hover:not(:disabled) {
 
 .choices .code-block {
   flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
   margin-top: 4px;
   margin-bottom: 0;
 }
@@ -455,6 +480,7 @@ button.primary:hover:not(:disabled) {
   line-height: 1.6;
   background: #fff;
   color: var(--text);
+  overflow-wrap: anywhere;
 }
 .question-note:focus {
   border-color: var(--dea-plus-primary-border);
@@ -485,6 +511,7 @@ button.primary:hover:not(:disabled) {
 #wrong-list li {
   margin-bottom: 8px;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 @media (min-width: 481px) and (max-width: 900px) {
@@ -584,20 +611,19 @@ button.primary:hover:not(:disabled) {
 }
 
 @media (max-width: 480px) {
-  .secondary-actions-toggle {
-    min-height: 36px;
-    padding: 6px 10px;
-    font-size: 0.86rem;
-  }
-
   .container {
-    padding: 10px;
+    padding: 10px 8px 14px;
   }
 
   .card {
     border-radius: 12px;
-    padding: 14px;
+    padding: 13px;
     margin-bottom: 10px;
+  }
+
+  #quiz-view {
+    scroll-padding-bottom: 112px;
+    padding-bottom: 108px;
   }
 
   h1 {
@@ -649,17 +675,27 @@ button.primary:hover:not(:disabled) {
 
   .quiz-head {
     flex-wrap: wrap;
-    row-gap: 4px;
+    gap: 3px 8px;
+    margin-bottom: 8px;
+  }
+
+  #quiz-question {
+    margin-bottom: 8px;
+    line-height: 1.5;
   }
 
   #quiz-progress {
     font-size: 0.9rem;
   }
 
+  .choices {
+    margin-top: 6px;
+  }
+
   .choices label {
     padding: 12px;
-    min-height: 50px;
-    margin-bottom: 12px;
+    min-height: 52px;
+    margin-bottom: 10px;
     line-height: 1.55;
   }
 
@@ -675,10 +711,20 @@ button.primary:hover:not(:disabled) {
 
   .button-group-primary {
     position: sticky;
-    bottom: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
     z-index: 5;
+    padding: 10px 10px max(10px, env(safe-area-inset-bottom));
     box-shadow: 0 14px 24px rgba(79, 70, 229, 0.16);
     backdrop-filter: blur(8px);
+    background: linear-gradient(180deg, rgba(238, 242, 255, 0.96), rgba(255, 255, 255, 0.98) 88%);
+  }
+
+  .button-row-primary {
+    gap: 8px;
+  }
+
+  .button-row-primary button {
+    min-height: 50px;
   }
 
   .button-group-secondary {
@@ -686,28 +732,37 @@ button.primary:hover:not(:disabled) {
     margin-top: 8px;
   }
 
-  .secondary-actions-panel {
-    margin-top: 6px;
-  }
-
-  .button-row-secondary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .button-row-secondary-top {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 6px;
   }
 
+  .secondary-actions-panel {
+    margin-top: 8px;
+  }
+
+  .button-row-secondary {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
   .button-row-secondary button {
-    min-height: 40px;
-    width: auto;
-    padding: 8px 10px;
-    font-size: 0.86rem;
+    min-height: 44px;
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 0.9rem;
     border-radius: 9px;
+    white-space: normal;
   }
 
   .button-row-secondary-top .secondary-home-slot > button,
   .secondary-actions-toggle {
-    min-height: 36px;
-    padding: 6px 10px;
-    font-size: 0.86rem;
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    white-space: normal;
   }
 
   #submit-answer,
@@ -720,24 +775,52 @@ button.primary:hover:not(:disabled) {
   }
 
   .selection-hint {
-    font-size: 0.9rem;
+    margin-top: 6px;
+    font-size: 0.86rem;
+    line-height: 1.45;
   }
 
   .note-panel {
-    padding: 12px;
+    margin-top: 12px;
+    padding: 11px;
+  }
+
+  .note-help {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin-bottom: 8px;
+  }
+
+  .question-note {
+    min-height: 104px;
+    max-height: 42vh;
+    padding: 9px 10px;
+    line-height: 1.55;
   }
 
   .note-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 7px;
   }
 
   .note-actions button {
     width: 100%;
+    min-height: 48px;
+  }
+
+  .note-status {
+    font-size: 0.9rem;
+    line-height: 1.45;
   }
 
   .explanation {
+    margin-top: 10px;
     padding: 10px;
+  }
+
+  .explanation-actions {
+    margin-top: 10px;
   }
 
   .explanation p,
@@ -746,11 +829,18 @@ button.primary:hover:not(:disabled) {
   }
 
   .code-block {
+    margin-bottom: 10px;
     padding: 9px;
+    border-radius: 7px;
   }
 
   .code-block code {
-    font-size: 0.82rem;
+    font-size: 0.83rem;
+    line-height: 1.55;
+  }
+
+  .choices .code-block {
+    margin-top: 6px;
   }
 
   .references ul,
@@ -811,6 +901,7 @@ textarea:focus-visible,
 
 .storage-repair-notice__target {
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .storage-repair-notice__close {
