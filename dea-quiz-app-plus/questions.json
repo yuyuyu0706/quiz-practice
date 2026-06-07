@@ -13,9 +13,9 @@
     "answer": "C",
     "explanation": "正解は、**Auto Optimize と Liquid Clustering** です。\n\nこの組み合わせは、データレイアウト最適化の運用負荷を下げつつ、実行性能を安定化させる定番です。\n\n- Auto Optimize: 小さすぎるファイルを抑制し、書き込み後の読み取り効率を改善\n- Liquid Clustering: パーティション設計の硬直化を避けながらクラスタリングを最適化\n- Photon などの実行エンジン最適化とも併用しやすい\n\n```sql\nOPTIMIZE sales.fct_orders;\nALTER TABLE sales.fct_orders CLUSTER BY (customer_id, order_date);\n```\n\n注意点: **VACUUM** はストレージ最適化には有効ですが、直接的なレイアウト最適化機能ではありません",
     "whyWrong": {
-      "A": "Z-Ordering は列値に基づくデータ配置最適化で、VACUUM は不要ファイルの削除です。小ファイル抑制やパーティション設計の硬直化回避を組み合わせて自動化する説明ではありません。",
-      "B": "Photon はクエリ実行エンジン、DatabricksIQ はデータや利用状況を理解して支援する知能レイヤーです。どちらもデータレイアウトの決定やクラスタリングを直接簡素化する機能の組み合わせではありません。",
-      "D": "Delta Sharing はデータ共有、Lakehouse Federation は外部データソースへの統合アクセスに関する機能です。クエリ性能向上のためにテーブル内のデータ配置を最適化する機能ではありません。"
+      "A": "Z-Ordering は列値に基づくデータ配置最適化で、VACUUM は不要ファイルの削除です。どちらを適用してもクエリ最適化には寄与しません",
+      "B": "Photon はクエリ実行エンジン、DatabricksIQ はデータや利用状況を理解して支援する知能レイヤーです",
+      "D": "Delta Sharing はデータ共有、Lakehouse Federation は外部データソースへの統合アクセスに関する機能です"
     },
     "references": [
       {
@@ -42,9 +42,9 @@
     "answer": "B",
     "explanation": "正解は **データ、ガバナンス、AI/BI を同一プラットフォーム上で統合し運用できる** です。\n\nDatabricks Data Intelligence Platform（≒レイクハウス基盤の統合プラットフォーム）の価値は、「データ処理」だけでなく、データの“利用”に必要な要素（ガバナンス・AI/BI・協業・運用）までを同じ基盤上で一貫して回せる点にあります。\n\nたとえば、“統合“の具体例を示します。\n\n- 同じデータ（例：Deltaテーブル）を、ETL（エンジニア）・分析（アナリスト）・AI/ML（サイエンティスト）が共有して使う\n\n- その際に、Unity Catalog等で権限・監査・リネージを統一して管理できる（＝ガバナンスが後付けにならない）\n\n- BI領域も、AI/BIなどでプラットフォームに統合されている（“別製品に切り出さず”同じ基盤で運用）",
     "whyWrong": {
-      "A": "Databricks の価値は単一ノード処理に限定されず、分散処理、ガバナンス、AI/BI などを含む統合基盤にあります。単一ノードでの高速 ETL だけでは Data Intelligence Platform の特徴を表せません。",
-      "C": "Databricks はクラウド上のレイクハウス基盤として利用されることが一般的で、処理をオンプレミスに限定するものではありません。プラットフォームの価値は配置場所の限定ではなく、データ活用機能の統合にあります。",
-      "D": "Databricks は Delta Lake、Parquet、CSV など複数の形式やデータソースを扱えます。CSV のみに限定してフォーマットを統一することは、Data Intelligence Platform の価値ではありません。"
+      "A": "Databricks の価値は単一ノード処理に限定されず、分散処理、ガバナンス、AI/BI などを含む統合基盤にあります",
+      "C": "Databricks はクラウド上のレイクハウス基盤として利用されることが一般的で、処理をオンプレミスに限定するものではありません",
+      "D": "Databricks は Delta Lake、Parquet、CSV など複数の形式やデータソースを扱えます。CSV のみに限定してフォーマットを統一することは、Data Intelligence Platform の価値ではありません"
     },
     "references": [
       {
@@ -75,9 +75,9 @@
     "answer": "B",
     "explanation": "正解は **Unity Catalog のカタログ/スキーマをチーム単位で分け、権限で制御する** です。\n\n同一ワークスペース内で複数チームが同じデータ資産を安全に共有するには、「論理的な境界（カタログ/スキーマ）」と「権限（GRANT/REVOKE）」でアクセスを設計できるUnity Catalogが最も相性が良いです。Unity Catalogはメタストア上で catalog.schema.table の階層を持ち、各階層に対して権限を付与できます\n\nなぜ、UCが“共有しやすい”のか（ポイント）\n\n- 同じ実体（同じテーブル/ビュー/ボリューム）を共有しつつ、チーム単位で「見える範囲」「操作できる範囲」を権限制御できる為\n\n- UCの権限は階層に沿って整理できる為。例えば「カタログ/スキーマは見えるが、テーブルはSELECTだけ」など、最小権限での設計がしやすい\n\n- “チーム境界”を ワークスペース分割やデータ複製で作るより、単一ワークスペースの方がガバナンスを効かせた共有が実現しやすい為",
     "whyWrong": {
-      "A": "ワークスペースやテーブルをチームごとに分けて複製すると、データの重複、同期ずれ、権限管理の分散が発生しやすくなります。同じデータ資産を安全に共有する設計としては、Unity Catalog で論理境界と権限を管理する方が適しています。",
-      "C": "個人用 DBFS は個人作業向けの保管場所であり、チーム横断の共有資産や権限管理の単位としては不適切です。監査やリネージを含むガバナンスも Unity Catalog ほど一貫して扱えません。",
-      "D": "クラスター名にチーム名を付けても、テーブルやビューへのアクセス権限は制御できません。命名規則は運用上の識別には役立ちますが、データ資産の安全な共有設計にはなりません。"
+      "A": "ワークスペースやテーブルをチームごとに分けて複製すると、データの重複、同期ずれ、権限管理の分散が発生しやすくなります。同じデータ資産を安全に共有する設計としては、Unity Catalog で論理境界と権限を管理する方が適しています",
+      "C": "個人用 DBFS は個人作業向けの保管場所であり、チーム横断の共有資産や権限管理の単位としては不適切です。監査やリネージを含むガバナンスも Unity Catalog ほど一貫して扱えません",
+      "D": "クラスター名にチーム名を付けても、テーブルやビューへのアクセス権限は制御できません。命名規則は運用上の識別には役立ちますが、データ資産の安全な共有設計にはなりません"
     },
     "references": [
       {
@@ -108,9 +108,9 @@
     "answer": "A",
     "explanation": "正解は **永続的な All-purpose（対話型）クラスター** です。\n\n「短時間のアドホック分析」とは、人が手元で試行錯誤しながら（セルを実行→結果を見て→すぐ修正…）進める作業を指します。この用途では、Notebookの対話実行に最適化された All-purpose（対話型）クラスターが最も素直な選択になります。\n\n**ポイント（“短時間”の解釈）**\n\n- 「短時間」といっても、アドホック分析は 反復実行が多く、起動・ウォームアップ・依存関係の再準備が頻発すると体験が悪化しやすい\n\n- All-purposeは **対話利用（複数回の実行・デバッグ・可視化）**を前提にしているため、今回の設問意図に合います。\n\n**補足（実務でよくある“もう1つの正解”）**\n\nもし「アドホック分析」が SQL中心（BI/クエリ）なら、実務では SQL Warehouse（可能なら Serverless）が第一候補になることも多いです。ただし本問は選択肢にSQL Warehouseが無いので、Notebook対話の代表格として All-purposeクラスタ が正解となります。",
     "whyWrong": {
-      "B": "ジョブクラスターは定期実行やバッチ処理のジョブに紐づけて起動・終了させる用途が中心です。手動で長時間稼働させ続ける運用は、短時間の対話的な試行錯誤に向いた選択ではありません。",
-      "C": "DLT パイプライン専用クラスターは宣言的なデータパイプライン運用のためのコンピュートです。短時間のアドホック分析で Notebook を反復実行する用途とは目的が異なります。",
-      "D": "シングルノードクラスターは小規模検証や学習用途では有効ですが、アドホック分析一般に常に適するわけではありません。データ量や処理内容によっては分散実行が必要になります。"
+      "B": "ジョブクラスターは定期実行やバッチ処理のジョブに紐づけて起動・終了させる用途が中心です。手動で長時間稼働させ続ける運用は、短時間の対話的な試行錯誤に向いた選択ではありません",
+      "C": "DLT パイプライン専用クラスターは宣言的なデータパイプライン運用のためのコンピュートです。短時間のアドホック分析で Notebook を反復実行する用途とは目的が異なります",
+      "D": "シングルノードクラスターは小規模検証や学習用途では有効ですが、アドホック分析一般に常に適するわけではありません。データ量や処理内容によっては分散実行が必要になります"
     },
     "references": [
       {
@@ -145,7 +145,7 @@
     "answer": "A",
     "explanation": "正解は **Photon** です。\n\nPhoton は Databricks が提供する ネイティブのベクトル化クエリエンジンで、SQL（Databricks SQL）だけでなく、Spark SQL / DataFrame API の多くの処理を高速化します。したがって「SQL実行の高速化に寄与する“実行エンジン機能”」として最も適切なのは Photon です。なお、Photon は “書き方” ではなく “実行エンジン” の話なので、クエリ自体は普通のSQL/PythonでOKです",
     "whyWrong": {
-      "B": "Delta Sharing は組織間・環境間でデータを安全に共有するための仕組みです。SQL クエリを高速化する実行エンジン機能ではありません。",
+      "B": "Delta Sharing は組織間・環境間でデータを安全に共有するための仕組みです。SQL クエリを高速化する実行エンジン機能ではありません",
       "C": "Repos は Git リポジトリと連携してノートブックやコードを管理する機能です。コード管理の利便性に関する機能であり、SQL 実行そのものを高速化するエンジンではありません。",
       "D": "Volumes は Unity Catalog 配下などでファイルを管理するためのストレージ領域です。データやファイルの管理に関する概念であり、SQL の実行エンジン機能ではありません。"
     },
@@ -173,6 +173,11 @@
     },
     "answer": "A",
     "explanation": "正解は **ローカル IDE から Databricks クラスターをリモート実行対象として利用できるようにする** です。\n\nDatabricks Connect は、ローカルのIDE（VS Code / PyCharm など）で書いた Sparkコードを、Databricks上のコンピュート（クラスター等）で実行できるようにする仕組みです。つまり「開発体験（IDEの補完・デバッグ）を維持しつつ、実行はDatabricks側の分散環境で行う」ことが主目的です",
+    "whyWrong": {
+      "B": "DBFSをFTPサーバーとして公開する内容です。Databricks Connect とは関係ありません",
+      "C": "Unity Catalogの監査ログを外部へ転送する内容です。Databricks Connect とは関係ありません",
+      "D": "Open sharing の recipient 用の credential file や activation linkに関する内容です。Databricks Connect とは関係ありません"
+    },
     "references": [
       {
         "title": "Databricks Connect（公式ドキュメント）",
@@ -201,6 +206,11 @@
     },
     "answer": "B",
     "explanation": "正解は、**ウィジェット（dbutils.widgets）を使う** です。\n\nDatabricksのNotebookをパラメータ化してジョブ実行するときの定番は、dbutils.widgets で入力ウィジェットを定義し、その値をNotebook内で読み取る方法です。公式にも、widgets は Notebook にパラメータを追加する用途として説明されており、ジョブから渡されたパラメータをNotebookタスクで参照する方法として使えます",
+    "whyWrong": {
+      "A": "Notebookにライブラリを追加するコマンドです。ジョブから入力値を受け取る仕組みではありません",
+      "C": "Deltaテーブルの不要ファイルを削除する保守操作です",
+      "D": "Deltaテーブルの変更履歴を確認するSQLです"
+    },
     "references": [
       {
         "title": "タスクからパラメーター値にアクセスする",
@@ -225,6 +235,11 @@
     },
     "answer": "A",
     "explanation": "正解は、**Repos** です。\n\nRepos は、Databricks ワークスペース内で 複数のノートブックやファイルを 1 つの Git リポジトリとして管理し、ブランチを切り替えながら開発するための機能です。公式では現在 Databricks Git folders と呼ばれており、Git ベースのバージョン管理、共同開発、CI/CD に利用できると説明されています",
+    "whyWrong": {
+      "B": "分析結果を画面で可視化・共有する機能です。リポジトリ管理の機能とは関係ありません",
+      "C": "SQLを実行するためのコンピュートです。リポジトリ管理の機能とは関係ありません",
+      "D": "データを組織間で共有する仕組みです。リポジトリ管理の機能とは関係ありません"
+    },
     "references": [
       {
         "title": "Azure Databricks Git フォルダー",
@@ -252,15 +267,16 @@
       "D": "SQL だけで UDF を実装する"
     },
     "answer": "A",
-    "explanation": "正解は **ストリーミングのスキーマ進化と増分ファイル取り込みを簡素化する** です。\n\nAuto Loader は、クラウドストレージ上の新規/更新ファイルを安全に増分取り込みするための仕組みです。\n\n- ファイル検知と重複防止を自動化\n- スキーマ進化（列追加など）に追従可能\n- Structured Streaming の checkpoint と組み合わせて再実行耐性を確保\n\n```python\nstream_df = (spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"json\")\n  .option(\"cloudFiles.schemaLocation\", \"dbfs:/chk/schemas/orders\")\n  .load(\"s3://raw/orders\"))\n```\n\n```sql\nCREATE TABLE IF NOT EXISTS bronze.orders\nUSING DELTA\nAS SELECT * FROM stream_tmp_view;\n```\n\n注意点: `schemaLocation` と `checkpointLocation` を混同しないこと。前者はスキーマ管理、後者は処理状態管理です。",
+    "explanation": "正解は **ストリーミングのスキーマ進化と増分ファイル取り込みを簡素化する** です。\n\nAuto Loader は、クラウドストレージ上の新規/更新ファイルを安全に増分取り込みするための仕組みです。\n\n- ファイル検知と重複防止を自動化\n- スキーマ進化（列追加など）に追従可能\n- Structured Streaming の checkpoint と組み合わせて再実行耐性を確保\n\n```python\nstream_df = (spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"json\")\n  .option(\"cloudFiles.schemaLocation\", \"dbfs:/chk/schemas/orders\")\n  .load(\"s3://raw/orders\"))\n```\n\n```sql\nCREATE TABLE IF NOT EXISTS bronze.orders\nUSING DELTA\nAS SELECT * FROM stream_tmp_view;\n```\n\n注意点: `schemaLocation` と `checkpointLocation` を混同しないこと。前者はスキーマ管理、後者は処理状態管理です",
+    "whyWrong": {
+      "B": "テーブルの権限付与は Unity Catalog や SQL の権限管理の領域です。Auto Loader の主目的ではありません",
+      "C": "クラスターのスポット利用可否はコンピュートやポリシー設計の話です。Auto Loader が直接解決する課題ではありません",
+      "D": "UDF 実装は SQL やプログラミング言語、関数機能の領域です。Auto Loader とは無関係です"
+    },
     "references": [
       {
-        "title": "What is Auto Loader?",
-        "url": "https://docs.databricks.com/aws/en/ingestion/auto-loader/"
-      },
-      {
-        "title": "Configure Auto Loader options",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
+        "title": "オートローダーとは何ですか？",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/"
       }
     ]
   },
@@ -277,6 +293,11 @@
     },
     "answer": "A",
     "explanation": "正解は、**cloudFiles でクラウドオブジェクトストレージ上のファイルを監視** です。\n\nAuto Loader は、Databricks の ファイル取り込み専用の Structured Streaming機能であり、cloudFiles を使って クラウドストレージ上のディレクトリに新しく到着したファイルを検出して取り込めます。対応ソースは、Databricks 公式に Amazon S3、Azure Data Lake Storage、Google Cloud Storage、Azure Blob Storage が示されています\n\nまた、Auto Loader はファイル検出のために directory listing mode や file notification mode を利用でき、いずれも前提は「クラウドストレージ上のファイル監視」です。JDBC のテーブル監視や Kafka トピック監視そのものを Auto Loader が直接担うわけではありません\n\n**ポイント**\n\n- 初期は directory listing mode でも良いが、現在の推奨は file notification mode",
+    "whyWrong": {
+      "B": "RDBへの接続方式に関する説明です。Auto LoaderではなくJDBCバッチやCDC系の別手段を適用します",
+      "C": "Kafkaトピックの監視に関する説明です。Auto Loaderとは別方式のKafkaコネクタでストリーミング取り込みします",
+      "D": "個人端末のローカルパスに関する説明です。Auto Loaderで継続監視する対象ではありません"
+    },
     "references": [
       {
         "title": "Auto Loaderとは何ですか？",
