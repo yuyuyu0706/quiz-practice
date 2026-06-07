@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { expect, test, type Page } from '@playwright/test';
 
 import { answerCurrentQuestion, startDeaPlusQuiz } from './helpers';
@@ -6,30 +8,11 @@ import { answerCurrentQuestion, startDeaPlusQuiz } from './helpers';
 // It intentionally avoids Phase 2-only fields such as whyWrong or multiple answers.
 // Update this fixture when the question schema is extended.
 // The fixed route data keeps Markdown rendering coverage stable without depending on
-// dea-quiz-app-plus/questions.json content changes.
-const markdownQuestions = [
-  {
-    id: 'MD001',
-    section: '1',
-    sectionTitle: 'Markdown E2E',
-    question: 'Databricks SQLで `SELECT` を確認します。\n```sql\nSELECT * FROM samples\n```',
-    choices: {
-      A: '`SELECT` は行を取得する',
-      B: '通常のテキスト',
-      C: 'Python例\n```python\nprint("x")\n```',
-      D: '通常の補足テキスト',
-    },
-    answer: 'A',
-    explanation:
-      '**重要**: `SELECT` はSQLの基本です。\n\n- inline codeを確認\n- list renderingを確認\n\n```python\nspark.sql("SELECT 1")\n```',
-    references: [
-      {
-        title: 'Markdown E2E fixture reference',
-        url: 'https://example.com/markdown-e2e-fixture',
-      },
-    ],
-  },
-];
+// dea-quiz-app-plus/questions.json content changes. The fixture is also checked by
+// scripts/validate-dea-plus-e2e-fixtures.mjs to catch schema or Markdown coverage drift.
+const markdownQuestions = JSON.parse(
+  readFileSync(new URL('./fixtures/dea-plus-markdown-questions.json', import.meta.url), 'utf8')
+);
 
 async function mockDeaPlusQuestions(page: Page) {
   await page.route('**/dea-quiz-app-plus/questions.json', async (route) => {
