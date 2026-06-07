@@ -333,7 +333,12 @@
       "D": "`spark.sql.ansi.enabled`"
     },
     "answer": "A",
-    "explanation": "チェックポイントは処理済みファイルやストリーミング状態を保持します。"
+    "explanation": "チェックポイントは処理済みファイルやストリーミング状態を保持します。",
+    "whyWrong": {
+      "B": "シャッフル時のパーティション数を調整するSpark設定です。増分取り込みの処理済み状態を保存する設定ではありません。",
+      "C": "Deltaの保持期間チェックに関する設定です。Auto Loaderの状態管理には使いません。",
+      "D": "SQLのANSI準拠動作を切り替える設定です。ストリーミングの再実行状態を保持するものではありません。"
+    }
   },
   {
     "id": "DEA-PLUS-Q012",
@@ -347,7 +352,12 @@
       "D": "`OPTIMIZE`"
     },
     "answer": "A",
-    "explanation": "schemaLocation に推論結果や進化情報が格納され、安定運用に重要です。"
+    "explanation": "schemaLocation に推論結果や進化情報が格納され、安定運用に重要です。",
+    "whyWrong": {
+      "B": "Delta書き込み時などにスキーマ統合を許可するオプションです。Auto Loaderの推論スキーマを永続化する場所ではありません。",
+      "C": "Deltaテーブルのデータ配置を最適化するSQL句です。スキーマ進化情報の保存には使いません。",
+      "D": "Deltaテーブルのファイルレイアウトを最適化するコマンドです。Auto Loaderのスキーマ管理設定ではありません。"
+    }
   },
   {
     "id": "DEA-PLUS-Q013",
@@ -361,7 +371,12 @@
       "D": "`@sql`"
     },
     "answer": "A",
-    "explanation": "`%sql`、`%python`、`%md` などが代表例です。"
+    "explanation": "`%sql`、`%python`、`%md` などが代表例です。",
+    "whyWrong": {
+      "B": "シェル系の記法に見えます。Databricksノートブックでセル言語を切り替えるマジックコマンドではありません。",
+      "C": "コメントや見出しに使われる記号に近い表記です。セル単位の言語切り替えには使いません。",
+      "D": "デコレーターやアノテーションのような表記です。Databricksのマジックコマンドではありません。"
+    }
   },
   {
     "id": "DEA-PLUS-Q014",
@@ -375,7 +390,12 @@
       "D": "監査ログを手で grep するだけ"
     },
     "answer": "A",
-    "explanation": "Spark UI（ステージ/タスク/SQL）、ドライバ/エグゼキュータログ、ジョブログなどが基本です。"
+    "explanation": "Spark UI（ステージ/タスク/SQL）、ドライバ/エグゼキュータログ、ジョブログなどが基本です。",
+    "whyWrong": {
+      "B": "Windows OSの設定編集ツールです。DatabricksのジョブやSpark処理をデバッグする組み込み機能ではありません。",
+      "C": "ブラウザ側の追加機能に限定した説明です。Databricksが提供する実行ログやメトリクスの確認手段ではありません。",
+      "D": "監査ログを手作業で検索する運用だけを指しています。Spark UIやジョブログなどの組み込み支援を表していません。"
+    }
   },
   {
     "id": "DEA-PLUS-Q015",
@@ -390,6 +410,11 @@
     },
     "answer": "A",
     "explanation": "正解は、**`readStream.format(\"cloudFiles\")`** です。\n\n- バッチ API の `read` ではなく、継続取り込みを前提に `readStream` を利用\n- 取り込み後は `writeStream` で Delta テーブルへ保存\n- watermark を設定する場合はイベント時間列の品質に注意\n\n```python\n(spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"parquet\")\n  .load(\"abfss://landing@acct.dfs.core.windows.net/events\")\n  .writeStream\n  .option(\"checkpointLocation\", \"dbfs:/chk/events\")\n  .trigger(availableNow=True)\n  .toTable(\"bronze.events\"))\n```\n\n```sql\nSELECT window(event_time, '10 minutes') AS w, count(*)\nFROM bronze.events\nGROUP BY window(event_time, '10 minutes');\n```\n\n注意点: ジョブ再実行時は同じ checkpoint を使うことで重複処理を防止できます。",
+    "whyWrong": {
+      "B": "既存のDeltaテーブルやDeltaファイルをバッチ読み取りするAPIです。Auto Loaderの継続的なファイル取り込みには使いません。",
+      "C": "外部ストレージをDBFSにマウントするためのユーティリティです。Structured Streamingの読み取りAPIではありません。",
+      "D": "Deltaテーブルの古いファイルを削除する保守コマンドです。Auto Loaderでデータを読み取る操作ではありません。"
+    },
     "references": [
       {
         "title": "Use Auto Loader in Structured Streaming",
