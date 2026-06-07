@@ -11,7 +11,8 @@
     "validate:dep-questions": "node scripts/validate-dep-questions.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate:e2e-catalog": "node scripts/validate-e2e-catalog.mjs"
+    "validate:e2e-catalog": "node scripts/validate-e2e-catalog.mjs",
+    "validate:swa-artifact": "node scripts/validate-swa-artifact.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
