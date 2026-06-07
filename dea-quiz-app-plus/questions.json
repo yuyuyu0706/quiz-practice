@@ -825,7 +825,26 @@
       "D": "UC を無効化する"
     },
     "answer": "B",
-    "explanation": "正解は、**失敗タスクを修復実行し、必要に応じて idempotent な書き込み（MERGE など）で再実行可能にする**です。\n\n再実行性（冪等性）と修復実行の組み合わせが実運用の基本です。"
+    "explanation": "正解は、**失敗タスクを修復実行し、必要に応じて idempotent な書き込み（MERGE など）で再実行可能にする** です\n\nDatabricks Jobs では、失敗後に **repair run** を使って、失敗したタスクとその依存タスクだけを再実行できます。さらに、修正後のノートブックパスや設定など、**現在の job / task 設定** で再実行されます。そのため、入力データを消すのではなく、コード修正後に失敗タスクを修復実行できる設計が最も適切です。\n\nまた、再実行時に同じデータが二重反映されないよう、書き込みは **idempotent** にしておくのが重要です。Databricks 公式でも、`foreachBatch` 内の `MERGE` は idempotent であることを確認すべきとされており、`txnAppId` / `txnVersion` による重複書き込み回避も案内されています",
+    "whyWrong": {
+      "A": "入力データを消してしまうと、原因調査や正しい再実行が難しくなります。コード修正だけで再実行したい状況では不適切です。",
+      "C": "監査ログを止めてもジョブ失敗の復旧にはつながりません。むしろ障害調査や運用監査に不利になります。",
+      "D": "Unity Catalog を無効化しても再実行性の問題は解決しません。ガバナンス機能を止める方向であり、障害復旧の適切な対応ではありません."
+    },
+    "references": [
+      {
+        "title": "Troubleshoot and repair job failures - Databricks",
+        "url": "https://docs.databricks.com/aws/en/jobs/repair-job-failures"
+      },
+      {
+        "title": "Troubleshoot and repair job failures - Azure Databricks",
+        "url": "https://learn.microsoft.com/en-us/azure/databricks/jobs/repair-job-failures"
+      },
+      {
+        "title": "Delta table streaming reads and writes - Azure Databricks",
+        "url": "https://learn.microsoft.com/en-us/azure/databricks/structured-streaming/delta-lake"
+      }
+    ]
   },
   {
     "id": "Q46",
@@ -839,7 +858,22 @@
       "D": "外部テーブルは Delta 形式を使えない"
     },
     "answer": "A",
-    "explanation": "正解は、**マネージドは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部はユーザー管理の場所を参照する**です。\n\n所有権（データファイルの管理責任）が大きな違いです。"
+    "explanation": "正解は、**マネージドは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部はユーザー管理の場所を参照する**です。\n\n所有権（データファイルの管理責任）が大きな違いです",
+    "whyWrong": {
+      "B": "外部テーブルでも SQL は利用できます。違いは SQL 可否ではなく、**データの保存場所とライフサイクル管理の責任範囲** にあります",
+      "C": "マネージドテーブルは読み取り専用ではありません。作成・更新・削除が可能で、Unity Catalog が読み書きや最適化を含む管理を担います",
+      "D": "外部テーブルでも Delta 形式は利用できます。外部テーブルの本質は **形式の制約** ではなく、**外部 location を参照すること** にあります"
+    },
+    "references": [
+      {
+        "title": "Azure Databricks for Delta Lake と Apache Iceberg の Unity カタログ マネージド テーブル",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/managed"
+      },
+      {
+        "title": "外部テーブルの操作",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/external"
+      }
+    ]
   },
   {
     "id": "Q47",
