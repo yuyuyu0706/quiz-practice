@@ -3,6 +3,8 @@ import {
   renderMarkdownToFragment,
 } from './markdown-renderer.js';
 
+const CHOICE_LABEL_ORDER = ['A', 'B', 'C', 'D', 'E'];
+
 const STORAGE_KEY_LABELS = {
   deaPlusQuizProgress: '学習進捗データ',
   deaPlusQuizSettings: '設定データ',
@@ -116,7 +118,7 @@ export function renderQuestion(els, data) {
     els.choicesForm.appendChild(choiceLabel);
   });
 
-  renderExplanation(els, { question, choiceMap });
+  renderExplanation(els, { question, showWhyWrong: Boolean(graded) });
   els.explanation.classList.toggle('hidden', !explanationOpen);
   els.toggleExplanation.textContent = explanationOpen ? '解説を非表示' : '解説を表示';
 
@@ -139,11 +141,70 @@ export function renderQuestion(els, data) {
   els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
 }
 
-export function renderExplanation(els, { question, choiceMap }) {
+export function renderExplanation(els, { question, showWhyWrong = false }) {
   els.explanation.replaceChildren();
   els.explanation.appendChild(
     renderMarkdownToFragment(typeof question.explanation === 'string' ? question.explanation : '')
   );
+
+  if (showWhyWrong) {
+    appendWhyWrongPanel(els.explanation, question);
+  }
+}
+
+function getWhyWrongEntries(question) {
+  if (
+    !question?.whyWrong ||
+    typeof question.whyWrong !== 'object' ||
+    Array.isArray(question.whyWrong)
+  ) {
+    return [];
+  }
+
+  return CHOICE_LABEL_ORDER.filter((label) =>
+    Object.prototype.hasOwnProperty.call(question.whyWrong, label)
+  )
+    .map((label) => [label, question.whyWrong[label]])
+    .filter(([, text]) => typeof text === 'string' && text.trim().length > 0)
+    .map(([label, text]) => [label, text.trim()]);
+}
+
+function appendWhyWrongPanel(container, question) {
+  const entries = getWhyWrongEntries(question);
+  if (entries.length === 0) return;
+
+  const panel = document.createElement('section');
+  panel.className = 'why-wrong-panel';
+  panel.setAttribute('aria-label', '各選択肢が違う理由');
+
+  const title = document.createElement('h4');
+  title.textContent = '各選択肢が違う理由';
+
+  const list = document.createElement('div');
+  list.className = 'why-wrong-list';
+
+  for (const [label, text] of entries) {
+    const item = document.createElement('article');
+    item.className = 'why-wrong-item';
+
+    const itemTitle = document.createElement('h5');
+    itemTitle.className = 'why-wrong-label';
+    const choiceText =
+      question?.choices && typeof question.choices[label] === 'string'
+        ? question.choices[label].trim()
+        : '';
+    itemTitle.textContent = choiceText ? `${label}. ${choiceText}` : `${label}.`;
+
+    const body = document.createElement('div');
+    body.className = 'why-wrong-body';
+    body.appendChild(renderMarkdownToFragment(text));
+
+    item.append(itemTitle, body);
+    list.appendChild(item);
+  }
+
+  panel.append(title, list);
+  container.appendChild(panel);
 }
 
 export function renderResult(els, result) {

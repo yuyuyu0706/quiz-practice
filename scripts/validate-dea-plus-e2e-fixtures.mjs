@@ -1,7 +1,18 @@
 import { readFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 
-const fixturePaths = [resolve('tests/e2e/fixtures/dea-plus-markdown-questions.json')];
+const fixtureConfigs = [
+  {
+    path: resolve('tests/e2e/fixtures/dea-plus-markdown-questions.json'),
+    allowWhyWrong: false,
+    requiredMarkdownCoverage: ['inlineCode', 'codeFence', 'strong', 'list'],
+  },
+  {
+    path: resolve('tests/e2e/fixtures/dea-plus-why-wrong-questions.json'),
+    allowWhyWrong: true,
+    requiredMarkdownCoverage: ['inlineCode', 'strong'],
+  },
+];
 const requiredFields = [
   'id',
   'section',
@@ -13,7 +24,6 @@ const requiredFields = [
 ];
 const answerLabels = ['A', 'B', 'C', 'D'];
 const phase2OnlyFields = new Set([
-  'whyWrong',
   'type',
   'questionType',
   'selectionType',
@@ -33,7 +43,12 @@ function collectQuestionText(question) {
   const choiceText = isPlainObject(question.choices)
     ? Object.values(question.choices).join('\n')
     : '';
-  return [question.question, choiceText, question.explanation].filter(Boolean).join('\n');
+  const whyWrongText = isPlainObject(question.whyWrong)
+    ? Object.values(question.whyWrong).join('\n')
+    : '';
+  return [question.question, choiceText, question.explanation, whyWrongText]
+    .filter(Boolean)
+    .join('\n');
 }
 
 function hasInlineCode(text) {
@@ -53,7 +68,7 @@ function hasList(text) {
   return /^\s*-\s+\S+/m.test(text);
 }
 
-function validateQuestion(question, index, errors, markdownCoverage) {
+function validateQuestion(question, index, errors, markdownCoverage, options) {
   const label = `question[${index}]${isNonEmptyString(question?.id) ? ` (${question.id})` : ''}`;
 
   if (!isPlainObject(question)) {
@@ -68,7 +83,7 @@ function validateQuestion(question, index, errors, markdownCoverage) {
   }
 
   for (const field of Object.keys(question)) {
-    if (phase2OnlyFields.has(field)) {
+    if (phase2OnlyFields.has(field) || (field === 'whyWrong' && !options.allowWhyWrong)) {
       errors.push(`${label} must not include Phase 2-only field: ${field}.`);
     }
   }
@@ -109,6 +124,24 @@ function validateQuestion(question, index, errors, markdownCoverage) {
     errors.push(`${label}.answer must exist as a key in choices.`);
   }
 
+  if ('whyWrong' in question && question.whyWrong !== undefined && options.allowWhyWrong) {
+    if (!isPlainObject(question.whyWrong)) {
+      errors.push(`${label}.whyWrong must be an object when present.`);
+    } else if (isPlainObject(question.choices)) {
+      Object.entries(question.whyWrong).forEach(([choiceKey, reason]) => {
+        if (!(choiceKey in question.choices)) {
+          errors.push(`${label}.whyWrong.${choiceKey} must reference an existing choice key.`);
+        }
+        if (choiceKey === question.answer) {
+          errors.push(`${label}.whyWrong must not include the correct answer key ${choiceKey}.`);
+        }
+        if (!isNonEmptyString(reason)) {
+          errors.push(`${label}.whyWrong.${choiceKey} must be a non-empty string.`);
+        }
+      });
+    }
+  }
+
   if ('references' in question && question.references !== undefined) {
     if (!Array.isArray(question.references)) {
       errors.push(`${label}.references must be an array when present.`);
@@ -139,7 +172,8 @@ function validateQuestion(question, index, errors, markdownCoverage) {
 let totalQuestions = 0;
 const allErrors = [];
 
-for (const fixturePath of fixturePaths) {
+for (const fixtureConfig of fixtureConfigs) {
+  const fixturePath = fixtureConfig.path;
   const displayPath = relative(process.cwd(), fixturePath);
   const errors = [];
   const markdownCoverage = {
@@ -163,13 +197,13 @@ for (const fixturePath of fixturePaths) {
     errors.push('fixture must include at least one question.');
   } else {
     questions.forEach((question, index) =>
-      validateQuestion(question, index, errors, markdownCoverage)
+      validateQuestion(question, index, errors, markdownCoverage, fixtureConfig)
     );
     totalQuestions += questions.length;
   }
 
-  for (const [feature, covered] of Object.entries(markdownCoverage)) {
-    if (!covered) {
+  for (const feature of fixtureConfig.requiredMarkdownCoverage) {
+    if (!markdownCoverage[feature]) {
       errors.push(`fixture must include Markdown coverage for ${feature}.`);
     }
   }
@@ -185,6 +219,6 @@ if (allErrors.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `DEA Plus E2E fixture validation passed (${fixturePaths.length} fixture file(s), ${totalQuestions} question(s) checked).`
+    `DEA Plus E2E fixture validation passed (${fixtureConfigs.length} fixture file(s), ${totalQuestions} question(s) checked).`
   );
 }
