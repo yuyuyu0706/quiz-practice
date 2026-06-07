@@ -1,0 +1,37 @@
+[
+  {
+    "id": "WW001",
+    "section": "1",
+    "sectionTitle": "WhyWrong E2E",
+    "question": "SQL Warehouseの説明として正しいものはどれですか？",
+    "choices": {
+      "A": "SQLクエリ実行に使うコンピュートリソース",
+      "B": "Unity Catalogのメタストアそのもの",
+      "C": "Delta Sharingの受信者設定",
+      "D": "ノートブックのバージョン管理機能"
+    },
+    "answer": "A",
+    "explanation": "SQL WarehouseはSQLクエリ実行用のコンピュートです。",
+    "whyWrong": {
+      "B": "`Unity Catalog` はガバナンス機能であり、SQL Warehouseそのものではありません。",
+      "C": "**Delta Sharing** はデータ共有機能です。",
+      "D": "ノートブックのバージョン管理とは用途が異なります。"
+    },
+    "references": []
+  },
+  {
+    "id": "WW002",
+    "section": "1",
+    "sectionTitle": "WhyWrong E2E",
+    "question": "whyWrongがない問題です。",
+    "choices": {
+      "A": "正答",
+      "B": "誤答",
+      "C": "誤答その2",
+      "D": "誤答その3"
+    },
+    "answer": "A",
+    "explanation": "通常の解説のみを表示します。",
+    "references": []
+  }
+]
