@@ -207,7 +207,7 @@
     "answer": "B",
     "explanation": "正解は、**ウィジェット（dbutils.widgets）を使う** です。\n\nDatabricksのNotebookをパラメータ化してジョブ実行するときの定番は、dbutils.widgets で入力ウィジェットを定義し、その値をNotebook内で読み取る方法です。公式にも、widgets は Notebook にパラメータを追加する用途として説明されており、ジョブから渡されたパラメータをNotebookタスクで参照する方法として使えます",
     "whyWrong": {
-      "A": "Notebookにライブラリを追加するコマンドです",
+      "A": "Notebookにライブラリを追加するコマンドです。ジョブから入力値を受け取る仕組みではありません",
       "C": "Deltaテーブルの不要ファイルを削除する保守操作です",
       "D": "Deltaテーブルの変更履歴を確認するSQLです"
     },
