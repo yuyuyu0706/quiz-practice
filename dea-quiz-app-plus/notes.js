@@ -1,3 +1,5 @@
+import { normalizeQuestionId } from './question-id.js';
+
 // 問題単位の学習進捗と自分用メモの初期値・更新補助を提供する。
 export function baseProgress() {
   return {
@@ -32,11 +34,17 @@ export function normalizeProgress(progress) {
     return {};
   }
 
-  return Object.fromEntries(
-    Object.entries(progress)
-      .filter(([questionId]) => typeof questionId === 'string' && questionId.trim())
-      .map(([questionId, entry]) => [questionId, normalizeProgressEntry(entry)])
-  );
+  return Object.entries(progress)
+    .filter(([questionId]) => typeof questionId === 'string' && questionId.trim())
+    .reduce((normalized, [questionId, entry]) => {
+      const normalizedQuestionId = normalizeQuestionId(questionId);
+      const normalizedEntry = normalizeProgressEntry(entry);
+      normalized[normalizedQuestionId] = mergeProgressEntries(
+        normalized[normalizedQuestionId],
+        normalizedEntry
+      );
+      return normalized;
+    }, {});
 }
 
 export function getQuestionNote(progress, questionId) {
@@ -83,4 +91,48 @@ function normalizeNoteText(entry) {
 
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function mergeProgressEntries(existingEntry, incomingEntry) {
+  if (!existingEntry) return incomingEntry;
+
+  const existing = normalizeProgressEntry(existingEntry);
+  const incoming = normalizeProgressEntry(incomingEntry);
+  const noteSource = chooseNoteSource(existing, incoming);
+
+  return {
+    seenCount: Math.max(existing.seenCount, incoming.seenCount),
+    correctCount: Math.max(existing.correctCount, incoming.correctCount),
+    wrongCount: Math.max(existing.wrongCount, incoming.wrongCount),
+    lastAnsweredAt: maxIsoString(existing.lastAnsweredAt, incoming.lastAnsweredAt),
+    bookmark: existing.bookmark || incoming.bookmark,
+    noteText: noteSource.noteText,
+    noteUpdatedAt: noteSource.noteUpdatedAt,
+  };
+}
+
+function chooseNoteSource(existing, incoming) {
+  const existingHasNote = String(existing.noteText ?? '').trim().length > 0;
+  const incomingHasNote = String(incoming.noteText ?? '').trim().length > 0;
+
+  if (existingHasNote && incomingHasNote) {
+    return isAfter(incoming.noteUpdatedAt, existing.noteUpdatedAt) ? incoming : existing;
+  }
+
+  if (incomingHasNote) return incoming;
+  if (existingHasNote) return existing;
+
+  return isAfter(incoming.noteUpdatedAt, existing.noteUpdatedAt) ? incoming : existing;
+}
+
+function maxIsoString(a, b) {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return isAfter(b, a) ? b : a;
+}
+
+function isAfter(candidate, current) {
+  if (!candidate) return false;
+  if (!current) return true;
+  return candidate > current;
 }

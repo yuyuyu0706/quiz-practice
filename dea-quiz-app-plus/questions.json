@@ -1,6 +1,6 @@
 [
   {
-    "id": "Q1",
+    "id": "DEA-PLUS-Q001",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "Databricks で データレイアウトの決定を簡素化し、クエリ性能を最適化する代表的な機能の組み合わせ として最も適切なのはどれ？",
@@ -29,7 +29,7 @@
     ]
   },
   {
-    "id": "Q2",
+    "id": "DEA-PLUS-Q002",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "Databricks Data Intelligence Platform の価値として最も適切なのはどれ？",
@@ -62,7 +62,7 @@
     ]
   },
   {
-    "id": "Q3",
+    "id": "DEA-PLUS-Q003",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "以下のうち、 同一のワークスペース内で複数チームが同じデータ資産を安全に共有しやすくする設計 として最も適切なのはどれ？",
@@ -95,7 +95,7 @@
     ]
   },
   {
-    "id": "Q4",
+    "id": "DEA-PLUS-Q004",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "次のうち、 短時間のアドホック分析 に最も適したコンピュート選択はどれ？",
@@ -132,7 +132,7 @@
     ]
   },
   {
-    "id": "Q5",
+    "id": "DEA-PLUS-Q005",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "SQL 実行の高速化に寄与する Databricks の実行エンジン機能として最も適切なのはどれ？",
@@ -161,7 +161,7 @@
     ]
   },
   {
-    "id": "Q6",
+    "id": "DEA-PLUS-Q006",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Databricks Connect の主目的として最も適切なのはどれ？",
@@ -189,7 +189,7 @@
     ]
   },
   {
-    "id": "Q7",
+    "id": "DEA-PLUS-Q007",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Notebook をジョブからパラメータ付きで実行する方法として、最も一般的なのはどれですか？",
@@ -213,7 +213,7 @@
     ]
   },
   {
-    "id": "Q8",
+    "id": "DEA-PLUS-Q008",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "複数ノートブックを 1 つのリポジトリで管理し、ブランチ運用する機能はどれ？",
@@ -241,7 +241,7 @@
     ]
   },
   {
-    "id": "Q9",
+    "id": "DEA-PLUS-Q009",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loader が主に解決する課題として最も適切なのはどれ？",
@@ -265,7 +265,7 @@
     ]
   },
   {
-    "id": "Q10",
+    "id": "DEA-PLUS-Q010",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loader の入力に扱うソースとして最も適切なのはどれ？",
@@ -301,7 +301,7 @@
     ]
   },
   {
-    "id": "Q11",
+    "id": "DEA-PLUS-Q011",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loader で増分取り込みの状態を保持するために必須となる設定はどれ？",
@@ -315,7 +315,7 @@
     "explanation": "チェックポイントは処理済みファイルやストリーミング状態を保持します。"
   },
   {
-    "id": "Q12",
+    "id": "DEA-PLUS-Q012",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loader のスキーマを永続化し、スキーマ進化を安全に扱うために用いる設定はどれ？",
@@ -329,7 +329,7 @@
     "explanation": "schemaLocation に推論結果や進化情報が格納され、安定運用に重要です。"
   },
   {
-    "id": "Q13",
+    "id": "DEA-PLUS-Q013",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "次のうち、ノートブックでセル単位の言語を切り替える「マジックコマンド」の例として正しいのはどれ？",
@@ -343,7 +343,7 @@
     "explanation": "`%sql`、`%python`、`%md` などが代表例です。"
   },
   {
-    "id": "Q14",
+    "id": "DEA-PLUS-Q014",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "次のうち、Databricks の組み込みデバッグ支援として適切なのはどれ？",
@@ -357,7 +357,7 @@
     "explanation": "Spark UI（ステージ/タスク/SQL）、ドライバ/エグゼキュータログ、ジョブログなどが基本です。"
   },
   {
-    "id": "Q15",
+    "id": "DEA-PLUS-Q015",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Structured Streaming を使って Auto Loader で取り込みたい。読み取りに使う典型 API はどれ？",
@@ -381,7 +381,7 @@
     ]
   },
   {
-    "id": "Q16",
+    "id": "DEA-PLUS-Q016",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "ノートブックをジョブのタスクとして実行する際、依存関係として最も適切なのはどれ？",
@@ -405,7 +405,7 @@
     ]
   },
   {
-    "id": "Q17",
+    "id": "DEA-PLUS-Q017",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "次のうち、ノートブック実行時に「同じセルを複数回実行して状態が変わる」問題を減らすために有効な運用はどれ？",
@@ -419,7 +419,7 @@
     "explanation": "再現性（idempotency）を意識し、状態依存を減らすのが基本です。"
   },
   {
-    "id": "Q18",
+    "id": "DEA-PLUS-Q018",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loader のユースケースとして最も適切なのはどれ？",
@@ -433,7 +433,7 @@
     "explanation": "ファイル増分取り込み（ブロンズ層）での利用が典型です。"
   },
   {
-    "id": "Q19",
+    "id": "DEA-PLUS-Q019",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Databricks Connect 利用時のトラブルシューティングとして最も適切なのはどれ？",
@@ -447,7 +447,7 @@
     "explanation": "正解は、**ローカルのライブラリとクラスターランタイム/DBR の互換性を確認する** です\n\n互換性（Python/Spark/DBR）や認証設定がまず確認ポイントです。"
   },
   {
-    "id": "Q20",
+    "id": "DEA-PLUS-Q020",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "ストリーミング取り込みのジョブが遅い。まず確認すべき内容として適切なのはどれ？",
@@ -461,7 +461,7 @@
     "explanation": "正解は、**Spark UI で確認する**です\n\n遅延の原因は計算/シャッフル/I/O/スキュー等が多く、Spark UI での調査が第一選択です"
   },
   {
-    "id": "Q21",
+    "id": "DEA-PLUS-Q021",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "メダリオンアーキテクチャにおける   Bronze  の主目的として最も適切なのはどれ？",
@@ -475,7 +475,7 @@
     "explanation": "正解は、**取り込みデータをできるだけ加工せず、監査可能な形で保存する** です。\n\nBronze は「生データに近い形の着地（履歴保持・再処理可能）」が基本です。"
   },
   {
-    "id": "Q22",
+    "id": "DEA-PLUS-Q022",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Silver の主目的として最も適切なのはどれ？",
@@ -489,7 +489,7 @@
     "explanation": "正解は、**クリーニング・正規化・結合などの品質改善を行い、下流で使いやすくする**です。\n\nSilver はクレンジング/整形/統合など「利用可能な形」への変換が中心です。"
   },
   {
-    "id": "Q23",
+    "id": "DEA-PLUS-Q023",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Gold の主目的として最も適切なのはどれ？",
@@ -503,7 +503,7 @@
     "explanation": "正解は、**ビジネス利用（BI/ML）に最適化した集計・データマートを提供する** です。\n\nGold は下流ユースケース向け（集計・指標・データマート）です。"
   },
   {
-    "id": "Q24",
+    "id": "DEA-PLUS-Q024",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "次のうち、バッチ ETL に適したクラスター選択として最も適切なのはどれ？",
@@ -517,7 +517,7 @@
     "explanation": "正解は、**Job クラスター**です。\n\nバッチ処理は Job クラスターでコスト最適化しやすいです。"
   },
   {
-    "id": "Q25",
+    "id": "DEA-PLUS-Q025",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DLT（Delta Live Tables）の利点として最も適切なのはどれ？",
@@ -531,7 +531,7 @@
     "explanation": "宣言型パイプライン、expectations、運用容易性が主要メリットです。"
   },
   {
-    "id": "Q26",
+    "id": "DEA-PLUS-Q026",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DLT の expectation（例：`CONSTRAINT valid_timestamp EXPECT (...)`）に違反したレコードの扱いで、最も典型的なのはどれ？（設定により挙動は変化し得る）",
@@ -545,7 +545,7 @@
     "explanation": "期待値は「記録」「ドロップ」「失敗」などを選べますが、記録（無効としてログに残す）が基本パターンです。"
   },
   {
-    "id": "Q27",
+    "id": "DEA-PLUS-Q027",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DDL として最も適切な操作はどれ？",
@@ -559,7 +559,7 @@
     "explanation": "DDL はスキーマ/オブジェクト定義（CREATE/ALTER/DROP 等）です。"
   },
   {
-    "id": "Q28",
+    "id": "DEA-PLUS-Q028",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DML として最も適切な操作はどれ？",
@@ -573,7 +573,7 @@
     "explanation": "DML はデータ操作（INSERT/UPDATE/DELETE/MERGE 等）です。"
   },
   {
-    "id": "Q29",
+    "id": "DEA-PLUS-Q029",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "PySpark DataFrame で「ユーザー別に売上合計と注文回数」を計算する最も適切なパターンはどれ？",
@@ -587,7 +587,7 @@
     "explanation": "正解は、**`groupBy(\"user_id\").agg(sum(\"sales\").alias(\"total_sales\"), count(\"*\").alias(\"orders\"))`**です。\n\n集計は `groupBy().agg()` が基本です。"
   },
   {
-    "id": "Q30",
+    "id": "DEA-PLUS-Q030",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "次のうち、ウィンドウ関数を DataFrame で使う主な目的として最も適切なのはどれ？",
@@ -601,7 +601,7 @@
     "explanation": "正解は、**パーティション内の順序を考慮した累積値、順位、移動平均との差などを計算する**です。\n\nWindow は「グループ内の順序」を扱う計算（rank/lag/rolling 等）に使います。"
   },
   {
-    "id": "Q31",
+    "id": "DEA-PLUS-Q031",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Delta テーブルに対する `MERGE INTO` の典型用途として最も適切なのはどれ？",
@@ -629,7 +629,7 @@
     ]
   },
   {
-    "id": "Q32",
+    "id": "DEA-PLUS-Q032",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "次のうち、Delta Lake のタイムトラベルを利用する SQL として最も適切なのはどれ？",
@@ -643,7 +643,7 @@
     "explanation": "正解は **`SELECT * FROM table VERSION AS OF 5`**です。\n\nVERSION/TIMESTAMP 指定で過去スナップショット参照ができます。"
   },
   {
-    "id": "Q33",
+    "id": "DEA-PLUS-Q033",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "大規模なシャッフルが発生し、特定キーにデータが偏っている（スキュー）場合の対処として適切なのはどれ？",
@@ -657,7 +657,7 @@
     "explanation": "正解は、**キーのサルティング（salt）や再パーティション戦略を検討する** です。\n\nスキューはシャッフルの偏りなので、分散の工夫（salt 等）が有効です。"
   },
   {
-    "id": "Q34",
+    "id": "DEA-PLUS-Q034",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "同じ中間結果を複数回使う処理があり、再計算コストが高い。DataFrame での対処として最も適切なのはどれ？",
@@ -671,7 +671,7 @@
     "explanation": "正解は、**`cache()` / `persist()` を使う** です。\n\nキャッシュは再利用により計算量を削減できます（メモリ/ディスク戦略に注意）。"
   },
   {
-    "id": "Q35",
+    "id": "DEA-PLUS-Q035",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "UDF（ユーザー定義関数）を使う際の一般的な注意点として適切なのはどれ？",
@@ -685,7 +685,7 @@
     "explanation": "正解は、**最適化が効きにくい場合があるため、まず組み込み関数/SQL 関数を検討する** です。\n\nUDF は最適化（例：Catalyst/Photon）が効きにくいケースがあるため、組み込み優先が定石です。"
   },
   {
-    "id": "Q36",
+    "id": "DEA-PLUS-Q036",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Delta テーブルで小さなファイルが大量にある場合の典型的な対策はどれ？",
@@ -717,7 +717,7 @@
     ]
   },
   {
-    "id": "Q37",
+    "id": "DEA-PLUS-Q037",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "DAB（Databricks Asset Bundles）の目的として最も適切なのはどれ？",
@@ -731,7 +731,7 @@
     "explanation": "正解は、**Databricks のリソース（ジョブ、パイプライン等）をコードとして定義し、環境ごとにデプロイ可能にする**です。\n\nDAB は Databricks リソースを宣言的にまとめ、再現性あるデプロイを支援します"
   },
   {
-    "id": "Q38",
+    "id": "DEA-PLUS-Q038",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "DAB と従来の「GUI でジョブを手作業作成」の違いとして最も適切なのはどれ？",
@@ -745,7 +745,7 @@
     "explanation": "正解は、**DAB はリソース定義をファイルで管理し CI/CD に組み込みやすい**です。\n\nIaC 的に扱える点が最大の違いです。"
   },
   {
-    "id": "Q39",
+    "id": "DEA-PLUS-Q039",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "Workflows で失敗したタスクを、原因修正後に該当タスク以降を再実行したい。最も適切なのはどれ？",
@@ -769,7 +769,7 @@
     ]
   },
   {
-    "id": "Q40",
+    "id": "DEA-PLUS-Q040",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "ジョブの実行ログや出力を追跡し、失敗原因を確認する基本手段として適切なのはどれ？",
@@ -783,7 +783,7 @@
     "explanation": "正解は、**Workflows の Run（実行）詳細画面でログ/出力を確認する** です\n\nジョブ実行の UI からタスクログ、ドライバログ、設定を辿れます。"
   },
   {
-    "id": "Q41",
+    "id": "DEA-PLUS-Q041",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "Databricks 管理のサーバレス（例：サーバレス SQL/ジョブ）を使う利点として最も適切なのはどれ？",
@@ -797,7 +797,7 @@
     "explanation": "正解は、**コンピュート運用の多くをプラットフォーム側に任せ、起動/スケール等を最適化できる** です\n\n運用負荷軽減（管理の自動化）が大きな利点です。"
   },
   {
-    "id": "Q42",
+    "id": "DEA-PLUS-Q042",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "Spark UI を使って「どこが遅いか」を特定する際、まず見るべき情報の組み合わせとして最も適切なのはどれ？",
@@ -811,7 +811,7 @@
     "explanation": "正解は、**Stage の時間、Shuffle Read/Write、Skew、Task 失敗/再試行** です\n\nボトルネックはステージ/タスク/シャッフル/I/O に現れます。"
   },
   {
-    "id": "Q43",
+    "id": "DEA-PLUS-Q043",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "ジョブが外部システム API を呼び出す。レート制限対策として最も適切なのはどれ？",
@@ -825,7 +825,7 @@
     "explanation": "正解は、**リトライ（指数バックオフ）と並列度の制御を組み合わせる** です\n\n外部依存ではリトライ戦略と並列制御が基本です。"
   },
   {
-    "id": "Q44",
+    "id": "DEA-PLUS-Q044",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "本番向けに「環境差分（dev/stg/prod）」を安全に扱う一般的手法として適切なのはどれ？",
@@ -839,7 +839,7 @@
     "explanation": "正解は、**環境ごとに変数/シークレット/設定を分離し、DAB などで切り替えてデプロイする** です\n\n秘匿情報分離と環境別設定がセキュアで再現性も高いです。"
   },
   {
-    "id": "Q45",
+    "id": "DEA-PLUS-Q045",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "「処理が失敗したが、入力データはそのまま。コード修正だけで再実行したい」場合、運用として最も適切なのはどれ？",
@@ -872,7 +872,7 @@
     ]
   },
   {
-    "id": "Q46",
+    "id": "DEA-PLUS-Q046",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Unity Catalog におけるマネージドテーブル と 外部テーブル の違いとして最も適切なのはどれ？",
@@ -901,7 +901,7 @@
     ]
   },
   {
-    "id": "Q47",
+    "id": "DEA-PLUS-Q047",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "UnityCatalog で「スキーマを利用する」ために必要になりやすい権限の組み合わせとして最も適切なのはどれ？",
@@ -915,7 +915,7 @@
     "explanation": "正解は、**`USAGE`（カタログ/スキーマ）＋対象オブジェクトへの権限** です。\n\nUnityCatalog は階層に沿って `USAGE` とオブジェクト権限が必要になるのが基本です。"
   },
   {
-    "id": "Q48",
+    "id": "DEA-PLUS-Q048",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "UC の重要なロール/概念として最も適切なのはどれ？",
@@ -947,7 +947,7 @@
     ]
   },
   {
-    "id": "Q49",
+    "id": "DEA-PLUS-Q049",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Unity Catalog のリネージ（lineage）を活用する主な目的として最も適切なのはどれ？",
@@ -961,7 +961,7 @@
     "explanation": "正解は、**データの派生関係（上流→下流）を把握し、影響範囲分析や監査に使う** です\n\nどのデータがどこから来て、どこへ使われたかの追跡により、変更影響や品質管理が容易になります。"
   },
   {
-    "id": "Q50",
+    "id": "DEA-PLUS-Q050",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Delta Sharing の説明として最も適切なのはどれ？",
@@ -975,7 +975,7 @@
     "explanation": "共有方式（プロトコル/権限/課金/データ移動）を理解することが重要です。"
   },
   {
-    "id": "Q51",
+    "id": "DEA-PLUS-Q051",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "Databricksのレイクハウス（Data Intelligence Platform）の価値として最も適切な説明はどれ？",
@@ -999,7 +999,7 @@
     ]
   },
   {
-    "id": "Q52",
+    "id": "DEA-PLUS-Q052",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "クラスタ（ドライバ/ワーカー）を実際にホストする場所として正しいのはどれ？",
@@ -1027,7 +1027,7 @@
     ]
   },
   {
-    "id": "Q53",
+    "id": "DEA-PLUS-Q053",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "同一クエリでも実行のたびに起動/停止される運用を減らしたい。運用負担を抑えつつSQL実行基盤を使いたい場合の選択として最も適切なのはどれ？",
@@ -1055,7 +1055,7 @@
     ]
   },
   {
-    "id": "Q54",
+    "id": "DEA-PLUS-Q054",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "クエリ性能を最適化するために、データレイアウトの決定を簡素化する機能の考え方として最も近いのはどれ？",
@@ -1087,7 +1087,7 @@
     ]
   },
   {
-    "id": "Q55",
+    "id": "DEA-PLUS-Q055",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "バッチETLとストリーミングの両方を同じテーブル（Delta）に対して適用したい。設計として最も自然なのはどれ？",
@@ -1115,7 +1115,7 @@
     ]
   },
   {
-    "id": "Q56",
+    "id": "DEA-PLUS-Q056",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Databricks Connectの主なユースケースとして最も適切なのはどれ？",
@@ -1143,7 +1143,7 @@
     ]
   },
   {
-    "id": "Q57",
+    "id": "DEA-PLUS-Q057",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Notebookの機能として一般的に期待できるものはどれ？",
@@ -1171,7 +1171,7 @@
     ]
   },
   {
-    "id": "Q58",
+    "id": "DEA-PLUS-Q058",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loaderの代表的なユースケースとして最も適切なのはどれ？",
@@ -1203,7 +1203,7 @@
     ]
   },
   {
-    "id": "Q59",
+    "id": "DEA-PLUS-Q059",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loaderの取り込みでスキーマ進化（schema evolution）を扱いたい。一般的に行う設定として適切なのはどれ？",
@@ -1235,7 +1235,7 @@
     ]
   },
   {
-    "id": "Q60",
+    "id": "DEA-PLUS-Q060",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Structured Streaming + Auto Loaderで一貫した再処理を行う際に最も重要な永続データはどれ？",
@@ -1267,7 +1267,7 @@
     ]
   },
   {
-    "id": "Q61",
+    "id": "DEA-PLUS-Q061",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Databricksのデバッグで、実行計画やステージのボトルネック把握に最も直接的に役立つのはどれ？",
@@ -1299,7 +1299,7 @@
     ]
   },
   {
-    "id": "Q62",
+    "id": "DEA-PLUS-Q062",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "ストリーミング取り込みで同一ファイルが二重に処理されないようにしたい。設計として適切なのはどれ？",
@@ -1327,7 +1327,7 @@
     ]
   },
   {
-    "id": "Q63",
+    "id": "DEA-PLUS-Q063",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Notebooksでライブラリの依存関係管理として、最小構成で再現性を上げたい。一般的に推奨されるのはどれ？",
@@ -1363,7 +1363,7 @@
     ]
   },
   {
-    "id": "Q64",
+    "id": "DEA-PLUS-Q064",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loaderで取り込み対象として一般的に扱いやすいのはどれ？",
@@ -1395,7 +1395,7 @@
     ]
   },
   {
-    "id": "Q65",
+    "id": "DEA-PLUS-Q065",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "ストリーミングで集計結果をテーブルに出力する際、累積集計を常に最新で上書きしたい。outputModeとして最も近いのはどれ？",
@@ -1423,7 +1423,7 @@
     ]
   },
   {
-    "id": "Q66",
+    "id": "DEA-PLUS-Q066",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Notebookで同じ処理を本番ジョブとして定期実行したい。最も素直な流れはどれ？",
@@ -1451,7 +1451,7 @@
     ]
   },
   {
-    "id": "Q67",
+    "id": "DEA-PLUS-Q067",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "取り込み時に不正レコードの解析を容易にしたい。実装上の工夫として適切なのはどれ？",
@@ -1479,7 +1479,7 @@
     ]
   },
   {
-    "id": "Q68",
+    "id": "DEA-PLUS-Q068",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loaderで大規模ディレクトリを取り込む際、初回フルスキャンを避けたい。一般的な手段はどれ？",
@@ -1511,7 +1511,7 @@
     ]
   },
   {
-    "id": "Q69",
+    "id": "DEA-PLUS-Q069",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "実行が遅いNotebookがある。まず確認する一次情報として最も適切なのはどれ？",
@@ -1543,7 +1543,7 @@
     ]
   },
   {
-    "id": "Q70",
+    "id": "DEA-PLUS-Q070",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "外部IDEからの開発と、ワークスペース内での実行を両立したい。適切な構成はどれ？",
@@ -1571,7 +1571,7 @@
     ]
   },
   {
-    "id": "Q71",
+    "id": "DEA-PLUS-Q071",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "メダリオンアーキテクチャにおけるBronze層の主目的として最も近いのはどれ？",
@@ -1595,7 +1595,7 @@
     ]
   },
   {
-    "id": "Q72",
+    "id": "DEA-PLUS-Q072",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Silver層の主目的として最も適切なのはどれ？",
@@ -1623,7 +1623,7 @@
     ]
   },
   {
-    "id": "Q73",
+    "id": "DEA-PLUS-Q073",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Gold層の主目的として最も適切なのはどれ？",
@@ -1651,7 +1651,7 @@
     ]
   },
   {
-    "id": "Q74",
+    "id": "DEA-PLUS-Q074",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DLT（Delta Live Tables）の利点として最も適切なのはどれ？",
@@ -1683,7 +1683,7 @@
     ]
   },
   {
-    "id": "Q75",
+    "id": "DEA-PLUS-Q075",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "SQLでDDLに該当する操作として最も適切なのはどれ？",
@@ -1711,7 +1711,7 @@
     ]
   },
   {
-    "id": "Q76",
+    "id": "DEA-PLUS-Q076",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DMLに該当する操作として最も適切なのはどれ？",
@@ -1739,7 +1739,7 @@
     ]
   },
   {
-    "id": "Q77",
+    "id": "DEA-PLUS-Q077",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "PySpark DataFrameで複雑な集計を行うとき、グループ単位の集計に最も典型的に使うのはどれ？",
@@ -1767,7 +1767,7 @@
     ]
   },
   {
-    "id": "Q78",
+    "id": "DEA-PLUS-Q078",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "大規模結合でシャッフルが肥大化している。まず検討する改善策として一般的なのはどれ？",
@@ -1803,7 +1803,7 @@
     ]
   },
   {
-    "id": "Q79",
+    "id": "DEA-PLUS-Q079",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "クラスタータイプ選定で、短時間・断続的なジョブを多数さばきたい。運用負担を抑えたい場合の選択として適切なのはどれ？",
@@ -1823,7 +1823,7 @@
     ]
   },
   {
-    "id": "Q80",
+    "id": "DEA-PLUS-Q080",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "ストリーミングで到着遅延（late data）を許容しつつウィンドウ集計したい。一般的に必要となる概念はどれ？",
@@ -1851,7 +1851,7 @@
     ]
   },
   {
-    "id": "Q81",
+    "id": "DEA-PLUS-Q081",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Deltaテーブルで過去バージョンを参照できる機能として最も近いのはどれ？",
@@ -1883,7 +1883,7 @@
     ]
   },
   {
-    "id": "Q82",
+    "id": "DEA-PLUS-Q082",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "MERGE INTO を使う主目的として最も適切なのはどれ？",
@@ -1907,7 +1907,7 @@
     ]
   },
   {
-    "id": "Q83",
+    "id": "DEA-PLUS-Q083",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DLTでデータ品質を担保したい。一般的に行うのはどれ？",
@@ -1939,7 +1939,7 @@
     ]
   },
   {
-    "id": "Q84",
+    "id": "DEA-PLUS-Q084",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "頻繁にフィルタされる列に基づいて、Delta テーブルのデータレイアウトを改善したい。最も近い操作はどれか",
@@ -1963,7 +1963,7 @@
     ]
   },
   {
-    "id": "Q85",
+    "id": "DEA-PLUS-Q085",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "DataFrameの遅延評価（lazy evaluation）の説明として最も適切なのはどれ？",
@@ -1987,7 +1987,7 @@
     ]
   },
   {
-    "id": "Q86",
+    "id": "DEA-PLUS-Q086",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "DAB（Databricks Asset Bundles）と従来のデプロイ方法の違いとして最も適切なのはどれ？",
@@ -2019,7 +2019,7 @@
     ]
   },
   {
-    "id": "Q87",
+    "id": "DEA-PLUS-Q087",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "ワークフローでタスク失敗が発生した。最も一般的な運用として適切なのはどれ？",
@@ -2047,7 +2047,7 @@
     ]
   },
   {
-    "id": "Q88",
+    "id": "DEA-PLUS-Q088",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "サーバレスコンピュート（Databricks管理）を使う利点として最も適切なのはどれ？",
@@ -2075,7 +2075,7 @@
     ]
   },
   {
-    "id": "Q89",
+    "id": "DEA-PLUS-Q089",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "Spark UIでクエリ最適化のヒントを得たい。最も典型的に確認するのはどれ？",
@@ -2095,7 +2095,7 @@
     ]
   },
   {
-    "id": "Q90",
+    "id": "DEA-PLUS-Q090",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "DABの構造として一般的に含まれるものはどれ？",
@@ -2123,7 +2123,7 @@
     ]
   },
   {
-    "id": "Q91",
+    "id": "DEA-PLUS-Q091",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "ワークフローで、特定タスクだけを再実行したい。期待する動作として適切なのはどれ？",
@@ -2151,7 +2151,7 @@
     ]
   },
   {
-    "id": "Q92",
+    "id": "DEA-PLUS-Q092",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "本番運用でジョブの実行ログを追跡しやすくしたい。まず設計すべきなのはどれ？",
@@ -2171,7 +2171,7 @@
     ]
   },
   {
-    "id": "Q93",
+    "id": "DEA-PLUS-Q093",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "開発環境と本番環境で同じジョブ定義を使い、差分は環境変数で切り替えたい。最も近い考え方はどれ？",
@@ -2199,7 +2199,7 @@
     ]
   },
   {
-    "id": "Q94",
+    "id": "DEA-PLUS-Q094",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "ジョブが失敗した際、原因の切り分けでまず見るべき優先度が高い情報はどれ？",
@@ -2219,7 +2219,7 @@
     ]
   },
   {
-    "id": "Q95",
+    "id": "DEA-PLUS-Q095",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Unity Catalogにおけるマネージドテーブルと外部テーブルの違いとして最も適切なのはどれ？",
@@ -2251,7 +2251,7 @@
     ]
   },
   {
-    "id": "Q96",
+    "id": "DEA-PLUS-Q096",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Unity Catalogで最小権限の原則に沿ってスキーマを利用可能にする際、典型的に必要になるのはどれ？",
@@ -2283,7 +2283,7 @@
     ]
   },
   {
-    "id": "Q97",
+    "id": "DEA-PLUS-Q097",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "監査ログの取り扱いとして、最も一般的な方法はどれ？",
@@ -2307,7 +2307,7 @@
     ]
   },
   {
-    "id": "Q98",
+    "id": "DEA-PLUS-Q098",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Delta Sharingの利点として最も適切なのはどれ？",
@@ -2339,7 +2339,7 @@
     ]
   },
   {
-    "id": "Q99",
+    "id": "DEA-PLUS-Q099",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Lakehouse Federationのユースケースとして最も近いのはどれ？",
@@ -2367,7 +2367,7 @@
     ]
   },
   {
-    "id": "Q100",
+    "id": "DEA-PLUS-Q100",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Unity Catalogのリネージ（lineage）機能を使う主な目的として最も適切なのはどれ？",
@@ -2399,7 +2399,7 @@
     ]
   },
   {
-    "id": "Q101",
+    "id": "DEA-PLUS-Q101",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "Lakehouseアーキテクチャの目的とは？",
@@ -2423,7 +2423,7 @@
     ]
   },
   {
-    "id": "Q102",
+    "id": "DEA-PLUS-Q102",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "VACUUM コマンドのデフォルトの保持期間はどのくらいですか？",
@@ -2447,7 +2447,7 @@
     ]
   },
   {
-    "id": "Q103",
+    "id": "DEA-PLUS-Q103",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "DatabricksのWebアプリケーションは、以下のどの場所にホストされていますか？",
@@ -2471,7 +2471,7 @@
     ]
   },
   {
-    "id": "Q104",
+    "id": "DEA-PLUS-Q104",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Databricks Connectの目的と機能を最もよく表しているのは、次のうちどれですか？",
@@ -2499,7 +2499,7 @@
     ]
   },
   {
-    "id": "Q105",
+    "id": "DEA-PLUS-Q105",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Delta Live Tablesパイプラインでデータ品質制約を定義したい。この制約に違反するレコードが対象テーブルに追加され、メトリクスに報告されるようにしてください",
@@ -2523,7 +2523,7 @@
     ]
   },
   {
-    "id": "Q106",
+    "id": "DEA-PLUS-Q106",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "DataFrame.WriteStream メソッド で、クエリが2分ごとにマイクロバッチを実行するオプションを指定してください",
@@ -2543,7 +2543,7 @@
     ]
   },
   {
-    "id": "Q107",
+    "id": "DEA-PLUS-Q107",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "頻繁な更新と削除が行われる大規模なDelta Lakeテーブルを管理している中、小さなデータファイルの増加により、クエリのパフォーマンスが時間とともに低下していることに気づいた。この問題を解決するため、頻繁に使用される列に対して、Z-Orderインデックスを指定したOPTIMIZEコマンドを実行することにした。これらのコマンドが効率的に実行されるようにするために、エンジニアリングチームはどのようなリソース最適化を優先すべきでしょうか？",
@@ -2563,7 +2563,7 @@
     ]
   },
   {
-    "id": "Q108",
+    "id": "DEA-PLUS-Q108",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "本番環境では、S3バケットに毎日数千もの画像ファイルがさまざまな形式（.png、.jpg、.gif）で受信されます。データエンジニアは、.jpgファイルのみを処理するように、ストリーミング取り込みスクリプトを修正したい。要件を満たすための選択肢を選んでください",
@@ -2583,7 +2583,7 @@
     ]
   },
   {
-    "id": "Q109",
+    "id": "DEA-PLUS-Q109",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "タイムトラベル機能を使用してテーブルを以前のバージョンに戻そうとしましたが、データファイルが存在しないというエラーが発生しました。以下のコマンドのうち、データファイルの削除を引き起こしたのはどれですか？",
@@ -2603,7 +2603,7 @@
     ]
   },
   {
-    "id": "Q110",
+    "id": "DEA-PLUS-Q110",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Delta Live Tablesパイプラインを設計したい。\n\nソースシステムは、ソースデータで取り込まれた変更イベントのファイルを生成します。各変更イベントには、指定されたレコードが挿入、更新、削除されたかを示すメタデータが含まれています。更に、変更が発生した順序を示すタイムスタンプ列も含まれています。\n\nデータエンジニアはこれらの変更イベントに基づいてターゲットテーブルを更新する必要があります。この問題を解決するために最も適したコマンドはどれですか？",
@@ -2627,7 +2627,7 @@
     ]
   },
   {
-    "id": "Q111",
+    "id": "DEA-PLUS-Q111",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "spark.readStream()にて、デフォルト値のトリガー間隔は、次のうちどれか？",
@@ -2647,7 +2647,7 @@
     ]
   },
   {
-    "id": "Q112",
+    "id": "DEA-PLUS-Q112",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Deltaテーブルにおいて、トランザクションログファイルの主要なフォーマットは次のうちどれですか？",
@@ -2671,7 +2671,7 @@
     ]
   },
   {
-    "id": "Q113",
+    "id": "DEA-PLUS-Q113",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "以下のSQLコマンドのうち、新しい行を既存のDeltaテーブル=usersに追加するものはどれですか？",
@@ -2691,7 +2691,7 @@
     ]
   },
   {
-    "id": "Q114",
+    "id": "DEA-PLUS-Q114",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Delta Live Tablesパイプラインでデータ品質制約を定義したい。この制約に違反するレコードを削除して、メトリクスに報告されるようにしてください",
@@ -2715,7 +2715,7 @@
     ]
   },
   {
-    "id": "Q115",
+    "id": "DEA-PLUS-Q115",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "カスタムロケーションスキーマ=db_hrを持っており、このスキーマが基盤上のストレージのどこに作成されたのかを知りたい。コマンドは次のうちどれですか？",
@@ -2735,7 +2735,7 @@
     ]
   },
   {
-    "id": "Q116",
+    "id": "DEA-PLUS-Q116",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Unity Catalogに保存したユーザーアクティビティイベントテーブルの処理に取り組んでいます。user_idやevent_dateなど、複数の列に対するフィルタが頻繁にクエリで使用されます。コストのかかるテーブルスキャンを回避するために、チームはどのデータレイアウト手法を採用すべきでしょうか？",
@@ -2759,7 +2759,7 @@
     ]
   },
   {
-    "id": "Q117",
+    "id": "DEA-PLUS-Q117",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "アナリストは、Databricksを使用して大規模なDelta Lakeデータセットに対して頻繁にアドホッククエリを実行します。しかし、クエリのパフォーマンスが低下しているという問題が発生しています。彼らは、キャッシュされたデータを利用することで、探索的分析のための迅速かつインタラクティブな応答を実現する必要があります。このワークロードに最適なインスタンスタイプはどれですか？",
@@ -2779,7 +2779,7 @@
     ]
   },
   {
-    "id": "Q118",
+    "id": "DEA-PLUS-Q118",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "spark.table().writeStream() にて、クエリが複数のマイクロバッチを実行して利用可能なすべてのデータを処理し、その後トリガーを停止するようにしたい。次のうちどのトリガーを扱うべきですか？",
@@ -2799,7 +2799,7 @@
     ]
   },
   {
-    "id": "Q119",
+    "id": "DEA-PLUS-Q119",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "分析ワークロードに対するLiquid Clusteringの主な利点は何ですか？",
@@ -2819,7 +2819,7 @@
     ]
   },
   {
-    "id": "Q120",
+    "id": "DEA-PLUS-Q120",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "Databricks Intelligence Platformにおいて、データウェアハウジングソリューションを提供するサービスは次のうちどれですか？",
@@ -2847,7 +2847,7 @@
     ]
   },
   {
-    "id": "Q121",
+    "id": "DEA-PLUS-Q121",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "部署ごとの給与の合計、平均、および件数を計算するために、以下のコードを記述しました\n\n```python\nresult_df = df.groupBy(”department”).agg({”salary”: ”sum”, ”salary”: ”avg”, ”salary”: ”count”})```コード実行後、結果として得たデータフレームには、期待した3つの指標ではなく、1つの集計値しか含まれていません。この問題の最も可能性の高い原因とは？",
@@ -2875,7 +2875,7 @@
     ]
   },
   {
-    "id": "Q122",
+    "id": "DEA-PLUS-Q122",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "このKafkaトピックから読み込むためのストリーミングDataFrameをPySparkで正しく構築しているのはどれですか？",
@@ -2895,7 +2895,7 @@
     ]
   },
   {
-    "id": "Q123",
+    "id": "DEA-PLUS-Q123",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "PySparkでは、Spark SQLで作成されたDeltaテーブルemployeesをクエリするために、以下のどのコマンドを使用できますか？",
@@ -2915,7 +2915,7 @@
     ]
   },
   {
-    "id": "Q124",
+    "id": "DEA-PLUS-Q124",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "Automatic Liquid Clusteringは、どの列をクラスタリングキーとして使用するかをどのように決定するのですか？",
@@ -2935,7 +2935,7 @@
     ]
   },
   {
-    "id": "Q125",
+    "id": "DEA-PLUS-Q125",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "ある組織は、AWS、Azure、GCPにまたがる複数のクライアントが大規模なデータセットにアクセスできるようにするため、Delta Sharingを計画している。上級データエンジニアは、データ共有プロセスを開始する前に、データセットをCloudflare R2オブジェクトストレージに移行することを推奨している。この Delta Sharing の設定において、Cloudflare R2はどのようなメリットがありますか？",
@@ -2955,7 +2955,7 @@
     ]
   },
   {
-    "id": "Q126",
+    "id": "DEA-PLUS-Q126",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "データエンジニアは、どのシナリオにおいて、COPY INTOコマンドではなくAuto Loaderを使用すべきでしょうか？",
@@ -2979,7 +2979,7 @@
     ]
   },
   {
-    "id": "Q127",
+    "id": "DEA-PLUS-Q127",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "データエンジニアは、どのシナリオにおいて、COPY INTOコマンドではなくAuto Loaderを使用すべきでしょうか？",
@@ -3003,7 +3003,7 @@
     ]
   },
   {
-    "id": "Q128",
+    "id": "DEA-PLUS-Q128",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "数百の列と数十億のレコードを含む複数の大規模データセットを結合する大規模なETLパイプラインを処理しています。結合フェーズ中に、Sparkエグゼキュータが繰り返しデータをディスクに書き出しており、過剰なシャッフルによってパフォーマンスが著しく低下していることに彼らは気づきました。本処理のパフォーマンスを向上させる為に、どのようなコンピュートを選択すべきでしょうか？",
@@ -3023,7 +3023,7 @@
     ]
   },
   {
-    "id": "Q129",
+    "id": "DEA-PLUS-Q129",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Delta Live Tablesパイプラインでデータ品質制約を定義したい。この制約に違反するレコードが発生するとパイプラインが失敗するようにしてください",
@@ -3047,7 +3047,7 @@
     ]
   },
   {
-    "id": "Q130",
+    "id": "DEA-PLUS-Q130",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "Databricksのスポットインスタンスを使用するのに最適なシナリオはどれですか？",
@@ -3067,7 +3067,7 @@
     ]
   },
   {
-    "id": "Q131",
+    "id": "DEA-PLUS-Q131",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "CTASステートメントに関して、以下の記述のうち正しくないものはどれですか？",
@@ -3095,7 +3095,7 @@
     ]
   },
   {
-    "id": "Q132",
+    "id": "DEA-PLUS-Q132",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "次の構造化ストリーミングクエリは、メダリオンアーキテクチャのどの目的に最も合致しているでしょうか\n\n```python\n(spark.readStream\n        .table(”cleanedOrders”)\n        .groupBy(”productCategory”)\n        .agg(sum(”totalWithTax”))\n    .writeStream\n        .option(”checkpointLocation”, checkpointPath)\n        .outputMode(”complete”)\n        .table(”aggregatedOrders”)\n)```",
@@ -3119,7 +3119,7 @@
     ]
   },
   {
-    "id": "Q133",
+    "id": "DEA-PLUS-Q133",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "以下の空欄を埋めて、students列の各学生のコース数を1ずつ増やしてください\n\n```sql\nSELECT\n  faculty_id,\n  students,\n  ___________ AS new_totals\nFROM faculties```",
@@ -3143,7 +3143,7 @@
     ]
   },
   {
-    "id": "Q134",
+    "id": "DEA-PLUS-Q134",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Delta Live Tables（DLT）でニアリアルな分析パイプラインを構築します。エッジサービスから取り込まれた生イベントデータは、主に2つの場所に取り込みます\n\n1-Delta table registered in Unity Catalog\n```python\necommerce.analytics.raw_clickstream```\n2-S3バケット-受信データはParquetファイルとして保存\n```python\ns3://ecommerce/analytics/clickstream/```\nパーソナライズした商品レコメンデーション、不正検出、ライブパフォーマンスダッシュボードなどをニアリアルなユースケースとしてサポートするには、DLTパイプライン内でストリーミングテーブルを定義する必要があります\n\nエンジニアは、@dlt.table デコレータを使用して以下の候補コードブロックを作成しました。次のコードブロックのうち、clickstream_events という名前のストリーミングテーブルを正しく作成するのはどれですか？",
@@ -3163,7 +3163,7 @@
     ]
   },
   {
-    "id": "Q135",
+    "id": "DEA-PLUS-Q135",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "S3バケットからJSONデータを取り込むために、Databricks Auto Loaderストリームを設定しています。受信データに新しい列を検出した場合、パイプラインは停止しますが、新しい列はスキーマに追加します。更新したスキーマで、再実行後の処理が正常に再開できることが要件です。指定した要件を満たすのは次のうちどれでしょうか",
@@ -3183,7 +3183,7 @@
     ]
   },
   {
-    "id": "Q136",
+    "id": "DEA-PLUS-Q136",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "データレイクハウスの特徴を最もよく表しているのは次のうちどれですか？",
@@ -3203,7 +3203,7 @@
     ]
   },
   {
-    "id": "Q137",
+    "id": "DEA-PLUS-Q137",
     "section": "1",
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "あるデータエンジニアが、パフォーマンスの問題が発生している大規模な非パーティション化デルタテーブルを扱っています。彼らはOPTIMIZEコマンドを実行し、多数の小さなファイルをより大きなファイルに正常に圧縮することに成功しました。\n\nしかし、テーブルに対する後続のクエリの実行速度は依然として遅いままです。パフォーマンスを更に向上させる為、OPTIMIZEコマンドを再実行しましたが、データファイルのサイズに変化は見られませんでした。\n\n2回目の実行時の挙動を最もよく説明しているのは次のうちどれでしょうか？",
@@ -3223,7 +3223,7 @@
     ]
   },
   {
-    "id": "Q138",
+    "id": "DEA-PLUS-Q138",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "Databricks Auto Loaderを使用して、以下のストリーミングデータ取り込みコードを実装しました\n\n```python\nspark.readStream \\n        .format(”cloudFiles”) \\n        .schema(expected_schema) \\n        .option(”cloudFiles.format”, ”json”) \\n        .option(”cloudFiles.schemaEvolutionMode”, ”failOnNewColumns”) \\n        .load(”s3://vendor/raw/sales/json/”) \\n    .writeStream \\n        .option(”checkpointLocation”, ”s3://vendor/checkpoints/sales”) \\n        .start(”sales_table”)```\n受信するJSONファイルで、元のスキーマに含まれていない新しい列が現れた場合、このストリーミングジョブはどのような動作が期待できますか？",
@@ -3243,7 +3243,7 @@
     ]
   },
   {
-    "id": "Q139",
+    "id": "DEA-PLUS-Q139",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "データエンジニアがコメント付きの新しいテーブルを作成するために使用できるコマンドは次のうちどれですか？",
@@ -3263,7 +3263,7 @@
     ]
   },
   {
-    "id": "Q140",
+    "id": "DEA-PLUS-Q140",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "データエンジニアがユーザー定義関数（UDF）を作成するために使用できるコードブロックは次のうちどれですか？",
@@ -3287,7 +3287,7 @@
     ]
   },
   {
-    "id": "Q141",
+    "id": "DEA-PLUS-Q141",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Databricksプラットフォームのどの機能で、テーブルに対するユーザーの権限を取り消すことができますか？",
@@ -3307,7 +3307,7 @@
     ]
   },
   {
-    "id": "Q142",
+    "id": "DEA-PLUS-Q142",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "次のSQLキーワードのうち、テーブルの行の値を複数の列に変換≒行を回転させる機能はどれですか？",
@@ -3331,7 +3331,7 @@
     ]
   },
   {
-    "id": "Q143",
+    "id": "DEA-PLUS-Q143",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Auto Loaderを使用してストリーミングデータ取り込みパイプラインを設計しています。要件は、パイプラインはスキーマの変更によって決して失敗してはならず、データに新しく追加された列はすべて取得して後で検査できるようにすることです。この要件を満たすためには、どのスキーマ進化モードを使用すべきでしょうか？",
@@ -3351,7 +3351,7 @@
     ]
   },
   {
-    "id": "Q144",
+    "id": "DEA-PLUS-Q144",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "Databricksアセットバンドルのdatabricks.ymlファイルにある `targetsセクション` の主な目的は何ですか？",
@@ -3379,7 +3379,7 @@
     ]
   },
   {
-    "id": "Q145",
+    "id": "DEA-PLUS-Q145",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "本番環境で複数のタスクを実行するジョブを運用している。ジョブが失敗した場合、チームメンバーにメール通知したい。次のうち、どの方法が使用できますか？",
@@ -3399,7 +3399,7 @@
     ]
   },
   {
-    "id": "Q146",
+    "id": "DEA-PLUS-Q146",
     "section": "2",
     "sectionTitle": "開発と取り込み",
     "question": "Gitフォルダ内で実行できる機能は次のうちどれですか？",
@@ -3423,7 +3423,7 @@
     ]
   },
   {
-    "id": "Q147",
+    "id": "DEA-PLUS-Q147",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "【試験類似】Goldレイヤーの特徴の1つは「読み取りに最適化」です。次のうち、もう1つの代表的な特徴はどれですか？",
@@ -3447,7 +3447,7 @@
     ]
   },
   {
-    "id": "Q148",
+    "id": "DEA-PLUS-Q148",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "【試験類似】イベントデータのヒストリカルデータを長期保存したい。大量データを比較的低コストで保持する層として最も適切なのはどれか",
@@ -3471,7 +3471,7 @@
     ]
   },
   {
-    "id": "Q149",
+    "id": "DEA-PLUS-Q149",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
     "question": "【試験類似】date列でパーティション分割された既存のDeltaテーブルがある。customer_id列でのフィルタ性能を改善したいため liquid clustering の導入を検討している。既存運用への影響を極力抑える対応案として最も適切なのはどれ？",
@@ -3499,7 +3499,7 @@
     ]
   },
   {
-    "id": "Q150",
+    "id": "DEA-PLUS-Q150",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
     "question": "Databricks を導入している企業間で、Delta Sharing によるデータ・ノートブック共有を構築しようとしている。双方で構成情報をやりとりするにあたり、相手先に提供すべき情報として最も適切なのはどれ？",
@@ -3527,7 +3527,7 @@
     ]
   },
   {
-    "id": "Q151",
+    "id": "DEA-PLUS-Q151",
     "section": "4",
     "sectionTitle": "データパイプラインの製品化",
     "question": "データエンジニアリングチームは、手動で停止するまで、定義した間隔で全てのテーブルを更新するDLTパイプラインを運用しています。パイプラインを停止すると、コンピューティングリソースも終了します\nこのDLTパイプラインの実行モードを最も適切に説明しているのは、次のうちどれですか？",

@@ -26,7 +26,11 @@ function baseQuestion(overrides = {}) {
 }
 
 function validate(appName, question) {
-  return validateQuestions([question], getAppConfig(appName));
+  const normalizedQuestion =
+    appName === 'dea-plus' && question.id === 'fixture-1'
+      ? { ...question, id: 'DEA-PLUS-Q099' }
+      : question;
+  return validateQuestions([normalizedQuestion], getAppConfig(appName));
 }
 
 function assertValid(appName, question, description) {
@@ -47,15 +51,24 @@ assertInvalid(
   'DEA rejects choices.E.'
 );
 
-assertValid('dea-plus', baseQuestion(), 'DEA Plus accepts A-D single-answer questions.');
 assertValid(
   'dea-plus',
-  baseQuestion({ choices: { A: 'A', B: 'B', C: 'C', D: 'D', E: 'E' }, answer: 'E' }),
+  baseQuestion({ id: 'DEA-PLUS-Q001' }),
+  'DEA Plus accepts A-D single-answer questions with DEA Plus IDs.'
+);
+assertInvalid('dea-plus', baseQuestion({ id: 'Q1' }), 'DEA Plus rejects legacy Q-number IDs.');
+assertValid(
+  'dea-plus',
+  baseQuestion({
+    id: 'DEA-PLUS-Q002',
+    choices: { A: 'A', B: 'B', C: 'C', D: 'D', E: 'E' },
+    answer: 'E',
+  }),
   'DEA Plus accepts choices.E for single-answer questions.'
 );
 assertValid(
   'dea-plus',
-  baseQuestion({ answer: undefined, answers: ['A', 'C'] }),
+  baseQuestion({ id: 'DEA-PLUS-Q003', answer: undefined, answers: ['A', 'C'] }),
   'DEA Plus accepts answers arrays for multiple-answer questions.'
 );
 

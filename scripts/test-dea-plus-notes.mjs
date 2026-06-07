@@ -9,7 +9,8 @@ import {
   normalizeProgressEntry,
   saveNote,
 } from '../dea-quiz-app-plus/notes.js';
-import { createQuizSession } from '../dea-quiz-app-plus/quiz-session.js';
+import { normalizeQuestionId } from '../dea-quiz-app-plus/question-id.js';
+import { createQuizSession, normalizeLoadedSession } from '../dea-quiz-app-plus/quiz-session.js';
 import {
   getRepairedStorageKeys,
   loadProgress,
@@ -121,7 +122,7 @@ test('normalizeProgress normalizes each question entry and drops invalid questio
   });
 
   assert.deepEqual(normalized, {
-    Q001: {
+    'DEA-PLUS-Q001': {
       seenCount: 2,
       correctCount: 1,
       wrongCount: 0,
@@ -130,7 +131,47 @@ test('normalizeProgress normalizes each question entry and drops invalid questio
       noteText: 'legacy note',
       noteUpdatedAt: null,
     },
-    Q002: baseProgress(),
+    'DEA-PLUS-Q002': baseProgress(),
+  });
+});
+
+test('normalizeQuestionId maps legacy Q-number IDs to DEA Plus IDs', () => {
+  assert.equal(normalizeQuestionId('Q1'), 'DEA-PLUS-Q001');
+  assert.equal(normalizeQuestionId('Q10'), 'DEA-PLUS-Q010');
+  assert.equal(normalizeQuestionId('Q100'), 'DEA-PLUS-Q100');
+  assert.equal(normalizeQuestionId('DEA-PLUS-Q001'), 'DEA-PLUS-Q001');
+});
+
+test('normalizeProgress merges legacy and new ID entries without losing notes or bookmarks', () => {
+  const normalized = normalizeProgress({
+    Q1: {
+      seenCount: 1,
+      correctCount: 1,
+      wrongCount: 0,
+      bookmark: true,
+      noteText: 'legacy memo',
+      noteUpdatedAt: '2026-06-01T00:00:00.000Z',
+    },
+    'DEA-PLUS-Q001': {
+      seenCount: 2,
+      correctCount: 1,
+      wrongCount: 1,
+      bookmark: false,
+      noteText: 'newer memo',
+      noteUpdatedAt: '2026-06-02T00:00:00.000Z',
+    },
+  });
+
+  assert.deepEqual(normalized, {
+    'DEA-PLUS-Q001': {
+      seenCount: 2,
+      correctCount: 1,
+      wrongCount: 1,
+      lastAnsweredAt: null,
+      bookmark: true,
+      noteText: 'newer memo',
+      noteUpdatedAt: '2026-06-02T00:00:00.000Z',
+    },
   });
 });
 
@@ -313,6 +354,24 @@ test('createQuizSession notesOnly respects selected count after filtering', () =
   assert.deepEqual(session.order, ['Q001', 'Q002']);
 });
 
+test('normalizeLoadedSession rejects legacy or unknown question IDs after ID migration', () => {
+  const validQuestionIds = new Set(['DEA-PLUS-Q001', 'DEA-PLUS-Q002']);
+
+  assert.equal(
+    normalizeLoadedSession({ order: ['Q1'], currentIndex: 0 }, { validQuestionIds }),
+    null
+  );
+  assert.equal(
+    normalizeLoadedSession({ order: ['DEA-PLUS-Q999'], currentIndex: 0 }, { validQuestionIds }),
+    null
+  );
+  assert.deepEqual(
+    normalizeLoadedSession({ order: ['DEA-PLUS-Q001'], currentIndex: 0 }, { validQuestionIds })
+      .order,
+    ['DEA-PLUS-Q001']
+  );
+});
+
 test('loadProgress repairs malformed stored progress and records repair key', () => {
   const store = installLocalStorageMock();
   const malformedProgress = {
@@ -331,7 +390,7 @@ test('loadProgress repairs malformed stored progress and records repair key', ()
   const loaded = loadProgress();
 
   const expected = {
-    Q001: {
+    'DEA-PLUS-Q001': {
       seenCount: 3,
       correctCount: 0,
       wrongCount: 0,

@@ -1,3 +1,5 @@
+import { isLegacyQuestionId } from './question-id.js';
+
 const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
 
 export function shuffle(array) {
@@ -119,9 +121,13 @@ export function getStoredSelectedLabel(session, questionId, choices, choiceMap =
   return labels.find((label) => map[label] === stored) ?? null;
 }
 
-export function normalizeLoadedSession(saved) {
+export function normalizeLoadedSession(saved, options = {}) {
   if (!saved) return null;
   if (!Array.isArray(saved.order) || saved.order.length === 0) {
+    return null;
+  }
+
+  if (!hasSupportedQuestionIds(saved.order, options.validQuestionIds)) {
     return null;
   }
 
@@ -146,4 +152,19 @@ export function normalizeLoadedSession(saved) {
   };
 
   return session.completedAt ? null : session;
+}
+
+function hasSupportedQuestionIds(order, validQuestionIds) {
+  if (!order.every((questionId) => typeof questionId === 'string' && questionId.trim())) {
+    return false;
+  }
+
+  if (order.some((questionId) => isLegacyQuestionId(questionId))) {
+    return false;
+  }
+
+  if (!validQuestionIds) return true;
+
+  const ids = validQuestionIds instanceof Set ? validQuestionIds : new Set(validQuestionIds);
+  return order.every((questionId) => ids.has(questionId));
 }
