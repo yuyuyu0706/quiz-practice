@@ -7,13 +7,15 @@
     "validate:dea-questions": "node scripts/validate-dea-questions.mjs",
     "test:e2e": "playwright test",
     "test:dea-plus-notes": "node scripts/test-dea-plus-notes.mjs",
-    "test": "npm run validate:dea-questions && npm run validate:dep-questions && npm run validate:e2e-fixtures && npm run test:dea-plus-notes && npm run test:e2e",
+    "test": "npm run validate:dea-questions && npm run validate:dep-questions && npm run validate:dea-plus-questions && npm run validate:e2e-fixtures && npm run test:question-validator && npm run test:dea-plus-notes && npm run test:e2e",
     "validate:dep-questions": "node scripts/validate-dep-questions.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate:e2e-catalog": "node scripts/validate-e2e-catalog.mjs",
     "validate:swa-artifact": "node scripts/validate-swa-artifact.mjs",
-    "validate:e2e-fixtures": "node scripts/validate-dea-plus-e2e-fixtures.mjs"
+    "validate:e2e-fixtures": "node scripts/validate-dea-plus-e2e-fixtures.mjs",
+    "validate:dea-plus-questions": "node scripts/validate-questions.mjs dea-plus",
+    "test:question-validator": "node scripts/test-question-validator.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
