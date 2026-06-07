@@ -23,6 +23,8 @@ export const appConfigs = {
     maxChoices: 5,
     allowSchemaV2: true,
     allowMultipleAnswers: true,
+    idPattern: /^DEA-PLUS-Q\d{3}$/,
+    idPatternDescription: 'DEA-PLUS-Q + 3 digits (for example DEA-PLUS-Q001)',
   },
 };
 
@@ -263,6 +265,8 @@ export function validateQuestions(questions, config, options = {}) {
 
     if (!isNonEmptyString(question.id)) {
       errors.push(`${label} must have a non-empty string id.`);
+    } else if (config.idPattern && !config.idPattern.test(question.id)) {
+      errors.push(`${label} id must match ${config.idPatternDescription}.`);
     } else if (ids.has(question.id)) {
       errors.push(`${label} has a duplicate id: ${question.id}.`);
     } else {

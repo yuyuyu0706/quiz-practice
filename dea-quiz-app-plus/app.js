@@ -435,7 +435,9 @@ function refreshResumeUI() {
 
 function loadSession() {
   const rawSession = loadActiveSession();
-  const session = normalizeLoadedSession(rawSession);
+  const session = normalizeLoadedSession(rawSession, {
+    validQuestionIds: new Set(state.questions.map((question) => question.id)),
+  });
   if (!session) {
     if (rawSession !== null) {
       clearSession();
