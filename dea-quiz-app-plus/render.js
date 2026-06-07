@@ -118,7 +118,12 @@ export function renderQuestion(els, data) {
     els.choicesForm.appendChild(choiceLabel);
   });
 
-  renderExplanation(els, { question, showWhyWrong: Boolean(graded) });
+  renderExplanation(els, {
+    question,
+    choiceLabels,
+    choiceMap,
+    showWhyWrong: Boolean(graded),
+  });
   els.explanation.classList.toggle('hidden', !explanationOpen);
   els.toggleExplanation.textContent = explanationOpen ? '解説を非表示' : '解説を表示';
 
@@ -141,18 +146,21 @@ export function renderQuestion(els, data) {
   els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
 }
 
-export function renderExplanation(els, { question, showWhyWrong = false }) {
+export function renderExplanation(
+  els,
+  { question, choiceLabels = CHOICE_LABEL_ORDER, choiceMap = null, showWhyWrong = false }
+) {
   els.explanation.replaceChildren();
   els.explanation.appendChild(
     renderMarkdownToFragment(typeof question.explanation === 'string' ? question.explanation : '')
   );
 
   if (showWhyWrong) {
-    appendWhyWrongPanel(els.explanation, question);
+    appendWhyWrongPanel(els.explanation, question, choiceLabels, choiceMap);
   }
 }
 
-function getWhyWrongEntries(question) {
+function getWhyWrongEntries(question, choiceLabels = CHOICE_LABEL_ORDER, choiceMap = null) {
   if (
     !question?.whyWrong ||
     typeof question.whyWrong !== 'object' ||
@@ -161,16 +169,27 @@ function getWhyWrongEntries(question) {
     return [];
   }
 
-  return CHOICE_LABEL_ORDER.filter((label) =>
-    Object.prototype.hasOwnProperty.call(question.whyWrong, label)
-  )
-    .map((label) => [label, question.whyWrong[label]])
-    .filter(([, text]) => typeof text === 'string' && text.trim().length > 0)
-    .map(([label, text]) => [label, text.trim()]);
+  return choiceLabels
+    .map((displayLabel) => {
+      const originalKey = choiceMap?.[displayLabel] ?? displayLabel;
+      const choiceText = question?.choices?.[originalKey];
+      const whyWrongText = question.whyWrong[originalKey];
+
+      if (typeof whyWrongText !== 'string' || whyWrongText.trim().length === 0) {
+        return null;
+      }
+
+      return {
+        displayLabel,
+        choiceText: typeof choiceText === 'string' ? choiceText.trim() : '',
+        whyWrongText: whyWrongText.trim(),
+      };
+    })
+    .filter(Boolean);
 }
 
-function appendWhyWrongPanel(container, question) {
-  const entries = getWhyWrongEntries(question);
+function appendWhyWrongPanel(container, question, choiceLabels, choiceMap) {
+  const entries = getWhyWrongEntries(question, choiceLabels, choiceMap);
   if (entries.length === 0) return;
 
   const panel = document.createElement('section');
@@ -183,21 +202,19 @@ function appendWhyWrongPanel(container, question) {
   const list = document.createElement('div');
   list.className = 'why-wrong-list';
 
-  for (const [label, text] of entries) {
+  for (const entry of entries) {
     const item = document.createElement('article');
     item.className = 'why-wrong-item';
 
     const itemTitle = document.createElement('h5');
     itemTitle.className = 'why-wrong-label';
-    const choiceText =
-      question?.choices && typeof question.choices[label] === 'string'
-        ? question.choices[label].trim()
-        : '';
-    itemTitle.textContent = choiceText ? `${label}. ${choiceText}` : `${label}.`;
+    itemTitle.textContent = entry.choiceText
+      ? `${entry.displayLabel}. ${entry.choiceText}`
+      : `${entry.displayLabel}.`;
 
     const body = document.createElement('div');
     body.className = 'why-wrong-body';
-    body.appendChild(renderMarkdownToFragment(text));
+    body.appendChild(renderMarkdownToFragment(entry.whyWrongText));
 
     item.append(itemTitle, body);
     list.appendChild(item);
