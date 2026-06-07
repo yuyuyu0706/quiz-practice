@@ -21,6 +21,11 @@ async function mockDeaPlusQuestions(page: Page) {
 
 async function startWhyWrongQuiz(page: Page) {
   await page.addInitScript(() => window.localStorage.clear());
+  await page.addInitScript(() => {
+    const values = [0.3, 0.4, 0.1];
+    let index = 0;
+    Math.random = () => values[index++ % values.length];
+  });
   await mockDeaPlusQuestions(page);
   await startDeaPlusQuiz(page, 'all');
 }
@@ -33,6 +38,30 @@ async function answerByChoiceText(page: Page, choiceText: string) {
   await expect(page.locator('#explanation')).toBeVisible();
 }
 
+async function getDisplayedChoiceTextByLabel(page: Page) {
+  return page.locator('#choices-form label').evaluateAll((labels) =>
+    Object.fromEntries(
+      labels.map((label) => {
+        const text = (label.textContent ?? '').trim().replace(/\s+/g, ' ');
+        const match = text.match(/^([A-E])\.\s*(.*)$/);
+        return [match?.[1] ?? '', match?.[2] ?? ''];
+      })
+    )
+  );
+}
+
+async function getWhyWrongTitleTextByLabel(page: Page) {
+  return page.locator('.why-wrong-label').evaluateAll((labels) =>
+    Object.fromEntries(
+      labels.map((label) => {
+        const text = (label.textContent ?? '').trim().replace(/\s+/g, ' ');
+        const match = text.match(/^([A-E])\.\s*(.*)$/);
+        return [match?.[1] ?? '', match?.[2] ?? ''];
+      })
+    )
+  );
+}
+
 async function expectAllWhyWrongEntries(page: Page) {
   const panel = page.locator('.why-wrong-panel');
   await expect(panel).toBeVisible();
@@ -40,9 +69,9 @@ async function expectAllWhyWrongEntries(page: Page) {
   await expect(panel.locator('.why-wrong-item')).toHaveCount(3);
 
   const labels = panel.locator('.why-wrong-label');
-  await expect(labels.nth(0)).toHaveText('B. Unity Catalogのメタストアそのもの');
-  await expect(labels.nth(1)).toHaveText('C. Delta Sharingの受信者設定');
-  await expect(labels.nth(2)).toHaveText('D. ノートブックのバージョン管理機能');
+  await expect(labels.nth(0)).toHaveText('A. Delta Sharingの受信者設定');
+  await expect(labels.nth(1)).toHaveText('C. ノートブックのバージョン管理機能');
+  await expect(labels.nth(2)).toHaveText('D. Unity Catalogのメタストアそのもの');
 
   await expect(panel.locator('.why-wrong-body .inline-code')).toHaveText('Unity Catalog');
   await expect(panel.locator('.why-wrong-body strong')).toHaveText('Delta Sharing');
@@ -76,6 +105,37 @@ test.describe('[DEA][UI] Explanation / Why wrong', () => {
 
     await expect(page.locator('#result-indicator')).toContainText('正解');
     await expectAllWhyWrongEntries(page);
+  });
+
+  test('guarantees DEA Plus keeps whyWrong aligned with shuffled choices', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop-only whyWrong DOM coverage.');
+
+    await startWhyWrongQuiz(page);
+    await answerByChoiceText(page, 'Unity Catalogのメタストアそのもの');
+
+    const displayedChoices = await getDisplayedChoiceTextByLabel(page);
+    const whyWrongChoices = await getWhyWrongTitleTextByLabel(page);
+
+    expect(displayedChoices).toMatchObject({
+      A: 'Delta Sharingの受信者設定',
+      B: 'SQLクエリ実行に使うコンピュートリソース',
+      C: 'ノートブックのバージョン管理機能',
+      D: 'Unity Catalogのメタストアそのもの',
+    });
+    expect(whyWrongChoices).toEqual({
+      A: displayedChoices.A,
+      C: displayedChoices.C,
+      D: displayedChoices.D,
+    });
+
+    const items = page.locator('.why-wrong-item');
+    await expect(items.nth(0)).toContainText('Delta Sharing はデータ共有機能です。');
+    await expect(items.nth(1)).toContainText('ノートブックのバージョン管理とは用途が異なります。');
+    await expect(items.nth(2)).toContainText(
+      'Unity Catalog はガバナンス機能であり、SQL Warehouseそのものではありません。'
+    );
   });
 
   test('guarantees DEA Plus hides whyWrong panel when entries are missing', async ({
