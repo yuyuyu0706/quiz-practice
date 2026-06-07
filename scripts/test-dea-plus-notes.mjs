@@ -5,9 +5,16 @@ import {
   deleteNote,
   getQuestionNote,
   hasNote,
+  normalizeProgress,
+  normalizeProgressEntry,
   saveNote,
 } from '../dea-quiz-app-plus/notes.js';
 import { createQuizSession } from '../dea-quiz-app-plus/quiz-session.js';
+import {
+  getRepairedStorageKeys,
+  loadProgress,
+  STORAGE_KEYS,
+} from '../dea-quiz-app-plus/storage.js';
 
 function test(name, fn) {
   try {
@@ -25,6 +32,27 @@ function assertIsoDate(value) {
   assert.equal(Number.isNaN(Date.parse(value)), false);
 }
 
+function installLocalStorageMock() {
+  const store = new Map();
+
+  globalThis.localStorage = {
+    getItem(key) {
+      return store.has(key) ? store.get(key) : null;
+    },
+    setItem(key, value) {
+      store.set(key, String(value));
+    },
+    removeItem(key) {
+      store.delete(key);
+    },
+    clear() {
+      store.clear();
+    },
+  };
+
+  return store;
+}
+
 test('baseProgress includes note fields with empty defaults', () => {
   assert.deepEqual(baseProgress(), {
     seenCount: 0,
@@ -34,6 +62,75 @@ test('baseProgress includes note fields with empty defaults', () => {
     bookmark: false,
     noteText: '',
     noteUpdatedAt: null,
+  });
+});
+
+test('normalizeProgressEntry coerces malformed progress values to safe defaults', () => {
+  const normalized = normalizeProgressEntry({
+    seenCount: '3',
+    correctCount: -1,
+    wrongCount: 'abc',
+    lastAnsweredAt: 123,
+    bookmark: 'yes',
+    noteText: 123,
+    noteUpdatedAt: 999,
+    unexpectedField: 'drop-me',
+  });
+
+  assert.deepEqual(normalized, {
+    seenCount: 3,
+    correctCount: 0,
+    wrongCount: 0,
+    lastAnsweredAt: null,
+    bookmark: false,
+    noteText: '',
+    noteUpdatedAt: null,
+  });
+  assert.equal('unexpectedField' in normalized, false);
+});
+
+test('normalizeProgressEntry migrates legacy note and memo fields to noteText', () => {
+  assert.equal(
+    normalizeProgressEntry({ noteText: 'current', note: 'legacy note', memo: 'legacy memo' })
+      .noteText,
+    'current'
+  );
+  assert.equal(
+    normalizeProgressEntry({ note: 'legacy note', memo: 'legacy memo' }).noteText,
+    'legacy note'
+  );
+  assert.equal(normalizeProgressEntry({ memo: 'legacy memo' }).noteText, 'legacy memo');
+  assert.equal(normalizeProgressEntry({ note: 123, memo: false }).noteText, '');
+});
+
+test('normalizeProgressEntry returns base progress for non object entries', () => {
+  for (const entry of [null, undefined, [], 'abc', 123]) {
+    assert.deepEqual(normalizeProgressEntry(entry), baseProgress());
+  }
+});
+
+test('normalizeProgress normalizes each question entry and drops invalid question ids', () => {
+  assert.deepEqual(normalizeProgress(null), {});
+  assert.deepEqual(normalizeProgress([]), {});
+
+  const normalized = normalizeProgress({
+    Q001: { seenCount: '2', correctCount: '1', wrongCount: 1.5, note: 'legacy note' },
+    '': { seenCount: 99, noteText: 'drop empty id' },
+    '  ': { seenCount: 99, noteText: 'drop blank id' },
+    Q002: null,
+  });
+
+  assert.deepEqual(normalized, {
+    Q001: {
+      seenCount: 2,
+      correctCount: 1,
+      wrongCount: 0,
+      lastAnsweredAt: null,
+      bookmark: false,
+      noteText: 'legacy note',
+      noteUpdatedAt: null,
+    },
+    Q002: baseProgress(),
   });
 });
 
@@ -97,6 +194,28 @@ test('saveNote preserves progress counters and bookmark while storing trimmed no
   assert.equal(updated.Q001.lastAnsweredAt, '2026-06-01T00:00:00.000Z');
   assert.equal(updated.Q001.bookmark, true);
   assert.equal(updated.Q001.noteText, 'schema memo');
+  assertIsoDate(updated.Q001.noteUpdatedAt);
+});
+
+test('saveNote normalizes malformed entry while preserving valid progress values', () => {
+  const updated = saveNote(
+    {
+      Q001: {
+        seenCount: '2',
+        correctCount: '1',
+        wrongCount: -5,
+        bookmark: true,
+      },
+    },
+    'Q001',
+    ' memo '
+  );
+
+  assert.equal(updated.Q001.seenCount, 2);
+  assert.equal(updated.Q001.correctCount, 1);
+  assert.equal(updated.Q001.wrongCount, 0);
+  assert.equal(updated.Q001.bookmark, true);
+  assert.equal(updated.Q001.noteText, 'memo');
   assertIsoDate(updated.Q001.noteUpdatedAt);
 });
 
@@ -192,4 +311,39 @@ test('createQuizSession notesOnly respects selected count after filtering', () =
   assert.equal(pool.length, 3);
   assert.equal(session.order.length, 2);
   assert.deepEqual(session.order, ['Q001', 'Q002']);
+});
+
+test('loadProgress repairs malformed stored progress and records repair key', () => {
+  const store = installLocalStorageMock();
+  const malformedProgress = {
+    Q001: {
+      seenCount: '3',
+      correctCount: -1,
+      wrongCount: 'abc',
+      bookmark: 'yes',
+      note: 'legacy note',
+      noteUpdatedAt: 999,
+      unexpectedField: 'drop-me',
+    },
+  };
+  store.set(STORAGE_KEYS.progress, JSON.stringify(malformedProgress));
+
+  const loaded = loadProgress();
+
+  const expected = {
+    Q001: {
+      seenCount: 3,
+      correctCount: 0,
+      wrongCount: 0,
+      lastAnsweredAt: null,
+      bookmark: false,
+      noteText: 'legacy note',
+      noteUpdatedAt: null,
+    },
+  };
+  assert.deepEqual(loaded, expected);
+  assert.deepEqual(JSON.parse(store.get(STORAGE_KEYS.progress)), expected);
+  assert.ok(getRepairedStorageKeys().includes(STORAGE_KEYS.progress));
+
+  delete globalThis.localStorage;
 });

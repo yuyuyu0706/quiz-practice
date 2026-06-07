@@ -1,3 +1,5 @@
+import { normalizeProgress } from './notes.js';
+
 export const STORAGE_KEYS = {
   progress: 'deaPlusQuizProgress',
   settings: 'deaPlusQuizSettings',
@@ -13,7 +15,15 @@ const DEFAULT_SETTINGS = {
 const repairedStorageKeys = new Set();
 
 export function loadProgress() {
-  return loadJSON(STORAGE_KEYS.progress, {});
+  const loaded = loadJSON(STORAGE_KEYS.progress, {});
+  const normalized = normalizeProgress(loaded);
+
+  if (!isSameJSON(loaded, normalized)) {
+    saveProgress(normalized);
+    recordStorageRepair(STORAGE_KEYS.progress);
+  }
+
+  return normalized;
 }
 export function saveProgress(progress) {
   saveJSON(STORAGE_KEYS.progress, progress);
@@ -68,6 +78,10 @@ function loadJSON(key, fallback) {
 function isValidStoredJSON(value, fallback) {
   if (fallback === null && value === null) return true;
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isSameJSON(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 function recordStorageRepair(key) {
