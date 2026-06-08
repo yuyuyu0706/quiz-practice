@@ -335,9 +335,9 @@
     "answer": "A",
     "explanation": "正解は、**`checkpointLocation`** です。\n\nAuto Loader は Structured Streaming を使って増分取り込みを行うため、**どこまで処理したかという進捗状態をチェックポイントに保持**します。`checkpointLocation` を設定することで、ジョブが失敗・再起動しても処理済みファイルを重複して取り込まずに再開できます。そのため、増分取り込みの状態管理という観点で最も重要なのは `checkpointLocation` です。\n\nなお、Auto Loader ではスキーマ推論やスキーマ進化のために `cloudFiles.schemaLocation` を使うことも多いですが、これは **スキーマ情報の保存先** であり、取り込み進捗そのものを保持する設定ではありません。増分処理の状態管理という設問意図に最も合うのは `checkpointLocation` です",
     "whyWrong": {
-      "B": "`spark.sql.shuffle.partitions` はシャッフル時のパーティション数を調整する Spark の実行設定です。Auto Loader とは無関係です",
-      "C": "`spark.databricks.delta.retentionDurationCheck.enabled` は Delta の保持期間チェックに関する設定です。Auto Loader とは無関係です",
-      "D": "`spark.sql.ansi.enabled` は SQL の ANSI 準拠動作を制御する設定です。Auto Loader とは無関係です"
+      "B": "`spark.sql.shuffle.partitions` はシャッフル時のパーティション数を調整する Spark の実行設定です。増分取り込みの状態管理設定ではありません",
+      "C": "`spark.databricks.delta.retentionDurationCheck.enabled` は Delta の保持期間チェックに関する設定です。増分取り込みの状態管理設定ではありません",
+      "D": "`spark.sql.ansi.enabled` は SQL の ANSI 準拠動作を制御する設定です。増分取り込みの状態管理設定ではありません"
     },
     "references": [
       {
@@ -455,9 +455,9 @@
     "answer": "A",
     "explanation": "正解は、**`readStream.format(\"cloudFiles\")`** です。\n\n- バッチ API の `read` ではなく、継続取り込みを前提に `readStream` を利用\n- 取り込み後は `writeStream` で Delta テーブルへ保存\n- watermark を設定する場合はイベント時間列の品質に注意\n\n```python\n(spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"parquet\")\n  .load(\"abfss://landing@acct.dfs.core.windows.net/events\")\n  .writeStream\n  .option(\"checkpointLocation\", \"dbfs:/chk/events\")\n  .trigger(availableNow=True)\n  .toTable(\"bronze.events\"))\n```\n\n```sql\nSELECT window(event_time, '10 minutes') AS w, count(*)\nFROM bronze.events\nGROUP BY window(event_time, '10 minutes');\n```\n\n注意点: ジョブ再実行時は同じ checkpoint を使うことで重複処理を防止できます。",
     "whyWrong": {
-      "B": "既存のDelta テーブルを通常のバッチ読み込みで参照するAPIです。Auto Loaderの継続的なファイル取り込みには使いません。",
-      "C": "外部ストレージをDBFSにマウントするための補助機能です。Structured Streamingの読み取りAPIではありません。",
-      "D": "Deltaテーブルの古いファイルを削除する保守コマンドです。Auto Loaderでデータを読み取る操作ではありません。"
+      "B": "既存のDelta テーブルを通常のバッチ読み込みで参照するAPIです。Auto Loaderの継続的なファイル取り込みには使いません",
+      "C": "外部ストレージをDBFSにマウントするための補助機能です。Structured Streamingの読み取りAPIではありません",
+      "D": "Deltaテーブルの古いファイルを削除する保守コマンドです。Auto Loaderでデータを読み取る操作ではありません"
     },
     "references": [
       {
