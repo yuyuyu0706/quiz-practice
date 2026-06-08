@@ -333,12 +333,26 @@
       "D": "`spark.sql.ansi.enabled`"
     },
     "answer": "A",
-    "explanation": "チェックポイントは処理済みファイルやストリーミング状態を保持します。",
+    "explanation": "正解は、**`checkpointLocation`** です。\n\nAuto Loader は Structured Streaming を使って増分取り込みを行うため、**どこまで処理したかという進捗状態をチェックポイントに保持**します。`checkpointLocation` を設定することで、ジョブが失敗・再起動しても処理済みファイルを重複して取り込まずに再開できます。そのため、増分取り込みの状態管理という観点で最も重要なのは `checkpointLocation` です。\n\nなお、Auto Loader ではスキーマ推論やスキーマ進化のために `cloudFiles.schemaLocation` を使うことも多いですが、これは **スキーマ情報の保存先** であり、取り込み進捗そのものを保持する設定ではありません。増分処理の状態管理という設問意図に最も合うのは `checkpointLocation` です",
     "whyWrong": {
-      "B": "シャッフル時のパーティション数を調整するSpark設定です。増分取り込みの処理済み状態を保存する設定ではありません。",
-      "C": "Deltaの保持期間チェックに関する設定です。Auto Loaderの状態管理には使いません。",
-      "D": "SQLのANSI準拠動作を切り替える設定です。ストリーミングの再実行状態を保持するものではありません。"
-    }
+      "B": "`spark.sql.shuffle.partitions` はシャッフル時のパーティション数を調整する Spark の実行設定です。Auto Loader とは無関係です",
+      "C": "`spark.databricks.delta.retentionDurationCheck.enabled` は Delta の保持期間チェックに関する設定です。Auto Loader とは無関係です",
+      "D": "`spark.sql.ansi.enabled` は SQL の ANSI 準拠動作を制御する設定です。Auto Loader とは無関係です"
+    },
+    "references": [
+      {
+        "title": "Auto Loaderとは何ですか？",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/"
+      },
+      {
+        "title": "Auto Loaderでスキーマの推論と進化を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+      },
+      {
+        "title": "構造化ストリーミング チェックポイント",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/checkpoints"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q012",
@@ -352,12 +366,22 @@
       "D": "`OPTIMIZE`"
     },
     "answer": "A",
-    "explanation": "schemaLocation に推論結果や進化情報が格納され、安定運用に重要です。",
+    "explanation": "正解は、**`schemaLocation`** です。\n\nAuto Loader では、スキーマ推論結果やスキーマ進化の履歴を永続化するために `cloudFiles.schemaLocation` を使用します。Databricks 公式では、この設定により Auto Loader が読み取ったスキーマを保存し、新しい列が現れたときにスキーマ進化を追跡できると説明されています。これにより、ストリーム再起動時にも安定したスキーマ管理がしやすくなり、スキーマ変更を安全に扱いやすくなります\n\nなお、`checkpointLocation` は増分取り込みの進捗状態を保持するための設定であり、スキーマそのものの永続化先とは役割が異なります。設問は「スキーマを永続化し、スキーマ進化を安全に扱う設定」を聞いているため、最も適切なのは `schemaLocation` です",
     "whyWrong": {
-      "B": "Delta書き込み時などにスキーマ統合を許可するオプションです。Auto Loaderの推論スキーマを永続化する場所ではありません。",
-      "C": "Deltaテーブルのデータ配置を最適化するSQL句です。スキーマ進化情報の保存には使いません。",
-      "D": "Deltaテーブルのファイルレイアウトを最適化するコマンドです。Auto Loaderのスキーマ管理設定ではありません。"
-    }
+      "B": "`mergeSchema` は Delta への書き込み時などにマージを許可するオプションです。Auto Loaderの推論スキーマを永続化する場所ではありません",
+      "C": "`ZORDER BY` は Delta テーブルのデータレイアウト最適化に関するSQL句です。Auto Loader のスキーマ永続化やスキーマ進化管理とは無関係です",
+      "D": "`OPTIMIZE` は Delta テーブルのファイル配置や圧縮を改善するためコマンドです。Auto Loader のスキーマ情報保存には使いません"
+    },
+    "references": [
+      {
+        "title": "Auto Loaderでスキーマの推論と進化を構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+      },
+      {
+        "title": "構造化ストリーミング チェックポイント",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/checkpoints"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q013",
@@ -371,12 +395,18 @@
       "D": "`@sql`"
     },
     "answer": "A",
-    "explanation": "`%sql`、`%python`、`%md` などが代表例です。",
+    "explanation": "正解は、**`%sql`** です\n\nDatabricks ノートブックでは、セルの先頭に **`%<language>`** を書くことで、そのセルだけ実行言語を切り替えられます。公式ドキュメントでは、サポートされる言語マジックコマンドとして **`%python`、`%r`、`%scala`、`%sql`** が案内されています",
     "whyWrong": {
-      "B": "シェル系の記法に見えます。Databricksノートブックでセル言語を切り替えるマジックコマンドではありません。",
-      "C": "コメントや見出しに使われる記号に近い表記です。セル単位の言語切り替えには使いません。",
-      "D": "デコレーターやアノテーションのような表記です。Databricksのマジックコマンドではありません。"
-    }
+      "B": "シェル系の記法に見えます。Databricksノートブックでセル言語を切り替えるマジックコマンドではありません",
+      "C": "コメントや見出しに使われる記号に近い表記です。セル単位の言語切り替えには使いません",
+      "D": "デコレーターやアノテーションのような表記です。Databricksのマジックコマンドではありません"
+    },
+    "references": [
+      {
+        "title": "Databricksノートブックでコードを開発する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/notebooks-code"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q014",
@@ -390,12 +420,26 @@
       "D": "監査ログを手で grep するだけ"
     },
     "answer": "A",
-    "explanation": "Spark UI（ステージ/タスク/SQL）、ドライバ/エグゼキュータログ、ジョブログなどが基本です。",
+    "explanation": "正解は、**Spark UI とジョブログ、メトリクス、イベントログの参照** です\n\nDatabricks では、処理の失敗原因や性能問題を調べるために、**Spark UI**、**ジョブ実行の詳細画面とログ**、**タスクやストリーミングのメトリクス**、**イベントログ** といった組み込みの可観測性機能を利用できます。公式ドキュメントでも、Jobs UI では run details、cluster へのリンク、logs、task metrics を確認でき、さらにストリーミングタスクでは backlog などのメトリクスも参照できます。また、Lakeflow / パイプライン系では event log を使って更新内容や失敗情報を確認できます",
     "whyWrong": {
-      "B": "Windows OSの設定編集ツールです。DatabricksのジョブやSpark処理をデバッグする組み込み機能ではありません。",
-      "C": "ブラウザ側の追加機能に限定した説明です。Databricksが提供する実行ログやメトリクスの確認手段ではありません。",
-      "D": "監査ログを手作業で検索する運用だけを指しています。Spark UIやジョブログなどの組み込み支援を表していません。"
-    }
+      "B": "Windows OSの設定編集ツールです。DatabricksのジョブやSpark処理をデバッグする組み込み機能ではありません",
+      "C": "ブラウザ側の追加機能に限定した説明です。Databricksが提供する実行ログやメトリクスの確認手段ではありません",
+      "D": "監査ログを手作業で検索する運用だけを指しています。Spark UIやジョブログなどの組み込み支援を表していません"
+    },
+    "references": [
+      {
+        "title": "Lakeflow ジョブの監視と可観測性",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/monitor"
+      },
+      {
+        "title": "Spark UI を使用したデバッグ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
+      },
+      {
+        "title": "パイプライン イベント ログ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/monitor-event-logs"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q015",
@@ -411,18 +455,18 @@
     "answer": "A",
     "explanation": "正解は、**`readStream.format(\"cloudFiles\")`** です。\n\n- バッチ API の `read` ではなく、継続取り込みを前提に `readStream` を利用\n- 取り込み後は `writeStream` で Delta テーブルへ保存\n- watermark を設定する場合はイベント時間列の品質に注意\n\n```python\n(spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"parquet\")\n  .load(\"abfss://landing@acct.dfs.core.windows.net/events\")\n  .writeStream\n  .option(\"checkpointLocation\", \"dbfs:/chk/events\")\n  .trigger(availableNow=True)\n  .toTable(\"bronze.events\"))\n```\n\n```sql\nSELECT window(event_time, '10 minutes') AS w, count(*)\nFROM bronze.events\nGROUP BY window(event_time, '10 minutes');\n```\n\n注意点: ジョブ再実行時は同じ checkpoint を使うことで重複処理を防止できます。",
     "whyWrong": {
-      "B": "既存のDeltaテーブルやDeltaファイルをバッチ読み取りするAPIです。Auto Loaderの継続的なファイル取り込みには使いません。",
-      "C": "外部ストレージをDBFSにマウントするためのユーティリティです。Structured Streamingの読み取りAPIではありません。",
+      "B": "既存のDelta テーブルを通常のバッチ読み込みで参照するAPIです。Auto Loaderの継続的なファイル取り込みには使いません。",
+      "C": "外部ストレージをDBFSにマウントするための補助機能です。Structured Streamingの読み取りAPIではありません。",
       "D": "Deltaテーブルの古いファイルを削除する保守コマンドです。Auto Loaderでデータを読み取る操作ではありません。"
     },
     "references": [
       {
-        "title": "Use Auto Loader in Structured Streaming",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/#incremental-ingestion-using-auto-loader-with-structured-streaming"
+        "title": "Auto Loaderとは何ですか？",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/"
       },
       {
-        "title": "Spark Structured Streaming guide",
-        "url": "https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html"
+        "title": "Structured Streaming Programming Guide",
+        "url": "https://spark.apache.org/docs/latest/streaming/apis-on-dataframes-and-datasets.html"
       }
     ]
   },
