@@ -39,7 +39,6 @@ test.describe('[DEP][DATA] Notes / Keyboard isolation', () => {
     await expect(page.locator('#next-question')).toBeEnabled();
 
     const progressAfterAnswer = await progressForCurrentQuestion(page);
-    const firstChoice = page.locator('#choices-form input[name="choice"]').first();
     const initiallyCheckedValue = await page
       .locator('#choices-form input[name="choice"]:checked')
       .inputValue();
@@ -63,7 +62,7 @@ test.describe('[DEP][DATA] Notes / Keyboard isolation', () => {
     await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue(
       initiallyCheckedValue
     );
-    await expect(firstChoice).toBeDisabled();
+    await expect(page.getByRole('button', { name: '回答する' })).toBeDisabled();
 
     const progressAfterShortcuts = await progressForCurrentQuestion(page);
     expect(progressAfterShortcuts.seenCount ?? 0).toBe(progressAfterAnswer.seenCount ?? 0);
