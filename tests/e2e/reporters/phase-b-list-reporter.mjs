@@ -19,6 +19,16 @@ const caseLabels = new Map([
   ['guarantees DEP learning settings and home actions render without layout issues', 'home-layout'],
   ['guarantees mobile secondary actions open and quiz progress advances', 'mobile-actions'],
   [
+    'guarantees desktop note textarea keeps multiline drafts and suppresses quiz shortcuts',
+    'note-keyboard',
+  ],
+  ['guarantees desktop quiz shortcuts still work while choice radio has focus', 'radio-shortcuts'],
+  [
+    'guarantees answered question Enter does not double count progress while note is focused',
+    'note-enter-count',
+  ],
+  ['guarantees mobile note textarea keeps multiline drafts', 'mobile-note-keyboard'],
+  [
     'guarantees note deletion preserves bookmarks and bookmark deletion preserves notes',
     'note-bookmark',
   ],

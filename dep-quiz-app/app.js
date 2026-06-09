@@ -255,6 +255,7 @@ function closeSecondaryActions(options = {}) {
 
 function handleKeyboard(event) {
   if (!state.session || els.views.quiz.className.indexOf('active') === -1) return;
+  if (isTextEntryTarget(event.target)) return;
   const key = event.key.toUpperCase();
   const map = {
     1: 'A',
@@ -280,6 +281,29 @@ function handleKeyboard(event) {
   } else if (event.key === 'ArrowLeft') {
     moveQuestion(-1);
   }
+}
+
+function isTextEntryTarget(target) {
+  if (!(target instanceof Element)) return false;
+  if (target.closest('textarea, select')) return true;
+  if (target instanceof HTMLElement && target.isContentEditable) return true;
+
+  const input = target.closest('input');
+  if (!input) return false;
+
+  const nonTextInputTypes = new Set([
+    'button',
+    'checkbox',
+    'color',
+    'file',
+    'hidden',
+    'image',
+    'radio',
+    'range',
+    'reset',
+    'submit',
+  ]);
+  return !nonTextInputTypes.has(input.type);
 }
 
 function startSession(forcedMode = null) {
@@ -337,6 +361,11 @@ function renderQuestion(options = {}) {
 function submitCurrentAnswer(event) {
   event?.preventDefault?.();
   const question = getCurrentQuestion();
+  if (!question || state.session?.graded?.[question.id]) {
+    updatePrimaryActions(question?.id);
+    return;
+  }
+
   const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
   if (!selected) {
     els.quizMessage.textContent = '選択肢を1つ選んでから「回答する」を押してください。';
