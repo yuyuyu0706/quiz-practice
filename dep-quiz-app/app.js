@@ -285,9 +285,25 @@ function handleKeyboard(event) {
 
 function isTextEntryTarget(target) {
   if (!(target instanceof Element)) return false;
-  if (target.closest('textarea, input, select')) return true;
+  if (target.closest('textarea, select')) return true;
   if (target instanceof HTMLElement && target.isContentEditable) return true;
-  return false;
+
+  const input = target.closest('input');
+  if (!input) return false;
+
+  const nonTextInputTypes = new Set([
+    'button',
+    'checkbox',
+    'color',
+    'file',
+    'hidden',
+    'image',
+    'radio',
+    'range',
+    'reset',
+    'submit',
+  ]);
+  return !nonTextInputTypes.has(input.type);
 }
 
 function startSession(forcedMode = null) {

@@ -70,6 +70,26 @@ test.describe('[DEP][DATA] Notes / Keyboard isolation', () => {
     expect(progressAfterShortcuts.wrongCount ?? 0).toBe(progressAfterAnswer.wrongCount ?? 0);
   });
 
+  test('guarantees desktop quiz shortcuts still work while choice radio has focus', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop-only keyboard shortcut coverage.');
+    await startDepQuiz(page, 'all');
+    const initialProgress = await page.locator('#quiz-progress').textContent();
+
+    await page.locator('#choices-form input[value="A"]').focus();
+    await page.keyboard.press('2');
+    await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue('B');
+    await expect(page.getByRole('button', { name: '回答する' })).toBeEnabled();
+
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);
+    await expect(page.locator('#quiz-progress')).toHaveText(initialProgress ?? '');
+
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#quiz-progress')).toContainText(/2\s*\/\s*/);
+  });
+
   test('guarantees answered question Enter does not double count progress while note is focused', async ({
     page,
   }) => {

@@ -22,6 +22,7 @@ const caseLabels = new Map([
     'guarantees desktop note textarea keeps multiline drafts and suppresses quiz shortcuts',
     'note-keyboard',
   ],
+  ['guarantees desktop quiz shortcuts still work while choice radio has focus', 'radio-shortcuts'],
   [
     'guarantees answered question Enter does not double count progress while note is focused',
     'note-enter-count',
