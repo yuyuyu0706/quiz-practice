@@ -455,9 +455,9 @@
     "answer": "A",
     "explanation": "正解は、**`readStream.format(\"cloudFiles\")`** です。\n\n- バッチ API の `read` ではなく、継続取り込みを前提に `readStream` を利用\n- 取り込み後は `writeStream` で Delta テーブルへ保存\n- watermark を設定する場合はイベント時間列の品質に注意\n\n```python\n(spark.readStream\n  .format(\"cloudFiles\")\n  .option(\"cloudFiles.format\", \"parquet\")\n  .load(\"abfss://landing@acct.dfs.core.windows.net/events\")\n  .writeStream\n  .option(\"checkpointLocation\", \"dbfs:/chk/events\")\n  .trigger(availableNow=True)\n  .toTable(\"bronze.events\"))\n```\n\n```sql\nSELECT window(event_time, '10 minutes') AS w, count(*)\nFROM bronze.events\nGROUP BY window(event_time, '10 minutes');\n```\n\n注意点: ジョブ再実行時は同じ checkpoint を使うことで重複処理を防止できます。",
     "whyWrong": {
-      "B": "既存のDelta テーブルを通常のバッチ読み込みで参照するAPIです。Auto Loaderの継続的なファイル取り込みには使いません",
-      "C": "外部ストレージをDBFSにマウントするための補助機能です。Structured Streamingの読み取りAPIではありません",
-      "D": "Deltaテーブルの古いファイルを削除する保守コマンドです。Auto Loaderでデータを読み取る操作ではありません"
+      "B": "既存のDelta テーブルを通常のバッチ読み込みで参照するAPIです",
+      "C": "外部ストレージをDBFSにマウントするための補助機能です",
+      "D": "Deltaテーブルの古いファイルを削除する保守コマンドです"
     },
     "references": [
       {
@@ -483,6 +483,11 @@
     },
     "answer": "A",
     "explanation": "正解は **タスク間の依存（DAG）を Workflows で設定できる** です。\n\nDatabricksでノートブックを「ジョブのタスク」として運用する場合、複数タスクの順序や条件分岐は Workflows（Jobs）側でDAGとして定義します。つまり「前処理が成功したら次へ」「失敗したら通知・停止」「並列実行して合流」などの依存関係は、Databricksのジョブオーケストレーション機能で表現するのが王道です\n\n**なぜ、他の選択肢が違うか**\n\n- **crontab** : crontabはOSのスケジューラであり、Databricks内のタスク依存・リトライ・実行ログなどの運用機能と一体になりません\n\n- **Reposのブランチ名で依存を表現** : ブランチ名はソース管理の概念で、実行順序や成功/失敗分岐を表現できません\n\n- **Deltaのテーブルプロパティ** : テーブルプロパティはデータ/テーブルのメタ情報であり、ジョブの実行制御とは別です",
+    "whyWrong": {
+      "B": "OS のスケジューラによる実行時刻の管理です",
+      "C": "ソースコード管理上のブランチ名に関する説明です",
+      "D": "Delta テーブルのメタデータに関する説明です"
+    },
     "references": [
       {
         "title": "Lakeflow Jobs",
@@ -492,12 +497,7 @@
         "title": "タスクの依存関係を構成する",
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/run-if"
       }
-    ],
-    "whyWrong": {
-      "B": "OS のスケジューラによる実行時刻の管理です。Databricks ジョブ内のタスク依存や条件分岐の設定ではありません。",
-      "C": "ソースコード管理上のブランチ名に関する説明です。タスクの実行順序や成功時・失敗時の分岐は表現できません。",
-      "D": "Delta テーブルのメタデータに関する説明です。ジョブタスク間の依存関係を制御する場所ではありません。"
-    }
+    ]
   },
   {
     "id": "DEA-PLUS-Q017",
@@ -511,12 +511,18 @@
       "D": "Python だけを使い SQL を禁止する"
     },
     "answer": "A",
-    "explanation": "再現性（idempotency）を意識し、状態依存を減らすのが基本です。",
+    "explanation": "正解は、**ノートブックの冒頭で入力データの参照先を固定し、再実行可能な手順にする** です。\n\nノートブックで同じセルを何度も実行したときに結果や状態が変わってしまう問題を減らすには、処理を **再実行可能で、状態に依存しにくい形** に整えることが重要です。Databricks のノートブック開発ベストプラクティスでも、コードを共有モジュール化し、テストし、ジョブから安定して実行できるようにする流れが案内されており、再現性と予測可能性を高める設計が重視されています。そのため、入力データの参照先を冒頭で明示し、毎回同じ前提で実行できるようにする運用が最も適切です",
     "whyWrong": {
-      "B": "結果表示をセルに追加する操作です。再実行時の状態依存や副作用を減らす運用ではありません。",
-      "C": "計算資源の設定に関する対応です。セルの再実行で状態が変わる問題の根本対策ではありません。",
-      "D": "使用言語を制限する方針です。入力固定や冪等な手順設計とは別の観点です。"
-    }
+      "B": "`display()` を増やしても、ノートブックの状態依存や再実行時の不整合は解決しません。表示は確認には役立ちますが、再実行可能性そのものを高める対策ではありません",
+      "C": "ドライバメモリを最大化しても、セルの再実行で状態が変わる問題の本質的な対策にはなりません。重要なのは、入力・処理手順・副作用を安定させることです",
+      "D": "Python だけに限定しても、状態依存の問題は防げません。Databricks ノートブックでは複数言語を扱えますが、重要なのは言語ではなく、再現性のある実行手順と状態管理です"
+    },
+    "references": [
+      {
+        "title": "ノートブックのソフトウェア エンジニアリングのベスト プラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/best-practices"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q018",
@@ -530,12 +536,26 @@
       "D": "ノートブックの見た目を変更する"
     },
     "answer": "A",
-    "explanation": "ファイル増分取り込み（ブロンズ層）での利用が典型です。",
+    "explanation": "正解は、**日次で増える JSON/CSV/Parquet ファイルをオブジェクトストレージから増分取り込みしてブロンズに着地** です。\n\nAuto Loader は、クラウドオブジェクトストレージに到着する新規ファイルを **増分かつ効率的に処理する** ための仕組みです。Databricks 公式でも、Auto Loader は cloud storage に到着した新しいデータファイルを incrementally and efficiently 処理し、S3・ADLS・GCS・Unity Catalog volumes などをソースとして扱えると説明されています。そのため、日々追加される JSON / CSV / Parquet などのファイルをオブジェクトストレージから継続的に取り込み、まず Bronze 層へ着地させる用途が最も代表的なユースケースです",
     "whyWrong": {
-      "B": "Delta テーブルの不要ファイル削除に関する操作です。新規ファイルの増分取り込み用途ではありません。",
-      "C": "Unity Catalog のユーザー管理に関する自動化です。オブジェクトストレージ上のファイル取り込みとは別領域です。",
-      "D": "ノートブック UI の表示に関する操作です。データ取り込み処理のユースケースではありません。"
-    }
+      "B": "`VACUUM` は Delta テーブルの不要ファイルを削除する保守操作であり、Auto Loader のユースケースではありません",
+      "C": "Unity Catalog のユーザー作成や権限管理はガバナンス領域の機能であり、Auto Loader の役割ではありません",
+      "D": "ノートブックの見た目変更は UI 操作の話であり、Auto Loader とは無関係です"
+    },
+    "references": [
+      {
+        "title": "Auto Loaderとは何ですか？",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/"
+      },
+      {
+        "title": "クラウド オブジェクト ストレージからデータを取り込む",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/"
+      },
+      {
+        "title": "Spark API オプション リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/spark/api-options"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q019",
@@ -549,12 +569,26 @@
       "D": "常にシングルノードにする"
     },
     "answer": "A",
-    "explanation": "正解は、**ローカルのライブラリとクラスターランタイム/DBR の互換性を確認する** です\n\n互換性（Python/Spark/DBR）や認証設定がまず確認ポイントです。",
+    "explanation": "正解は、**ローカルのライブラリとクラスターランタイム/DBR の互換性を確認する** です。\n\nDatabricks Connect のトラブルでは、まず **ローカル環境と接続先 Databricks Runtime の互換性** を確認するのが基本です。Databricks 公式では、Databricks Connect のパッケージバージョンは接続先 compute の Databricks Runtime バージョン以下である必要があり、できるだけ対応する最新版を使うことが推奨されています。さらに、Python・JDK・Scala のバージョンも接続先の実行環境と整合している必要があり、特に UDF を使う場合はローカルの Python minor version をクラスター側と一致させる必要があります",
     "whyWrong": {
-      "B": "表示上の識別名を変えるだけの対応です。ライブラリや DBR との互換性問題の確認にはなりません。",
-      "C": "ストレージ領域を削除する危険な操作です。Databricks Connect の互換性確認や認証確認とは関係ありません。",
-      "D": "クラスター構成を単一ノードに固定する対応です。ローカル環境とクラスターランタイムの不整合を直接確認する方法ではありません。"
-    }
+      "B": "クラスター名の長さは Databricks Connect の典型的な接続不具合や互換性問題の主因ではありません",
+      "C": "DBFS ルートの削除は危険な操作であり、Databricks Connect の一般的なトラブルシューティングではありません",
+      "D": "Databricks Connect で常にシングルノードが必要なわけではありません"
+    },
+    "references": [
+      {
+        "title": "Databricks Connect の使用要件",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/requirements"
+      },
+      {
+        "title": "Databricks Connect のコンピューティング構成",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/cluster-config"
+      },
+      {
+        "title": "Databricks Connect for Pythonの問題解決",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/python/troubleshooting"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q020",
@@ -568,12 +602,26 @@
       "D": "ノートブックを PDF 化する"
     },
     "answer": "A",
-    "explanation": "正解は、**Spark UI で確認する**です\n\n遅延の原因は計算/シャッフル/I/O/スキュー等が多く、Spark UI での調査が第一選択です",
+    "explanation": "正解は、**Spark UI でステージ/タスクのスキュー、シャッフル、I/O 待ち、バッチ処理時間を確認する** です。\n\nDatabricks では、Structured Streaming の遅延やスループット低下を調べる際、まず **Spark UI の Streaming タブやジョブ詳細画面** を見て、各マイクロバッチの **処理時間、入力レート、処理レート、backlog** などのメトリクスを確認するのが基本です。また、Spark UI ではステージやタスクの偏り、シャッフル、実行時間の長いタスクなども確認できるため、スキューや I/O 起因のボトルネック調査に向いています",
     "whyWrong": {
-      "B": "監査ログは操作履歴やアクセス履歴の確認に使います。Spark 実行のスキューやシャッフルの詳細調査には不十分です。",
-      "C": "ソースコード管理領域を削除する操作です。ストリーミング遅延の原因調査にはつながりません。",
-      "D": "ノートブックを文書化する操作です。実行時のボトルネック確認には役立ちません。"
-    }
+      "B": "監査ログは操作監査やアクセス追跡には有用ですが、ストリーミングジョブの性能低下を最初に切り分ける主手段ではありません",
+      "C": "Repos の削除は性能調査とは無関係です。ストリーミング遅延の原因調査にはつながりません",
+      "D": "ノートブックを PDF 化しても、ストリーミング性能の原因分析にはつながりません"
+    },
+    "references": [
+      {
+        "title": "Azure Databricksでの構造化ストリーミング クエリの監視",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/stream-monitoring"
+      },
+      {
+        "title": "構造化ストリーミングの概念",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/concepts"
+      },
+      {
+        "title": "Spark UI を使用したデバッグ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q021",
