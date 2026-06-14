@@ -1291,7 +1291,30 @@
       "D": "Delta を使えなくなる"
     },
     "answer": "B",
-    "explanation": "正解は、**コンピュート運用の多くをプラットフォーム側に任せ、起動/スケール等を最適化できる** です\n\n運用負荷軽減（管理の自動化）が大きな利点です。"
+    "explanation": "正解は、**コンピュート運用の多くをプラットフォーム側に任せ、起動/スケール等を最適化できる** です。\n\nDatabricks のサーバレス コンピューティングは、ユーザーがクラウドアカウント内でクラスターを事前にプロビジョニングしたり、インスタンス種類やスケール設定を細かく管理したりする負担を減らすための仕組みです。Azure Databricks のサーバレスでは、Databricks が必要なコンピューティングリソースを自動的に割り当て・管理し、起動時間やスケーリング、アイドル時間の削減を支援します。\n\nたとえばサーバレス ジョブでは、インフラストラクチャを構成・デプロイしなくてもジョブを実行でき、Azure Databricks 側がワークロードに応じてコンピューティングの最適化やスケーリングを管理します。サーバレス SQL ウェアハウスも、Databricks SQL を実行するためのコンピュートを Databricks 管理に寄せられる選択肢です",
+    "whyWrong": {
+      "A": "サーバレスは、クラスターの手動チューニングや常時管理の負担を増やすための仕組みではありません。むしろ、コンピュートの割り当て、起動、スケールなどを Databricks 側に任せやすくすることが利点です",
+      "C": "サーバレスを使うと常に Spark UI が使えなくなる、という理解は不正確です。サーバレスでは利用できる機能や制限事項はありますが、利点として問われている内容ではありません",
+      "D": "サーバレスを使っても Delta Lake が使えなくなる訳ではありません。サーバレス SQL やサーバレス ジョブでも、Databricks のレイクハウス上のデータ処理や分析が利用できます"
+    },
+    "references": [
+      {
+        "title": "サーバーレス コンピューティングに接続する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/serverless/"
+      },
+      {
+        "title": "ワークフロー用のサーバーレス コンピューティングを使用して Lakeflow ジョブを実行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/run-serverless-jobs"
+      },
+      {
+        "title": "サーバーレス SQL ウェアハウスを設定する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/admin/sql/serverless"
+      },
+      {
+        "title": "SQL ウェアハウスの種類",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/sql-warehouse/warehouse-types"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q042",
@@ -1305,7 +1328,26 @@
       "D": "UC のグループ名"
     },
     "answer": "A",
-    "explanation": "正解は、**Stage の時間、Shuffle Read/Write、Skew、Task 失敗/再試行** です\n\nボトルネックはステージ/タスク/シャッフル/I/O に現れます。"
+    "explanation": "正解は、**Stage の時間、Shuffle Read/Write、Skew、Task 失敗/再試行** です。\n\nSpark UI は、Spark ジョブの実行状況を確認し、どの処理が遅いかを切り分けるための基本的なデバッグ手段です。まずは Jobs / Stages / Tasks の情報を確認し、どの Stage に時間がかかっているか、Shuffle Read / Shuffle Write が大きすぎないか、一部の Task だけ極端に遅くないか、失敗や再試行が多発していないかを見ます。\n\nたとえば、特定の Stage だけ長時間かかっている場合は、その Stage の Task 一覧を確認します。一部の Task だけ処理時間や入力データ量が大きい場合は、データスキューが疑われます。また、Shuffle Read / Write が大きい場合は、大規模な join や groupBy などによるデータ移動がボトルネックになっている可能性があります",
+    "whyWrong": {
+      "B": "ノートブックのテーマ色は表示上の設定であり、Spark ジョブの性能ボトルネック特定には関係ありません",
+      "C": "監査ログの保存先はガバナンスやセキュリティ監査の観点では重要ですが、Spark 処理のどの Stage や Task が遅いかを特定するための主情報ではありません",
+      "D": "Unity Catalog のグループ名はアクセス制御に関する情報であり、Spark ジョブの処理遅延、Shuffle、Task 失敗、データスキューの調査には直接使いません"
+    },
+    "references": [
+      {
+        "title": "Spark UI を使用したデバッグ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
+      },
+      {
+       "title": "スキューとスピル",
+        "url": "https://learn.microsoft.com/en-us/azure/databricks/optimizations/spark-ui-guide/long-spark-stage-page"
+      },
+      {
+        "title": "Spark UI を使用してコストとパフォーマンスの問題を診断する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/optimizations/spark-ui-guide/"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q043",
@@ -1319,7 +1361,26 @@
       "D": "監査ログを無効化する"
     },
     "answer": "A",
-    "explanation": "正解は、**リトライ（指数バックオフ）と並列度の制御を組み合わせる** です\n\n外部依存ではリトライ戦略と並列制御が基本です。"
+    "explanation": "正解は、**リトライ（指数バックオフ）と並列度の制御を組み合わせる** です。\n\n外部システム API には、一定時間あたりの呼び出し回数に上限があることが多く、Databricks ジョブから大量・高並列に API を呼び出すと、HTTP 429 Too Many Requests のようなレート制限エラーが発生する場合があります。このような場合は、失敗時にすぐ同じリクエストを連打するのではなく、待ち時間を徐々に長くする **指数バックオフ付きリトライ** を使い、あわせて同時実行数やパーティション数を制御して、外部APIに過剰な負荷をかけないようにします。\n\nたとえば、Spark の各パーティションから外部 API を呼び出す場合、パーティション数や並列タスク数がそのまま同時リクエスト数に近くなることがあります。そのため、`repartition` で並列度を調整する、API 呼び出し側でスロットリングする、失敗時は指数バックオフで再試行する、といった設計が重要です。\n\nDatabricks Jobs 側にもタスクの再試行設定はありますが、API のレート制限対策では、アプリケーション側のリトライ制御と並列度制御を組み合わせることが特に重要です",
+    "whyWrong": {
+      "B": "例外を握りつぶして成功扱いにすると、API 呼び出しが失敗しているにも関わらず後続処理が進む為、データ欠損や不整合に繋がります。対処として不適切です",
+      "C": "常に最大並列で外部 API を呼び出すと、相手先のレート制限に達しやすくなります",
+      "D": "監査ログを無効化しても、外部 API のレート制限対策にはなりません。むしろ障害調査や運用監査に不利になります"
+    },
+    "references": [
+      {
+        "title": "ジョブのタスクを構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/tasks"
+      },
+      {
+        "title": "ジョブ失敗のトラブルシューティングと修復",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/repair-job-failures"
+      },
+      {
+        "title": "ForEachBatch を使用してパイプライン内の任意のデータ シンクに書き込む",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/for-each-batch"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q044",
@@ -1330,10 +1391,33 @@
       "A": "すべての環境で同じ資格情報を共有する",
       "B": "環境ごとに変数/シークレット/設定を分離し、DAB などで切り替えてデプロイする",
       "C": "本番では手動コピペのみで反映する",
-      "D": "監査ログを削除して差分をなくす"
+      "D": "監査ログを削除して差分を無くす"
     },
     "answer": "B",
-    "explanation": "正解は、**環境ごとに変数/シークレット/設定を分離し、DAB などで切り替えてデプロイする** です\n\n秘匿情報分離と環境別設定がセキュアで再現性も高いです。"
+    "explanation": "正解は、**環境ごとに変数/シークレット/設定を分離し、DAB などで切り替えてデプロイする** です。\n\n本番向けのデータパイプラインでは、開発・検証・本番で使うカタログ名、スキーマ名、ジョブ名、スケジュール、クラスター設定、接続先、資格情報などが異なることがあります。これらの環境差分を安全に扱うには、設定値をコード内に直接書き込むのではなく、環境ごとの変数、シークレット、設定ファイルとして分離し、デプロイ時に対象環境に応じて切り替えるのが一般的です\n\nDAB（Databricks Asset Bundles）では、`dev`、`staging`、`prod` のような target を定義し、同じリソース定義をもとに環境ごとの設定差分を切り替えてデプロイできます。これにより、GUIで本番設定を手作業コピーするよりも、Git管理、レビュー、CI/CD、自動デプロイに乗せやすくなり、設定ミスや資格情報の混在を減らせます\n\nしたがって、本番向けに環境差分を安全に扱う方法として最も適切なのは、環境ごとに変数・シークレット・設定を分離し、DAB などで切り替えてデプロイすることです",
+    "whyWrong": {
+      "A": "全ての環境で同じ資格情報を共有すると、開発環境から本番データへ誤アクセスしたり、資格情報漏えい時の影響範囲が広がったりします。環境ごとに資格情報や権限を分離するのが安全です",
+      "C": "本番反映を手動コピペだけにすると、設定漏れ、差分の追跡不能、再現性の低下が起きやすくなります。DAB などでリソース定義をコード化し、CI/CD で反映する方が安全です",
+      "D": "監査ログを削除しても環境差分は無くなりません。むしろ変更履歴や障害調査に必要な情報を失います。環境差分は設定管理とシークレット管理で扱うべきです"
+    },
+    "references": [
+      {
+        "title": "宣言型オートメーション バンドルとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/"
+      },
+      {
+        "title": "宣言型オートメーション バンドルのターゲット",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/settings#targets"
+      },
+      {
+        "title": "宣言型オートメーション バンドルのデプロイ モード",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/deployment-modes"
+      },
+      {
+        "title": "シークレット",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/security/secrets/"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q045",
@@ -1355,16 +1439,20 @@
     },
     "references": [
       {
-        "title": "Troubleshoot and repair job failures - Databricks",
-        "url": "https://docs.databricks.com/aws/en/jobs/repair-job-failures"
+        "title": "ジョブ失敗のトラブルシューティングと修復",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/repair-job-failures"
       },
       {
-        "title": "Troubleshoot and repair job failures - Azure Databricks",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/jobs/repair-job-failures"
+        "title": "Delta Lake テーブルへのマージを使用したアップサート",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/merge"
       },
       {
-        "title": "Delta table streaming reads and writes - Azure Databricks",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/structured-streaming/delta-lake"
+        "title": "MERGE INTO - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-merge-into"
+      },
+      {
+        "title": "Delta Lake テーブルの作成と管理 - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/tutorial"
       }
     ]
   },
@@ -1374,13 +1462,13 @@
     "sectionTitle": "データガバナンス＆品質",
     "question": "Unity Catalog におけるマネージドテーブル と 外部テーブル の違いとして最も適切なのはどれ？",
     "choices": {
-      "A": "マネージドは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部はユーザー管理の場所を参照する",
-      "B": "外部テーブルは SQL が使えない",
-      "C": "マネージドテーブルは読み取り専用",
-      "D": "外部テーブルは Delta 形式を使えない"
+      "A": "マネージドテーブルは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部テーブルはユーザー管理の場所を参照する",
+      "B": "マネージドテーブルは SQL で操作できるが、外部テーブルは SQL では操作できない",
+      "C": "マネージドテーブルは読み取り専用で、外部テーブルは書き込み専用として扱われる",
+      "D": "マネージドテーブルは Delta 形式を使えるが、外部テーブルは Delta 形式を使えない"
     },
     "answer": "A",
-    "explanation": "正解は、**マネージドは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部はユーザー管理の場所を参照する**です。\n\n所有権（データファイルの管理責任）が大きな違いです",
+    "explanation": "正解は、**マネージドテーブルは Databricks がストレージ上のデータ配置/ライフサイクルを管理し、外部テーブルはユーザー管理の場所を参照する** です。\n\nUnity Catalog におけるマネージドテーブルは、Databricks がテーブルのメタデータだけでなく、データファイルの保存場所やライフサイクルも管理するテーブルです。通常、データは Unity Catalog の管理対象ストレージに配置され、テーブル削除時には一定条件のもとで基盤データも管理対象として扱われます。\n\n一方、外部テーブルは、ユーザーが管理するクラウドストレージ上の場所を参照するテーブルです。Unity Catalog は外部テーブルのメタデータやアクセス制御を管理しますが、データファイルそのものの配置、保存場所、ライフサイクルは利用者側の管理責任になります",
     "whyWrong": {
       "B": "外部テーブルでも SQL は利用できます。違いは SQL 可否ではなく、**データの保存場所とライフサイクル管理の責任範囲** にあります",
       "C": "マネージドテーブルは読み取り専用ではありません。作成・更新・削除が可能で、Unity Catalog が読み書きや最適化を含む管理を担います",
@@ -1388,12 +1476,16 @@
     },
     "references": [
       {
-        "title": "Azure Databricks for Delta Lake と Apache Iceberg の Unity カタログ マネージド テーブル",
+        "title": "外部テーブルの操作",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/external"
+      },
+      {
+        "title": "マネージド テーブル",
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/managed"
       },
       {
-        "title": "外部テーブルの操作",
-        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/external"
+        "title": "Azure Databricks for Delta Lake と Apache Iceberg の Unity カタログ マネージド テーブル",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/managed"
       }
     ]
   },
@@ -1401,15 +1493,38 @@
     "id": "DEA-PLUS-Q047",
     "section": "5",
     "sectionTitle": "データガバナンス＆品質",
-    "question": "UnityCatalog で「スキーマを利用する」ために必要になりやすい権限の組み合わせとして最も適切なのはどれ？",
+    "question": "Unity Catalog で、あるテーブルを参照できるようにするための権限付与として最も適切なのはどれ？",
     "choices": {
-      "A": "`USAGE`（カタログ/スキーマ）＋対象オブジェクトへの権限（例：テーブルの `SELECT`）",
-      "B": "`OWNERSHIP` がないと何もできない",
-      "C": "`SELECT` だけあればスキーマ参照できる",
-      "D": "`VACUUM` 権限"
+      "A": "対象テーブルに `SELECT` を付与するだけでよい",
+      "B": "対象テーブルの `SELECT` に加えて、親カタログと親スキーマの `USAGE` を付与する",
+      "C": "親カタログの `USAGE` だけを付与すれば、配下の全テーブルを参照できる",
+      "D": "親スキーマの `CREATE TABLE` を付与すれば、既存テーブルを参照できる"
     },
-    "answer": "A",
-    "explanation": "正解は、**`USAGE`（カタログ/スキーマ）＋対象オブジェクトへの権限** です。\n\nUnityCatalog は階層に沿って `USAGE` とオブジェクト権限が必要になるのが基本です。"
+    "answer": "B",
+    "explanation": "正解は、**対象テーブルの `SELECT` に加えて、親カタログと親スキーマの `USAGE` を付与する** です。\n\nUnity Catalog では、テーブルを参照するために、対象テーブルそのものへの `SELECT` 権限だけでなく、そのテーブルが属する親カタログと親スキーマに対する `USAGE` 権限も必要です。\n\nたとえば `main.sales.orders` というテーブルを参照したい場合、利用者には `orders` テーブルへの `SELECT` に加えて、`main` カタログへの `USAGE` と、`sales` スキーマへの `USAGE` が必要になります。これは、Unity Catalog の権限がカタログ、スキーマ、テーブルなどの階層構造で管理されているためです",
+    "whyWrong": {
+      "A": "対象テーブルに `SELECT` を付与するだけでは不十分です",
+      "C": "親カタログの `USAGE` だけでは、配下の全テーブルを参照できるわけではありません",
+      "D": "`CREATE TABLE` はスキーマ内に新しいテーブルを作成するための権限であり、既存テーブルを参照するための権限ではありません"
+    },
+    "references": [
+      {
+        "title": "Unity Catalog の特権とセキュリティ保護可能なオブジェクト",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+      },
+      {
+        "title": "Unity Catalog のデータに対する特権の管理",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/manage-privileges/"
+      },
+      {
+        "title": "GRANT",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/security-grant"
+      },
+      {
+        "title": "SHOW GRANTS",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/security-show-grant"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q048",
@@ -1423,7 +1538,12 @@
       "D": "クラスターの作成者が全テーブルの所有者になる"
     },
     "answer": "A",
-    "explanation": "正解は **Metastore 管理者（admin）やオブジェクト所有者（owner）など、管理境界を持つ役割** です。\n\nUnity Catalog（UC）は「誰が何のデータ資産を見られる/使えるか」を統制する仕組みなので、運用上は “責務の境界”を持つロール（役割） が明確に存在します。代表例が次の2つです\n\n- **Metastore 管理者（admin）**：メタストア全体の管理（ガバナンスの根幹に近い責務）\n\n- **オブジェクト所有者（owner）**：テーブル/ビュー/スキーマ等の “所有” と、それに伴う権限管理の責務\n\n **なぜ、他の選択肢が違うか**\n\n- **監査ログ閲覧者は存在しない**\n\n“存在しない”と言い切っているのが不自然です。監査ログはガバナンスの重要要素で、実際の運用では閲覧・分析できるように保存/参照します\n\n- **ジョブの所有者がUCの全権限を自動で持つ**\n\nジョブ（Workflows）の所有者と、UC上の権限（データへのアクセス権）は別物です。ジョブを持っているだけでデータ全権限が自動付与される設計は最小権限に反します。\n\n- **クラスター作成者が全テーブルの所有者になる**\n\nクラスター作成はコンピュート管理の概念で、UCのデータ資産の所有権とは直結しません。",
+    "explanation": "正解は、**Metastore 管理者（admin）やオブジェクト所有者（owner）など、管理境界を持つ役割** です。\n\nUnity Catalog では、データガバナンスを行うために、管理者ロール、オブジェクト所有者、権限を付与されるプリンシパルなどの概念を使ってアクセス制御を管理します。代表的な管理者ロールには、アカウント管理者、ワークスペース管理者、Metastore 管理者があります。このうち Metastore 管理者は、特定の Unity Catalog metastore の範囲で、データアクセス、所有権、上位の Unity Catalog オブジェクト管理に関わる重要な役割です。\n\nまた、Unity Catalog ではカタログ、スキーマ、テーブル、ビュー、ボリュームなどがセキュリティ保護可能なオブジェクトとして階層的に管理され、それぞれに所有者（owner）や権限を設定できます。オブジェクト所有者は、そのオブジェクトに対する管理権限を持ち、必要に応じて他のユーザーやグループに権限を付与できます",
+    "whyWrong": {
+      "B": "監査ログ閲覧者という表現は環境や設定によって扱いが異なりますが、Unity Catalog では監査ログやシステムテーブルを使ってアクセスや操作を確認できます。「監査ログ閲覧者は存在しない」と断定する選択肢は、UC の重要なロール/概念を説明するものとして不適切です",
+      "C": "ジョブの所有者であることと、Unity Catalog の全権限を持つことは別です。ジョブ所有者はジョブ設定や実行に関係しますが、UC のカタログ、スキーマ、テーブルに対する権限は別途管理されます",
+      "D": "クラスターの作成者が全テーブルの所有者になるわけではありません。Unity Catalog のテーブル所有者は、オブジェクト作成者や明示的な所有権移譲などによって管理され、クラスター作成者とは別の概念です"
+    },
     "references": [
       {
         "title": "Unity Catalog の権限とセキュリティ保護可能なオブジェクト",
@@ -1455,7 +1575,26 @@
       "D": "Auto Loader のスキーマ推論を高速化する"
     },
     "answer": "B",
-    "explanation": "正解は、**データの派生関係（上流→下流）を把握し、影響範囲分析や監査に使う** です\n\nどのデータがどこから来て、どこへ使われたかの追跡により、変更影響や品質管理が容易になります。"
+    "explanation": "正解は、**データの派生関係（上流→下流）を把握し、影響範囲分析や監査に使う** です。\n\nUnity Catalog のリネージは、Azure Databricks で実行されたクエリや処理をもとに、データがどの上流テーブルや列から作られ、どの下流テーブル、ノートブック、ジョブ、ダッシュボードなどで利用されているかを把握するための機能です。Unity Catalog では、ランタイムのデータ系列がキャプチャされ、列レベルのリネージもサポートされます。\n\nたとえば、ある Silver テーブルの列定義を変更する前に、その列がどの Gold テーブルやダッシュボードで使われているかを確認できます。また、下流レポートの値がおかしい場合に、上流データや変換処理をたどって原因を調査できます。機密データがどこから来て、どの下流資産に流れているかを確認することで、監査やコンプライアンスにも役立ちます",
+    "whyWrong": {
+      "A": "Unity Catalog のリネージは、ユーザーのパスワードを表示する機能ではありません",
+      "C": "クラスターの停止はコンピュート管理の操作であり、Unity Catalog のリネージの主な目的ではありません",
+      "D": "Auto Loader のスキーマ推論を高速化することは、Unity Catalog のリネージの目的ではありません。Auto Loader のスキーマ推論やスキーマ進化は取り込み処理の機能です"
+    },
+    "references": [
+      {
+        "title": "Unity カタログを使用してデータ系列を表示する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/data-lineage"
+      },
+      {
+        "title": "Unity Catalog とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/"
+      },
+      {
+        "title": "Unity カタログを始めよう",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/get-started"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q050",
@@ -1463,13 +1602,36 @@
     "sectionTitle": "データガバナンス＆品質",
     "question": "Delta Sharing の説明として最も適切なのはどれ？",
     "choices": {
-      "A": "Databricks ワークスペース間でしか共有できない",
-      "B": "共有先にデータコピーを強制しない方式で、外部システムとも共有できる（権限制御やコスト考慮が必要）",
-      "C": "共有は CSV に変換してメール送付する",
-      "D": "監査ログを共有するためだけの機能"
+      "A": "Databricks 間に限定して、テーブルをコピーして共有する仕組み",
+      "B": "共有先にコピーを強制せず、Databricks 外の受信者にも共有できる仕組み",
+      "C": "Unity Catalog の権限を無視して、全ユーザーに公開する仕組み",
+      "D": "監査ログやジョブログだけを、外部システムへ転送する仕組み"
     },
     "answer": "B",
-    "explanation": "共有方式（プロトコル/権限/課金/データ移動）を理解することが重要です。"
+    "explanation": "正解は、**共有先にコピーを強制せず、Databricks 外の受信者にも共有できる仕組み** です。\n\nDelta Sharing は、組織内外の受信者にデータや AI 資産を安全に共有するためのオープンなデータ共有プロトコルです。共有先にデータを手動コピーしたり、CSV に変換して配布したりするのではなく、共有元が共有対象を定義し、受信者がその共有データへアクセスできるようにします。\n\nDelta Sharing には、Databricks 間で共有する方式に加えて、Databricks を利用していない受信者に共有できるオープン Delta Sharing もあります。そのため、共有先は必ずしも Databricks ワークスペースに限定されません。\n\nただし、Delta Sharing は Unity Catalog の権限制御を無視して全公開する仕組みではありません。共有元は share、recipient、権限などを管理し、どのデータを誰に共有するかを制御します",
+    "whyWrong": {
+      "A": "Delta Sharing は Databricks 間だけに限定された仕組みではありません。Databricks-to-Databricks 共有に加えて、Databricks 外の受信者にも共有できます",
+      "C": "Delta Sharing は Unity Catalog の権限を無視して全ユーザーに公開する仕組みではありません。共有元は共有対象、受信者、権限を管理し、誰に何を共有するかを制御します",
+      "D": "Delta Sharing は監査ログやジョブログだけを外部転送する機能ではありません。主な目的は、テーブル、ビュー、ボリューム、AI 資産などのデータ資産を安全に共有することです"
+    },
+    "references": [
+      {
+        "title": "Delta Sharing とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/"
+      },
+      {
+        "title": "Delta Sharing の共有を作成および管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/create-share"
+      },
+      {
+        "title": "オープン共有を使用してデータを共有する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/open-sharing"
+      },
+      {
+        "title": "Delta Sharing 受信者を作成および管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta-sharing/create-recipient"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q051",
@@ -1484,6 +1646,11 @@
     },
     "answer": "B",
     "explanation": "正解は、**ストレージとコンピュートを分離し、同一データ上でBI/ML/ストリーミングを統合できる** です。\n\nDatabricksのレイクハウス / Data Intelligence Platform の中核は、オブジェクトストレージ上の同じデータを基盤として、SQL分析、データエンジニアリング、機械学習、ストリーミング処理を一体で扱える点にあります。Databricks自身も、レイクハウスを「データウェアハウスの性能・管理性」と「データレイクの柔軟性・低コスト」を統合するアーキテクチャとして説明しています",
+    "whyWrong": {
+      "A": "Databricks のレイクハウスは、データを必ず専用のプロプライエタリ形式に変換して閉じ込める考え方ではありません",
+      "C": "Databricks のデータ管理は、コントロールプレーン上の RDBMS に限定されるものではありません",
+      "D": "Databricks では、ストリーミング処理もレイクハウス上の主要なワークロードの1つとして扱えます。別製品に切り出すことを前提としていません"
+    },
     "references": [
       {
         "title": "データ・インテリジェンス・プラットフォーム",
@@ -1492,6 +1659,14 @@
       {
         "title": "Data Lakehouse とは何ですか?",
         "url": "https://www.databricks.com/jp/blog/what-is-data-lakehouse"
+      },
+      {
+        "title": "適切に設計された Data Lakehouse の概要",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/"
+      },
+      {
+        "title": "データ ウェアハウスを Databricks レイクハウスに移行する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/migration/warehouse-to-lakehouse"
       }
     ]
   },
@@ -1507,19 +1682,24 @@
       "D": "Unity Catalogメタストアのみ"
     },
     "answer": "B",
-    "explanation": "正解は、**データプレーン** です",
+    "explanation": "正解は、**データプレーン** です。\n\nDatabricks のアーキテクチャは、大きく管理・制御を担うコントロールプレーンと、実際のデータ処理を担うデータプレーンの2種類に分けて理解できます。コントロールプレーンは、ワークスペース UI、ジョブ管理、クラスター管理、ノートブック管理など、Databricks 側の管理・制御系サービスを提供する領域です。\n\n一方、データプレーンは、Spark のドライバやワーカー、SQL クエリやジョブの実行基盤など、実際に計算処理が行われる領域です。クラシックコンピュートの場合、ドライバやワーカーは通常、ユーザーのクラウドアカウント内のデータプレーン上で実行されます。\n\nサーバレスコンピュートの場合も、実際の処理がコントロールプレーン上で行われるわけではありません。ユーザーが自分のクラウドアカウント内でクラスターを事前に作成・管理しない代わりに、Databricks が管理するサーバレス側のデータ処理領域でワークロードが実行されます。つまり、クラシックかサーバレスかでコンピュートの管理主体や配置方式は異なりますが、実処理を担うのはコントロールプレーンではなくデータプレーン側です。\n\nSQL ウェアハウスも同様に、SQL クエリを実行するためのコンピュートはデータ処理側の領域で動作します。クラシック SQL ウェアハウスではユーザーの Azure サブスクリプション側のコンピュートを使い、サーバレス SQL ウェアハウスでは Databricks 管理のサーバレス側のデータ処理領域を使います。どちらの場合も、SQL の実行そのものをコントロールプレーン上で行うわけではありません\n\nしたがって、クラスタのドライバ/ワーカー、または SQL やジョブの実処理を担うコンピュートが配置される場所として最も適切なのは、コントロールプレーンではなくデータプレーンです",
+    "whyWrong": {
+      "A": "コントロールプレーンは、Databricks の UI、ジョブ管理、クラスター管理などの管理・制御機能を提供する領域です",
+      "C": "DBFS はファイルシステム抽象化やストレージアクセスに関する概念であり、クラスタのドライバ/ワーカーをホストする場所ではありません",
+      "D": "Unity Catalog メタストアは、カタログ、スキーマ、テーブル、権限などのメタデータとガバナンスを管理する領域です"
+    },
     "references": [
       {
-        "title": "Unity Catalog: Privileges and securable objects",
-        "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "高レベル アーキテクチャ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/getting-started/high-level-architecture"
       },
       {
-        "title": "Unity Catalog: Managed tables",
-        "url": "https://docs.databricks.com/aws/en/tables/managed"
+        "title": "クラシック コンピューティング プレーン ネットワーク",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/security/network/classic/"
       },
       {
-        "title": "Azure Databricks: Unity Catalog privileges",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "コンピューティング",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/"
       }
     ]
   },
@@ -1535,7 +1715,12 @@
       "D": "Databricks Connectのみで実行する"
     },
     "answer": "B",
-    "explanation": "正解は、**SQL Warehouse（可能ならサーバレス）を利用する** です\n\nこの設問の要点は「**同一クエリでも、実行のたびにコンピュートを起動/停止する運用を減らしたい**」かつ「**運用負担を抑えつつSQL実行基盤を使いたい**」という2点です。SQL用途に最適化された SQL Warehouse を使うと、クエリ実行基盤を“SQL専用のサービス”として扱え、（特にサーバレスの場合）クラスターの管理（起動/スケール/パッチ等）をDatabricks側に寄せやすいため、運用負担を下げられます。\n\n**なぜ、他の選択肢が違うか**\n\n- **All-purposeを人手で起動して使い回す**\n\n対話分析には向きますが、「運用負担を抑える」という観点では 手動起動/停止やサイズ調整の責務が残りやすい。SQL用途に特化した運用（オートスケール、同時実行制御など）もSQL Warehouseの方が意図に合います\n\n- **シングルノードを全ユーザー共有**\n\n同時実行やデータ量の増加で破綻しやすく、SQL実行基盤として一般解になりにくい（ボトルネック・障害影響が集中）\n\n- **Databricks Connectのみ**\n\nConnectは、“開発/実行接続”の仕組みであり、SQLの運用基盤を提供するものではありません\n\n**実務での事例**\n\n- BI/ダッシュボード/アドホックSQLを SQL Warehouseに集約する\n\n- 需要に応じてスケールし、過剰な手動操作を減らす（特にサーバレス）\n\n- 「クエリの同時実行」「キューイング」「クエリ履歴」など、SQL運用に必要な機能を利用する",
+    "explanation": "正解は、**SQL Warehouse（可能ならサーバレス）を利用する** です。\n\nDatabricks SQL でクエリを実行するための標準的なコンピュートは SQL Warehouse です。SQL Warehouse は、SQL クエリ、ダッシュボード、BI ツールからの接続など、SQL ワークロード向けに用意された実行基盤です。汎用 All-purpose cluster を人手で起動・停止して使い回すよりも、SQL 用途に適したコンピュートを使う方が、運用負担を抑えやすくなります。\n\n特にサーバレス SQL Warehouse が利用できる場合は、Databricks 側がクエリ実行に必要なリソースを動的に管理し、インフラ管理を抑えながら SQL ワークロードを実行できます。Azure Databricks でも、利用できる場合はサーバレス SQL Warehouse の利用が推奨されています",
+    "whyWrong": {
+      "A": "All-purpose cluster はノートブックでの対話的な開発や探索には便利ですが、SQL クエリ実行基盤として人手で起動・停止して使い回す運用は、管理負担やコスト管理の面で不利になりやすいです",
+      "C": "シングルノードクラスタを全ユーザーで共有すると、性能、可用性、権限分離、運用管理の面で問題が起きやすくなります。複数ユーザーの SQL 実行基盤としては、SQL Warehouse を使う方が適切です",
+      "D": "Databricks Connect は、ローカル開発環境から Databricks のコンピュートに接続してコードを実行するための仕組みです。SQL クエリの実行基盤そのものを提供する選択肢ではありません"
+    },
     "references": [
       {
         "title": "SQL ウェアハウスに接続する",
@@ -1557,13 +1742,18 @@
     "sectionTitle": "Databricks Intelligence Platform",
     "question": "クエリ性能を最適化するために、データレイアウトの決定を簡素化する機能の考え方として最も近いのはどれ？",
     "choices": {
-      "A": "常に手動でパーティション列を1つに固定する",
-      "B": "頻出のフィルタ/結合を踏まえたデータの並び替えや最適化を自動化してくれる機能群を有効化する",
-      "C": "Deltaテーブルでは最適化は不可能なのでParquetへ戻す",
-      "D": "クエリのたびに全件フルスキャンすることで一貫性を保つ"
+      "A": "手動パーティション設計を中心に、特定列へのアクセスだけを高速化する",
+      "B": "クエリパターンを踏まえ、クラスタリングや最適化の運用負担を下げる",
+      "C": "ZORDER をすべてのテーブルに適用し、Liquid Clustering と併用する",
+      "D": "Delta テーブルを外部テーブル化し、メタデータ管理を簡素化する"
     },
     "answer": "B",
-    "explanation": "正解は、**頻出のフィルタ/結合を踏まえたデータの並び替えや最適化を自動化してくれる機能群を有効化する** です\n\nこの問題のポイントは、**クエリ性能を上げたいときに、データレイアウトの調整をどこまで人手で抱えるべきか** です。Databricksでは、近年は Liquid Clustering や Predictive Optimization によって、テーブルの物理レイアウト最適化をより自動化・簡素化する方向を推奨しています。Databricks公式も、Liquid Clustering は「table partitioning と Z-ORDER を置き換える データレイアウトの最適化テクニック」と位置づけ、データレイアウトの決定を簡素化しつつ、クエリ性能を最適化すると説明しています\n\n**Liquid Clusteringの有効化例**\n\n```SQL\nALTER TABLE main.sales.orders CLUSTER BY AUTO;```\n",
+    "explanation": "正解は、**クエリパターンを踏まえ、クラスタリングや最適化の運用負担を下げる** です。\n\nDelta テーブルのクエリ性能を高めるには、よく使われるフィルタ条件や結合キーに合わせて、データファイルの配置を最適化することが重要です。従来は、パーティション列や ZORDER 列を人が慎重に選ぶ必要がありましたが、Databricks では Liquid Clustering や Predictive Optimization などにより、データレイアウト最適化の運用負担を下げられます。\n\nLiquid Clustering は、従来のパーティションや ZORDER に代わるデータレイアウト最適化手法です。クラスタリングキーに基づいてデータを整理し、クエリ性能を改善しやすくします。また、従来の静的なパーティション設計と比べて、分析ニーズの変化に合わせてクラスタリングキーを見直しやすい点も特徴です。\n\nPredictive Optimization は、Unity Catalog 管理テーブルに対して `ANALYZE`、`OPTIMIZE`、`VACUUM` などの保守処理を Databricks 側で自動実行し、性能やコスト効率の改善を支援する機能です。これにより、すべてのテーブルに対して手動で最適化ジョブを設計・運用する負担を減らせます",
+    "whyWrong": {
+      "A": "手動パーティション設計はデータレイアウト最適化の1つの方法ですが、常にそれを中心にする考え方ではありません。Liquid Clustering は、従来のパーティションや ZORDER に代わる手法として、データレイアウト管理を簡素化するために利用できます",
+      "C": "ZORDER をすべてのテーブルに適用するのは適切ではありません。また、Liquid Clustering を有効化したテーブルでは、ZORDER 句を併用できません。新しいテーブルでは、Databricks は ZORDER よりも Liquid Clustering の利用を推奨しています",
+      "D": "Delta テーブルを外部テーブル化しても、クエリパターンに応じたデータレイアウト最適化が自動的に簡素化されるわけではありません。外部テーブル化は保存場所や管理責任の話であり、クラスタリングや保守最適化の代替ではありません"
+    },
     "references": [
       {
         "title": "テーブルにリキッドクラスタリングを使用する",
@@ -1595,19 +1785,24 @@
       "D": "ストリーミングではDeltaを使えないのでCSVにする"
     },
     "answer": "B",
-    "explanation": "正解は、**同一Deltaテーブルに対して、バッチ書き込みとStructured Streaming書き込みを用途に応じて使う** です",
+    "explanation": "正解は、**同一Deltaテーブルに対して、バッチ書き込みとStructured Streaming書き込みを用途に応じて使う** です。\n\nDelta Lake は、バッチ処理とストリーミング処理の両方を同じテーブル形式で扱えることが大きな特徴です。Databricks では、バッチETLで Delta テーブルに書き込むことも、Structured Streaming を使って継続的に Delta テーブルへ書き込むこともできます。\n\nたとえば、日次で過去データをまとめて補正・再処理するバッチ処理と、新しく到着するイベントを継続的に取り込むストリーミング処理を、同じ Delta テーブルを中心に設計できます。Delta Lake のトランザクションログにより、読み取りと書き込みの一貫性を保ちながら、バッチとストリーミングのワークロードを組み合わせやすくなります\n\nただし、実務では同じテーブルへ複数の処理が書き込む場合、重複書き込み、更新順序、スキーマ変更、チェックポイント管理、冪等性などに注意が必要です。Structured Streaming では `checkpointLocation` を適切に設定し、再実行時にも処理済みデータを正しく管理できるようにします",
+    "whyWrong": {
+      "A": "ストリーミングは RDB、バッチは Data Lake と必ず分けて保存する必要はありません。Delta Lake では、バッチとストリーミングを同じテーブル形式で扱えるため、用途に応じて同一 Delta テーブルを中心に設計できます",
+      "C": "ストリーミングはファイルのみ、バッチは DBFS のみという制約はありません。Databricks では Structured Streaming を使って Delta テーブルに書き込むことができ、バッチ処理でもクラウドストレージ上の Delta テーブルを扱えます。",
+      "D": "ストリーミングで Delta を使えないという説明は誤りです。Structured Streaming は Delta Lake と統合されており、Delta テーブルをストリーミングのソースまたはシンクとして利用できます。CSV に変換する必要はありません"
+    },
     "references": [
       {
-        "title": "Compute: クラスタータイプの概要",
-        "url": "https://docs.databricks.com/aws/en/compute/cluster-types"
+        "title": "Structured Streaming の概要",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/"
       },
       {
-        "title": "Jobs: コンピュートと実行",
-        "url": "https://docs.databricks.com/aws/en/jobs"
+        "title": "構造化ストリーミングのチェックポイント",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/checkpoints"
       },
       {
-        "title": "Serverless: 概要",
-        "url": "https://docs.databricks.com/aws/en/compute/serverless"
+        "title": "Delta Lake テーブルのストリーミング読み取りと書き込み",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/delta-lake"
       }
     ]
   },
@@ -1623,19 +1818,28 @@
       "D": "Spark UIのイベントログを削除する"
     },
     "answer": "A",
-    "explanation": "正解は、**Databricksワークスペース外のローカルIDEから、リモートのクラスタへSpark処理を送って開発する** です。\n\nDatabricks Connect は、ローカルIDE（VS Code/PyCharm等）から Databricks 上のコンピュートへ接続し、リモート実行しながら開発するための仕組みです。\n\n```python\n# 例：ローカルIDE側でSparkSessionを作り、リモートクラスタへ接続\nfrom pyspark.sql import SparkSession\nspark = SparkSession.builder.getOrCreate()\n```\n\n他の選択肢（監査ログ、Delta Sharing、Spark UIログ削除）は Connect の目的（開発体験/実行先の分離）と一致しません。",
+    "explanation": "正解は、**Databricksワークスペース外のローカルIDEから、リモートのクラスタへSpark処理を送って開発する** です。\n\nDatabricks Connect は、ローカルPC上の IDE や開発環境から、Azure Databricks 側のリモート compute に接続して Spark コードを実行するための仕組みです。開発者は Visual Studio Code、PyCharm、IntelliJ IDEA などのローカルIDEでコードを書きながら、実際の Spark 処理は Databricks の compute 上で実行できます。\n\nこれにより、ローカルIDEの補完、デバッグ、テスト、バージョン管理などの開発体験を活かしつつ、Databricks 上のデータや Spark 実行環境を使って開発できます。ノートブックだけでなく、より一般的なソフトウェア開発の流れに寄せたい場合に便利です。\n\nただし、Databricks Connect は Unity Catalog の監査ログを有効化したり、Delta Sharing を構成したり、Spark UI のイベントログを削除したりするための機能ではありません",
+    "whyWrong": {
+      "B": "Databricks Connect は、Unity Catalog の監査ログを自動で有効化する機能ではありません",
+      "C": "Delta Sharing は、組織内外の受信者にデータを安全に共有するための仕組みです。Databricks Connect はデータ共有プロトコルではありません",
+      "D": "Databricks Connect は、Spark UI のイベントログを削除するための機能ではありません。Spark UI やイベントログは、ジョブやクエリの実行状況を調査するために使われます"
+    },
     "references": [
       {
-        "title": "Unity Catalog: Privileges and securable objects",
-        "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "Databricks Connect とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/"
       },
       {
-        "title": "Unity Catalog: Managed tables",
-        "url": "https://docs.databricks.com/aws/en/tables/managed"
+        "title": "Databricks Connect for Python のチュートリアル",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/python/tutorial"
       },
       {
-        "title": "Azure Databricks: Unity Catalog privileges",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "Databricks Connect の要件",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/requirements"
+      },
+      {
+        "title": "Databricks Connect for Python の制限事項",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/python/limitations"
       }
     ]
   },
@@ -1651,19 +1855,28 @@
       "D": "Unity Catalogのメタストアを削除する"
     },
     "answer": "A",
-    "explanation": "正解は、**セル単位の実行と、結果（表/グラフ/ログ）のインタラクティブ表示** です。\n\nUnity Catalog はカタログ/スキーマ/テーブル等をセキュアオブジェクトとして扱い、最小権限でアクセス制御・監査・リネージを提供します。",
+    "explanation": "正解は、**セル単位の実行と、結果（表/グラフ/ログ）のインタラクティブ表示** です。\n\nDatabricks Notebook は、コードをセル単位で実行しながら、データの確認、変換ロジックの試作、可視化、ログ確認などを対話的に進めるための開発環境です。Python、SQL、Scala、R などの言語を使い、処理結果を表形式で確認したり、グラフとして可視化したりできます。\n\nNotebook は、データ探索、ETLロジックの開発、デバッグ、分析、チーム内共有などに便利です。また、完成した Notebook は Databricks Jobs / Workflows のタスクとして実行することもできます。\n\nただし、Notebook は本番ジョブのすべての権限管理、クラスタノードのOSパッチ適用、Unity Catalog メタストアの削除を担う機能ではありません",
+    "whyWrong": {
+      "B": "Notebook はコード開発や分析を対話的に行う環境ですが、本番ジョブの権限管理を完全に Notebook 内だけで完結させるものではありません",
+      "C": "クラスタノードの OS パッチ適用は、Notebook の一般的な機能ではありません。コンピュート基盤の管理やランタイム更新は、Databricks の compute 管理やクラウド基盤側の仕組みとして扱います",
+      "D": "Unity Catalog のメタストア削除は、Notebook の一般的な開発機能ではありません。メタストアはデータガバナンスの中核であり、削除は管理者が慎重に扱うべき操作です"
+    },
     "references": [
       {
-        "title": "Unity Catalog: Privileges and securable objects",
-        "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "Databricks ノートブックの概要",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/"
       },
       {
-        "title": "Unity Catalog: Managed tables",
-        "url": "https://docs.databricks.com/aws/en/tables/managed"
+        "title": "Databricks ノートブックの開発",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/notebooks-code"
       },
       {
-        "title": "Azure Databricks: Unity Catalog privileges",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "Databricks Notebook の視覚化",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/notebooks/visualizations"
+      },
+      {
+        "title": "Azure Databricks ジョブでノートブックを使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/notebook"
       }
     ]
   },
@@ -1679,7 +1892,12 @@
       "D": "Unity CatalogのUSAGE権限を一括付与する"
     },
     "answer": "B",
-    "explanation": "正解は、**クラウドストレージ上に継続的に到着するファイルを増分取り込みする** です。\n\nAuto Loader はクラウドストレージに継続的に到着するファイルを **増分検知** して取り込むための仕組みです。\n\nバッチの一括投入やSQL Warehouseのキャッシュ用途ではなく、**ファイル到着の継続取り込み** が主用途です。",
+    "explanation": "正解は、**クラウドストレージ上に継続的に到着するファイルを増分取り込みする** です。\n\nAuto Loader は、クラウドオブジェクトストレージに新しく到着するファイルを効率的に検出し、Delta テーブルなどへ増分取り込みするための機能です。Databricks では `cloudFiles` という Structured Streaming のソースとして利用し、JSON、CSV、Parquet などのファイルを継続的または定期的に取り込めます。\n\nたとえば、外部システムから ADLS、S3、GCS などのクラウドストレージに日次・ hourly ・随時でファイルが配置される場合、Auto Loader を使うことで、新規ファイルだけを追跡しながらブロンズテーブルへ取り込む設計ができます。スキーマ推論やスキーマ進化にも対応しているため、ファイルベースのデータ取り込みパイプラインでよく使われます",
+    "whyWrong": {
+      "A": "VACUUM は Delta テーブルの不要になった古いデータファイルを削除する保守操作です",
+      "C": "SQL Warehouse のクエリ結果キャッシュは Auto Loader の役割ではありません",
+      "D": "Unity Catalog の `USAGE` 権限を一括付与することは Auto Loader の機能ではありません。権限管理は Unity Catalog の GRANT などで扱います"
+    },
     "references": [
       {
         "title": "Auto Loader: スキーマ推論と進化",
@@ -1688,10 +1906,6 @@
       {
         "title": "Auto Loader: オプション一覧",
         "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
-      },
-      {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/patterns"
       },
       {
         "title": "Auto Loader: 代表的な取り込みパターン",
@@ -1711,10 +1925,16 @@
       "D": "取り込み対象をCSVに限定することでスキーマ進化を回避する"
     },
     "answer": "B",
-    "explanation": "正解は、**schemaLocationを永続ストレージに置き、必要に応じてスキーマ進化を許可する設定を入れる** です。\n\nAuto Loader はクラウドストレージに継続的に到着するファイルを **増分検知** して取り込むための仕組みです。\n\n`schemaLocation` は推論したスキーマ（および進化情報）を保存する場所で、再起動時に再推論コストや不整合を減らします。`checkpointLocation` はストリーミングの進捗（オフセット等）を保存します。\n\n```python\n(spark.readStream.format('cloudFiles')\n .option('cloudFiles.format','json')\n .option('cloudFiles.schemaLocation','/Volumes/<cat>/<sch>/<vol>/schema')\n .option('checkpointLocation','/Volumes/<cat>/<sch>/<vol>/chk')\n .load('abfss://<container>@<acct>.dfs.core.windows.net/raw/')\n)\n```",
+    "explanation": "正解は、**schemaLocationを永続ストレージに置き、必要に応じてスキーマ進化を許可する設定を入れる** です。\n\nAuto Loader はクラウドストレージに継続的に到着するファイルを **増分検知** して取り込むための仕組みです。\n\n`schemaLocation` は推論したスキーマ（および進化情報）を保存する場所で、再起動時に再推論コストや不整合を減らします。`checkpointLocation` はストリーミングの進捗（オフセット等）を保存します",
+    "explanation": "正解は、**schemaLocationを永続ストレージに置き、必要に応じてスキーマ進化を許可する設定を入れる** です。\n\nAuto Loader でスキーマ推論やスキーマ進化を扱う場合は、`cloudFiles.schemaLocation` を永続的なストレージパスに設定します。この場所には、Auto Loader が推論したスキーマ情報や、スキーマの変化に関する情報が保存されます。\n\n一方、`checkpointLocation` は Structured Streaming の進捗管理に使われる設定です。どのファイルを処理済みか、どこから再開するかといった状態を管理します。つまり、`checkpointLocation` は処理の進捗、`cloudFiles.schemaLocation` はスキーマ情報を管理する、という役割の違いがあります。\n\nまた、Auto Loader では `cloudFiles.schemaEvolutionMode` を使って、新しい列が見つかった場合の動作を制御できます。たとえば、新しい列を追加してスキーマを進化させる、未知の列を rescue column に退避する、新しい列を検出したら失敗させる、といったモードを選べます。具体的なサンプルコードは下記の通りです\n\n```python\n(spark.readStream.format('cloudFiles')\n .option('cloudFiles.format','json')\n .option('cloudFiles.schemaLocation','/Volumes/<cat>/<sch>/<vol>/schema')\n .option('checkpointLocation','/Volumes/<cat>/<sch>/<vol>/chk')\n .load('abfss://<container>@<acct>.dfs.core.windows.net/raw/')\n)\n```",
+    "whyWrong": {
+      "A": "`schemaLocation` を設定しないと、Auto Loader がスキーマ推論やスキーマ進化の情報を安定して管理しづらくなります",
+      "C": "`checkpointLocation` はストリーミングの進捗管理に使う設定であり、スキーマ情報を管理するための設定ではありません",
+      "D": "CSV に限定してもスキーマ進化を根本的に回避できるわけではありません。CSV でも列の追加や変更が発生する可能性があります"
+    },
     "references": [
       {
-        "title": "Auto Loader: スキーマ推論と進化",
+        "title": "Auto Loader でスキーマ推論とスキーマ進化を構成する",
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
       },
       {
@@ -1723,11 +1943,11 @@
       },
       {
         "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/patterns"
+        "url": "https://docs.databricks.com/gcp/en/ingestion/cloud-object-storage/auto-loader/patterns"
       },
       {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/gcp/en/ingestion/cloud-object-storage/auto-loader/patterns"
+        "title": "構造化ストリーミングのチェックポイント - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/checkpoints"
       }
     ]
   },
@@ -1743,23 +1963,28 @@
       "D": "DBFSの/tmpディレクトリ"
     },
     "answer": "B",
-    "explanation": "正解は、**checkpointLocationの状態** です\n\nAuto Loader はクラウドストレージに継続的に到着するファイルを **増分検知** して取り込むための仕組みです。\n\nバッチの一括投入やSQL Warehouseのキャッシュ用途ではなく、**ファイル到着の継続取り込み** が主用途です。",
+    "explanation": "正解は、**checkpointLocationの状態** です。\n\nStructured Streaming では、ストリーミング処理の進捗や状態を `checkpointLocation` に保存します。Auto Loader も Structured Streaming のソースとして動作するため、どのファイルを処理済みか、どこから再開するかといった情報を checkpoint に基づいて管理します。\n\nたとえば、ジョブが途中で失敗した場合でも、同じ `checkpointLocation` を使って再起動すれば、処理済みの入力を把握したうえで再開できます。これにより、不要な重複取り込みや取りこぼしを避け、一貫した再処理を行いやすくなります。\n\nなお、Auto Loader ではスキーマ推論やスキーマ進化の情報を保存する `cloudFiles.schemaLocation` も重要ですが、再処理や再開の進捗管理という観点では、最も重要なのは `checkpointLocation` の状態です",
+    "whyWrong": {
+      "A": "Spark UI のスクリーンショットは調査記録として役立つ場合はありますが、Structured Streaming の再開位置や処理済みファイルを管理する永続状態ではありません",
+      "C": "Notebook の実行履歴だけでは、どの入力ファイルやマイクロバッチを処理済みかを正確に管理できません",
+      "D": "DBFS の `/tmp` ディレクトリは一時領域として使われることがあり、再処理の一貫性を担保する永続状態の保存先としては不適切です"
+    },
     "references": [
       {
-        "title": "Auto Loader: スキーマ推論と進化",
+        "title": "Auto Loader とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/"
+      },
+      {
+        "title": "Auto Loader のオプション",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/options"
+      },
+      {
+        "title": "構造化ストリーミングのチェックポイント",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/checkpoints"
+      },
+      {
+       "title": "Auto Loader でスキーマ推論とスキーマ進化を構成する",
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
-      },
-      {
-        "title": "Auto Loader: オプション一覧",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
-      },
-      {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/patterns"
-      },
-      {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/gcp/en/ingestion/cloud-object-storage/auto-loader/patterns"
       }
     ]
   },
@@ -1775,23 +2000,24 @@
       "D": "Unity Catalogのカタログ一覧"
     },
     "answer": "A",
-    "explanation": "正解は、**Spark UI** です\n\n性能/障害の切り分けは Spark UI が一次情報です（SQLタブ・Stages・Executors でスキャン量/シャッフル/スキュー/スピル等を確認）。\n\n- まず **どのステージが遅いか** → 次に **シャッフル量やスキュー** → 最後に **executorのメモリ/GC/スピル** の順で当てます。",
+    "explanation": "正解は、**Spark UI** です。\n\nSpark UI は、Databricks 上で実行された Spark ジョブの詳細を確認し、性能問題や失敗原因を調査するための代表的なデバッグツールです。Jobs、Stages、Tasks、SQL/DataFrame、Storage、Executors などのタブを通じて、どの処理に時間がかかっているか、どのステージでシャッフルが多いか、特定のタスクだけ極端に遅くないか、失敗や再試行が発生していないかを確認できます。\n\nたとえば、クエリが遅い場合は、Spark UI で実行計画やステージの処理時間、Shuffle Read / Write、タスクごとの実行時間、スキュー、スピルなどを確認します。これにより、結合処理が重いのか、データの偏りがあるのか、I/O がボトルネックなのかを切り分けやすくなります",
+    "whyWrong": {
+      "B": "DBFS ルートディレクトリ一覧は、ファイルやディレクトリの確認には使えますが、Spark の実行計画、ステージ、タスク、シャッフルなどのボトルネック把握には直接役立ちません。",
+      "C": "Cluster policy の JSON は、クラスター設定の制約や標準化ルールを確認するためのものです",
+      "D": "Unity Catalog のカタログ一覧は、データ資産の名前空間やガバナンス対象を確認するための情報です"
+    },
     "references": [
       {
-        "title": "Spark UI：コスト/性能問題の診断ガイド",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/optimizations/spark-ui-guide/"
+        "title": "Spark UI を使用したデバッグ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
       },
       {
-        "title": "Unity Catalog: Privileges and securable objects",
-        "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "Spark UI を使用してコストとパフォーマンスの問題を診断する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/optimizations/spark-ui-guide/"
       },
       {
-        "title": "Unity Catalog: Managed tables",
-        "url": "https://docs.databricks.com/aws/en/tables/managed"
-      },
-      {
-        "title": "Azure Databricks: Unity Catalog privileges",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "スキューとスピル",
+        "url": "https://learn.microsoft.com/en-us/azure/databricks/optimizations/spark-ui-guide/long-spark-stage-page"
       }
     ]
   },
@@ -1807,7 +2033,12 @@
       "D": "入力ファイルを毎回手動で削除する"
     },
     "answer": "B",
-    "explanation": "正解は、**checkpointLocationを永続化し、同じクエリを同じチェックポイントで再開する** です\n\n問題文の“何をしたいか（目的）”と“どの機能で実現するか（前提条件）”に照らすと、この選択肢が最も整合します。\n\n- キーワード：checkpointLocationを永続化し、同じクエリを同じチェックポイントで再開する",
+    "explanation": "正解は、**checkpointLocationを永続化し、同じクエリを同じチェックポイントで再開する** です。\n\nStructured Streaming（およびAuto Loaderを含むストリーミング処理）では、どの入力データを処理済みかという状態を `checkpointLocation` に永続化して管理します。このチェックポイントには、処理済みファイルやオフセット情報などが記録されるため、同じストリーミングクエリを同じチェックポイントで再開することで、すでに処理済みのファイルを再度処理せずに済みます。\n\nこれにより、ジョブの再起動や障害復旧が発生しても、重複取り込みを防ぎつつ正確に処理を継続できます。\n\n一方で、新しいチェックポイントで開始すると過去の処理履歴が失われるため再処理や重複が発生する可能性があり、ファイル名の工夫だけではストリーミングの重複排除は保証できません",
+    "whyWrong": {
+      "A": "ファイル名に日付を入れるだけでは、ストリーミング処理における処理済み管理はできません",
+      "C": "毎回新しいチェックポイントで開始すると、過去の処理状態が失われる為、既に処理済みのデータも再処理される可能性があり、重複排除の設計としては不適切です。",
+      "D": "入力ファイルを手動で削除する方法は運用負荷が高く、また完全な重複排除の仕組みにはなりません"
+    },
     "references": [
       {
         "title": "Auto Loader: スキーマ推論と進化",
@@ -1818,8 +2049,8 @@
         "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
       },
       {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/gcp/en/ingestion/cloud-object-storage/auto-loader/patterns"
+        "title": "構造化ストリーミングのチェックポイント",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/checkpoints"
       }
     ]
   },
@@ -1835,7 +2066,12 @@
       "D": "依存管理は不要。常に最新を使う"
     },
     "answer": "B",
-    "explanation": "正解は、**cluster libraries / init script 等で依存を宣言し、環境差分を減らす** です。\n\nNotebook中心の開発で「最小構成で再現性を上げたい」という要件は、要するに “どのクラスターで実行しても同じ依存関係（ライブラリ/設定）になる” 状態を作ることです。そのためには、クラスター側に依存を“宣言”しておく（compute-scoped libraries / cluster libraries）か、起動時に必ず適用される init script を使って環境を整えるのが一般的です\n\n**なぜ、他の選択肢が不適切か**\n\n- **各ノードに手動pip installして放置**\n\n手作業は「誰がいつどのバージョンを入れたか」が崩れやすく、クラスター再起動・再作成で再現できません\n\n- **Notebookに依存を全部コピペ**\n\n依存管理が分散し、複数Notebook/ジョブで差分が生まれやすい。レビューもしづらい\n\n- **依存管理不要、常に最新**\n\n今日動いても明日壊れる典型。試験でも実務でも “再現性” と逆方向です\n\n**実務の整理（Notebook-scoped vs Cluster-scoped）**\n\n- Notebook単位で一時的に入れたい場合：%pip（Notebook-scoped）ただし セッションをまたぐと消えるので、毎回入れ直しが必要です\n\n- チーム/ジョブで安定運用したい場合：Cluster-scoped libraries（compute-scoped）クラスターに付与して、同じクラスターで動くNotebook/ジョブに共通適用\n\n- OSレベル設定やpip index-urlなど、起動時に必ず整えたい場合：init scriptsノード起動時に実行されるため、環境の前提条件を揃えやすい\n\n**Notebook-scoped（試行錯誤向け）**\n\nNotebook-scoped は永続しない点に注意\n\n```\npython\n%pip install -U pydantic==2.6.1\n```\n\n**init script（クラスター起動時に固定化）**\n\ninit script（bash）で決め打ちインストールするイメージ\n\ninit script はクラスター起動時に各ノードで実行されます\n\n```\nbash\n#!/bin/bash\n/databricks/python/bin/pip install -U `pydantic==2.6.1`\n```",
+    "explanation": "正解は、**cluster libraries / init script 等で依存を宣言し、環境差分を減らす** です。\n\nNotebook で外部ライブラリを使う場合、依存関係を個別ノードに手作業でインストールして放置すると、クラスター再作成時や別環境への移行時に同じ状態を再現しにくくなります。本番に近いジョブや複数人で使う Notebook では、どのライブラリをどのバージョンで使うかを明示し、クラスターやジョブの設定として管理することが重要です。\n\nDatabricks では、cluster libraries を使ってクラスターにライブラリをインストールしたり、init script を使ってクラスター起動時の環境設定を自動化したりできます。また、Notebook 内で `%pip install` を使う場合でも、バージョンを明示し、必要に応じて `requirements.txt` などで管理すると再現性を高められます\n\n**実務の整理（Notebook-scoped vs Cluster-scoped）**\n\n- Notebook単位で一時的に入れたい場合：%pip（Notebook-scoped）ただし セッションをまたぐと消えるので、毎回入れ直しが必要です\n\n- チーム/ジョブで安定運用したい場合：Cluster-scoped libraries（compute-scoped）クラスターに付与して、同じクラスターで動くNotebook/ジョブに共通適用\n\n- OSレベル設定やpip index-urlなど、起動時に必ず整えたい場合：init scriptsノード起動時に実行されるため、環境の前提条件を揃えやすい\n\n**Notebook-scoped（試行錯誤向け）**\n\nNotebook-scoped は永続しない点に注意\n\n```\npython\n%pip install -U pydantic==2.6.1\n```\n\n**init script（クラスター起動時に固定化）**\n\ninit script（bash）で決め打ちインストールするイメージ\n\ninit script はクラスター起動時に各ノードで実行されます\n\n```\nbash\n#!/bin/bash\n/databricks/python/bin/pip install -U `pydantic==2.6.1`\n```",
+    "whyWrong": {
+      "A": "ノードに手動で `pip install` して放置すると、クラスター再起動や再作成、別環境への移行時に同じ依存関係を再現しにくくなります",
+      "C": "依存ライブラリのコードを Notebook にすべてコピペして埋め込むと、保守性が悪くなり、バージョン管理や更新も難しくなります",
+      "D": "依存管理をせず常に最新バージョンを使うと、ライブラリ更新による破壊的変更や挙動差分で、Notebook やジョブが突然失敗する可能性があります"
+    },
     "references": [
       {
         "title": "ライブラリのインストール",
@@ -1871,7 +2107,12 @@
       "D": "Spark UIのイベントログ"
     },
     "answer": "A",
-    "explanation": "正解は、**クラウドオブジェクトストレージ（例：S3/ADLS/GCS）に置かれたファイル** です\n\nAuto Loader はクラウドストレージに継続的に到着するファイルを **増分検知** して取り込むための仕組みです。\n\nバッチの一括投入やSQL Warehouseのキャッシュ用途ではなく、**ファイル到着の継続取り込み** が主用途です。",
+    "explanation": "正解は、**クラウドオブジェクトストレージ（例：S3/ADLS/GCS）に置かれたファイル** です。\n\nAuto Loader は、クラウドオブジェクトストレージに到着するファイルを効率的に検出し、増分取り込みするための機能です。Databricks では `cloudFiles` という Structured Streaming のソースとして利用し、S3、Azure Data Lake Storage、Google Cloud Storage などに配置された JSON、CSV、Parquet などのファイルを継続的または定期的に取り込めます。\n\nたとえば、外部システムがクラウドストレージ上の landing フォルダにファイルを出力し、Auto Loader が新規ファイルだけを検出して Bronze テーブルへ取り込む、という設計は代表的なユースケースです。スキーマ推論やスキーマ進化にも対応しているため、ファイルベースのデータ取り込みに向いています。\n\nしたがって、Auto Loader で取り込み対象として一般的に扱いやすいのは、クラウドオブジェクトストレージに置かれたファイルです",
+    "whyWrong": {
+      "B": "Auto Loader はオンプレの USB メモリを直接読み取るための機能ではありません",
+      "C": "Databricks Workspace のノートブック自体は、Auto Loader の代表的な取り込み対象ではありません",
+      "D": "Spark UI のイベントログは、Spark ジョブの実行状況や性能調査に使う情報です"
+    },
     "references": [
       {
         "title": "Auto Loader: スキーマ推論と進化",
@@ -1880,10 +2121,6 @@
       {
         "title": "Auto Loader: オプション一覧",
         "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
-      },
-      {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/patterns"
       },
       {
         "title": "Auto Loader: 代表的な取り込みパターン",
@@ -1903,7 +2140,12 @@
       "D": "error"
     },
     "answer": "B",
-    "explanation": "正解は **complete** です。\n\nStructured Streaming の outputMode は「各マイクロバッチで“何を”シンクに書くか」を決めます。completeとは、毎トリガーで「集計結果テーブル全体（Result Table全体）」を書き出すモードです。**累積集計を常に最新で上書きしたい** ＝ 毎回、集計の全体結果を更新して出したい という要件に最も合致します。\n\n- **append**：新しく確定した行だけ追記するモード。集計の結果が後から変わる（状態を持つ集計）ケースでは、過去の結果を更新できず要件に合いません。\n\n- **ignore / error**：条件付き書き込みの制御であり、「累積集計を更新し続ける」目的のモードではありません（出力結果の“更新”とは別概念）\n\ngroupBy のような状態を持つ集計は、結果が継続的に更新されるため、complete が要件に合いやすいです",
+    "explanation": "正解は、**complete** です。\n\nStructured Streaming の `outputMode` は、ストリーミングクエリの結果をシンクへどのように出力するかを指定する設定です。集計結果を扱う場合、`complete` モードでは、トリガーごとに結果テーブル全体、つまり現在の集計結果全体を出力します。\n\nたとえば、ユーザー別の累積件数や商品別の累積売上のように、集計結果が新しいデータ到着のたびに更新される場合、`complete` は「現在の集計結果全体を最新状態として出力する」考え方に近いモードです。\n\n一方、`append` は新しく確定した行だけを追加出力するモードであり、既存の集計結果を毎回更新する用途とは異なります。したがって、ストリーミングで累積集計を常に最新で上書きしたい場合の `outputMode` として最も近いのは `complete` です\n\nサンプルコードは以下の通りです\n\n```python\n# ストリーミング書き込み（outputMode = complete）\nquery = (\n    agg_df.writeStream\n    .format(\"delta\")\n    .outputMode(\"complete\")   # ← ここがポイント\n    .option(\"checkpointLocation\", \"/tmp/chk/user_sales\")\n    .option(\"path\", \"/mnt/delta/user_sales\")\n    .trigger(processingTime=\"1 minute\")\n    .start()\n)```",
+    "whyWrong": {
+      "A": "`append` は、新しく追加された結果行だけを出力するモードです。累積集計の全体を毎回最新状態として出力する用途には、通常 `complete` の方が近いです",
+      "C": "`ignore` は Structured Streaming の `outputMode` として一般的に使う値ではありません。出力モードとしては `append`、`complete`、`update` などを理解する必要があります",
+      "D": "`error` は Structured Streaming の `outputMode` として集計結果の出力方法を指定する値ではありません。エラー処理や失敗制御とは別の概念です"
+    },
     "references": [
       {
         "title": "Databricks: 構造化ストリーミングの出力モードを選択する",
@@ -1914,8 +2156,8 @@
         "url": "https://spark.apache.org/docs/latest/streaming/apis-on-dataframes-and-datasets.html"
       },
       {
-        "title": "Delta Lake: Table streaming reads and writes（complete modeの例）",
-        "url": "https://docs.delta.io/delta-streaming/"
+        "title": "Delta Lake テーブルのストリーミング読み取りと書き込み",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/delta-lake"
       }
     ]
   },
@@ -1931,19 +2173,28 @@
       "D": "Unity Catalogに登録すれば勝手にスケジュールされる"
     },
     "answer": "B",
-    "explanation": "正解は、**Workflow（Jobs）でNotebookタスクとして登録してスケジュールする** です\n\nワークフロー（Jobs）は失敗タスクの修復（Repair）や再実行により、影響範囲を限定して再処理できます。\n\n“全タスクを最初から手動でやり直す”は運用として非効率になりがちです。",
+    "explanation": "正解は、**Workflow（Jobs）でNotebookタスクとして登録してスケジュールする** です。\n\nDatabricks Notebook で開発した処理を本番ジョブとして定期実行したい場合は、Databricks Workflows / Jobs に Notebook タスクとして登録し、スケジュールを設定するのが基本的な流れです。Jobs では、実行する Notebook、利用する compute、パラメータ、スケジュール、通知、リトライ、依存関係などを管理できます。\n\nたとえば、日次で Bronze 取り込み Notebook を実行し、その後に Silver 変換 Notebook、Gold 集計 Notebook を順番に実行するようなパイプラインを、複数タスクのジョブとして定義できます。これにより、手元PCの cron に依存せず、Databricks 上で実行履歴、ログ、失敗通知、修復実行などを管理しやすくなります",
+    "whyWrong": {
+      "A": "Notebook を PC にコピーして cron で実行すると、Databricks のジョブ管理、実行履歴、通知、リトライ、権限管理、compute 管理を活用しにくくなります",
+      "C": "Notebook やファイルを DBFS に置いただけで自動実行されるわけではありません",
+      "D": "Unity Catalog はデータや権限、メタデータを管理するための仕組みであり、Notebook を登録すると自動的にスケジュール実行される機能ではありません"
+    },
     "references": [
       {
-        "title": "Unity Catalog: Privileges and securable objects",
-        "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "Azure Databricks ジョブとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/"
       },
       {
-        "title": "Unity Catalog: Managed tables",
-        "url": "https://docs.databricks.com/aws/en/tables/managed"
+        "title": "Azure Databricks ジョブでノートブックを使用する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/notebook"
       },
       {
-        "title": "Azure Databricks: Unity Catalog privileges",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "ジョブをスケジュールおよび調整する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/scheduled"
+      },
+      {
+        "title": "ジョブのタスクを構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/tasks"
       }
     ]
   },
@@ -1959,19 +2210,24 @@
       "D": "不正レコードはすべて手動で修正してから投入する"
     },
     "answer": "B",
-    "explanation": "正解は、**取り込み時に救済列（rescued data）やエラーログ/隔離テーブルを用意する** です\n\n問題文の“何をしたいか（目的）”と“どの機能で実現するか（前提条件）”に照らすと、この選択肢が最も整合します。\n\n- キーワード：取り込み時に救済列（rescued data）やエラーログ/隔離テーブルを用意する",
+    "explanation": "正解は、**取り込み時に救済列（rescued data）やエラーログ/隔離テーブルを用意する** です。\n\nデータ取り込みでは、スキーマ不一致や欠損、型不整合などにより不正レコードが発生することがあります。これらを単純に破棄すると原因調査が困難になるため、解析可能な形で保持する設計が重要です。\n\nDatabricks では Auto Loader の rescued data column（`_rescued_data`）などを利用して、スキーマに合わないフィールドを別列に退避させることができます。また、明示的に不正データを隔離テーブル（quarantine table）へ振り分けることで、後続処理とは分離しつつ調査・修正が可能になります。\n\nこのように、取り込み時点で不正データを可視化・隔離することで、データ品質の改善とトラブルシューティングの効率化が可能になります",
+    "whyWrong": {
+      "A": "不正レコードを捨ててログも残さないと、後から原因分析やデータ品質調査ができなくなり、問題の再発防止が困難になります",
+      "C": "不正レコードが出た際に必ずジョブを停止すると、運用が過敏になりすぎてパイプラインの安定性が低下する可能性があります",
+      "D": "すべての不正レコードを手動修正してから投入する方法はスケーラビリティが低く、大規模データ処理には現実的ではありません"
+    },
     "references": [
       {
-        "title": "Notebooks: マジックコマンドなど（概要）",
-        "url": "https://docs.databricks.com/aws/en/notebooks/notebooks"
-      },
-      {
-        "title": "Auto Loader: スキーマ推論と進化",
+        "title": "Auto Loader の rescued data 列",
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
       },
       {
-        "title": "Auto Loader: オプション一覧",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
+        "title": "データ品質とデータガバナンスのベストプラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/best-practices"
+      },
+      {
+        "title": "構造化ストリーミングでのエラーハンドリング",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/"
       }
     ]
   },
@@ -1987,23 +2243,20 @@
       "D": "Spark UIの設定を変える"
     },
     "answer": "B",
-    "explanation": "正解は、**ファイル通知（notification）などイベント駆動の検知方式を利用する** です\n\nAuto Loader はクラウドストレージに継続的に到着するファイルを **増分検知** して取り込むための仕組みです。\n\nバッチの一括投入やSQL Warehouseのキャッシュ用途ではなく、**ファイル到着の継続取り込み** が主用途です。",
+    "explanation": "正解は、**ファイル通知（notification）などイベント駆動の検知方式を利用する** です。\n\nAuto Loader は、クラウドストレージ上に到着するファイルを増分的に検出して取り込む機能です。ファイル検出には、ディレクトリ一覧を使ってファイルを探す方式と、クラウドストレージのイベント通知を利用する方式があります。\n\n大規模ディレクトリでは、ディレクトリ一覧による検出はファイル数が増えるほど負荷や時間が大きくなりやすくなります。そのため、ファイル通知モードを使い、入力ディレクトリに到着したファイルイベントをキュー経由で検出することで、よりスケーラブルに新規ファイルを取り込めます。Azure Databricks のドキュメントでも、ファイル通知モードはディレクトリ一覧モードより高性能でスケーラブルと説明されています",
+    "whyWrong": {
+      "A": "1ファイルずつ手動投入する方法は運用負荷が高く、Auto Loader のスケーラブルな増分取り込みという目的に合いません",
+      "C": "DBFSにコピーするだけで、Auto Loader のファイル検出やデータレイアウトが自動的に最適化されるわけではありません",
+      "D": "Spark UI は実行状況や性能を確認するための画面であり、Auto Loader のファイル検出方式を変更するものではありません"
+    },
     "references": [
       {
-        "title": "Auto Loader: スキーマ推論と進化",
-        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
+        "title": "ファイル通知モードで自動ローダー ストリームを構成する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/file-notification-mode"
       },
       {
-        "title": "Auto Loader: オプション一覧",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/options"
-      },
-      {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/patterns"
-      },
-      {
-        "title": "Auto Loader: 代表的な取り込みパターン",
-        "url": "https://docs.databricks.com/gcp/en/ingestion/cloud-object-storage/auto-loader/patterns"
+        "title": "Spark API オプション リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/spark/api-options"
       }
     ]
   },
@@ -2019,23 +2272,24 @@
       "D": "DBFSのファイル数だけを数える"
     },
     "answer": "B",
-    "explanation": "正解は、**Spark UIでステージ/シャッフル/スキューなどを確認する** です。\n\n性能/障害の切り分けは Spark UI が一次情報です（SQLタブ・Stages・Executors でスキャン量/シャッフル/スキュー/スピル等を確認）。\n\n- まず **どのステージが遅いか** → 次に **シャッフル量やスキュー** → 最後に **executorのメモリ/GC/スピル** の順で当てます。",
+    "explanation": "正解は、**Spark UIでステージ/シャッフル/スキューなどを確認する** です。\n\nNotebook の実行が遅い場合、まず確認すべき一次情報は、実際に Spark ジョブがどのように実行されたかを示す情報です。Spark UI では、Jobs、Stages、Tasks、SQL/DataFrame、Executors などの情報を確認でき、どのステージに時間がかかっているか、Shuffle Read / Write が大きいか、特定のタスクだけ極端に遅いか、失敗や再試行が発生していないかを調べられます。\n\nたとえば、特定の Stage だけ長時間かかっている場合は、その Stage の Task 一覧を確認します。一部の Task だけ処理時間や入力データ量が大きい場合は、データスキューが疑われます。また、Shuffle Read / Write が大きい場合は、大規模な join や groupBy によるデータ移動がボトルネックになっている可能性があります",
+    "whyWrong": {
+      "A": "監査ログは、誰がいつ何を操作したかを確認するガバナンスやセキュリティ監査の情報です",
+      "C": "Unity Catalog のカタログ名を変更しても、Notebook の実行遅延の原因調査にはなりません",
+      "D": "DBFS のファイル数は調査の一部になる場合もありますが、それだけでは Notebook の処理ボトルネックは分かりません"
+    },
     "references": [
       {
-        "title": "Spark UI：コスト/性能問題の診断ガイド",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/optimizations/spark-ui-guide/"
+        "title": "Spark UI を使用したデバッグ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
       },
       {
-        "title": "Unity Catalog: Privileges and securable objects",
-        "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "Spark UI を使用してコストとパフォーマンスの問題を診断する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/optimizations/spark-ui-guide/"
       },
       {
-        "title": "Unity Catalog: Managed tables",
-        "url": "https://docs.databricks.com/aws/en/tables/managed"
-      },
-      {
-        "title": "Azure Databricks: Unity Catalog privileges",
-        "url": "https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/privileges"
+        "title": "スキューとスピル",
+        "url": "https://learn.microsoft.com/en-us/azure/databricks/optimizations/spark-ui-guide/long-spark-stage-page"
       }
     ]
   },
@@ -2051,19 +2305,24 @@
       "D": "Delta SharingでNotebookを共有する"
     },
     "answer": "B",
-    "explanation": "正解は、**Databricks Connectで外部IDEから実行しつつ、必要に応じてNotebookで検証する** です\n\nDatabricks Connect は、ローカルIDE（VS Code/PyCharm等）から Databricks 上のコンピュートへ接続し、リモート実行しながら開発するための仕組みです。\n\n```python\n# 例：ローカルIDE側でSparkSessionを作り、リモートクラスタへ接続\nfrom pyspark.sql import SparkSession\nspark = SparkSession.builder.getOrCreate()\n```\n\n他の選択肢（監査ログ、Delta Sharing、Spark UIログ削除）は Connect の目的（開発体験/実行先の分離）と一致しません。",
+    "explanation": "正解は、**Databricks Connectで外部IDEから実行しつつ、必要に応じてNotebookで検証する** です。\n\nDatabricks Connect を使うことで、VS Code や PyCharm などの外部IDEから、Databricks ワークスペース上のクラスタに接続し、Spark コードをリモート実行できます。これにより、ローカルIDEの補完・デバッグ・テストといった開発体験を維持しながら、実際の処理は Databricks のコンピュート環境で実行することができます。\n\n一方で、複雑なデータ探索や可視化、共同作業、軽い検証などは Notebook の方が適しているため、外部IDEとNotebookを併用する構成が現実的です。これにより、開発効率と実行環境の一貫性を両立できます",
+    "whyWrong": {
+      "A": "外部IDEを使わずすべて手入力する方法は、開発効率や保守性が低く、現代的なデータエンジニアリングの開発フローとしては不適切です",
+      "C": "SQL Warehouse は主に SQL クエリ実行基盤であり、Python の Spark アプリケーション開発全般を実行するための環境ではありません",
+      "D": "Delta Sharing はデータ共有の仕組みであり、Notebook の実行環境や外部IDEとの連携を行う機能ではありません"
+    },
     "references": [
       {
-        "title": "Delta Sharing: 概要",
-        "url": "https://docs.databricks.com/aws/en/data-sharing/delta-sharing"
+        "title": "Databricks Connect とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/"
       },
       {
-        "title": "Delta Sharing: limitations",
-        "url": "https://docs.databricks.com/aws/en/data-sharing/delta-sharing#limitations"
+        "title": "Databricks Connect for Python のチュートリアル",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/python/tutorial"
       },
       {
-        "title": "Unity Catalog: Delta Sharing",
-        "url": "https://docs.databricks.com/aws/en/data-sharing/unity-catalog-delta-sharing"
+        "title": "Databricks Connect の要件",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/databricks-connect/requirements"
       }
     ]
   },
@@ -2079,15 +2338,24 @@
       "D": "機械学習特徴量を最終形で提供する"
     },
     "answer": "B",
-    "explanation": "正解は、**生データをなるべく加工せずに取り込み、監査/再処理の基点にする** です\n\nBronze は“原データの取り込み”が主目的です。後続で再処理できるよう、なるべく加工を抑えつつ監査/追跡の起点にします。",
+    "explanation": "正解は、**生データをなるべく加工せずに取り込み、監査/再処理の基点にする** です。\n\nメダリオンアーキテクチャでは、Bronze、Silver、Gold のように段階的にデータ品質と利用価値を高めていきます。このうち Bronze 層は、ソースシステムから取り込んだデータを、できるだけ元の形に近い状態で保存する層です。\n\nBronze 層では、ログ、CSV、JSON、CDC データ、イベントデータなどをまず着地させ、後続の Silver / Gold 処理の入力として使います。生データに近い状態で保持しておくことで、後から処理ロジックを修正した場合の再処理、データ品質問題の原因調査、監査、履歴確認がしやすくなります",
+    "whyWrong": {
+      "A": "ビジネスKPIの集計結果を提供するのは、一般的には Gold 層の役割です",
+      "C": "重複除去、クレンジング、品質保証を進めたデータを提供するのは、主に Silver 層の役割です",
+      "D": "機械学習特徴量を最終形で提供するのは、Gold 層や特徴量テーブルの役割に近いです"
+    },
     "references": [
       {
-        "title": "監査ログ: Azure Databricks audit logs",
-        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/administration-guide/account-settings/audit-logs"
+        "title": "メダリオン レイクハウス アーキテクチャとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/medallion"
       },
       {
-        "title": "Databricks: Audit logs",
-        "url": "https://docs.databricks.com/aws/en/administration-guide/account-settings/audit-logs"
+        "title": "適切に設計された Data Lakehouse の概要",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/"
+      },
+      {
+        "title": "Delta Lake とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/"
       }
     ]
   },
