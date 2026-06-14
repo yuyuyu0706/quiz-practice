@@ -635,7 +635,18 @@
       "D": "監査ログのみを格納する"
     },
     "answer": "A",
-    "explanation": "正解は、**取り込みデータをできるだけ加工せず、監査可能な形で保存する** です。\n\nBronze は「生データに近い形の着地（履歴保持・再処理可能）」が基本です。"
+    "explanation": "正解は、**取り込みデータをできるだけ加工せず、監査可能な形で保存する** です。\n\nDatabricks のメダリオンアーキテクチャにおいて Bronze は **raw data ingestion** の層で、ソースデータをできるだけ元の状態のまま保持し、増分で蓄積しながら再処理や監査の基点にすることが主目的です。公式でも Bronze は、元データの忠実性を保ち、履歴を保持し、監査や再処理を可能にする single source of truth と説明されています",
+    "whyWrong": {
+      "B": "BI 用の最終形や高度なモデリングは主に Gold 層の役割です。Databricks では Gold を analytics and reporting 向けの集約・業務用途層として説明しています",
+      "C": "重複排除やデータ検証は主に Silver 層の役割です。公式でも Silver は validate, deduplicate, normalize の層としています",
+      "D": "Bronze は監査ログ専用の保管場所ではありません。クラウドストレージ、メッセージバス、各種ソースから取り込んだ raw data 全般を保持する層です"
+    },
+    "references": [
+      {
+        "title": "メダリオン レイクハウス アーキテクチャとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/medallion"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q022",
@@ -649,7 +660,18 @@
       "D": "外部共有のために匿名化だけをする"
     },
     "answer": "B",
-    "explanation": "正解は、**クリーニング・正規化・結合などの品質改善を行い、下流で使いやすくする**です。\n\nSilver はクレンジング/整形/統合など「利用可能な形」への変換が中心です。"
+    "explanation": "正解は、**クリーニング・正規化・結合などの品質改善を行い、下流で使いやすくする** です。\n\nDatabricks のメダリオンアーキテクチャにおいて Silver は、Bronze に取り込まれた raw data をもとに、**データのクリーニング、検証、重複排除、正規化、結合** などを行い、下流の分析・機械学習・Gold 層で使いやすい状態に整える層です。公式ドキュメントでも Silver は、Bronze から得たデータを validate and deduplicate し、データ品質を適用しながらモデリングを開始する層として説明されています",
+    "whyWrong": {
+      "A": "取り込み生データをそのまま保持するのは主に Bronze 層の役割です",
+      "C": "経営指標の集計やダッシュボード向けの最終形は主に Gold 層の役割です",
+      "D": "匿名化はガバナンスや共有要件として実施されることはありますが、Silver の主目的を『外部共有のための匿名化だけ』とするのは不適切です"
+    },
+    "references": [
+      {
+        "title": "メダリオン レイクハウス アーキテクチャとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/medallion"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q023",
@@ -663,7 +685,18 @@
       "D": "ファイル取り込みの増分検知"
     },
     "answer": "C",
-    "explanation": "正解は、**ビジネス利用（BI/ML）に最適化した集計・データマートを提供する** です。\n\nGold は下流ユースケース向け（集計・指標・データマート）です。"
+    "explanation": "正解は、**ビジネス利用（BI/ML）に最適化した集計・データマートを提供する** です。\n\nDatabricks のメダリオンアーキテクチャにおいて Gold は、Bronze や Silver で整備されたデータをもとに、**分析・レポート・ダッシュボード・機械学習などのビジネス利用に適した形へ加工する層**です。具体的には、集計済みテーブル、データマート、特徴量テーブル、業務指標など、下流の利用者が直接使いやすいデータを提供します。\n\nBronze は生データの保持、Silver はクリーニング・重複排除・正規化などの品質改善、Gold は消費用途に最適化された集計・提供層、という役割分担で理解すると分かりやすいです",
+    "whyWrong": {
+      "A": "生データの永続化は主に Bronze 層の役割です",
+      "B": "監査ログの格納は Gold 層の主目的ではありません。監査ログはガバナンスやセキュリティ監査のために別途保存します",
+      "D": "ファイル取り込みの増分検知は Auto Loader などの取り込み機能の役割です。"
+    },
+    "references": [
+      {
+        "title": "メダリオン レイクハウス アーキテクチャとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/medallion"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q024",
@@ -677,7 +710,22 @@
       "D": "監査ログ専用クラスター"
     },
     "answer": "A",
-    "explanation": "正解は、**Job クラスター**です。\n\nバッチ処理は Job クラスターでコスト最適化しやすいです。"
+    "explanation": "正解は、**Job クラスター（タスク実行時に起動し、完了後に終了）** です。\n\nDatabricks のバッチ ETL のような定期実行・自動実行ワークロードでは、ジョブ実行時に専用の compute を起動し、完了後に終了できる **Job クラスター** が適しています。Databricks 公式では、All-purpose compute はジョブにも使えますが、本番ジョブには推奨されないと説明されています。また、Job クラスターはタスク実行のために使われる compute であり、対話的な共同分析向けの All-purpose クラスターとは用途が異なります",
+    "whyWrong": {
+      "B": "All-purpose クラスターは対話的な開発・分析には便利ですが、24時間稼働させて手動管理する運用は、バッチ ETL の本番実行にはコストや運用面で不利です",
+      "C": "ローカル PC の Python 実行環境は、Databricks 上の分散 ETL ジョブを実行するためのクラスターではありません",
+      "D": "Databricks に『監査ログ専用クラスター』というバッチ ETL 向けの標準クラスター種別はありません"
+    },
+    "references": [
+      {
+        "title": "ジョブの計算リソースを設定する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/compute"
+      },
+      {
+        "title": "運用ジョブ スケジューリングのチート シート",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/cheat-sheet/jobs"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q025",
@@ -691,13 +739,36 @@
       "D": "Unity Catalog を不要にする"
     },
     "answer": "B",
-    "explanation": "宣言型パイプライン、expectations、運用容易性が主要メリットです。"
+    "explanation": "正解は、**宣言的にパイプラインを定義し、依存関係・品質制約・運用（リトライ等）を統合できる** です。\n\nDLT（Delta Live Tables）は、現在の Azure Databricks では Lakeflow 宣言型パイプラインとして整理されている機能です。「宣言的」とは、処理を1ステップずつ手で並べるのではなく、**どのテーブルを、どの入力から、どのような変換で作るか** を定義する考え方です。\n\nDLTを使わない場合、Bronze、Silver、Gold の各処理を別々のノートブックやジョブとして作り、「Bronze の次に Silver、その次に Gold」という依存関係や実行順序を自分で設計します。失敗時の再実行、品質チェック、監視も個別に考える必要があります。\n\n一方、DLTでは、Silver が Bronze を参照し、Gold が Silver を参照するようにテーブル定義を書けば、Databricks がその依存関係をもとに実行順序を判断し、パイプラインとして管理します。開発者は細かい実行手順よりも、作りたいデータセットとその関係性に集中できます\n\nまた、expectations によりデータ品質ルールを定義し、違反レコードを許容・削除・失敗として扱う制御もできる点が、DLTの利点です",
+    "whyWrong": {
+      "A": "Lakeflow 宣言型パイプラインは、処理を手動で順番に実行するための仕組みではありません",
+      "C": "DLT は expectations によってデータ品質ルールを定義できますが、どんな品質問題でも自動修復するわけではありません",
+      "D": "DLT は Unity Catalog を不要にする機能ではありません。むしろ、パイプラインで作成・管理するデータ資産は Unity Catalog と組み合わせてガバナンス管理するのが一般的です"
+    },
+    "references": [
+      {
+        "title": "ワークフローの概要 - Delta Live Tables とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/workflows/"
+      },
+      {
+        "title": "Lakeflow Spark 宣言パイプラインの開発",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/develop"
+      },
+      {
+        "title": "相互運用性と使いやすさのベスト プラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/interoperability-and-usability/best-practices"
+      },
+      {
+        "title": "信頼性のためのベスト プラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/reliability/best-practices"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q026",
     "section": "3",
     "sectionTitle": "データ処理 & 変換",
-    "question": "DLT の expectation（例：`CONSTRAINT valid_timestamp EXPECT (...)`）に違反したレコードの扱いで、最も典型的なのはどれ？（設定により挙動は変化し得る）",
+    "question": "DLT の expectation（例：`CONSTRAINT valid_timestamp EXPECT (...)`）に違反したレコードの扱いで、最も典型的なのはどれ？",
     "choices": {
       "A": "すべてのレコードが自動的に削除される",
       "B": "違反レコードはテーブルに書き込まれ、イベントとして無効が記録される",
@@ -705,7 +776,26 @@
       "D": "UC の権限がリセットされる"
     },
     "answer": "B",
-    "explanation": "期待値は「記録」「ドロップ」「失敗」などを選べますが、記録（無効としてログに残す）が基本パターンです。"
+    "explanation": "正解は、**違反レコードはテーブルに書き込まれ、イベントとして無効が記録される** です。\n\nDLT（Delta Live Tables）/ Lakeflow 宣言型パイプラインの expectation は、データ品質ルールを定義するための仕組みです。たとえば `CONSTRAINT valid_timestamp EXPECT (timestamp > '2012-01-01')` のように書くと、各レコードが条件を満たすかどうかを検査できます。\n\n最も基本的な `EXPECT` の挙動は、条件に違反したレコードを **そのままターゲットテーブルに書き込みつつ、無効レコードとしてメトリクスやイベントログに記録する** ことです。これは `warn`、または retain invalid records と呼ばれる動作で、品質問題を可視化しながらも、データ自体は保持したい場合に使います。\n\nただし、expectation の挙動は設定により変えられます。`ON VIOLATION DROP ROW` を指定すると違反レコードを削除して書き込まず、`ON VIOLATION FAIL UPDATE` を指定すると違反検出時に更新を失敗させます",
+    "whyWrong": {
+      "A": "すべてのレコードが自動的に削除されるわけではありません。違反レコードを削除したい場合は `ON VIOLATION DROP ROW` のような設定を明示します",
+      "C": "expectation 違反によって Databricks ワークスペース全体が停止することはありません",
+      "D": "expectation はデータ品質制約の仕組みであり、Unity Catalog の権限をリセットする機能ではありません。UC の権限管理と DLT のデータ品質チェックは別の領域です"
+    },
+    "references": [
+      {
+        "title": "パイプライン期待値を使用してデータ品質を管理する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/expectations"
+      },
+      {
+        "title": "信頼性のためのベスト プラクティス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse-architecture/reliability/best-practices"
+      },
+      {
+        "title": "パイプライン イベント ログ スキーマ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/monitor-event-log-schema"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q027",
@@ -719,7 +809,26 @@
       "D": "`DELETE`"
     },
     "answer": "A",
-    "explanation": "DDL はスキーマ/オブジェクト定義（CREATE/ALTER/DROP 等）です。"
+    "explanation": "正解は、**`CREATE TABLE`** です。\n\nDDL（Data Definition Language）は、テーブルやビューなどのデータベースオブジェクトの構造を定義・変更・削除するためのSQLです。代表例には `CREATE TABLE`、`ALTER TABLE`、`DROP TABLE` などがあります。\n\n一方、`UPDATE`、`MERGE`、`DELETE` は、既存テーブル内のデータ行を更新・統合・削除する操作であり、主に DML（Data Manipulation Language）に分類されます",
+    "whyWrong": {
+      "B": "`UPDATE` は既存テーブルの行を更新する操作であり、データを操作するDMLに分類されます",
+      "C": "`MERGE` は条件に応じて更新・挿入・削除を行う操作であり、Deltaテーブルのデータを統合するDML系の操作です",
+      "D": "`DELETE` は既存テーブルから行を削除する操作であり、テーブル定義を作成・変更するDDLではありません"
+    },
+    "references": [
+      {
+        "title": "SQL 言語リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/"
+      },
+      {
+        "title": "外部テーブルの操作",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/tables/external"
+      },
+      {
+        "title": "DROP TABLE",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-drop-table"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q028",
@@ -733,7 +842,30 @@
       "D": "`DROP TABLE`"
     },
     "answer": "C",
-    "explanation": "DML はデータ操作（INSERT/UPDATE/DELETE/MERGE 等）です。"
+    "explanation": "正解は、**`INSERT INTO`** です。\n\nDML（Data Manipulation Language）は、既存のテーブル内のデータ行を操作するためのSQLです。代表例には、データを追加する `INSERT`、更新する `UPDATE`、削除する `DELETE`、条件に応じて挿入・更新・削除を行う `MERGE` などがあります。\n\n`INSERT INTO` は、既存テーブルに新しい行を追加する操作です。テーブルやスキーマの構造を定義・変更するのではなく、テーブル内のデータそのものを操作するため、DMLとして最も適切です",
+    "whyWrong": {
+      "A": "`ALTER TABLE` は既存テーブルの構造やプロパティを変更する操作であり、DDLに分類されます",
+      "B": "`CREATE SCHEMA` はスキーマを作成する操作であり、データベースオブジェクトを定義するDDLです",
+      "D": "`DROP TABLE` はテーブルを削除する操作であり、データベースオブジェクトの削除を行うDDLです"
+    },
+    "references": [
+      {
+        "title": "SQL 言語リファレンス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/"
+      },
+      {
+        "title": "INSERT INTO",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-dml-insert-into"
+      },
+      {
+        "title": "ALTER TABLE",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-alter-table"
+      },
+      {
+        "title": "DROP TABLE",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-ddl-drop-table"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q029",
@@ -747,7 +879,26 @@
       "D": "`cacheTable(\"user_id\")`"
     },
     "answer": "A",
-    "explanation": "正解は、**`groupBy(\"user_id\").agg(sum(\"sales\").alias(\"total_sales\"), count(\"*\").alias(\"orders\"))`**です。\n\n集計は `groupBy().agg()` が基本です。"
+    "explanation": "正解は、**groupBy(\"user_id\").agg(sum(\"sales\").alias(\"total_sales\"), count(\"*\").alias(\"orders\"))** です。\n\nPySpark DataFrame でグループ別の集計を行う場合は、`groupBy()` でグループ化する列を指定し、`agg()` で集計内容を指定するのが基本です。Azure Databricks の PySpark 基本ドキュメントでも、DataFrame 内のデータを集計するには SQL の `GROUP BY` と同様に `groupBy` メソッドで列を指定し、`agg` メソッドで集計を指定すると説明されています。\n\nこの問題では、`user_id` ごとに売上合計と注文回数を計算したいので、`groupBy(\"user_id\")` でユーザー別にまとめ、`sum(\"sales\")` で売上合計、`count(\"*\")` で注文回数を計算します。`alias()` は、集計結果の列名を `total_sales` や `orders` のように分かりやすく付け直すために使います",
+    "whyWrong": {
+      "B": "`select(\"user_id\").where(\"sales\")` は user_id の列選択と条件指定の形に近く、ユーザー別の売上合計や注文回数を集計していません",
+      "C": "`dropDuplicates(\"sales\")` は重複行の削除に使う操作であり、ユーザー別の売上合計や注文回数を計算するものではありません",
+      "D": "`cacheTable(\"user_id\")` はテーブルのキャッシュに関する操作であり、DataFrame のグループ集計ではありません"
+    },
+    "references": [
+      {
+        "title": "PySpark の基本",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/basics"
+      },
+      {
+        "title": "groupBy",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/reference/classes/dataframe/groupby"
+      },
+      {
+        "title": "PySpark 関数",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/reference/functions/"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q030",
@@ -761,7 +912,26 @@
       "D": "Auto Loader のチェックポイントを設定する"
     },
     "answer": "B",
-    "explanation": "正解は、**パーティション内の順序を考慮した累積値、順位、移動平均との差などを計算する**です。\n\nWindow は「グループ内の順序」を扱う計算（rank/lag/rolling 等）に使います。"
+    "explanation": "正解は、**パーティション内の順序を考慮した累積値、順位、移動平均との差などを計算する** です。\n\nDataFrame のウィンドウ関数は、データを特定の列でパーティション分けし、その中で並び順を指定したうえで、各行に対して順位、累積合計、移動平均、前後行との差分などを計算するために使います。\n\nたとえば、ユーザーごとに注文日時順で並べて「何回目の注文か」を求める、部門ごとに売上順位を付ける、日付順に累積売上を計算する、といった用途です。通常の `groupBy()` 集計ではグループごとに行がまとめられて行数が減りますが、ウィンドウ関数では元の行を残したまま、グループ内の順位や累積値などを列として追加できます",
+    "whyWrong": {
+      "A": "行ごとに乱数を作るだけであれば、ウィンドウ関数の主目的ではありません",
+      "C": "Unity Catalog の権限付与は `GRANT` などのアクセス制御の領域であり、DataFrame のウィンドウ関数とは関係ありません",
+      "D": "Auto Loader のチェックポイント設定はストリーミング取り込みの進捗管理に関する設定です"
+    },
+    "references": [
+      {
+        "title": "PySpark の基本",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/basics"
+      },
+      {
+        "title": "PySpark 関数",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/reference/functions/"
+      },
+      {
+        "title": "Window - PySpark API リファレンス",
+        "url": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/window.html"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q031",
@@ -775,7 +945,12 @@
       "D": "クラスターを自動終了する"
     },
     "answer": "B",
-    "explanation": "正解は **変更データ（CDC）を適用し、アップサート（更新/挿入）を行う** です。\n\nMERGE INTO は、ターゲット（既存のDeltaテーブル）とソース（取り込み/変更データ）をキーで突き合わせて1つのステートメントで原子的にUPDATE/INSTER/DELETEできる機能になります。これは Upsert とも呼び、CDC（Change Data Capture：変更分取り込み）の王道パターンになります。キー条件は次のとおりです\n\n- キーが一致したら更新（UPDATE）\n\n- キーが一致しなければ挿入（INSERT）※必要なら 削除（DELETE）\n\n**なぜ、他の選択肢が違うか**\n\n- **参照専用にする**：参照専用は権限（SELECTのみ付与）やビューなどの話で、MERGEの用途ではありません\n\n- **物理削除して容量を増やす**：容量削減はVACUUMやテーブル設計の領域。MERGEは更新・挿入・削除の“データ反映”です参照専用にする\n\n- **クラスター自動終了**：コンピュート運用機能であり、SQLのDMLとは無関係です。\n\n**典型例（SQL：CDCをMERGEで反映）**\n\n例えば、updates に「最新の変更行」が入っているとして、`customer_id` で突き合わせる例です。\n\n```\nsql\nMERGE INTO main.sales.customers AS tgt\nUSING main.bronze.customer_updates AS src\nON tgt.customer_id = src.customer_id\nWHEN MATCHED THEN\n  UPDATE SET\n    tgt.name = src.name,\n    tgt.email = src.email,\n    tgt.updated_at = src.updated_at\nWHEN NOT MATCHED THEN\n  INSERT (customer_id, name, email, updated_at)\n  VALUES (src.customer_id, src.name, src.email, src.updated_at);\n```\n\nCDC適用で重要なのは、`ON` のキーが正しいこと（主キー/一意キー）と、src 側が1キーに対して重複しないように整えることです（重複があると意図しない更新やエラーの原因）\n\n**実務上の注意点**\n\n- `MERGE` は便利ですが、ソースが巨大で頻繁に走るとコストが増えることがあります。その場合は、更新対象を絞る（期間/パーティション）・ソースを事前に集約/重複排除するなどの工夫が効きます\n\n- CDCのパターンとしては、まず Bronzeに生データ着地 → Silverで整形/重複排除 → GoldへMERGE がよくあります（メダリオンの典型）",
+    "explanation": "正解は **変更データ（CDC）を適用し、アップサート（更新/挿入）を行う** です。\n\nMERGE INTO は、ターゲット（既存のDeltaテーブル）とソース（取り込み/変更データ）をキーで突き合わせて1つのステートメントで原子的にUPDATE/INSTER/DELETEできる機能になります。これは Upsert とも呼び、CDC（Change Data Capture：変更分取り込み）の王道パターンになります。キー条件は次のとおりです\n\n- キーが一致したら更新（UPDATE）\n\n- キーが一致しなければ挿入（INSERT）※必要なら 削除（DELETE）\n\n**典型例（SQL：CDCをMERGEで反映）**\n\n例えば、updates に「最新の変更行」が入っているとして、`customer_id` で突き合わせる例です。\n\n```\nsql\nMERGE INTO main.sales.customers AS tgt\nUSING main.bronze.customer_updates AS src\nON tgt.customer_id = src.customer_id\nWHEN MATCHED THEN\n  UPDATE SET\n    tgt.name = src.name,\n    tgt.email = src.email,\n    tgt.updated_at = src.updated_at\nWHEN NOT MATCHED THEN\n  INSERT (customer_id, name, email, updated_at)\n  VALUES (src.customer_id, src.name, src.email, src.updated_at);\n```\n\nCDC適用で重要なのは、`ON` のキーが正しいこと（主キー/一意キー）と、src 側が1キーに対して重複しないように整えることです（重複があると意図しない更新やエラーの原因）\n\n**実務上の注意点**\n\n- `MERGE` は便利ですが、ソースが巨大で頻繁に走るとコストが増えることがあります。その場合は、更新対象を絞る（期間/パーティション）・ソースを事前に集約/重複排除するなどの工夫が効きます\n\n- CDCのパターンとしては、まず Bronzeに生データ着地 → Silverで整形/重複排除 → GoldへMERGE がよくあります",
+    "whyWrong": {
+      "A": "`MERGE INTO` は、既存行の更新、新規行の挿入、条件によっては削除も行える、Delta テーブルへの書き込み操作です",
+      "C": "テーブルを物理削除して容量を増やす操作ではありません。不要ファイルの削除には `VACUUM`、テーブル削除には `DROP TABLE` などを使います",
+      "D": "クラスターの自動終了は compute の設定であり、`MERGE INTO` とは関係ありません"
+    },
     "references": [
       {
         "title": "マージを使用した Delta Lake テーブルへの upsert",
@@ -803,7 +978,26 @@
       "D": "`SELECT * FROM table OPTIMIZE`"
     },
     "answer": "A",
-    "explanation": "正解は **`SELECT * FROM table VERSION AS OF 5`**です。\n\nVERSION/TIMESTAMP 指定で過去スナップショット参照ができます。"
+    "explanation": "正解は、**SELECT * FROM table VERSION AS OF 5** です。\n\nDelta Lake のタイムトラベルは、Delta テーブルの過去バージョンや過去時点のデータを参照するための機能です。Delta テーブルはトランザクションログによって変更履歴を管理しているため、`VERSION AS OF` を使うと、指定したバージョン時点のテーブル内容を読み取ることができます。\n\nたとえば `SELECT * FROM table VERSION AS OF 5` は、対象テーブルのバージョン 5 の状態を参照する SQL です。誤った更新後の確認、過去データとの差分調査、障害調査などで有用です。\n\nなお、タイムトラベルには `TIMESTAMP AS OF` を使って特定時刻の状態を参照する方法もあります",
+    "whyWrong": {
+      "B": "`CLUSTER BY` はテーブル作成時などにクラスタリングキーを指定するための構文です",
+      "C": "`SHARE WITH` は データ共有の文脈では Delta Sharing などがありますが、Delta Lake のタイムトラベル構文ではありません",
+      "D": "`OPTIMIZE` は Delta テーブルのファイルサイズやデータレイアウトを最適化する操作です"
+    },
+    "references": [
+      {
+        "title": "Delta Lake テーブル履歴の操作",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/history"
+      },
+      {
+        "title": "Delta Lake テーブルの作成と管理",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/tutorial"
+      },
+      {
+        "title": "SELECT",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-syntax-qry-select"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q033",
@@ -817,7 +1011,26 @@
       "D": "Python UDF を増やす"
     },
     "answer": "A",
-    "explanation": "正解は、**キーのサルティング（salt）や再パーティション戦略を検討する** です。\n\nスキューはシャッフルの偏りなので、分散の工夫（salt 等）が有効です。"
+    "explanation": "正解は、**キーのサルティング（salt）や再パーティション戦略を検討する** です。\n\nSpark では、`groupBy` や `join` などでシャッフルが発生したとき、特定のキーにデータが集中していると、一部のタスクだけが極端に重くなることがあります。これをデータスキューと呼びます。たとえば、ほとんどのレコードが同じ `customer_id` に偏っていると、そのキーを担当するパーティションだけ処理量が大きくなり、全体の処理完了が遅くなります。\n\nこのような場合は、偏ったキーにランダム値などの salt を付けて一時的に分散させる、結合や集計のキー設計を見直す、`repartition` でパーティション分布を調整する、Spark UI でどのステージやタスクが偏っているか確認する、といった対策を検討します。Azure Databricks の Spark UI ガイドでも、長時間実行ステージではスピルやスキューなどを確認する観点が示されています",
+    "whyWrong": {
+      "B": "監査ログを削除しても、Spark のシャッフルやデータスキューは改善しません",
+      "C": "常に単一パーティションに集約すると、並列処理のメリットが失われ、むしろ性能が悪化しやすくなります",
+      "D": "Python UDF を増やしても、データスキューの根本対策にはなりません。むしろ Python UDF は最適化が効きにくく、処理が遅くなる場合があります"
+    },
+    "references": [
+      {
+        "title": "スキューとスピル",
+        "url": "https://learn.microsoft.com/en-us/azure/databricks/optimizations/spark-ui-guide/long-spark-stage-page"
+      },
+      {
+        "title": "Spark UI を使用したデバッグ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
+      },
+      {
+        "title": "PySpark の基本",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/basics"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q034",
@@ -831,7 +1044,26 @@
       "D": "`GRANT USAGE` する"
     },
     "answer": "A",
-    "explanation": "正解は、**`cache()` / `persist()` を使う** です。\n\nキャッシュは再利用により計算量を削減できます（メモリ/ディスク戦略に注意）。"
+    "explanation": "正解は、**`cache()` / `persist()` を使う** です。\n\nSpark の DataFrame は遅延評価されるため、同じ中間 DataFrame を複数の後続処理で使うと、そのたびに元の変換処理が再計算される場合があります。再計算コストが高い中間結果を何度も参照する場合は、`cache()` や `persist()` を使って DataFrame をメモリやディスクに保持し、再利用できるようにするのが有効です。\n\nAzure Databricks の PySpark DataFrame リファレンスでも、`cache()` は既定のストレージレベルで DataFrame を永続化し、`persist(storageLevel)` は操作全体で DataFrame の内容を保持するストレージレベルを設定すると説明されています。また、複数の出力先へ書き込むようなケースでは、`df.persist` または `df.cache` を使うことで、同じデータ準備を何度も実行しないようにできるとされています。\n\nただし、キャッシュは万能ではありません。大きすぎる DataFrame を無計画にキャッシュするとメモリを圧迫するため、再利用回数が多く、再計算コストが高い中間結果に絞って使うのが実務的です。不要になったら `unpersist()` で解放することも検討します",
+    "whyWrong": {
+      "B": "`VACUUM` は Delta テーブルの不要ファイルを削除する保守操作です",
+      "C": "`DROP TABLE` はテーブルを削除するDDL操作です",
+      "D": "`GRANT USAGE` は Unity Catalog などで権限を付与する操作です"
+    },
+    "references": [
+      {
+        "title": "DataFrame クラス",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/reference/classes/dataframe"
+      },
+      {
+        "title": "ForEachBatch を使用してパイプライン内の任意のデータ シンクに書き込む",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ldp/for-each-batch"
+      },
+      {
+        "title": "サーバーレス コンピューティングの制限事項",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/serverless/limitations"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q035",
@@ -845,7 +1077,26 @@
       "D": "DLT では使えない"
     },
     "answer": "B",
-    "explanation": "正解は、**最適化が効きにくい場合があるため、まず組み込み関数/SQL 関数を検討する** です。\n\nUDF は最適化（例：Catalyst/Photon）が効きにくいケースがあるため、組み込み優先が定石です。"
+    "explanation": "正解は、**最適化が効きにくい場合があるため、まず組み込み関数/SQL 関数を検討する** です。\n\nUDF（ユーザー定義関数）は、標準の関数だけでは表現しにくい独自ロジックを実装できる便利な仕組みです。ただし、Spark や Databricks の組み込み関数に比べると、クエリ最適化の対象になりにくかったり、実行時のオーバーヘッドが増えたりする場合があります。\n\nそのため、文字列処理、日付処理、条件分岐、集計などを行う場合は、まず Spark SQL 関数や PySpark の組み込み関数で表現できないかを検討するのが基本です。組み込み関数で書ける処理は、実行エンジンが最適化しやすく、分散処理にも向いています。\n\nUDF は、組み込み関数では実現しづらい業務固有の変換や複雑な処理が必要な場合に限定して使うのが実務的です",
+    "whyWrong": {
+      "A": "UDF が常に組み込み関数より速いわけではありません。むしろ組み込み関数の方が Spark の最適化を受けやすく、高速実行することが多いです",
+      "C": "UDF は独自の処理ロジックを定義するための仕組みであり、Unity Catalog の権限を自動付与する機能ではありません。権限管理は `GRANT` などで別途行います",
+      "D": "DLT / Lakeflow 宣言型パイプラインで UDF が一切使えない、という理解は不正確です。ただし、パイプラインの保守性や性能を考えると、まずは組み込み関数やSQL関数を検討するのが適切です"
+    },
+    "references": [
+      {
+        "title": "ユーザー定義関数",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/udf/"
+      },
+      {
+        "title": "PySpark 関数",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/pyspark/reference/functions/"
+      },
+      {
+        "title": "SQL 言語リファレンスの関数",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/sql-ref-functions-builtin"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q036",
@@ -859,7 +1110,12 @@
       "D": "`DROP SCHEMA` する"
     },
     "answer": "A",
-    "explanation": "正解は **OPTIMIZE によるファイルコンパクション** です。\n\n複数の小ファイルを大きめのファイルにまとめて（コンパクションして）読み取り効率を改善する機能が「OPTIMIZE」です。Deltaテーブルに小さなファイルが大量にあると、次の理由でクエリ性能が落ちやすくなります。\n\n- **ファイル数が多いほど、読み取り時のオーバーヘッドが増える**\n\n1ファイルあたりのオープン/シーク、メタデータ参照、タスク起動などの固定コストが積み上がります。\n\n- **スキャンが分断される**\n\n必要なデータ量は同じでも、ファイルが細切れだと Spark のタスク数・スケジューリング負荷が増えます。\n\nこれらの典型的な対策が「OPTIMIZE」です。\n\n**なぜ、他の選択肢が違うか**\n\n- ** `DESCRIBE HISTORY` を増やす** : 履歴参照コマンドであり、ファイル数そのものを減らしません\n\n- **`SHOW GRANTS` を繰り返す** : 権限確認であり、ファイル構成とは無関係です\n\n- **`DROP SCHEMA`** : スキーマ削除は破壊的で、性能改善策ではありません\n\n**補足事項**\n\nUnity カタログのマネージド テーブルの場合、SQL ウェアハウスまたは Databricks Runtime 11.3 LTS 以降を使用している場合、Databricks はこれらの構成のほとんどを自動的に調整します。",
+    "explanation": "正解は **OPTIMIZE によるファイルコンパクション** です。\n\n複数の小ファイルを大きめのファイルにまとめて（コンパクションして）読み取り効率を改善する機能が「OPTIMIZE」です。Deltaテーブルに小さなファイルが大量にあると、次の理由でクエリ性能が落ちやすくなります。\n\n- **ファイル数が多いほど、読み取り時のオーバーヘッドが増える**\n\n1ファイルあたりのオープン/シーク、メタデータ参照、タスク起動などの固定コストが積み上がります。\n\n- **スキャンが分断される**\n\n必要なデータ量は同じでも、ファイルが細切れだと Spark のタスク数・スケジューリング負荷が増えます。\n\nこれらの典型的な対策が「OPTIMIZE」です。\n\n**なぜ、他の選択肢が違うか**\n\n- ** `DESCRIBE HISTORY` を増やす** : 履歴参照コマンドであり、ファイル数そのものを減らしません\n\n- **`SHOW GRANTS` を繰り返す** : 権限確認であり、ファイル構成とは無関係です\n\n- **`DROP SCHEMA`** : スキーマ削除は破壊的で、性能改善策ではありません\n\n**補足事項**\n\nUnity カタログのマネージド テーブルの場合、SQL ウェアハウスまたは Databricks Runtime 11.3 LTS 以降を使用している場合、Databricks はこれらの構成のほとんどを自動的に調整します",
+    "whyWrong": {
+      "B": "`DESCRIBE HISTORY` は Delta テーブルの操作履歴を確認するためのコマンドです。履歴確認には役立ちますが、小さなファイルをまとめて性能改善する操作ではありません",
+      "C": "`SHOW GRANTS` は権限設定を確認するためのコマンドです。テーブルのファイル数やファイルサイズの最適化とは関係ありません",
+      "D": "`DROP SCHEMA` はスキーマを削除する操作であり、小さなファイル問題への対策ではありません。誤って実行すると配下のオブジェクト削除につながる危険があります"
+    },
     "references": [
       {
         "title": "Azure Databricks の最適化に関する推奨事項",
@@ -891,7 +1147,30 @@
       "D": "監査ログを暗号化する"
     },
     "answer": "B",
-    "explanation": "正解は、**Databricks のリソース（ジョブ、パイプライン等）をコードとして定義し、環境ごとにデプロイ可能にする**です。\n\nDAB は Databricks リソースを宣言的にまとめ、再現性あるデプロイを支援します"
+    "explanation": "正解は、**Databricks のリソース（ジョブ、パイプライン等）をコードとして定義し、環境ごとにデプロイ可能にする** です\n\nDAB（Databricks Asset Bundles）は、現在の Azure Databricks では **宣言型オートメーション バンドル** として整理されています。これは、ジョブ、Lakeflow Spark 宣言パイプライン、MLOps スタックなどの Databricks リソースを、画面上で手作業設定するのではなく、構成ファイルやソースファイルとして定義し、検証・デプロイ・実行できるようにする仕組みです。\n\nたとえば、開発環境では `dev` ターゲット、本番環境では `prod` ターゲットに対して、同じプロジェクト定義をもとに異なる設定でデプロイできます。これにより、ソース管理、コードレビュー、テスト、CI/CD といったソフトウェアエンジニアリングのベストプラクティスを、Databricks のデータ・AIプロジェクトにも適用しやすくなります。\n\nしたがって、DAB の目的として最も適切なのは、Databricks のジョブやパイプラインなどをコードとして管理し、環境ごとに再現性を持ってデプロイ可能にすることです",
+    "whyWrong": {
+      "A": "DAB はノートブックの表示状態を自動で折りたたむためのUI機能ではありません",
+      "C": "DAB は DBFS を完全に廃止する機能ではありません。プロジェクトやリソース定義をコード化してデプロイするための仕組みです",
+      "D": "DAB は監査ログを暗号化するための機能ではありません。監査ログの管理や暗号化はセキュリティ・ガバナンス領域の話です"
+    },
+    "references": [
+      {
+        "title": "宣言型オートメーション バンドルとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/"
+      },
+      {
+        "title": "bundle コマンド グループ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/cli/bundle-commands"
+      },
+      {
+        "title": "宣言型オートメーション バンドルのデプロイ モード",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/deployment-modes"
+      },
+      {
+        "title": "宣言型オートメーション バンドル リソース",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/resources"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q038",
@@ -905,7 +1184,30 @@
       "D": "DAB はジョブを作れない"
     },
     "answer": "B",
-    "explanation": "正解は、**DAB はリソース定義をファイルで管理し CI/CD に組み込みやすい**です。\n\nIaC 的に扱える点が最大の違いです。"
+    "explanation": "正解は、**DAB はリソース定義をファイルで管理し CI/CD に組み込みやすい** です。\n\nDAB（Databricks Asset Bundles）は、現在の Azure Databricks では宣言型オートメーション バンドルとして整理されており、ジョブ、パイプライン、関連ファイルなどの Databricks リソースをコードとして定義・検証・デプロイするための仕組みです。\n\nGUI でジョブを手作業作成する場合、設定内容が画面上に閉じやすく、誰がいつ何を変えたか、開発環境と本番環境でどこが違うかを追跡しづらくなります。一方、DAB ではリソース定義を `databricks.yml` などのファイルで管理できるため、Git によるバージョン管理、Pull Request レビュー、環境別設定、CI/CD パイプラインへの組み込みがしやすくなります。\n\nたとえば、開発環境では小さなクラスター設定、本番環境では本番用のジョブ名・スケジュール・権限設定を使う、といった差分をファイルで明示できます",
+    "whyWrong": {
+      "A": "DAB はリソース定義をファイルとして管理できるため、むしろ Git などでバージョン管理しやすい仕組みです",
+      "C": "GUI だけで環境差分を管理すると、開発・検証・本番の設定差分が画面上に分散し、変更履歴や再現性を保ちにくくなります",
+      "D": "DAB ではジョブを作成・デプロイできます。ジョブ、パイプライン、その他の Databricks リソースをコードとして管理できる点が主な目的です"
+    },
+    "references": [
+      {
+        "title": "宣言型オートメーション バンドルとは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/"
+      },
+      {
+        "title": "宣言型オートメーション バンドルのデプロイ モード",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/deployment-modes"
+      },
+      {
+        "title": "宣言型オートメーション バンドル リソース",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/bundles/resources"
+      },
+      {
+        "title": "Databricks CLI の bundle コマンド グループ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/dev-tools/cli/bundle-commands"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q039",
@@ -920,6 +1222,11 @@
     },
     "answer": "A",
     "explanation": "正解は **修復（Repair）実行で失敗タスク/下流のみを再実行する**です。\n\nDatabricks Workflows（Jobs）の Repair run は、失敗したジョブ実行（run）に対して「失敗したタスク」と、その失敗により実行されなかった／影響を受ける「依存（下流）タスク」だけを選んで再実行できる機能です。そのため、原因修正後に「該当タスク以降だけをやり直したい」という要件に最も合致します。\n\n- （毎回最初から）：Repair run があるので不要にコスト・時間が増えます。成功済みタスクの再処理を避けられるのがRepairの利点です。\n\n- （Reposを削除）：再実行の手段ではなく、逆に復旧を妨げます\n\n- （UC権限を削除）：権限削除は事故の元で、再実行と無関係です",
+    "whyWrong": {
+      "B": "Databricks Jobs / Workflows では、失敗後に必ずすべてのタスクを最初から実行するしかないわけではありません",
+      "C": "Repos を削除しても、失敗したジョブタスクの復旧にはつながりません",
+      "D": "Unity Catalog の権限を削除すると、むしろデータやジョブ実行に必要なアクセス権が失われる可能性があります"
+    },
     "references": [
       {
         "title": "ジョブの失敗のトラブルシューティングと修復（Repair runのUI手順）",
@@ -928,6 +1235,14 @@
       {
         "title": "Jobs API: Repair a job run（Repair runをAPIで実行）",
         "url": "https://docs.databricks.com/api/workspace/jobs/repairrun"
+      },
+      {
+        "title": "Lakeflow ジョブ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/"
+      },
+      {
+        "title": "ジョブを監視および観測する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/monitor"
       }
     ]
   },
@@ -943,7 +1258,26 @@
       "D": "DBFS を削除する"
     },
     "answer": "A",
-    "explanation": "正解は、**Workflows の Run（実行）詳細画面でログ/出力を確認する** です\n\nジョブ実行の UI からタスクログ、ドライバログ、設定を辿れます。"
+    "explanation": "正解は、**Workflows の Run（実行）詳細画面でログ/出力を確認する** です。\n\nDatabricks Workflows / Jobs では、ジョブの実行ごとに Run 詳細画面から、各タスクの状態、開始・終了時刻、実行結果、エラーメッセージ、ログ、ノートブック出力などを確認できます。ジョブが失敗した場合は、まず Run 詳細画面でどのタスクが失敗したかを確認し、そのタスクのログや出力を見て原因を切り分けるのが基本です。\n\nたとえば、複数タスクのパイプラインで Silver 処理が失敗した場合、Run 詳細画面から該当タスクを開き、例外メッセージや出力ログ、関連する compute 情報を確認します。必要に応じて Spark UI やメトリクスも参照し、データエラーなのか、権限エラーなのか、性能問題なのかを調査します",
+    "whyWrong": {
+      "B": "ブラウザの履歴だけを見ても、Databricks ジョブの実行状態、タスクログ、エラーメッセージ、出力は確認できません",
+      "C": "ノートブックを PNG にしても、ジョブの実行ログやエラー原因の追跡には向きません",
+      "D": "DBFS を削除するのは危険な操作であり、ジョブの失敗原因確認とは無関係です"
+    },
+    "references": [
+      {
+        "title": "ジョブを監視および観測する",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/monitor"
+      },
+      {
+        "title": "ジョブ失敗のトラブルシューティングと修復",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/repair-job-failures"
+      },
+      {
+        "title": "Spark UI を使用したデバッグ",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
+      }
+    ]
   },
   {
     "id": "DEA-PLUS-Q041",
