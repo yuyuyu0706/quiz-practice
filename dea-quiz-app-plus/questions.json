@@ -1340,7 +1340,7 @@
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/troubleshooting/debugging-spark-ui"
       },
       {
-       "title": "スキューとスピル",
+        "title": "スキューとスピル",
         "url": "https://learn.microsoft.com/en-us/azure/databricks/optimizations/spark-ui-guide/long-spark-stage-page"
       },
       {
