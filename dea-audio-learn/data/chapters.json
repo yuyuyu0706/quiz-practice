@@ -9,5 +9,16 @@
     "contentPath": "contents/dea-dip-001.md",
     "audioScriptPath": "audio-scripts/dea-dip-001.md",
     "status": "draft"
+  },
+  {
+    "id": "dea-dip-002",
+    "exam": "Databricks Certified Data Engineer Associate",
+    "domain": "Databricks Intelligence Platform",
+    "chapterNo": 2,
+    "title": "LakehouseとDelta Lakeの位置づけ",
+    "estimatedMinutes": 6,
+    "contentPath": "contents/dea-dip-002.md",
+    "audioScriptPath": "audio-scripts/dea-dip-002.md",
+    "status": "draft"
   }
 ]
