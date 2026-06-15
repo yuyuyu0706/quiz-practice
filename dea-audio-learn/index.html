@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DEA Audio Learn</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="hero">
+      <p class="eyebrow">Databricks Certified Data Engineer Associate</p>
+      <h1>DEA Audio Learn</h1>
+      <p class="hero__lead">
+        音声インプット教材MVPのPhase 1です。本文Markdownと読み上げ用スクリプトを分けて管理します。
+      </p>
+    </header>
+
+    <main class="layout">
+      <aside class="panel chapter-panel" aria-labelledby="chapter-list-title">
+        <h2 id="chapter-list-title">チャプター</h2>
+        <div id="chapter-list" class="chapter-list" aria-live="polite">読み込み中...</div>
+      </aside>
+
+      <section class="content-area" aria-live="polite">
+        <article class="panel meta-card" aria-labelledby="selected-chapter-title">
+          <p id="selected-domain" class="eyebrow">-</p>
+          <h2 id="selected-chapter-title">チャプターを読み込み中...</h2>
+          <dl class="meta-grid">
+            <div>
+              <dt>チャプター番号</dt>
+              <dd id="selected-chapter-no">-</dd>
+            </div>
+            <div>
+              <dt>推定学習時間</dt>
+              <dd id="selected-minutes">-</dd>
+            </div>
+            <div>
+              <dt>ステータス</dt>
+              <dd id="selected-status">-</dd>
+            </div>
+          </dl>
+        </article>
+
+        <section class="notice-grid" aria-label="後続実装予定">
+          <div class="notice-card">読み上げ機能：未実装</div>
+          <div class="notice-card">ミニクイズ：未実装</div>
+          <div class="notice-card">学習履歴：未実装</div>
+        </section>
+
+        <article class="panel markdown-card">
+          <h2>教本本文</h2>
+          <div id="content-markdown" class="markdown-body">本文を読み込み中...</div>
+        </article>
+
+        <details class="panel markdown-card" open>
+          <summary>音声スクリプトを確認する</summary>
+          <div id="audio-script-markdown" class="markdown-body">音声スクリプトを読み込み中...</div>
+        </details>
+      </section>
+    </main>
+  </body>
+</html>
