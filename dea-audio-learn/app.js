@@ -1,4 +1,5 @@
 const chapterList = document.querySelector('#chapter-list');
+const chapterSelector = document.querySelector('#chapter-selector');
 const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
 const selectedChapterNo = document.querySelector('#selected-chapter-no');
@@ -12,6 +13,12 @@ const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
 
 let chapters = [];
 let selectedChapterIndex = 0;
+
+const mobileChapterSelectorQuery = window.matchMedia('(max-width: 780px)');
+
+const syncChapterSelectorState = () => {
+  chapterSelector.open = !mobileChapterSelectorQuery.matches;
+};
 
 const renderMarkdown = (markdown) => {
   if (window.marked) {
@@ -50,7 +57,13 @@ const renderChapterList = () => {
 
 const updateActiveChapter = (chapterId) => {
   document.querySelectorAll('.chapter-button').forEach((button) => {
-    button.classList.toggle('is-active', button.dataset.chapterId === chapterId);
+    const isActive = button.dataset.chapterId === chapterId;
+    button.classList.toggle('is-active', isActive);
+    if (isActive) {
+      button.setAttribute('aria-current', 'true');
+    } else {
+      button.removeAttribute('aria-current');
+    }
   });
 };
 
@@ -109,6 +122,9 @@ nextChapterButton.addEventListener('click', () => {
 });
 
 const init = async () => {
+  syncChapterSelectorState();
+  mobileChapterSelectorQuery.addEventListener('change', syncChapterSelectorState);
+
   try {
     const response = await fetch('data/chapters.json');
     if (!response.ok) {
