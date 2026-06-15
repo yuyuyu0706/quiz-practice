@@ -13,7 +13,7 @@
       <p class="eyebrow">Databricks Certified Data Engineer Associate</p>
       <h1>DEA Audio Learn</h1>
       <p class="hero__lead">
-        音声インプット教材MVPのPhase 1です。本文Markdownと読み上げ用スクリプトを分けて管理します。
+        音声インプット教材MVPのPhase 2です。複数チャプターの本文Markdownと読み上げ用スクリプトを分けて管理します。
       </p>
     </header>
 
@@ -33,6 +33,10 @@
               <dd id="selected-chapter-no">-</dd>
             </div>
             <div>
+              <dt>現在位置</dt>
+              <dd id="selected-position">-</dd>
+            </div>
+            <div>
               <dt>推定学習時間</dt>
               <dd id="selected-minutes">-</dd>
             </div>
@@ -41,6 +45,10 @@
               <dd id="selected-status">-</dd>
             </div>
           </dl>
+          <nav class="chapter-nav" aria-label="チャプター移動">
+            <button id="previous-chapter" class="nav-button" type="button">前へ</button>
+            <button id="next-chapter" class="nav-button" type="button">次へ</button>
+          </nav>
         </article>
 
         <section class="notice-grid" aria-label="後続実装予定">
