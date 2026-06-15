@@ -1983,7 +1983,7 @@
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/structured-streaming/checkpoints"
       },
       {
-       "title": "Auto Loader でスキーマ推論とスキーマ進化を構成する",
+        "title": "Auto Loader でスキーマ推論とスキーマ進化を構成する",
         "url": "https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema"
       }
     ]
