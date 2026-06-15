@@ -1,0 +1,13 @@
+[
+  {
+    "id": "dea-dip-001",
+    "exam": "Databricks Certified Data Engineer Associate",
+    "domain": "Databricks Intelligence Platform",
+    "chapterNo": 1,
+    "title": "Databricks Intelligence Platformの全体像",
+    "estimatedMinutes": 6,
+    "contentPath": "contents/dea-dip-001.md",
+    "audioScriptPath": "audio-scripts/dea-dip-001.md",
+    "status": "draft"
+  }
+]
