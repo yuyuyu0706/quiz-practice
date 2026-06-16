@@ -92,7 +92,7 @@ body {
 .meta-card,
 .learning-steps,
 .markdown-card,
-.note-placeholder {
+.note-card {
   grid-column: 2;
   padding: clamp(0.8rem, 2vw, 1.1rem);
 }
@@ -268,10 +268,12 @@ body {
   margin-top: 0.75rem;
 }
 
-.note-placeholder p {
-  margin: 1rem 0 0;
-  color: var(--color-muted);
-  font-weight: 700;
+.note-card .markdown-body {
+  margin-top: 0.75rem;
+}
+
+.note-card .markdown-body > :first-child {
+  margin-top: 0;
 }
 
 .speech-controls {
@@ -428,7 +430,7 @@ body {
   .meta-card,
   .learning-steps,
   .markdown-card,
-  .note-placeholder {
+  .note-card {
     grid-column: 1;
   }
 
@@ -449,7 +451,7 @@ body {
     order: 4;
   }
 
-  .note-placeholder {
+  .note-card {
     order: 6;
   }
 
