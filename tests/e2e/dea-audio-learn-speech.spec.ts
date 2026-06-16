@@ -1,4 +1,11 @@
+import { readFileSync } from 'node:fs';
+
 import { test, expect, type Page } from '@playwright/test';
+
+const chapters = JSON.parse(
+  readFileSync(new URL('../../dea-audio-learn/data/chapters.json', import.meta.url), 'utf8')
+);
+const firstChapter = chapters[0];
 
 declare global {
   interface Window {
@@ -66,8 +73,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await gotoAudioLearn(page);
 
-    await expect(page.locator('#selected-minutes')).toHaveText('音声目安：約8分');
-    await expect(page.locator('#selected-status')).toHaveText('公開中');
+    await expect(page.locator('#selected-minutes')).toHaveText(
+      `音声目安：約${firstChapter.estimatedMinutes}分`
+    );
+    await expect(page.locator('#selected-status')).toHaveText(firstChapter.status);
     await expect(page.locator('#selected-chapter-no')).toHaveCount(0);
     await expect(page.locator('#selected-position')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '音声教材' })).toBeVisible();
