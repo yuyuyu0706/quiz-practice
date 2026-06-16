@@ -91,7 +91,8 @@ body {
 
 .meta-card,
 .learning-steps,
-.markdown-card {
+.markdown-card,
+.note-placeholder {
   grid-column: 2;
   padding: clamp(1rem, 3vw, 1.5rem);
 }
@@ -265,6 +266,24 @@ body {
   background: var(--color-primary-soft);
 }
 
+.audio-card--primary {
+  border-color: #cdd5ff;
+}
+
+.audio-card--primary .markdown-body {
+  max-width: 76ch;
+}
+
+.audio-card--primary summary span:last-child {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+
+.note-placeholder p {
+  margin: 1rem 0 0;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
 .speech-controls {
   display: flex;
   flex-wrap: wrap;
@@ -384,7 +403,8 @@ body {
   .chapter-panel,
   .meta-card,
   .learning-steps,
-  .markdown-card {
+  .markdown-card,
+  .note-placeholder {
     grid-column: 1;
   }
 
@@ -397,16 +417,16 @@ body {
     position: static;
   }
 
-  .learning-steps {
-    order: 3;
-  }
-
-  .markdown-card {
+  .audio-card {
     order: 4;
   }
 
-  .audio-card {
+  .learning-steps {
     order: 5;
+  }
+
+  .note-placeholder {
+    order: 6;
   }
 
   .meta-card__heading,

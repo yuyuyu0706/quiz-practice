@@ -66,7 +66,20 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await gotoAudioLearn(page);
 
+    await expect(page.getByRole('heading', { name: '音声教材' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
+    await expect(page.locator('#content-markdown')).toHaveCount(0);
     await expect(page.locator('.step-item').filter({ hasText: /^聞く利用可能$/ })).toBeVisible();
+    await expect(
+      page.locator('.step-item').filter({ hasText: /^要点Phase 6で追加予定$/ })
+    ).toBeVisible();
+    await expect(
+      page.locator('.step-item').filter({ hasText: /^解くPhase 7で追加予定$/ })
+    ).toBeVisible();
+    await expect(
+      page.locator('.step-item').filter({ hasText: /^記録Phase 8で追加予定$/ })
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: '要点メモ' })).toBeVisible();
     await expect(page.locator('#speech-status')).toHaveText('状態：未再生');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
 
