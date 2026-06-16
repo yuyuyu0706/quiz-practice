@@ -14,7 +14,7 @@
         <p class="eyebrow">Databricks Certified Data Engineer Associate</p>
         <h1>DEA Audio Learn</h1>
         <p class="hero__lead">
-          DEA試験対策を、読む教材と聞く教材で少しずつ進める音声インプット教材MVPです。
+          DEA試験対策を、音声教材を主軸に少しずつ進める音声インプット教材MVPです。
         </p>
       </div>
     </header>
@@ -25,23 +25,12 @@
           <div>
             <p id="selected-domain" class="eyebrow">-</p>
             <h2 id="selected-chapter-title">チャプターを読み込み中...</h2>
+            <div class="chapter-pills" aria-label="チャプター情報">
+              <span class="info-pill" id="selected-minutes">音声目安：-</span>
+              <span class="info-pill" id="selected-status">-</span>
+            </div>
           </div>
-          <span class="status-pill" id="selected-status">-</span>
         </div>
-        <dl class="meta-grid">
-          <div>
-            <dt>チャプター</dt>
-            <dd id="selected-chapter-no">-</dd>
-          </div>
-          <div>
-            <dt>現在位置</dt>
-            <dd id="selected-position">-</dd>
-          </div>
-          <div>
-            <dt>推定学習時間</dt>
-            <dd id="selected-minutes">-</dd>
-          </div>
-        </dl>
         <nav class="chapter-nav" aria-label="チャプター移動">
           <button id="previous-chapter" class="nav-button nav-button--secondary" type="button">
             前へ
@@ -58,46 +47,48 @@
       </aside>
 
       <section class="panel learning-steps" aria-labelledby="learning-steps-title">
-        <div class="section-heading">
-          <p class="eyebrow">Learning steps</p>
-          <h2 id="learning-steps-title">このチャプターの学習ステップ</h2>
+        <div class="section-heading section-heading--compact">
+          <h2 id="learning-steps-title" class="card-title">学習ステップ</h2>
         </div>
         <ol class="step-list">
-          <li class="step-item step-item--available"><span>読む</span><strong>利用可能</strong></li>
           <li class="step-item step-item--available"><span>聞く</span><strong>利用可能</strong></li>
-          <li class="step-item"><span>解く</span><strong>Phase 5で追加予定</strong></li>
-          <li class="step-item"><span>記録</span><strong>Phase 6で追加予定</strong></li>
+          <li class="step-item"><span>要点</span><strong>Phase 6で追加予定</strong></li>
+          <li class="step-item"><span>解く</span><strong>Phase 7で追加予定</strong></li>
+          <li class="step-item"><span>記録</span><strong>Phase 8で追加予定</strong></li>
         </ol>
       </section>
 
-      <article class="panel markdown-card">
-        <div class="section-heading">
-          <p class="eyebrow">Reading material</p>
-          <h2>読む教材</h2>
-        </div>
-        <div id="content-markdown" class="markdown-body">本文を読み込み中...</div>
-      </article>
-
-      <details class="panel markdown-card audio-card" open>
+      <details
+        class="panel markdown-card audio-card audio-card--primary"
+        aria-labelledby="audio-material-title"
+        open
+      >
         <summary>
-          <span class="eyebrow">Listening material</span>
-          <span>聞く教材</span>
+          <h2 id="audio-material-title" class="card-title">音声教材</h2>
+          <span class="summary-cue" aria-hidden="true"></span>
         </summary>
         <div class="speech-controls" aria-label="読み上げ操作">
           <button id="speech-toggle" class="speech-button" type="button">再生</button>
           <label class="speech-rate">
-            <span>読み上げ速度</span>
+            <span>速度</span>
             <select id="speech-rate" aria-label="読み上げ速度">
               <option value="0.8">0.8x</option>
               <option value="1" selected>1.0x</option>
               <option value="1.2">1.2x</option>
             </select>
           </label>
+          <span id="speech-status" class="speech-status" role="status">未再生</span>
         </div>
-        <p id="speech-status" class="speech-status" role="status">状態：未再生</p>
         <p id="speech-message" class="speech-message" hidden></p>
         <div id="audio-script-markdown" class="markdown-body">音声スクリプトを読み込み中...</div>
       </details>
+
+      <aside class="panel note-placeholder" aria-labelledby="note-placeholder-title">
+        <div class="section-heading section-heading--compact">
+          <h2 id="note-placeholder-title" class="card-title">要点メモ</h2>
+        </div>
+        <p>Phase 6で追加予定</p>
+      </aside>
     </main>
   </body>
 </html>

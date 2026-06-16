@@ -2,13 +2,10 @@ const chapterList = document.querySelector('#chapter-list');
 const chapterSelector = document.querySelector('#chapter-selector');
 const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
-const selectedChapterNo = document.querySelector('#selected-chapter-no');
 const selectedMinutes = document.querySelector('#selected-minutes');
 const selectedStatus = document.querySelector('#selected-status');
-const selectedPosition = document.querySelector('#selected-position');
 const previousChapterButton = document.querySelector('#previous-chapter');
 const nextChapterButton = document.querySelector('#next-chapter');
-const contentMarkdown = document.querySelector('#content-markdown');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
 const speechToggleButton = document.querySelector('#speech-toggle');
 const speechRateSelect = document.querySelector('#speech-rate');
@@ -49,8 +46,8 @@ const speechStatusLabels = {
   paused: '一時停止中',
   ended: '読み上げ完了',
   error: '読み上げエラー',
-  noVoices: '利用可能な音声がありません',
-  unsupported: 'このブラウザでは読み上げに対応していません',
+  noVoices: '利用不可',
+  unsupported: '利用不可',
 };
 
 const speechButtonLabels = {
@@ -159,6 +156,9 @@ const showSpeechNoVoices = () => {
   setSpeechState('noVoices');
 };
 
+const removeAudioScriptTitle = (markdown) =>
+  markdown.replace(/^#\s*音声スクリプト:[^\n]*(?:\r?\n)+/u, '').trimStart();
+
 const stripMarkdownForSpeech = (markdown) =>
   markdown
     .replace(/```[\s\S]*?```/g, ' ')
@@ -177,7 +177,7 @@ const updateSpeechUI = () => {
   speechToggleButton.textContent = speechButtonLabels[speechState];
   speechToggleButton.disabled = unavailable || !currentAudioScriptText;
   speechRateSelect.disabled = unavailable;
-  speechStatus.textContent = `状態：${speechStatusLabels[speechState]}`;
+  speechStatus.textContent = speechStatusLabels[speechState];
   if (speechState === 'unsupported') {
     speechMessage.hidden = false;
     speechMessage.textContent =
@@ -386,19 +386,12 @@ const selectChapterByIndex = async (chapterIndex) => {
   updateChapterNavigation();
   selectedDomain.textContent = chapter.domain;
   selectedTitle.textContent = chapter.title;
-  selectedChapterNo.textContent = `Chapter ${chapter.chapterNo}`;
-  selectedPosition.textContent = `Chapter ${chapterIndex + 1} / ${chapters.length}`;
-  selectedMinutes.textContent = `${chapter.estimatedMinutes}分`;
+  selectedMinutes.textContent = `音声目安：約${chapter.estimatedMinutes}分`;
   selectedStatus.textContent = chapter.status;
-  contentMarkdown.textContent = '本文を読み込み中...';
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
 
   try {
-    const [content, audioScript] = await Promise.all([
-      fetchText(chapter.contentPath),
-      fetchText(chapter.audioScriptPath),
-    ]);
-    contentMarkdown.innerHTML = renderMarkdown(content);
+    const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
     audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
     currentAudioScriptText = stripMarkdownForSpeech(audioScript);
     logSpeech('audio script loaded', {
@@ -409,7 +402,6 @@ const selectChapterByIndex = async (chapterIndex) => {
     });
     refreshSpeechVoices('audio-script-loaded');
   } catch (error) {
-    contentMarkdown.textContent = error.message;
     audioScriptMarkdown.textContent = error.message;
   }
 };
