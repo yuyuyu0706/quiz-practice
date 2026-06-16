@@ -63,8 +63,9 @@ const speechButtonLabels = {
   unsupported: '利用不可',
 };
 
-const noVoicesMessage =
-  'このブラウザまたはOS環境で利用可能な読み上げ音声が見つかりません。OSの音声読み上げ設定、別ブラウザ、または別端末で確認してください。';
+const speechUnavailableMessage =
+  'このブラウザまたはOS環境では、利用可能な読み上げ音声が見つかりません。Chromeなど別のブラウザでお試しください。';
+const noVoicesMessage = speechUnavailableMessage;
 
 const getSpeechSupport = () => ({
   speechSynthesis: 'speechSynthesis' in window && Boolean(window.speechSynthesis),
@@ -273,9 +274,7 @@ const speakFromStart = () => {
     });
     if (runId !== speechRunId) return;
     activeUtterance = null;
-    showSpeechError(
-      `読み上げに失敗しました（${event.error}）。OSの音声読み上げ設定、別ブラウザ、または別端末で確認してください。`
-    );
+    showSpeechError(`読み上げに失敗しました（${event.error}）。${speechUnavailableMessage}`);
   };
   activeUtterance = utterance;
   setSpeechState('speaking');

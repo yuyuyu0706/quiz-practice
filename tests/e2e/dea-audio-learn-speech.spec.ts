@@ -135,7 +135,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toHaveText('利用不可');
     await expect(page.locator('#speech-status')).toHaveText('状態：利用可能な音声がありません');
     await expect(page.locator('#speech-message')).toContainText(
-      'このブラウザまたはOS環境で利用可能な読み上げ音声が見つかりません。'
+      'このブラウザまたはOS環境では、利用可能な読み上げ音声が見つかりません。'
     );
   });
 
@@ -187,7 +187,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toBeEnabled();
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-message')).toContainText(
-      '読み上げに失敗しました（synthesis-failed）。'
+      '読み上げに失敗しました（synthesis-failed）。このブラウザまたはOS環境では'
     );
   });
 
