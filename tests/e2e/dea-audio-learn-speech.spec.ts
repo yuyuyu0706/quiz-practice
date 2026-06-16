@@ -29,39 +29,44 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           this.text = text;
         }
       }
-      window.SpeechSynthesisUtterance =
-        MockSpeechSynthesisUtterance as typeof SpeechSynthesisUtterance;
-      window.speechSynthesis = {
-        speak: (utterance: SpeechSynthesisUtterance) =>
-          window.__speechCalls.push({
-            type: 'speak',
-            text: utterance.text,
-            lang: utterance.lang,
-            rate: utterance.rate,
-            voice: utterance.voice?.lang,
-          }),
-        pause: () => window.__speechCalls.push({ type: 'pause' }),
-        resume: () => window.__speechCalls.push({ type: 'resume' }),
-        cancel: () => window.__speechCalls.push({ type: 'cancel' }),
-        getVoices: () => [
-          {
-            name: 'Mock Japanese Voice',
-            lang: 'ja-JP',
-            default: true,
-            localService: true,
-            voiceURI: 'mock-ja-JP',
-          },
-        ],
-        addEventListener: () => undefined,
-        pending: false,
-        speaking: false,
-        paused: false,
-      } as unknown as SpeechSynthesis;
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          speak: (utterance: SpeechSynthesisUtterance) =>
+            window.__speechCalls.push({
+              type: 'speak',
+              text: utterance.text,
+              lang: utterance.lang,
+              rate: utterance.rate,
+              voice: utterance.voice?.lang,
+            }),
+          pause: () => window.__speechCalls.push({ type: 'pause' }),
+          resume: () => window.__speechCalls.push({ type: 'resume' }),
+          cancel: () => window.__speechCalls.push({ type: 'cancel' }),
+          getVoices: () => [
+            {
+              name: 'Mock Japanese Voice',
+              lang: 'ja-JP',
+              default: true,
+              localService: true,
+              voiceURI: 'mock-ja-JP',
+            },
+          ],
+          addEventListener: () => undefined,
+          pending: false,
+          speaking: false,
+          paused: false,
+        } as unknown as SpeechSynthesis,
+      });
     });
 
     await gotoAudioLearn(page);
 
-    await expect(page.getByText('聞く').locator('..')).toContainText('利用可能');
+    await expect(page.locator('.step-item').filter({ hasText: /^聞く利用可能$/ })).toBeVisible();
     await expect(page.locator('#speech-status')).toHaveText('状態：未再生');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
 
@@ -107,13 +112,18 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           this.text = text;
         }
       }
-      window.SpeechSynthesisUtterance =
-        MockSpeechSynthesisUtterance as typeof SpeechSynthesisUtterance;
-      window.speechSynthesis = {
-        cancel: () => undefined,
-        getVoices: () => [],
-        addEventListener: () => undefined,
-      } as unknown as SpeechSynthesis;
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          cancel: () => undefined,
+          getVoices: () => [],
+          addEventListener: () => undefined,
+        } as unknown as SpeechSynthesis,
+      });
     });
 
     await gotoAudioLearn(page);
@@ -148,18 +158,23 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           this.text = text;
         }
       }
-      window.SpeechSynthesisUtterance =
-        MockSpeechSynthesisUtterance as typeof SpeechSynthesisUtterance;
-      window.speechSynthesis = {
-        speak: (utterance: SpeechSynthesisUtterance) =>
-          utterance.onerror?.({ error: 'synthesis-failed' } as SpeechSynthesisErrorEvent),
-        cancel: () => undefined,
-        getVoices: () => [mockVoice],
-        addEventListener: () => undefined,
-        pending: false,
-        speaking: false,
-        paused: false,
-      } as unknown as SpeechSynthesis;
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          speak: (utterance: SpeechSynthesisUtterance) =>
+            utterance.onerror?.({ error: 'synthesis-failed' } as SpeechSynthesisErrorEvent),
+          cancel: () => undefined,
+          getVoices: () => [mockVoice],
+          addEventListener: () => undefined,
+          pending: false,
+          speaking: false,
+          paused: false,
+        } as unknown as SpeechSynthesis,
+      });
     });
 
     await gotoAudioLearn(page);
@@ -175,8 +190,14 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('disables speech UI when Web Speech API is unavailable', async ({ page }) => {
     await page.addInitScript(() => {
-      delete window.SpeechSynthesisUtterance;
-      delete window.speechSynthesis;
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: undefined,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: undefined,
+      });
     });
 
     await gotoAudioLearn(page);
