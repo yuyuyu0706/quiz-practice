@@ -38,6 +38,7 @@ test.describe('[DEA Audio Learn][Phase 4] Speech controls', () => {
             text: utterance.text,
             lang: utterance.lang,
             rate: utterance.rate,
+            voice: utterance.voice?.lang,
           }),
         pause: () => window.__speechCalls.push({ type: 'pause' }),
         resume: () => window.__speechCalls.push({ type: 'resume' }),
@@ -83,7 +84,7 @@ test.describe('[DEA Audio Learn][Phase 4] Speech controls', () => {
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: 'speak', lang: 'ja-JP', rate: 1.2 }),
+        expect.objectContaining({ type: 'speak', lang: 'ja-JP', rate: 1.2, voice: 'ja-JP' }),
         expect.objectContaining({ type: 'pause' }),
         expect.objectContaining({ type: 'resume' }),
         expect.objectContaining({ type: 'cancel' }),
@@ -91,6 +92,85 @@ test.describe('[DEA Audio Learn][Phase 4] Speech controls', () => {
     );
     const speakCall = calls.find((call) => call.type === 'speak');
     expect(speakCall?.text).not.toContain('#');
+  });
+
+  test('shows a clear unavailable message when no speech voices are available', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      class MockSpeechSynthesisUtterance {
+        text: string;
+        lang = '';
+        voice: SpeechSynthesisVoice | null = null;
+
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+      window.SpeechSynthesisUtterance =
+        MockSpeechSynthesisUtterance as typeof SpeechSynthesisUtterance;
+      window.speechSynthesis = {
+        cancel: () => undefined,
+        getVoices: () => [],
+        addEventListener: () => undefined,
+      } as unknown as SpeechSynthesis;
+    });
+
+    await gotoAudioLearn(page);
+
+    await expect(page.locator('#speech-toggle')).toBeDisabled();
+    await expect(page.locator('#speech-toggle')).toHaveText('利用不可');
+    await expect(page.locator('#speech-status')).toHaveText('状態：利用可能な音声がありません');
+    await expect(page.locator('#speech-message')).toContainText(
+      'このブラウザまたはOS環境で利用可能な読み上げ音声が見つかりません。'
+    );
+  });
+
+  test('keeps synthesis-failed visible in the UI and returns the button to play', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const mockVoice = {
+        name: 'Mock Japanese Voice',
+        lang: 'ja-JP',
+        default: true,
+        localService: true,
+        voiceURI: 'mock-ja-JP',
+      } as SpeechSynthesisVoice;
+      class MockSpeechSynthesisUtterance {
+        text: string;
+        lang = '';
+        voice: SpeechSynthesisVoice | null = null;
+        rate = 1;
+        onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+      window.SpeechSynthesisUtterance =
+        MockSpeechSynthesisUtterance as typeof SpeechSynthesisUtterance;
+      window.speechSynthesis = {
+        speak: (utterance: SpeechSynthesisUtterance) =>
+          utterance.onerror?.({ error: 'synthesis-failed' } as SpeechSynthesisErrorEvent),
+        cancel: () => undefined,
+        getVoices: () => [mockVoice],
+        addEventListener: () => undefined,
+        pending: false,
+        speaking: false,
+        paused: false,
+      } as unknown as SpeechSynthesis;
+    });
+
+    await gotoAudioLearn(page);
+    await page.locator('#speech-toggle').click();
+
+    await expect(page.locator('#speech-status')).toHaveText('状態：読み上げエラー');
+    await expect(page.locator('#speech-toggle')).toBeEnabled();
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await expect(page.locator('#speech-message')).toContainText(
+      '読み上げに失敗しました（synthesis-failed）。'
+    );
   });
 
   test('disables speech UI when Web Speech API is unavailable', async ({ page }) => {

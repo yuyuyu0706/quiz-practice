@@ -22,6 +22,8 @@ let speechState = 'idle';
 let activeUtterance = null;
 let speechRunId = 0;
 let lastSpeechResetReason = 'initial';
+let availableSpeechVoices = [];
+let selectedSpeechVoice = null;
 
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
@@ -47,6 +49,7 @@ const speechStatusLabels = {
   paused: '一時停止中',
   ended: '読み上げ完了',
   error: '読み上げエラー',
+  noVoices: '利用可能な音声がありません',
   unsupported: 'このブラウザでは読み上げに対応していません',
 };
 
@@ -55,9 +58,13 @@ const speechButtonLabels = {
   speaking: '一時停止',
   paused: '再開',
   ended: '最初から再生',
-  error: '再試行',
+  error: '再生',
+  noVoices: '利用不可',
   unsupported: '利用不可',
 };
+
+const noVoicesMessage =
+  'このブラウザまたはOS環境で利用可能な読み上げ音声が見つかりません。OSの音声読み上げ設定、別ブラウザ、または別端末で確認してください。';
 
 const getSpeechSupport = () => ({
   speechSynthesis: 'speechSynthesis' in window && Boolean(window.speechSynthesis),
@@ -78,6 +85,19 @@ const describeVoice = (voice) => ({
   voiceURI: voice.voiceURI,
 });
 
+const getAvailableSpeechVoices = () => {
+  if (!getSpeechSupport().speechSynthesis) return [];
+  return window.speechSynthesis.getVoices();
+};
+
+const chooseSpeechVoice = (voices) => {
+  const japaneseVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith('ja'));
+  if (japaneseVoice) return japaneseVoice;
+
+  const defaultVoice = voices.find((voice) => voice.default);
+  return defaultVoice ?? voices[0] ?? null;
+};
+
 const logSpeechSupport = () => {
   const support = getSpeechSupport();
   logSpeech('Web Speech API support', {
@@ -88,7 +108,7 @@ const logSpeechSupport = () => {
   });
 
   if (support.speechSynthesis) {
-    const voices = window.speechSynthesis.getVoices();
+    const voices = getAvailableSpeechVoices();
     logSpeech('speechSynthesis.getVoices()', {
       count: voices.length,
       voices: voices.map(describeVoice),
@@ -96,10 +116,46 @@ const logSpeechSupport = () => {
   }
 };
 
+const refreshSpeechVoices = (reason) => {
+  if (!isSpeechSupported()) {
+    availableSpeechVoices = [];
+    selectedSpeechVoice = null;
+    setSpeechState('unsupported');
+    return false;
+  }
+
+  availableSpeechVoices = getAvailableSpeechVoices();
+  selectedSpeechVoice = chooseSpeechVoice(availableSpeechVoices);
+  logSpeech('voice availability checked', {
+    reason,
+    count: availableSpeechVoices.length,
+    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    voices: availableSpeechVoices.map(describeVoice),
+  });
+
+  if (availableSpeechVoices.length === 0) {
+    showSpeechNoVoices();
+    return false;
+  }
+
+  if (speechState === 'noVoices' || speechState === 'unsupported') {
+    setSpeechState('idle');
+  } else {
+    updateSpeechUI();
+  }
+  return true;
+};
+
 const showSpeechError = (message) => {
   speechMessage.hidden = false;
   speechMessage.textContent = message;
   setSpeechState('error');
+};
+
+const showSpeechNoVoices = () => {
+  speechMessage.hidden = false;
+  speechMessage.textContent = noVoicesMessage;
+  setSpeechState('noVoices');
 };
 
 const stripMarkdownForSpeech = (markdown) =>
@@ -116,15 +172,18 @@ const stripMarkdownForSpeech = (markdown) =>
     .trim();
 
 const updateSpeechUI = () => {
-  const unsupported = speechState === 'unsupported';
+  const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
   speechToggleButton.textContent = speechButtonLabels[speechState];
-  speechToggleButton.disabled = unsupported || !currentAudioScriptText;
-  speechRateSelect.disabled = unsupported;
+  speechToggleButton.disabled = unavailable || !currentAudioScriptText;
+  speechRateSelect.disabled = unavailable;
   speechStatus.textContent = `状態：${speechStatusLabels[speechState]}`;
-  if (unsupported) {
+  if (speechState === 'unsupported') {
     speechMessage.hidden = false;
     speechMessage.textContent =
       'このブラウザでは読み上げ機能に対応していません。対応ブラウザでお試しください。';
+  } else if (speechState === 'noVoices') {
+    speechMessage.hidden = false;
+    speechMessage.textContent = noVoicesMessage;
   } else if (speechState !== 'error') {
     speechMessage.hidden = true;
     speechMessage.textContent = '';
@@ -138,27 +197,24 @@ const setSpeechState = (nextState) => {
 
 const resetSpeechForChapterChange = () => {
   currentAudioScriptText = '';
-  if (!isSpeechSupported()) {
-    setSpeechState('unsupported');
-    return;
-  }
+  const canUseSpeechApi = isSpeechSupported();
+  const hasVoices = refreshSpeechVoices('chapter-change');
 
   speechRunId += 1;
   lastSpeechResetReason = 'chapter-change';
-  logSpeech('resetSpeechForChapterChange: calling speechSynthesis.cancel()', { speechRunId });
-  window.speechSynthesis.cancel();
+  if (canUseSpeechApi) {
+    logSpeech('resetSpeechForChapterChange: calling speechSynthesis.cancel()', { speechRunId });
+    window.speechSynthesis.cancel();
+  }
   activeUtterance = null;
-  setSpeechState('idle');
+  if (hasVoices) setSpeechState('idle');
 };
 
 const speakFromStart = () => {
   logSpeech('play button handler started', { speechState, lastSpeechResetReason });
   logSpeechSupport();
 
-  if (!isSpeechSupported()) {
-    setSpeechState('unsupported');
-    return;
-  }
+  if (!refreshSpeechVoices('play-button')) return;
   if (!currentAudioScriptText) {
     const message =
       '読み上げ用テキストが空のため再生できません。音声スクリプトの読み込み状態を確認してください。';
@@ -178,7 +234,8 @@ const speakFromStart = () => {
   speechRunId += 1;
   const runId = speechRunId;
   const utterance = new SpeechSynthesisUtterance(currentAudioScriptText);
-  utterance.lang = 'ja-JP';
+  utterance.lang = selectedSpeechVoice?.lang ?? 'ja-JP';
+  utterance.voice = selectedSpeechVoice;
   utterance.rate = Number(speechRateSelect.value);
   utterance.onstart = (event) => {
     logSpeech('SpeechSynthesisUtterance onstart', { runId, event });
@@ -201,16 +258,24 @@ const speakFromStart = () => {
     setSpeechState('ended');
   };
   utterance.onerror = (event) => {
+    const voices = getAvailableSpeechVoices();
     logSpeechError('SpeechSynthesisUtterance onerror', {
       runId,
       currentSpeechRunId: speechRunId,
       lastSpeechResetReason,
       error: event.error,
+      voicesCount: voices.length,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+      utteranceLang: utterance.lang,
+      utteranceRate: utterance.rate,
+      textLength: utterance.text.length,
       event,
     });
     if (runId !== speechRunId) return;
     activeUtterance = null;
-    showSpeechError(`読み上げエラー: ${event.error}`);
+    showSpeechError(
+      `読み上げに失敗しました（${event.error}）。OSの音声読み上げ設定、別ブラウザ、または別端末で確認してください。`
+    );
   };
   activeUtterance = utterance;
   setSpeechState('speaking');
@@ -220,6 +285,8 @@ const speakFromStart = () => {
     rate: utterance.rate,
     lang: utterance.lang,
     textLength: utterance.text.length,
+    voicesCount: availableSpeechVoices.length,
+    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
     pending: window.speechSynthesis.pending,
     speaking: window.speechSynthesis.speaking,
     paused: window.speechSynthesis.paused,
@@ -341,7 +408,7 @@ const selectChapterByIndex = async (chapterIndex) => {
       speechTextLength: currentAudioScriptText.length,
       speechTextPreview: currentAudioScriptText.slice(0, 200),
     });
-    updateSpeechUI();
+    refreshSpeechVoices('audio-script-loaded');
   } catch (error) {
     contentMarkdown.textContent = error.message;
     audioScriptMarkdown.textContent = error.message;
@@ -377,11 +444,12 @@ if (
   typeof window.speechSynthesis.addEventListener === 'function'
 ) {
   window.speechSynthesis.addEventListener('voiceschanged', () => {
-    const voices = window.speechSynthesis.getVoices();
-    logSpeech('speechSynthesis voiceschanged', {
-      count: voices.length,
-      voices: voices.map(describeVoice),
-    });
+    const hasVoice = refreshSpeechVoices('voiceschanged');
+    if (!hasVoice) {
+      logSpeechError('speechSynthesis voiceschanged but no voices are available', {
+        count: availableSpeechVoices.length,
+      });
+    }
   });
 }
 
