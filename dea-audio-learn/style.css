@@ -104,10 +104,17 @@ body {
   justify-content: space-between;
 }
 
-.meta-card h2,
-.section-heading h2 {
+.meta-card h2 {
   margin: 0.25rem 0 0;
   color: var(--color-primary);
+}
+
+.card-title {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: clamp(1.2rem, 2.5vw, 1.45rem);
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 .chapter-pills {
@@ -261,10 +268,6 @@ body {
   margin-top: 0.75rem;
 }
 
-.audio-card--primary summary {
-  font-size: clamp(1.2rem, 2.5vw, 1.45rem);
-}
-
 .note-placeholder p {
   margin: 1rem 0 0;
   color: var(--color-muted);
@@ -346,12 +349,43 @@ body {
 }
 
 .markdown-card summary {
-  display: grid;
-  gap: 0.1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
   color: var(--color-primary);
-  font-size: 1.15rem;
-  font-weight: 800;
+}
+
+.markdown-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.markdown-card summary::marker {
+  content: '';
+}
+
+.summary-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 28px;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid #cdd5ff;
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.summary-cue::after {
+  content: '▾';
+  font-size: 0.72rem;
+}
+
+.audio-card[open] .summary-cue::after {
+  content: '▴';
 }
 
 .markdown-body {

@@ -48,7 +48,7 @@
 
       <section class="panel learning-steps" aria-labelledby="learning-steps-title">
         <div class="section-heading section-heading--compact">
-          <h2 id="learning-steps-title">学習ステップ</h2>
+          <h2 id="learning-steps-title" class="card-title">学習ステップ</h2>
         </div>
         <ol class="step-list">
           <li class="step-item step-item--available"><span>聞く</span><strong>利用可能</strong></li>
@@ -58,8 +58,15 @@
         </ol>
       </section>
 
-      <details class="panel markdown-card audio-card audio-card--primary" open>
-        <summary>音声教材</summary>
+      <details
+        class="panel markdown-card audio-card audio-card--primary"
+        aria-labelledby="audio-material-title"
+        open
+      >
+        <summary>
+          <h2 id="audio-material-title" class="card-title">音声教材</h2>
+          <span class="summary-cue" aria-hidden="true">開閉</span>
+        </summary>
         <div class="speech-controls" aria-label="読み上げ操作">
           <button id="speech-toggle" class="speech-button" type="button">再生</button>
           <label class="speech-rate">
@@ -77,9 +84,8 @@
       </details>
 
       <aside class="panel note-placeholder" aria-labelledby="note-placeholder-title">
-        <div class="section-heading">
-          <p class="eyebrow">Key notes</p>
-          <h2 id="note-placeholder-title">要点メモ</h2>
+        <div class="section-heading section-heading--compact">
+          <h2 id="note-placeholder-title" class="card-title">要点メモ</h2>
         </div>
         <p>Phase 6で追加予定</p>
       </aside>
