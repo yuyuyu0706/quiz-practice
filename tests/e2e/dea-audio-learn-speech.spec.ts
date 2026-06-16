@@ -42,7 +42,20 @@ test.describe('[DEA Audio Learn][Phase 4] Speech controls', () => {
         pause: () => window.__speechCalls.push({ type: 'pause' }),
         resume: () => window.__speechCalls.push({ type: 'resume' }),
         cancel: () => window.__speechCalls.push({ type: 'cancel' }),
-      } as SpeechSynthesis;
+        getVoices: () => [
+          {
+            name: 'Mock Japanese Voice',
+            lang: 'ja-JP',
+            default: true,
+            localService: true,
+            voiceURI: 'mock-ja-JP',
+          },
+        ],
+        addEventListener: () => undefined,
+        pending: false,
+        speaking: false,
+        paused: false,
+      } as unknown as SpeechSynthesis;
     });
 
     await gotoAudioLearn(page);
