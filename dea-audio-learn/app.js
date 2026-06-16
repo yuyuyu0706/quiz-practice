@@ -2,10 +2,8 @@ const chapterList = document.querySelector('#chapter-list');
 const chapterSelector = document.querySelector('#chapter-selector');
 const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
-const selectedChapterNo = document.querySelector('#selected-chapter-no');
 const selectedMinutes = document.querySelector('#selected-minutes');
 const selectedStatus = document.querySelector('#selected-status');
-const selectedPosition = document.querySelector('#selected-position');
 const previousChapterButton = document.querySelector('#previous-chapter');
 const nextChapterButton = document.querySelector('#next-chapter');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
@@ -385,9 +383,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   updateChapterNavigation();
   selectedDomain.textContent = chapter.domain;
   selectedTitle.textContent = chapter.title;
-  selectedChapterNo.textContent = `Chapter ${chapter.chapterNo}`;
-  selectedPosition.textContent = `Chapter ${chapterIndex + 1} / ${chapters.length}`;
-  selectedMinutes.textContent = `${chapter.estimatedMinutes}分`;
+  selectedMinutes.textContent = `音声目安：約${chapter.estimatedMinutes}分`;
   selectedStatus.textContent = chapter.status;
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
 
