@@ -84,17 +84,20 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       page.locator('.step-item').filter({ hasText: /^記録Phase 8で追加予定$/ })
     ).toBeVisible();
     await expect(page.getByRole('heading', { name: '要点メモ' })).toBeVisible();
-    await expect(page.locator('#speech-status')).toHaveText('状態：未再生');
+    await expect(page.getByRole('heading', { name: '学習ステップ' })).toBeVisible();
+    await expect(page.locator('#audio-script-markdown h1')).toHaveCount(0);
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('音声スクリプト:');
+    await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
 
     await page.locator('#speech-rate').selectOption('1.2');
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
-    await expect(page.locator('#speech-status')).toHaveText('状態：読み上げ中');
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
 
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
-    await expect(page.locator('#speech-status')).toHaveText('状態：一時停止中');
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
 
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
@@ -104,7 +107,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'LakehouseとDelta Lakeの位置づけ'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await expect(page.locator('#speech-status')).toHaveText('状態：未再生');
+    await expect(page.locator('#speech-status')).toHaveText('未再生');
 
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
@@ -117,6 +120,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     const speakCall = calls.find((call) => call.type === 'speak');
     expect(speakCall?.text).not.toContain('#');
+    expect(speakCall?.text).not.toContain('音声スクリプト:');
   });
 
   test('shows a clear unavailable message when no speech voices are available', async ({
@@ -150,7 +154,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await expect(page.locator('#speech-toggle')).toBeDisabled();
     await expect(page.locator('#speech-toggle')).toHaveText('利用不可');
-    await expect(page.locator('#speech-status')).toHaveText('状態：利用可能な音声がありません');
+    await expect(page.locator('#speech-status')).toHaveText('利用不可');
     await expect(page.locator('#speech-message')).toContainText(
       'このブラウザまたはOS環境では、利用可能な読み上げ音声が見つかりません。'
     );
@@ -200,7 +204,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await gotoAudioLearn(page);
     await page.locator('#speech-toggle').click();
 
-    await expect(page.locator('#speech-status')).toHaveText('状態：読み上げエラー');
+    await expect(page.locator('#speech-status')).toHaveText('読み上げエラー');
     await expect(page.locator('#speech-toggle')).toBeEnabled();
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-message')).toContainText(
@@ -224,9 +228,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await expect(page.locator('#speech-toggle')).toBeDisabled();
     await expect(page.locator('#speech-toggle')).toHaveText('利用不可');
-    await expect(page.locator('#speech-status')).toHaveText(
-      '状態：このブラウザでは読み上げに対応していません'
-    );
+    await expect(page.locator('#speech-status')).toHaveText('利用不可');
     await expect(page.locator('#speech-message')).toContainText(
       'このブラウザでは読み上げ機能に対応していません。'
     );

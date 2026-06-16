@@ -47,9 +47,8 @@
       </aside>
 
       <section class="panel learning-steps" aria-labelledby="learning-steps-title">
-        <div class="section-heading">
-          <p class="eyebrow">Learning steps</p>
-          <h2 id="learning-steps-title">このチャプターの学習ステップ</h2>
+        <div class="section-heading section-heading--compact">
+          <h2 id="learning-steps-title">学習ステップ</h2>
         </div>
         <ol class="step-list">
           <li class="step-item step-item--available"><span>聞く</span><strong>利用可能</strong></li>
@@ -60,22 +59,19 @@
       </section>
 
       <details class="panel markdown-card audio-card audio-card--primary" open>
-        <summary>
-          <span class="eyebrow">Main audio material</span>
-          <span>音声教材</span>
-        </summary>
+        <summary>音声教材</summary>
         <div class="speech-controls" aria-label="読み上げ操作">
           <button id="speech-toggle" class="speech-button" type="button">再生</button>
           <label class="speech-rate">
-            <span>読み上げ速度</span>
+            <span>速度</span>
             <select id="speech-rate" aria-label="読み上げ速度">
               <option value="0.8">0.8x</option>
               <option value="1" selected>1.0x</option>
               <option value="1.2">1.2x</option>
             </select>
           </label>
+          <span id="speech-status" class="speech-status" role="status">未再生</span>
         </div>
-        <p id="speech-status" class="speech-status" role="status">状態：未再生</p>
         <p id="speech-message" class="speech-message" hidden></p>
         <div id="audio-script-markdown" class="markdown-body">音声スクリプトを読み込み中...</div>
       </details>

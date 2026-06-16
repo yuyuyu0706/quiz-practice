@@ -46,8 +46,8 @@ const speechStatusLabels = {
   paused: '一時停止中',
   ended: '読み上げ完了',
   error: '読み上げエラー',
-  noVoices: '利用可能な音声がありません',
-  unsupported: 'このブラウザでは読み上げに対応していません',
+  noVoices: '利用不可',
+  unsupported: '利用不可',
 };
 
 const speechButtonLabels = {
@@ -156,6 +156,9 @@ const showSpeechNoVoices = () => {
   setSpeechState('noVoices');
 };
 
+const removeAudioScriptTitle = (markdown) =>
+  markdown.replace(/^#\s*音声スクリプト:[^\n]*(?:\r?\n)+/u, '').trimStart();
+
 const stripMarkdownForSpeech = (markdown) =>
   markdown
     .replace(/```[\s\S]*?```/g, ' ')
@@ -174,7 +177,7 @@ const updateSpeechUI = () => {
   speechToggleButton.textContent = speechButtonLabels[speechState];
   speechToggleButton.disabled = unavailable || !currentAudioScriptText;
   speechRateSelect.disabled = unavailable;
-  speechStatus.textContent = `状態：${speechStatusLabels[speechState]}`;
+  speechStatus.textContent = speechStatusLabels[speechState];
   if (speechState === 'unsupported') {
     speechMessage.hidden = false;
     speechMessage.textContent =
@@ -388,7 +391,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
 
   try {
-    const audioScript = await fetchText(chapter.audioScriptPath);
+    const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
     audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
     currentAudioScriptText = stripMarkdownForSpeech(audioScript);
     logSpeech('audio script loaded', {
