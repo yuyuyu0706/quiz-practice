@@ -9,12 +9,12 @@ declare global {
 async function gotoAudioLearn(page: Page) {
   await page.goto('/dea-audio-learn/');
   await expect(page.getByRole('heading', { name: 'DEA Audio Learn' })).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: /Databricks Intelligence Platform/ })
-  ).toBeVisible();
+  await expect(page.locator('#selected-chapter-title')).toHaveText(
+    'Databricks Intelligence Platformの全体像'
+  );
 }
 
-test.describe('[DEA Audio Learn][Phase 4] Speech controls', () => {
+test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   test('uses one button to play, pause, resume, and resets on chapter change', async ({ page }) => {
     await page.addInitScript(() => {
       window.__speechCalls = [];
