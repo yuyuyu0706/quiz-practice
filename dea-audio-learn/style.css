@@ -113,7 +113,7 @@ body {
   margin: 0;
   color: var(--color-primary);
   font-size: clamp(1.2rem, 2.5vw, 1.45rem);
-  font-weight: 400;
+  font-weight: 800;
   line-height: 1.35;
 }
 
@@ -368,9 +368,10 @@ body {
 .summary-cue {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  width: 28px;
   min-height: 28px;
-  padding: 0.15rem 0.55rem;
+  padding: 0;
   border: 1px solid #cdd5ff;
   border-radius: 999px;
   color: var(--color-primary);
@@ -380,12 +381,12 @@ body {
 }
 
 .summary-cue::after {
-  content: '▾';
+  content: '▼';
   font-size: 0.72rem;
 }
 
 .audio-card[open] .summary-cue::after {
-  content: '▴';
+  content: '▲';
 }
 
 .markdown-body {

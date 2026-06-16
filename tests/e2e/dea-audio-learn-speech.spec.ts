@@ -71,7 +71,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-chapter-no')).toHaveCount(0);
     await expect(page.locator('#selected-position')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '音声教材' })).toBeVisible();
-    await expect(page.locator('.summary-cue')).toHaveText('開閉');
+    await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
     await expect(page.locator('#content-markdown')).toHaveCount(0);
     await expect(page.locator('.step-item').filter({ hasText: /^聞く利用可能$/ })).toBeVisible();
