@@ -8,7 +8,8 @@
     "estimatedMinutes": 6,
     "contentPath": "contents/dea-dip-001.md",
     "audioScriptPath": "audio-scripts/dea-dip-001.md",
-    "status": "draft"
+    "status": "draft",
+    "notePath": "notes/dea-dip-001.md"
   },
   {
     "id": "dea-dip-002",
@@ -19,6 +20,7 @@
     "estimatedMinutes": 6,
     "contentPath": "contents/dea-dip-002.md",
     "audioScriptPath": "audio-scripts/dea-dip-002.md",
-    "status": "draft"
+    "status": "draft",
+    "notePath": "notes/dea-dip-002.md"
   }
 ]

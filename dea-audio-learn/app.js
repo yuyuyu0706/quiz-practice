@@ -7,6 +7,7 @@ const selectedStatus = document.querySelector('#selected-status');
 const previousChapterButton = document.querySelector('#previous-chapter');
 const nextChapterButton = document.querySelector('#next-chapter');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
+const noteMarkdown = document.querySelector('#note-markdown');
 const speechToggleButton = document.querySelector('#speech-toggle');
 const speechRateSelect = document.querySelector('#speech-rate');
 const speechStatus = document.querySelector('#speech-status');
@@ -389,6 +390,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   selectedMinutes.textContent = `音声目安：約${chapter.estimatedMinutes}分`;
   selectedStatus.textContent = chapter.status;
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
+  noteMarkdown.textContent = '要点メモを読み込み中...';
 
   try {
     const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
@@ -403,6 +405,13 @@ const selectChapterByIndex = async (chapterIndex) => {
     refreshSpeechVoices('audio-script-loaded');
   } catch (error) {
     audioScriptMarkdown.textContent = error.message;
+  }
+
+  try {
+    const note = await fetchText(chapter.notePath);
+    noteMarkdown.innerHTML = renderMarkdown(note);
+  } catch (error) {
+    noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
   }
 };
 
