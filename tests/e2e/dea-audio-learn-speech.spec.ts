@@ -82,7 +82,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
 
-    await page.getByRole('button', { name: /LakehouseとDelta Lake/ }).click();
+    await page.locator('#next-chapter').click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'LakehouseとDelta Lakeの位置づけ'
+    );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-status')).toHaveText('状態：未再生');
 
