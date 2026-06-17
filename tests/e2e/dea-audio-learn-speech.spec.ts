@@ -274,6 +274,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('resets speech UI when Chrome does not dispatch a start event', async ({ page }) => {
     await page.addInitScript(() => {
+      window.__speechCalls = [];
       const mockVoice = {
         name: 'Mock Japanese Voice',
         lang: 'ja-JP',
@@ -301,7 +302,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         configurable: true,
         value: {
           speak: () => undefined,
-          cancel: () => undefined,
+          cancel: () => window.__speechCalls.push({ type: 'cancel' }),
           getVoices: () => [mockVoice],
           addEventListener: () => undefined,
           pending: false,
@@ -320,6 +321,128 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toBeEnabled();
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-message')).toContainText('読み上げを開始できませんでした。');
+    await expect
+      .poll(() => page.evaluate(() => window.__speechCalls))
+      .toEqual([{ type: 'cancel' }]);
+  });
+
+  test('keeps playback active when watchdog sees speech synthesis is active', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__speechCalls = [];
+      const mockVoice = {
+        name: 'Mock Japanese Voice',
+        lang: 'ja-JP',
+        default: true,
+        localService: true,
+        voiceURI: 'mock-ja-JP',
+      } as SpeechSynthesisVoice;
+      class MockSpeechSynthesisUtterance {
+        text: string;
+        lang = '';
+        voice: SpeechSynthesisVoice | null = null;
+        rate = 1;
+        onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+      const speechSynthesisMock = {
+        speak: () => {
+          window.__speechCalls.push({ type: 'speak' });
+          speechSynthesisMock.speaking = true;
+        },
+        cancel: () => window.__speechCalls.push({ type: 'cancel' }),
+        getVoices: () => [mockVoice],
+        addEventListener: () => undefined,
+        pending: false,
+        speaking: false,
+        paused: false,
+      };
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: speechSynthesisMock as unknown as SpeechSynthesis,
+      });
+    });
+
+    await gotoAudioLearn(page);
+    await page.locator('#speech-toggle').click();
+
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中', {
+      timeout: 4000,
+    });
+    await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
+    await expect(page.locator('#speech-message')).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => window.__speechCalls))
+      .toEqual([{ type: 'cancel' }, { type: 'speak' }]);
+  });
+
+  test('does not surface interrupted errors from app queue reset', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__speechCalls = [];
+      const mockVoice = {
+        name: 'Mock Japanese Voice',
+        lang: 'ja-JP',
+        default: true,
+        localService: true,
+        voiceURI: 'mock-ja-JP',
+      } as SpeechSynthesisVoice;
+      class MockSpeechSynthesisUtterance {
+        text: string;
+        lang = '';
+        voice: SpeechSynthesisVoice | null = null;
+        rate = 1;
+        onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+
+        constructor(text: string) {
+          this.text = text;
+          (
+            window as unknown as { __currentUtterance: MockSpeechSynthesisUtterance }
+          ).__currentUtterance = this;
+        }
+      }
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          speak: (utterance: SpeechSynthesisUtterance) => {
+            window.__speechCalls.push({ type: 'speak' });
+            utterance.onstart?.(new Event('start') as SpeechSynthesisEvent);
+          },
+          cancel: () => {
+            window.__speechCalls.push({ type: 'cancel' });
+            (
+              window as unknown as {
+                __currentUtterance?: { onerror?: (event: SpeechSynthesisErrorEvent) => void };
+              }
+            ).__currentUtterance?.onerror?.({
+              error: 'interrupted',
+            } as SpeechSynthesisErrorEvent);
+          },
+          getVoices: () => [mockVoice],
+          addEventListener: () => undefined,
+          pending: false,
+          speaking: false,
+          paused: false,
+        } as unknown as SpeechSynthesis,
+      });
+    });
+
+    await gotoAudioLearn(page);
+    await page.locator('#speech-toggle').click();
+
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(page.locator('#speech-message')).toBeHidden();
   });
 
   test('disables speech UI when Web Speech API is unavailable', async ({ page }) => {

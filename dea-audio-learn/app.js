@@ -46,6 +46,7 @@ const logSpeechError = (message, detail) => {
 
 const speechStatusLabels = {
   idle: '未再生',
+  starting: '読み上げ準備中',
   speaking: '読み上げ中',
   paused: '一時停止中',
   ended: '読み上げ完了',
@@ -56,6 +57,7 @@ const speechStatusLabels = {
 
 const speechButtonLabels = {
   idle: '再生',
+  starting: '準備中',
   speaking: '一時停止',
   paused: '再開',
   ended: '最初から再生',
@@ -160,6 +162,16 @@ const showSpeechNoVoices = () => {
   setSpeechState('noVoices');
 };
 
+const getSpeechSynthesisStateSnapshot = (runId) => ({
+  runId,
+  currentSpeechRunId: speechRunId,
+  speechState,
+  hasActiveUtterance: Boolean(activeUtterance),
+  pending: window.speechSynthesis?.pending ?? false,
+  speaking: window.speechSynthesis?.speaking ?? false,
+  paused: window.speechSynthesis?.paused ?? false,
+});
+
 const clearSpeechStartWatchdog = () => {
   if (speechStartWatchdogId === null) return;
   window.clearTimeout(speechStartWatchdogId);
@@ -185,7 +197,8 @@ const stripMarkdownForSpeech = (markdown) =>
 const updateSpeechUI = () => {
   const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
   speechToggleButton.textContent = speechButtonLabels[speechState];
-  speechToggleButton.disabled = unavailable || !currentAudioScriptText;
+  speechToggleButton.disabled =
+    unavailable || speechState === 'starting' || !currentAudioScriptText;
   speechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
   if (speechState === 'unsupported') {
@@ -290,6 +303,15 @@ const speakFromStart = () => {
       event,
     });
     if (runId !== speechRunId || activeUtterance !== utterance) return;
+
+    if (event.error === 'interrupted' && speechState === 'starting') {
+      logSpeech('ignored interrupted error during speech queue reset', {
+        ...getSpeechSynthesisStateSnapshot(runId),
+        error: event.error,
+      });
+      return;
+    }
+
     clearSpeechStartWatchdog();
     activeUtterance = null;
     showSpeechError(`読み上げに失敗しました（${event.error}）。${speechUnavailableMessage}`);
@@ -297,6 +319,7 @@ const speakFromStart = () => {
   activeUtterance = utterance;
   lastSpeechResetReason = 'play-request';
   clearSpeechStartWatchdog();
+  setSpeechState('starting');
   logSpeech('speakFromStart: clearing speechSynthesis queue before speak()', { runId });
   window.speechSynthesis.cancel();
 
@@ -315,25 +338,38 @@ const speakFromStart = () => {
       paused: window.speechSynthesis.paused,
     });
     window.speechSynthesis.speak(utterance);
+    logSpeech(
+      'speechSynthesis state immediately after speak()',
+      getSpeechSynthesisStateSnapshot(runId)
+    );
     if (utteranceStarted) return;
 
     speechStartWatchdogId = window.setTimeout(() => {
+      speechStartWatchdogId = null;
       if (utteranceStarted || runId !== speechRunId || activeUtterance !== utterance) return;
 
-      logSpeechError('SpeechSynthesisUtterance onstart watchdog timed out', {
-        runId,
-        currentSpeechRunId: speechRunId,
-        lastSpeechResetReason,
-        pending: window.speechSynthesis.pending,
-        speaking: window.speechSynthesis.speaking,
-        paused: window.speechSynthesis.paused,
+      const speechSnapshot = {
+        ...getSpeechSynthesisStateSnapshot(runId),
         textLength: utterance.text.length,
         selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-      });
+      };
+      logSpeechError('SpeechSynthesisUtterance onstart watchdog timed out', speechSnapshot);
+
+      if (speechSnapshot.speaking || speechSnapshot.pending || speechSnapshot.paused) {
+        logSpeech(
+          'watchdog found speechSynthesis active without onstart; keeping playback active',
+          {
+            ...speechSnapshot,
+            lastSpeechResetReason,
+          }
+        );
+        setSpeechState('speaking');
+        return;
+      }
+
       activeUtterance = null;
-      window.speechSynthesis.cancel();
       showSpeechError(
-        '読み上げを開始できませんでした。ブラウザの読み上げキューをリセットしました。もう一度「再生」を押してください。'
+        '読み上げを開始できませんでした。ブラウザの読み上げ状態を確認してから、もう一度「再生」を押してください。'
       );
     }, speechStartWatchdogMs);
   }, 0);
