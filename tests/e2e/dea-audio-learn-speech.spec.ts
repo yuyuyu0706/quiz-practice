@@ -43,14 +43,16 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       Object.defineProperty(window, 'speechSynthesis', {
         configurable: true,
         value: {
-          speak: (utterance: SpeechSynthesisUtterance) =>
+          speak: (utterance: SpeechSynthesisUtterance) => {
             window.__speechCalls.push({
               type: 'speak',
               text: utterance.text,
               lang: utterance.lang,
               rate: utterance.rate,
               voice: utterance.voice?.lang,
-            }),
+            });
+            utterance.onstart?.(new Event('start') as SpeechSynthesisEvent);
+          },
           pause: () => window.__speechCalls.push({ type: 'pause' }),
           resume: () => window.__speechCalls.push({ type: 'resume' }),
           cancel: () => window.__speechCalls.push({ type: 'cancel' }),
@@ -98,6 +100,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#note-markdown')).not.toContainText('Phase 6で追加予定');
     await expect(page.locator('#audio-script-markdown')).toContainText('はじめに');
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
+    await expect(page.getByRole('heading', { name: '背景', level: 2 })).toBeVisible();
+    await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '従来のデータ基盤の課題', level: 3 })
     ).toBeVisible();
@@ -266,6 +270,56 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-message')).toContainText(
       '読み上げに失敗しました（synthesis-failed）。このブラウザまたはOS環境では'
     );
+  });
+
+  test('resets speech UI when Chrome does not dispatch a start event', async ({ page }) => {
+    await page.addInitScript(() => {
+      const mockVoice = {
+        name: 'Mock Japanese Voice',
+        lang: 'ja-JP',
+        default: true,
+        localService: true,
+        voiceURI: 'mock-ja-JP',
+      } as SpeechSynthesisVoice;
+      class MockSpeechSynthesisUtterance {
+        text: string;
+        lang = '';
+        voice: SpeechSynthesisVoice | null = null;
+        rate = 1;
+        onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          speak: () => undefined,
+          cancel: () => undefined,
+          getVoices: () => [mockVoice],
+          addEventListener: () => undefined,
+          pending: false,
+          speaking: false,
+          paused: false,
+        } as unknown as SpeechSynthesis,
+      });
+    });
+
+    await gotoAudioLearn(page);
+    await page.locator('#speech-toggle').click();
+
+    await expect(page.locator('#speech-status')).toHaveText('読み上げエラー', {
+      timeout: 4000,
+    });
+    await expect(page.locator('#speech-toggle')).toBeEnabled();
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await expect(page.locator('#speech-message')).toContainText('読み上げを開始できませんでした。');
   });
 
   test('disables speech UI when Web Speech API is unavailable', async ({ page }) => {

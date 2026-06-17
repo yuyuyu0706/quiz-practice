@@ -23,6 +23,8 @@ let speechRunId = 0;
 let lastSpeechResetReason = 'initial';
 let availableSpeechVoices = [];
 let selectedSpeechVoice = null;
+let speechStartWatchdogId = null;
+const speechStartWatchdogMs = 3000;
 
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
@@ -158,6 +160,12 @@ const showSpeechNoVoices = () => {
   setSpeechState('noVoices');
 };
 
+const clearSpeechStartWatchdog = () => {
+  if (speechStartWatchdogId === null) return;
+  window.clearTimeout(speechStartWatchdogId);
+  speechStartWatchdogId = null;
+};
+
 const removeAudioScriptTitle = (markdown) =>
   markdown.replace(/^#\s*音声スクリプト:[^\n]*(?:\r?\n)+/u, '').trimStart();
 
@@ -205,6 +213,7 @@ const resetSpeechForChapterChange = () => {
 
   speechRunId += 1;
   lastSpeechResetReason = 'chapter-change';
+  clearSpeechStartWatchdog();
   if (canUseSpeechApi) {
     logSpeech('resetSpeechForChapterChange: calling speechSynthesis.cancel()', { speechRunId });
     window.speechSynthesis.cancel();
@@ -237,11 +246,16 @@ const speakFromStart = () => {
   speechRunId += 1;
   const runId = speechRunId;
   const utterance = new SpeechSynthesisUtterance(currentAudioScriptText);
+  let utteranceStarted = false;
   utterance.lang = selectedSpeechVoice?.lang ?? 'ja-JP';
   utterance.voice = selectedSpeechVoice;
   utterance.rate = Number(speechRateSelect.value);
   utterance.onstart = (event) => {
     logSpeech('SpeechSynthesisUtterance onstart', { runId, event });
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+    utteranceStarted = true;
+    clearSpeechStartWatchdog();
+    setSpeechState('speaking');
   };
   utterance.onpause = (event) => {
     logSpeech('SpeechSynthesisUtterance onpause', { runId, event });
@@ -256,7 +270,8 @@ const speakFromStart = () => {
       lastSpeechResetReason,
       event,
     });
-    if (runId !== speechRunId) return;
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+    clearSpeechStartWatchdog();
     activeUtterance = null;
     setSpeechState('ended');
   };
@@ -274,25 +289,54 @@ const speakFromStart = () => {
       textLength: utterance.text.length,
       event,
     });
-    if (runId !== speechRunId) return;
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+    clearSpeechStartWatchdog();
     activeUtterance = null;
     showSpeechError(`読み上げに失敗しました（${event.error}）。${speechUnavailableMessage}`);
   };
   activeUtterance = utterance;
-  setSpeechState('speaking');
   lastSpeechResetReason = 'play-request';
-  logSpeech('calling speechSynthesis.speak()', {
-    runId,
-    rate: utterance.rate,
-    lang: utterance.lang,
-    textLength: utterance.text.length,
-    voicesCount: availableSpeechVoices.length,
-    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-    pending: window.speechSynthesis.pending,
-    speaking: window.speechSynthesis.speaking,
-    paused: window.speechSynthesis.paused,
-  });
-  window.speechSynthesis.speak(utterance);
+  clearSpeechStartWatchdog();
+  logSpeech('speakFromStart: clearing speechSynthesis queue before speak()', { runId });
+  window.speechSynthesis.cancel();
+
+  window.setTimeout(() => {
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+
+    logSpeech('calling speechSynthesis.speak()', {
+      runId,
+      rate: utterance.rate,
+      lang: utterance.lang,
+      textLength: utterance.text.length,
+      voicesCount: availableSpeechVoices.length,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+      pending: window.speechSynthesis.pending,
+      speaking: window.speechSynthesis.speaking,
+      paused: window.speechSynthesis.paused,
+    });
+    window.speechSynthesis.speak(utterance);
+    if (utteranceStarted) return;
+
+    speechStartWatchdogId = window.setTimeout(() => {
+      if (utteranceStarted || runId !== speechRunId || activeUtterance !== utterance) return;
+
+      logSpeechError('SpeechSynthesisUtterance onstart watchdog timed out', {
+        runId,
+        currentSpeechRunId: speechRunId,
+        lastSpeechResetReason,
+        pending: window.speechSynthesis.pending,
+        speaking: window.speechSynthesis.speaking,
+        paused: window.speechSynthesis.paused,
+        textLength: utterance.text.length,
+        selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+      });
+      activeUtterance = null;
+      window.speechSynthesis.cancel();
+      showSpeechError(
+        '読み上げを開始できませんでした。ブラウザの読み上げキューをリセットしました。もう一度「再生」を押してください。'
+      );
+    }, speechStartWatchdogMs);
+  }, 0);
 };
 
 const handleSpeechToggle = () => {
