@@ -47,6 +47,7 @@ const logSpeechError = (message, detail) => {
 const speechStatusLabels = {
   idle: '未再生',
   starting: '読み上げ準備中',
+  uncertain: '読み上げ確認中',
   speaking: '読み上げ中',
   paused: '一時停止中',
   ended: '読み上げ完了',
@@ -58,6 +59,7 @@ const speechStatusLabels = {
 const speechButtonLabels = {
   idle: '再生',
   starting: '準備中',
+  uncertain: '再試行',
   speaking: '一時停止',
   paused: '再開',
   ended: '最初から再生',
@@ -208,6 +210,8 @@ const updateSpeechUI = () => {
   } else if (speechState === 'noVoices') {
     speechMessage.hidden = false;
     speechMessage.textContent = noVoicesMessage;
+  } else if (speechState === 'uncertain') {
+    speechMessage.hidden = false;
   } else if (speechState !== 'error') {
     speechMessage.hidden = true;
     speechMessage.textContent = '';
@@ -260,8 +264,7 @@ const speakFromStart = () => {
   const runId = speechRunId;
   const utterance = new SpeechSynthesisUtterance(currentAudioScriptText);
   let utteranceStarted = false;
-  utterance.lang = selectedSpeechVoice?.lang ?? 'ja-JP';
-  utterance.voice = selectedSpeechVoice;
+  utterance.lang = 'ja-JP';
   utterance.rate = Number(speechRateSelect.value);
   utterance.onstart = (event) => {
     logSpeech('SpeechSynthesisUtterance onstart', { runId, event });
@@ -320,59 +323,66 @@ const speakFromStart = () => {
   lastSpeechResetReason = 'play-request';
   clearSpeechStartWatchdog();
   setSpeechState('starting');
-  logSpeech('speakFromStart: clearing speechSynthesis queue before speak()', { runId });
-  window.speechSynthesis.cancel();
-
-  window.setTimeout(() => {
-    if (runId !== speechRunId || activeUtterance !== utterance) return;
-
-    logSpeech('calling speechSynthesis.speak()', {
-      runId,
-      rate: utterance.rate,
-      lang: utterance.lang,
-      textLength: utterance.text.length,
-      voicesCount: availableSpeechVoices.length,
+  const beforeSpeakState = getSpeechSynthesisStateSnapshot(runId);
+  if (beforeSpeakState.speaking || beforeSpeakState.pending || beforeSpeakState.paused) {
+    logSpeech('speakFromStart: clearing active speechSynthesis queue before direct speak()', {
+      ...beforeSpeakState,
       selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-      pending: window.speechSynthesis.pending,
-      speaking: window.speechSynthesis.speaking,
-      paused: window.speechSynthesis.paused,
     });
-    window.speechSynthesis.speak(utterance);
-    logSpeech(
-      'speechSynthesis state immediately after speak()',
-      getSpeechSynthesisStateSnapshot(runId)
+    window.speechSynthesis.cancel();
+  } else {
+    logSpeech('speakFromStart: speechSynthesis queue is already clear before direct speak()', {
+      ...beforeSpeakState,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    });
+  }
+
+  logSpeech('calling speechSynthesis.speak() directly', {
+    runId,
+    rate: utterance.rate,
+    lang: utterance.lang,
+    textLength: utterance.text.length,
+    voicesCount: availableSpeechVoices.length,
+    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    voiceAssignment: 'lang-only',
+    pending: window.speechSynthesis.pending,
+    speaking: window.speechSynthesis.speaking,
+    paused: window.speechSynthesis.paused,
+  });
+  window.speechSynthesis.speak(utterance);
+  logSpeech(
+    'speechSynthesis state immediately after direct speak()',
+    getSpeechSynthesisStateSnapshot(runId)
+  );
+  if (utteranceStarted) return;
+
+  speechStartWatchdogId = window.setTimeout(() => {
+    speechStartWatchdogId = null;
+    if (utteranceStarted || runId !== speechRunId || activeUtterance !== utterance) return;
+
+    const speechSnapshot = {
+      ...getSpeechSynthesisStateSnapshot(runId),
+      textLength: utterance.text.length,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    };
+    logSpeechError('SpeechSynthesisUtterance onstart watchdog timed out', speechSnapshot);
+
+    if (speechSnapshot.speaking || speechSnapshot.pending || speechSnapshot.paused) {
+      logSpeech('watchdog found speechSynthesis active without onstart; showing retry guidance', {
+        ...speechSnapshot,
+        lastSpeechResetReason,
+      });
+      speechMessage.textContent =
+        'ブラウザは読み上げ中と判定しています。音が出ない場合は「再試行」を押してください。';
+      setSpeechState('uncertain');
+      return;
+    }
+
+    activeUtterance = null;
+    showSpeechError(
+      '読み上げを開始できませんでした。ブラウザの読み上げ状態を確認してから、もう一度「再生」を押してください。'
     );
-    if (utteranceStarted) return;
-
-    speechStartWatchdogId = window.setTimeout(() => {
-      speechStartWatchdogId = null;
-      if (utteranceStarted || runId !== speechRunId || activeUtterance !== utterance) return;
-
-      const speechSnapshot = {
-        ...getSpeechSynthesisStateSnapshot(runId),
-        textLength: utterance.text.length,
-        selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-      };
-      logSpeechError('SpeechSynthesisUtterance onstart watchdog timed out', speechSnapshot);
-
-      if (speechSnapshot.speaking || speechSnapshot.pending || speechSnapshot.paused) {
-        logSpeech(
-          'watchdog found speechSynthesis active without onstart; keeping playback active',
-          {
-            ...speechSnapshot,
-            lastSpeechResetReason,
-          }
-        );
-        setSpeechState('speaking');
-        return;
-      }
-
-      activeUtterance = null;
-      showSpeechError(
-        '読み上げを開始できませんでした。ブラウザの読み上げ状態を確認してから、もう一度「再生」を押してください。'
-      );
-    }, speechStartWatchdogMs);
-  }, 0);
+  }, speechStartWatchdogMs);
 };
 
 const handleSpeechToggle = () => {
@@ -388,7 +398,12 @@ const handleSpeechToggle = () => {
     return;
   }
 
-  if (speechState === 'idle' || speechState === 'ended' || speechState === 'error') {
+  if (
+    speechState === 'idle' ||
+    speechState === 'ended' ||
+    speechState === 'error' ||
+    speechState === 'uncertain'
+  ) {
     speakFromStart();
   }
 };

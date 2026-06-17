@@ -170,13 +170,14 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: 'speak', lang: 'ja-JP', rate: 1.2, voice: 'ja-JP' }),
+        expect.objectContaining({ type: 'speak', lang: 'ja-JP', rate: 1.2 }),
         expect.objectContaining({ type: 'pause' }),
         expect.objectContaining({ type: 'resume' }),
         expect.objectContaining({ type: 'cancel' }),
       ])
     );
     const speakCall = calls.find((call) => call.type === 'speak');
+    expect(speakCall?.voice).toBeUndefined();
     expect(speakCall?.text).not.toContain('#');
     expect(speakCall?.text).not.toContain('音声スクリプト:');
     expect(speakCall?.text).not.toContain('flowchart LR');
@@ -326,7 +327,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       .toEqual([{ type: 'cancel' }]);
   });
 
-  test('keeps playback active when watchdog sees speech synthesis is active', async ({ page }) => {
+  test('shows retry guidance when watchdog sees speech synthesis is active', async ({ page }) => {
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const mockVoice = {
@@ -373,14 +374,22 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await gotoAudioLearn(page);
     await page.locator('#speech-toggle').click();
 
-    await expect(page.locator('#speech-status')).toHaveText('読み上げ中', {
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ確認中', {
       timeout: 4000,
     });
-    await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
-    await expect(page.locator('#speech-message')).toBeHidden();
+    await expect(page.locator('#speech-toggle')).toBeEnabled();
+    await expect(page.locator('#speech-toggle')).toHaveText('再試行');
+    await expect(page.locator('#speech-message')).toContainText(
+      'ブラウザは読み上げ中と判定しています。音が出ない場合は「再試行」を押してください。'
+    );
     await expect
       .poll(() => page.evaluate(() => window.__speechCalls))
       .toEqual([{ type: 'cancel' }, { type: 'speak' }]);
+
+    await page.locator('#speech-toggle').click();
+    await expect
+      .poll(() => page.evaluate(() => window.__speechCalls))
+      .toEqual([{ type: 'cancel' }, { type: 'speak' }, { type: 'cancel' }, { type: 'speak' }]);
   });
 
   test('does not surface interrupted errors from app queue reset', async ({ page }) => {
@@ -432,7 +441,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           getVoices: () => [mockVoice],
           addEventListener: () => undefined,
           pending: false,
-          speaking: false,
+          speaking: true,
           paused: false,
         } as unknown as SpeechSynthesis,
       });
