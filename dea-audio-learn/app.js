@@ -17,6 +17,8 @@ const speechMessage = document.querySelector('#speech-message');
 let chapters = [];
 let selectedChapterIndex = 0;
 let currentAudioScriptText = '';
+let speechChunks = [];
+let currentChunkIndex = 0;
 let speechState = 'idle';
 let activeUtterance = null;
 let speechRunId = 0;
@@ -25,6 +27,7 @@ let availableSpeechVoices = [];
 let selectedSpeechVoice = null;
 let speechStartWatchdogId = null;
 const speechStartWatchdogMs = 3000;
+const maxSpeechChunkLength = 450;
 
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
@@ -186,6 +189,8 @@ const removeAudioScriptTitle = (markdown) =>
 const stripMarkdownForSpeech = (markdown) =>
   markdown
     .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/gm, ' ')
+    .replace(/\|/g, '、')
     .replace(/^\s{0,3}#{1,6}\s*/gm, '')
     .replace(/^\s*[-*+]\s+/gm, '')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
@@ -195,6 +200,58 @@ const stripMarkdownForSpeech = (markdown) =>
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
+
+const splitLongSpeechPart = (part, maxLength = maxSpeechChunkLength) => {
+  const chunks = [];
+  let remaining = part.trim();
+
+  while (remaining.length > maxLength) {
+    const windowText = remaining.slice(0, maxLength);
+    const splitAt =
+      Math.max(
+        windowText.lastIndexOf('。'),
+        windowText.lastIndexOf('！'),
+        windowText.lastIndexOf('？'),
+        windowText.lastIndexOf('、'),
+        windowText.lastIndexOf('\n')
+      ) + 1;
+    const safeSplitAt = splitAt > Math.floor(maxLength * 0.45) ? splitAt : maxLength;
+    chunks.push(remaining.slice(0, safeSplitAt).trim());
+    remaining = remaining.slice(safeSplitAt).trim();
+  }
+
+  if (remaining) chunks.push(remaining);
+  return chunks;
+};
+
+const splitSpeechTextIntoChunks = (text, maxLength = maxSpeechChunkLength) => {
+  const parts = text
+    .split(/(?<=[。！？!?])\s+|\n+/u)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .flatMap((part) => splitLongSpeechPart(part, maxLength));
+
+  const chunks = [];
+  let currentChunk = '';
+
+  parts.forEach((part) => {
+    if (!currentChunk) {
+      currentChunk = part;
+      return;
+    }
+
+    if (`${currentChunk}\n${part}`.length <= maxLength) {
+      currentChunk = `${currentChunk}\n${part}`;
+      return;
+    }
+
+    chunks.push(currentChunk);
+    currentChunk = part;
+  });
+
+  if (currentChunk) chunks.push(currentChunk);
+  return chunks;
+};
 
 const updateSpeechUI = () => {
   const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
@@ -225,6 +282,8 @@ const setSpeechState = (nextState) => {
 
 const resetSpeechForChapterChange = () => {
   currentAudioScriptText = '';
+  speechChunks = [];
+  currentChunkIndex = 0;
   const canUseSpeechApi = isSpeechSupported();
   const hasVoices = refreshSpeechVoices('chapter-change');
 
@@ -237,6 +296,156 @@ const resetSpeechForChapterChange = () => {
   }
   activeUtterance = null;
   if (hasVoices) setSpeechState('idle');
+};
+
+const handleSpeechStartWatchdog = (runId, utterance, chunkIndex, utteranceStarted) => {
+  speechStartWatchdogId = window.setTimeout(() => {
+    speechStartWatchdogId = null;
+    if (
+      utteranceStarted() ||
+      runId !== speechRunId ||
+      activeUtterance !== utterance ||
+      chunkIndex !== currentChunkIndex
+    ) {
+      return;
+    }
+
+    const speechSnapshot = {
+      ...getSpeechSynthesisStateSnapshot(runId),
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      textLength: utterance.text.length,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    };
+    logSpeechError('SpeechSynthesisUtterance chunk onstart watchdog timed out', speechSnapshot);
+
+    if (speechSnapshot.speaking || speechSnapshot.pending || speechSnapshot.paused) {
+      logSpeech(
+        'watchdog found speechSynthesis active without chunk onstart; showing retry guidance',
+        {
+          ...speechSnapshot,
+          lastSpeechResetReason,
+        }
+      );
+      speechMessage.textContent =
+        'ブラウザは読み上げ中と判定しています。音が出ない場合は「再試行」を押してください。';
+      setSpeechState('uncertain');
+      return;
+    }
+
+    activeUtterance = null;
+    showSpeechError(
+      '読み上げを開始できませんでした。ブラウザの読み上げ状態を確認してから、もう一度「再生」を押してください。'
+    );
+  }, speechStartWatchdogMs);
+};
+
+const speakChunk = (runId, chunkIndex) => {
+  if (runId !== speechRunId || chunkIndex >= speechChunks.length) return;
+
+  currentChunkIndex = chunkIndex;
+  const chunkText = speechChunks[chunkIndex];
+  const utterance = new SpeechSynthesisUtterance(chunkText);
+  let utteranceStarted = false;
+  utterance.lang = 'ja-JP';
+  utterance.rate = Number(speechRateSelect.value);
+
+  utterance.onstart = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onstart', {
+      runId,
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      textLength: chunkText.length,
+      event,
+    });
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+    utteranceStarted = true;
+    clearSpeechStartWatchdog();
+    setSpeechState('speaking');
+  };
+  utterance.onpause = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onpause', { runId, chunkIndex, event });
+  };
+  utterance.onresume = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onresume', { runId, chunkIndex, event });
+  };
+  utterance.onend = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onend', {
+      runId,
+      currentSpeechRunId: speechRunId,
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      lastSpeechResetReason,
+      event,
+    });
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+    clearSpeechStartWatchdog();
+
+    if (chunkIndex + 1 < speechChunks.length) {
+      speakChunk(runId, chunkIndex + 1);
+      return;
+    }
+
+    activeUtterance = null;
+    setSpeechState('ended');
+  };
+  utterance.onerror = (event) => {
+    const voices = getAvailableSpeechVoices();
+    logSpeechError('SpeechSynthesisUtterance chunk onerror', {
+      runId,
+      currentSpeechRunId: speechRunId,
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      lastSpeechResetReason,
+      error: event.error,
+      voicesCount: voices.length,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+      utteranceLang: utterance.lang,
+      utteranceRate: utterance.rate,
+      textLength: utterance.text.length,
+      event,
+    });
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+
+    if (event.error === 'interrupted' && speechState === 'starting') {
+      logSpeech('ignored interrupted error during speech queue reset', {
+        ...getSpeechSynthesisStateSnapshot(runId),
+        chunkIndex,
+        error: event.error,
+      });
+      return;
+    }
+
+    clearSpeechStartWatchdog();
+    activeUtterance = null;
+    showSpeechError(`読み上げに失敗しました（${event.error}）。${speechUnavailableMessage}`);
+  };
+
+  activeUtterance = utterance;
+  setSpeechState('starting');
+  logSpeech('calling speechSynthesis.speak() directly for chunk', {
+    runId,
+    chunkIndex,
+    chunkCount: speechChunks.length,
+    rate: utterance.rate,
+    lang: utterance.lang,
+    textLength: utterance.text.length,
+    voicesCount: availableSpeechVoices.length,
+    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    voiceAssignment: 'lang-only',
+    pending: window.speechSynthesis.pending,
+    speaking: window.speechSynthesis.speaking,
+    paused: window.speechSynthesis.paused,
+  });
+  window.speechSynthesis.speak(utterance);
+  logSpeech('speechSynthesis state immediately after direct chunk speak()', {
+    ...getSpeechSynthesisStateSnapshot(runId),
+    chunkIndex,
+    chunkCount: speechChunks.length,
+  });
+  if (utteranceStarted) return;
+
+  handleSpeechStartWatchdog(runId, utterance, chunkIndex, () => utteranceStarted);
 };
 
 const speakFromStart = () => {
@@ -262,69 +471,32 @@ const speakFromStart = () => {
 
   speechRunId += 1;
   const runId = speechRunId;
-  const utterance = new SpeechSynthesisUtterance(currentAudioScriptText);
-  let utteranceStarted = false;
-  utterance.lang = 'ja-JP';
-  utterance.rate = Number(speechRateSelect.value);
-  utterance.onstart = (event) => {
-    logSpeech('SpeechSynthesisUtterance onstart', { runId, event });
-    if (runId !== speechRunId || activeUtterance !== utterance) return;
-    utteranceStarted = true;
-    clearSpeechStartWatchdog();
-    setSpeechState('speaking');
-  };
-  utterance.onpause = (event) => {
-    logSpeech('SpeechSynthesisUtterance onpause', { runId, event });
-  };
-  utterance.onresume = (event) => {
-    logSpeech('SpeechSynthesisUtterance onresume', { runId, event });
-  };
-  utterance.onend = (event) => {
-    logSpeech('SpeechSynthesisUtterance onend', {
-      runId,
-      currentSpeechRunId: speechRunId,
-      lastSpeechResetReason,
-      event,
-    });
-    if (runId !== speechRunId || activeUtterance !== utterance) return;
-    clearSpeechStartWatchdog();
-    activeUtterance = null;
-    setSpeechState('ended');
-  };
-  utterance.onerror = (event) => {
-    const voices = getAvailableSpeechVoices();
-    logSpeechError('SpeechSynthesisUtterance onerror', {
-      runId,
-      currentSpeechRunId: speechRunId,
-      lastSpeechResetReason,
-      error: event.error,
-      voicesCount: voices.length,
-      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-      utteranceLang: utterance.lang,
-      utteranceRate: utterance.rate,
-      textLength: utterance.text.length,
-      event,
-    });
-    if (runId !== speechRunId || activeUtterance !== utterance) return;
+  speechChunks = splitSpeechTextIntoChunks(currentAudioScriptText);
+  currentChunkIndex = 0;
+  if (speechChunks.length === 0) {
+    showSpeechError(
+      '読み上げ用テキストをチャンク分割できませんでした。音声スクリプトの内容を確認してください。'
+    );
+    return;
+  }
+  logSpeech('speech text split into chunks', {
+    runId,
+    chunkCount: speechChunks.length,
+    chunkLengths: speechChunks.map((chunk) => chunk.length),
+    maxSpeechChunkLength,
+  });
 
-    if (event.error === 'interrupted' && speechState === 'starting') {
-      logSpeech('ignored interrupted error during speech queue reset', {
-        ...getSpeechSynthesisStateSnapshot(runId),
-        error: event.error,
-      });
-      return;
-    }
-
-    clearSpeechStartWatchdog();
-    activeUtterance = null;
-    showSpeechError(`読み上げに失敗しました（${event.error}）。${speechUnavailableMessage}`);
-  };
-  activeUtterance = utterance;
   lastSpeechResetReason = 'play-request';
   clearSpeechStartWatchdog();
-  setSpeechState('starting');
   const beforeSpeakState = getSpeechSynthesisStateSnapshot(runId);
-  if (beforeSpeakState.speaking || beforeSpeakState.pending || beforeSpeakState.paused) {
+  if (
+    beforeSpeakState.speaking ||
+    beforeSpeakState.pending ||
+    beforeSpeakState.paused ||
+    speechState === 'uncertain' ||
+    speechState === 'error' ||
+    speechState === 'ended'
+  ) {
     logSpeech('speakFromStart: clearing active speechSynthesis queue before direct speak()', {
       ...beforeSpeakState,
       selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
@@ -337,52 +509,7 @@ const speakFromStart = () => {
     });
   }
 
-  logSpeech('calling speechSynthesis.speak() directly', {
-    runId,
-    rate: utterance.rate,
-    lang: utterance.lang,
-    textLength: utterance.text.length,
-    voicesCount: availableSpeechVoices.length,
-    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-    voiceAssignment: 'lang-only',
-    pending: window.speechSynthesis.pending,
-    speaking: window.speechSynthesis.speaking,
-    paused: window.speechSynthesis.paused,
-  });
-  window.speechSynthesis.speak(utterance);
-  logSpeech(
-    'speechSynthesis state immediately after direct speak()',
-    getSpeechSynthesisStateSnapshot(runId)
-  );
-  if (utteranceStarted) return;
-
-  speechStartWatchdogId = window.setTimeout(() => {
-    speechStartWatchdogId = null;
-    if (utteranceStarted || runId !== speechRunId || activeUtterance !== utterance) return;
-
-    const speechSnapshot = {
-      ...getSpeechSynthesisStateSnapshot(runId),
-      textLength: utterance.text.length,
-      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-    };
-    logSpeechError('SpeechSynthesisUtterance onstart watchdog timed out', speechSnapshot);
-
-    if (speechSnapshot.speaking || speechSnapshot.pending || speechSnapshot.paused) {
-      logSpeech('watchdog found speechSynthesis active without onstart; showing retry guidance', {
-        ...speechSnapshot,
-        lastSpeechResetReason,
-      });
-      speechMessage.textContent =
-        'ブラウザは読み上げ中と判定しています。音が出ない場合は「再試行」を押してください。';
-      setSpeechState('uncertain');
-      return;
-    }
-
-    activeUtterance = null;
-    showSpeechError(
-      '読み上げを開始できませんでした。ブラウザの読み上げ状態を確認してから、もう一度「再生」を押してください。'
-    );
-  }, speechStartWatchdogMs);
+  speakChunk(runId, 0);
 };
 
 const handleSpeechToggle = () => {

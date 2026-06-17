@@ -273,6 +273,120 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
   });
 
+  test('plays long speech text as sequential chunks and ends after the last chunk', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      window.__speechCalls = [];
+      const spokenUtterances: Array<SpeechSynthesisUtterance> = [];
+      (
+        window as unknown as { __spokenUtterances: Array<SpeechSynthesisUtterance> }
+      ).__spokenUtterances = spokenUtterances;
+      const mockVoice = {
+        name: 'Mock Japanese Voice',
+        lang: 'ja-JP',
+        default: true,
+        localService: true,
+        voiceURI: 'mock-ja-JP',
+      } as SpeechSynthesisVoice;
+      class MockSpeechSynthesisUtterance {
+        text: string;
+        lang = '';
+        voice: SpeechSynthesisVoice | null = null;
+        rate = 1;
+        onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onend: ((event: SpeechSynthesisEvent) => void) | null = null;
+        onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: MockSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          speak: (utterance: SpeechSynthesisUtterance) => {
+            spokenUtterances.push(utterance);
+            window.__speechCalls.push({
+              type: 'speak',
+              text: utterance.text,
+              textLength: utterance.text.length,
+              voice: utterance.voice?.lang,
+            });
+            utterance.onstart?.(new Event('start') as SpeechSynthesisEvent);
+          },
+          pause: () => window.__speechCalls.push({ type: 'pause' }),
+          resume: () => window.__speechCalls.push({ type: 'resume' }),
+          cancel: () => window.__speechCalls.push({ type: 'cancel' }),
+          getVoices: () => [mockVoice],
+          addEventListener: () => undefined,
+          pending: false,
+          speaking: false,
+          paused: false,
+        } as unknown as SpeechSynthesis,
+      });
+    });
+
+    await gotoAudioLearn(page);
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+
+    let speakCalls = await page.evaluate(() =>
+      window.__speechCalls.filter((call) => call.type === 'speak')
+    );
+    expect(speakCalls).toHaveLength(1);
+    expect(speakCalls[0].textLength).toBeLessThanOrEqual(450);
+    expect(speakCalls[0].voice).toBeUndefined();
+
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+
+    await page.evaluate(() => {
+      const utterances = (
+        window as unknown as {
+          __spokenUtterances: Array<SpeechSynthesisUtterance>;
+        }
+      ).__spokenUtterances;
+      utterances[0].onend?.(new Event('end') as SpeechSynthesisEvent);
+    });
+    await expect
+      .poll(() => page.evaluate(() => window.__speechCalls.filter((call) => call.type === 'speak')))
+      .toHaveLength(2);
+
+    speakCalls = await page.evaluate(() =>
+      window.__speechCalls.filter((call) => call.type === 'speak')
+    );
+    expect(speakCalls[1].text).not.toContain('flowchart LR');
+    expect(speakCalls[1].text).not.toContain('|');
+
+    await page.evaluate(() => {
+      const utterances = (
+        window as unknown as {
+          __spokenUtterances: Array<SpeechSynthesisUtterance>;
+        }
+      ).__spokenUtterances;
+      while (utterances.length > 0) {
+        const current = utterances[utterances.length - 1];
+        const before = utterances.length;
+        current.onend?.(new Event('end') as SpeechSynthesisEvent);
+        if (utterances.length === before) break;
+      }
+    });
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ完了');
+    speakCalls = await page.evaluate(() =>
+      window.__speechCalls.filter((call) => call.type === 'speak')
+    );
+    expect(speakCalls.length).toBeGreaterThan(1);
+    expect(speakCalls.every((call) => !String(call.text).includes('flowchart LR'))).toBe(true);
+    expect(speakCalls.every((call) => !String(call.text).includes('|'))).toBe(true);
+  });
+
   test('resets speech UI when Chrome does not dispatch a start event', async ({ page }) => {
     await page.addInitScript(() => {
       window.__speechCalls = [];
