@@ -1,16 +1,44 @@
 ## 試験で押さえるポイント
 
-- Databricks Intelligence Platformは、データの取り込み、変換、分析、AI活用までを共通基盤で扱う統合プラットフォームです。
-- Lakehouseは、データレイクの柔軟性とデータウェアハウスの管理性を組み合わせる考え方です。
-- DEA試験では、Delta Lake、Unity Catalog、Workflows、Databricks SQLなどの役割を機能別に整理しておくことが重要です。
+- Databricks Intelligence Platformは、データの取り込み、変換、分析、AI活用を共通基盤でつなぐ統合プラットフォームとして押さえます。
+- 個別機能の暗記だけでなく、分断されたデータ基盤の課題をどの機能が補うのかを対応づけます。
+- Lakehouseは柔軟な保存と管理された分析を近づける考え方、Delta Lakeは信頼できるテーブル管理、Unity Catalogはガバナンス、Workflowsはジョブ実行管理に関係します。
+- Databricks SQLは、共通基盤上のデータをSQLで分析するための入口として整理します。
 
-## 用語補足
+## キーワード一覧
 
-- Delta Lake: 信頼性の高いテーブル管理を支える仕組みです。
-- Unity Catalog: データや権限を統制するガバナンス機能です。
-- Workflows: データパイプラインやジョブの実行管理に使います。
+<a id="lakehouse"></a>
+
+### Lakehouse
+
+データレイクの柔軟性とデータウェアハウスの管理性を組み合わせるアーキテクチャの考え方です。
+
+<a id="delta-lake"></a>
+
+### Delta Lake
+
+ACIDトランザクション、スキーマ管理、履歴管理などにより、データを信頼できるテーブルとして扱いやすくする技術です。
+
+<a id="unity-catalog"></a>
+
+### Unity Catalog
+
+データ、AI資産、権限、監査などを一元的に管理するためのガバナンス機能です。
+
+<a id="workflows"></a>
+
+### Workflows
+
+データパイプラインやジョブの実行順序、スケジュール、依存関係を管理する機能です。
 
 ## ひっかけ注意
 
-- Databricksを単なるSQLツールやETLツールとして覚えないようにします。
-- 機能名だけでなく、「どの課題を解決する機能か」を対応づけて確認します。
+- Databricksを単なるSQLツール、ETLツール、ノートブック環境のどれか一つとして限定しないようにします。
+- Delta Lake、Unity Catalog、Workflows、Databricks SQLを横並びに暗記するだけでなく、どの課題に対応する機能かを確認します。
+- 「統合」とは、すべての作業を一つの画面に詰め込むことではなく、データ、権限、実行、分析を共通の文脈で扱いやすくすることです。
+
+## 参考リンク
+
+- [Databricks Data Intelligence Platform documentation](https://docs.databricks.com/)
+- [What is a lakehouse?](https://docs.databricks.com/aws/en/lakehouse/)
+- [Unity Catalog documentation](https://docs.databricks.com/aws/en/data-governance/unity-catalog/)

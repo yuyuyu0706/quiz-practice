@@ -86,16 +86,22 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('.step-item').filter({ hasText: /^聞く利用可能$/ })).toBeVisible();
     await expect(page.locator('.step-item').filter({ hasText: /^要点利用可能$/ })).toBeVisible();
     await expect(
-      page.locator('.step-item').filter({ hasText: /^解くPhase 7で追加予定$/ })
+      page.locator('.step-item').filter({ hasText: /^解くPhase 8で追加予定$/ })
     ).toBeVisible();
     await expect(
-      page.locator('.step-item').filter({ hasText: /^記録Phase 8で追加予定$/ })
+      page.locator('.step-item').filter({ hasText: /^記録Phase 9で追加予定$/ })
     ).toBeVisible();
     await expect(page.getByRole('heading', { name: '要点メモ' })).toBeVisible();
     await expect(page.locator('#note-markdown')).toContainText(
       'Databricks Intelligence Platformは'
     );
     await expect(page.locator('#note-markdown')).not.toContainText('Phase 6で追加予定');
+    await expect(page.locator('#audio-script-markdown')).toContainText('はじめに');
+    await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('導入');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('今日のゴール');
+    await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
+    await expect(page.locator('#note-markdown')).toContainText('参考リンク');
     await expect(page.getByRole('heading', { name: '学習ステップ' })).toBeVisible();
     await expect(page.locator('#audio-script-markdown h1')).toHaveCount(0);
     await expect(page.locator('#audio-script-markdown')).not.toContainText('音声スクリプト:');
@@ -120,7 +126,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-status')).toHaveText('未再生');
-    await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体像');
+    await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
+    await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
 
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
