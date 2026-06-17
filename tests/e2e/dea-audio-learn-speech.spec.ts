@@ -98,10 +98,38 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#note-markdown')).not.toContainText('Phase 6で追加予定');
     await expect(page.locator('#audio-script-markdown')).toContainText('はじめに');
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
+    await expect(
+      page.getByRole('heading', { name: '従来のデータ基盤の課題', level: 3 })
+    ).toBeVisible();
     await expect(page.locator('#audio-script-markdown')).not.toContainText('導入');
     await expect(page.locator('#audio-script-markdown')).not.toContainText('今日のゴール');
+    await expect(page.locator('#audio-script-markdown strong')).toContainText(
+      '統合プラットフォーム'
+    );
+    await expect(
+      page.locator('#audio-script-markdown strong').filter({ hasText: '共通基盤' })
+    ).toHaveCount(2);
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'flowchart LR'
+    );
+    await expect(page.locator('.audio-toc')).toContainText('目次');
+    await expect(page.locator('#audio-toc-list a')).toContainText([
+      'はじめに',
+      '従来のデータ基盤の課題',
+    ]);
+    await page.getByRole('link', { name: '共通基盤で扱うという発想' }).click();
+    await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
+    await expect(
+      page.locator('#note-markdown a[href="https://docs.databricks.com/"]').first()
+    ).toHaveAttribute('target', '_blank');
+    await expect(
+      page.locator('#note-markdown a[href="https://docs.databricks.com/"]').first()
+    ).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(
+      page.locator('#audio-script-markdown a[href="#lakehouse"]').first()
+    ).not.toHaveAttribute('target', '_blank');
     await expect(page.getByRole('heading', { name: '学習ステップ' })).toBeVisible();
     await expect(page.locator('#audio-script-markdown h1')).toHaveCount(0);
     await expect(page.locator('#audio-script-markdown')).not.toContainText('音声スクリプト:');
@@ -128,6 +156,12 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
+    await expect(
+      page.getByRole('heading', { name: 'データレイクだけでは困ること', level: 3 })
+    ).toBeVisible();
+    await expect(page.locator('#audio-toc-list')).toContainText(
+      'Delta Lakeは信頼できるテーブル管理'
+    );
 
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
@@ -141,6 +175,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     const speakCall = calls.find((call) => call.type === 'speak');
     expect(speakCall?.text).not.toContain('#');
     expect(speakCall?.text).not.toContain('音声スクリプト:');
+    expect(speakCall?.text).not.toContain('flowchart LR');
+    expect(speakCall?.text).not.toContain('業務システム');
   });
 
   test('shows a clear unavailable message when no speech voices are available', async ({

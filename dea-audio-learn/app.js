@@ -7,6 +7,7 @@ const selectedStatus = document.querySelector('#selected-status');
 const previousChapterButton = document.querySelector('#previous-chapter');
 const nextChapterButton = document.querySelector('#next-chapter');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
+const audioTocList = document.querySelector('#audio-toc-list');
 const noteMarkdown = document.querySelector('#note-markdown');
 const speechToggleButton = document.querySelector('#speech-toggle');
 const speechRateSelect = document.querySelector('#speech-rate');
@@ -327,6 +328,52 @@ const renderMarkdown = (markdown) => {
   return `<pre>${escaped}</pre>`;
 };
 
+const normalizeHeadingId = (text, index) => {
+  const normalized = text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+  return `audio-heading-${normalized || index + 1}`;
+};
+
+const addExternalLinkAttributes = (root) => {
+  root.querySelectorAll('a[href]').forEach((link) => {
+    const href = link.getAttribute('href') ?? '';
+    if (!/^https?:\/\//u.test(href)) return;
+
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+  });
+};
+
+const buildAudioTableOfContents = () => {
+  audioTocList.innerHTML = '';
+
+  const headings = Array.from(audioScriptMarkdown.querySelectorAll('h2, h3'));
+  const usedIds = new Set();
+  headings.forEach((heading, index) => {
+    const baseHeadingId = normalizeHeadingId(heading.textContent ?? '', index);
+    let headingId = baseHeadingId;
+    let suffix = 2;
+    while (usedIds.has(headingId)) {
+      headingId = `${baseHeadingId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(headingId);
+    heading.id = headingId;
+
+    const item = document.createElement('li');
+    item.className = `audio-toc__item audio-toc__item--${heading.tagName.toLowerCase()}`;
+
+    const link = document.createElement('a');
+    link.href = `#${headingId}`;
+    link.textContent = heading.textContent;
+    item.append(link);
+    audioTocList.append(item);
+  });
+};
+
 const fetchText = async (path) => {
   const response = await fetch(path);
   if (!response.ok) {
@@ -390,11 +437,13 @@ const selectChapterByIndex = async (chapterIndex) => {
   selectedMinutes.textContent = `音声目安：約${chapter.estimatedMinutes}分`;
   selectedStatus.textContent = chapter.status;
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
+  audioTocList.innerHTML = '';
   noteMarkdown.textContent = '要点メモを読み込み中...';
 
   try {
     const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
     audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
+    buildAudioTableOfContents();
     currentAudioScriptText = stripMarkdownForSpeech(audioScript);
     logSpeech('audio script loaded', {
       chapterId: chapter.id,
@@ -410,6 +459,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   try {
     const note = await fetchText(chapter.notePath);
     noteMarkdown.innerHTML = renderMarkdown(note);
+    addExternalLinkAttributes(noteMarkdown);
   } catch (error) {
     noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
   }
