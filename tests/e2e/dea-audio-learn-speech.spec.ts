@@ -315,6 +315,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
               type: 'speak',
               text: utterance.text,
               textLength: utterance.text.length,
+              rate: utterance.rate,
               voice: utterance.voice?.lang,
             });
             utterance.onstart?.(new Event('start') as SpeechSynthesisEvent);
@@ -339,9 +340,21 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       window.__speechCalls.filter((call) => call.type === 'speak')
     );
     expect(speakCalls).toHaveLength(1);
-    expect(speakCalls[0].textLength).toBeLessThanOrEqual(450);
+    expect(speakCalls[0].textLength).toBeLessThanOrEqual(320);
+    expect(speakCalls[0].rate).toBe(1);
     expect(speakCalls[0].voice).toBeUndefined();
 
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await page.locator('#speech-rate').selectOption('1.2');
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    speakCalls = await page.evaluate(() =>
+      window.__speechCalls.filter((call) => call.type === 'speak')
+    );
+    expect(speakCalls).toHaveLength(2);
+    expect(speakCalls[1].text).toBe(speakCalls[0].text);
+    expect(speakCalls[1].rate).toBe(1.2);
+    await expect(page.locator('#speech-message')).toBeHidden();
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
     await page.locator('#speech-toggle').click();
@@ -353,17 +366,17 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           __spokenUtterances: Array<SpeechSynthesisUtterance>;
         }
       ).__spokenUtterances;
-      utterances[0].onend?.(new Event('end') as SpeechSynthesisEvent);
+      utterances[utterances.length - 1].onend?.(new Event('end') as SpeechSynthesisEvent);
     });
     await expect
       .poll(() => page.evaluate(() => window.__speechCalls.filter((call) => call.type === 'speak')))
-      .toHaveLength(2);
+      .toHaveLength(3);
 
     speakCalls = await page.evaluate(() =>
       window.__speechCalls.filter((call) => call.type === 'speak')
     );
-    expect(speakCalls[1].text).not.toContain('flowchart LR');
-    expect(speakCalls[1].text).not.toContain('|');
+    expect(speakCalls[2].text).not.toContain('flowchart LR');
+    expect(speakCalls[2].text).not.toContain('|');
 
     await page.evaluate(() => {
       const utterances = (

@@ -27,7 +27,7 @@ let availableSpeechVoices = [];
 let selectedSpeechVoice = null;
 let speechStartWatchdogId = null;
 const speechStartWatchdogMs = 3000;
-const maxSpeechChunkLength = 450;
+const maxSpeechChunkLength = 320;
 
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
@@ -535,6 +535,32 @@ const handleSpeechToggle = () => {
   }
 };
 
+const restartCurrentChunkForRateChange = (previousSpeechState) => {
+  if (!['speaking', 'paused', 'uncertain'].includes(previousSpeechState)) return false;
+  if (speechChunks.length === 0) return false;
+
+  const previousRunId = speechRunId;
+  const restartChunkIndex = currentChunkIndex;
+  speechRunId += 1;
+  const runId = speechRunId;
+  clearSpeechStartWatchdog();
+  lastSpeechResetReason = 'rate-change';
+  logSpeech('rate change restart current chunk', {
+    runId,
+    previousRunId,
+    currentChunkIndex: restartChunkIndex,
+    chunkCount: speechChunks.length,
+    newRate: Number(speechRateSelect.value),
+    previousSpeechState,
+    ...getSpeechSynthesisStateSnapshot(runId),
+  });
+  window.speechSynthesis.cancel();
+  speechMessage.textContent = '速度変更を現在の区切りから反映しました。';
+  speechMessage.hidden = false;
+  speakChunk(runId, restartChunkIndex);
+  return true;
+};
+
 const mobileChapterSelectorQuery = window.matchMedia('(max-width: 780px)');
 
 const syncChapterSelectorState = () => {
@@ -702,12 +728,22 @@ nextChapterButton.addEventListener('click', () => {
 
 speechToggleButton.addEventListener('click', handleSpeechToggle);
 speechRateSelect.addEventListener('change', () => {
+  const previousSpeechState = speechState;
+  const newRate = Number(speechRateSelect.value);
   logSpeech('speech rate changed', {
-    rate: Number(speechRateSelect.value),
+    newRate,
     speechState,
+    runId: speechRunId,
+    currentSpeechRunId: speechRunId,
+    currentChunkIndex,
+    chunkCount: speechChunks.length,
+    previousSpeechState,
     appliesTo:
-      speechState === 'speaking' || speechState === 'paused' ? 'next playback' : 'next utterance',
+      speechState === 'speaking' || speechState === 'paused' || speechState === 'uncertain'
+        ? 'current chunk restart'
+        : 'next utterance',
   });
+  restartCurrentChunkForRateChange(previousSpeechState);
 });
 
 if (
