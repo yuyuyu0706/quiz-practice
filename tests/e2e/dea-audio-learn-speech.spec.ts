@@ -101,13 +101,15 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown')).toContainText('はじめに');
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
     await expect(page.getByRole('heading', { name: '背景', level: 2 })).toBeVisible();
-    await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toBeVisible();
+    await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toHaveCount(1);
     await expect(
       page.getByRole('heading', { name: '従来のデータ基盤の課題', level: 3 })
     ).toBeVisible();
     await expect(page.locator('#audio-script-markdown')).not.toContainText('導入');
     await expect(page.locator('#audio-script-markdown')).not.toContainText('今日のゴール');
-    await expect(page.locator('#audio-script-markdown strong')).toContainText('統合的な基盤');
+    await expect(
+      page.locator('#audio-script-markdown strong').filter({ hasText: '統合的な基盤' })
+    ).toHaveCount(1);
     await expect(
       page.locator('#audio-script-markdown strong').filter({ hasText: '統合基盤' })
     ).toHaveCount(2);
@@ -128,6 +130,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#audio-toc-panel').evaluate((details) => {
       (details as HTMLDetailsElement).open = true;
     });
+    await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toBeVisible();
     await expect(page.locator('#audio-toc-list a')).toContainText([
       'はじめに',
       '従来のデータ基盤の課題',
