@@ -1,4 +1,4 @@
-# Databricks Intelligence Platformの全体像
+# 音声スクリプト: Databricks Intelligence Platformの全体像
 
 ## はじめに
 
