@@ -116,7 +116,20 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'flowchart LR'
     );
-    await expect(page.locator('.audio-toc')).toContainText('目次');
+    await expect(page.locator('.audio-card .audio-toc')).toHaveCount(0);
+    await expect(page.locator('.chapter-panel #audio-toc-panel')).toContainText('この教材の目次');
+    await expect(
+      page.locator('.speech-controls + #speech-message + #audio-script-markdown')
+    ).toBeVisible();
+    const isMobileViewport = await page.evaluate(
+      () => window.matchMedia('(max-width: 780px)').matches
+    );
+    if (isMobileViewport) {
+      await expect(page.locator('#audio-toc-panel')).not.toHaveAttribute('open', '');
+    }
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
     await expect(page.locator('#audio-toc-list a')).toContainText([
       'はじめに',
       '従来のデータ基盤の課題',

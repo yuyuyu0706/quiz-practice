@@ -1,5 +1,6 @@
 const chapterList = document.querySelector('#chapter-list');
 const chapterSelector = document.querySelector('#chapter-selector');
+const audioTocPanel = document.querySelector('#audio-toc-panel');
 const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
 const selectedMinutes = document.querySelector('#selected-minutes');
@@ -565,6 +566,7 @@ const mobileChapterSelectorQuery = window.matchMedia('(max-width: 780px)');
 
 const syncChapterSelectorState = () => {
   chapterSelector.open = !mobileChapterSelectorQuery.matches;
+  audioTocPanel.open = !mobileChapterSelectorQuery.matches;
 };
 
 const renderMarkdown = (markdown) => {
