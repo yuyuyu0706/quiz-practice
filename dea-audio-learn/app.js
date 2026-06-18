@@ -1,5 +1,6 @@
 const chapterList = document.querySelector('#chapter-list');
 const chapterSelector = document.querySelector('#chapter-selector');
+const audioTocPanel = document.querySelector('#audio-toc-panel');
 const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
 const selectedMinutes = document.querySelector('#selected-minutes');
@@ -7,6 +8,7 @@ const selectedStatus = document.querySelector('#selected-status');
 const previousChapterButton = document.querySelector('#previous-chapter');
 const nextChapterButton = document.querySelector('#next-chapter');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
+const audioTocList = document.querySelector('#audio-toc-list');
 const noteMarkdown = document.querySelector('#note-markdown');
 const speechToggleButton = document.querySelector('#speech-toggle');
 const speechRateSelect = document.querySelector('#speech-rate');
@@ -16,12 +18,17 @@ const speechMessage = document.querySelector('#speech-message');
 let chapters = [];
 let selectedChapterIndex = 0;
 let currentAudioScriptText = '';
+let speechChunks = [];
+let currentChunkIndex = 0;
 let speechState = 'idle';
 let activeUtterance = null;
 let speechRunId = 0;
 let lastSpeechResetReason = 'initial';
 let availableSpeechVoices = [];
 let selectedSpeechVoice = null;
+let speechStartWatchdogId = null;
+const speechStartWatchdogMs = 3000;
+const maxSpeechChunkLength = 320;
 
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
@@ -43,6 +50,8 @@ const logSpeechError = (message, detail) => {
 
 const speechStatusLabels = {
   idle: '未再生',
+  starting: '読み上げ準備中',
+  uncertain: '読み上げ確認中',
   speaking: '読み上げ中',
   paused: '一時停止中',
   ended: '読み上げ完了',
@@ -53,6 +62,8 @@ const speechStatusLabels = {
 
 const speechButtonLabels = {
   idle: '再生',
+  starting: '準備中',
+  uncertain: '再試行',
   speaking: '一時停止',
   paused: '再開',
   ended: '最初から再生',
@@ -157,12 +168,30 @@ const showSpeechNoVoices = () => {
   setSpeechState('noVoices');
 };
 
+const getSpeechSynthesisStateSnapshot = (runId) => ({
+  runId,
+  currentSpeechRunId: speechRunId,
+  speechState,
+  hasActiveUtterance: Boolean(activeUtterance),
+  pending: window.speechSynthesis?.pending ?? false,
+  speaking: window.speechSynthesis?.speaking ?? false,
+  paused: window.speechSynthesis?.paused ?? false,
+});
+
+const clearSpeechStartWatchdog = () => {
+  if (speechStartWatchdogId === null) return;
+  window.clearTimeout(speechStartWatchdogId);
+  speechStartWatchdogId = null;
+};
+
 const removeAudioScriptTitle = (markdown) =>
   markdown.replace(/^#\s*音声スクリプト:[^\n]*(?:\r?\n)+/u, '').trimStart();
 
 const stripMarkdownForSpeech = (markdown) =>
   markdown
     .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/gm, ' ')
+    .replace(/\|/g, '、')
     .replace(/^\s{0,3}#{1,6}\s*/gm, '')
     .replace(/^\s*[-*+]\s+/gm, '')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
@@ -173,10 +202,63 @@ const stripMarkdownForSpeech = (markdown) =>
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
 
+const splitLongSpeechPart = (part, maxLength = maxSpeechChunkLength) => {
+  const chunks = [];
+  let remaining = part.trim();
+
+  while (remaining.length > maxLength) {
+    const windowText = remaining.slice(0, maxLength);
+    const splitAt =
+      Math.max(
+        windowText.lastIndexOf('。'),
+        windowText.lastIndexOf('！'),
+        windowText.lastIndexOf('？'),
+        windowText.lastIndexOf('、'),
+        windowText.lastIndexOf('\n')
+      ) + 1;
+    const safeSplitAt = splitAt > Math.floor(maxLength * 0.45) ? splitAt : maxLength;
+    chunks.push(remaining.slice(0, safeSplitAt).trim());
+    remaining = remaining.slice(safeSplitAt).trim();
+  }
+
+  if (remaining) chunks.push(remaining);
+  return chunks;
+};
+
+const splitSpeechTextIntoChunks = (text, maxLength = maxSpeechChunkLength) => {
+  const parts = text
+    .split(/(?<=[。！？!?])\s+|\n+/u)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .flatMap((part) => splitLongSpeechPart(part, maxLength));
+
+  const chunks = [];
+  let currentChunk = '';
+
+  parts.forEach((part) => {
+    if (!currentChunk) {
+      currentChunk = part;
+      return;
+    }
+
+    if (`${currentChunk}\n${part}`.length <= maxLength) {
+      currentChunk = `${currentChunk}\n${part}`;
+      return;
+    }
+
+    chunks.push(currentChunk);
+    currentChunk = part;
+  });
+
+  if (currentChunk) chunks.push(currentChunk);
+  return chunks;
+};
+
 const updateSpeechUI = () => {
   const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
   speechToggleButton.textContent = speechButtonLabels[speechState];
-  speechToggleButton.disabled = unavailable || !currentAudioScriptText;
+  speechToggleButton.disabled =
+    unavailable || speechState === 'starting' || !currentAudioScriptText;
   speechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
   if (speechState === 'unsupported') {
@@ -186,6 +268,8 @@ const updateSpeechUI = () => {
   } else if (speechState === 'noVoices') {
     speechMessage.hidden = false;
     speechMessage.textContent = noVoicesMessage;
+  } else if (speechState === 'uncertain') {
+    speechMessage.hidden = false;
   } else if (speechState !== 'error') {
     speechMessage.hidden = true;
     speechMessage.textContent = '';
@@ -199,17 +283,170 @@ const setSpeechState = (nextState) => {
 
 const resetSpeechForChapterChange = () => {
   currentAudioScriptText = '';
+  speechChunks = [];
+  currentChunkIndex = 0;
   const canUseSpeechApi = isSpeechSupported();
   const hasVoices = refreshSpeechVoices('chapter-change');
 
   speechRunId += 1;
   lastSpeechResetReason = 'chapter-change';
+  clearSpeechStartWatchdog();
   if (canUseSpeechApi) {
     logSpeech('resetSpeechForChapterChange: calling speechSynthesis.cancel()', { speechRunId });
     window.speechSynthesis.cancel();
   }
   activeUtterance = null;
   if (hasVoices) setSpeechState('idle');
+};
+
+const handleSpeechStartWatchdog = (runId, utterance, chunkIndex, utteranceStarted) => {
+  speechStartWatchdogId = window.setTimeout(() => {
+    speechStartWatchdogId = null;
+    if (
+      utteranceStarted() ||
+      runId !== speechRunId ||
+      activeUtterance !== utterance ||
+      chunkIndex !== currentChunkIndex
+    ) {
+      return;
+    }
+
+    const speechSnapshot = {
+      ...getSpeechSynthesisStateSnapshot(runId),
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      textLength: utterance.text.length,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    };
+    logSpeechError('SpeechSynthesisUtterance chunk onstart watchdog timed out', speechSnapshot);
+
+    if (speechSnapshot.speaking || speechSnapshot.pending || speechSnapshot.paused) {
+      logSpeech(
+        'watchdog found speechSynthesis active without chunk onstart; showing retry guidance',
+        {
+          ...speechSnapshot,
+          lastSpeechResetReason,
+        }
+      );
+      speechMessage.textContent =
+        'ブラウザは読み上げ中と判定しています。音が出ない場合は「再試行」を押してください。';
+      setSpeechState('uncertain');
+      return;
+    }
+
+    activeUtterance = null;
+    showSpeechError(
+      '読み上げを開始できませんでした。ブラウザの読み上げ状態を確認してから、もう一度「再生」を押してください。'
+    );
+  }, speechStartWatchdogMs);
+};
+
+const speakChunk = (runId, chunkIndex) => {
+  if (runId !== speechRunId || chunkIndex >= speechChunks.length) return;
+
+  currentChunkIndex = chunkIndex;
+  const chunkText = speechChunks[chunkIndex];
+  const utterance = new SpeechSynthesisUtterance(chunkText);
+  let utteranceStarted = false;
+  utterance.lang = 'ja-JP';
+  utterance.rate = Number(speechRateSelect.value);
+
+  utterance.onstart = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onstart', {
+      runId,
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      textLength: chunkText.length,
+      event,
+    });
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+    utteranceStarted = true;
+    clearSpeechStartWatchdog();
+    setSpeechState('speaking');
+  };
+  utterance.onpause = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onpause', { runId, chunkIndex, event });
+  };
+  utterance.onresume = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onresume', { runId, chunkIndex, event });
+  };
+  utterance.onend = (event) => {
+    logSpeech('SpeechSynthesisUtterance chunk onend', {
+      runId,
+      currentSpeechRunId: speechRunId,
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      lastSpeechResetReason,
+      event,
+    });
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+    clearSpeechStartWatchdog();
+
+    if (chunkIndex + 1 < speechChunks.length) {
+      speakChunk(runId, chunkIndex + 1);
+      return;
+    }
+
+    activeUtterance = null;
+    setSpeechState('ended');
+  };
+  utterance.onerror = (event) => {
+    const voices = getAvailableSpeechVoices();
+    logSpeechError('SpeechSynthesisUtterance chunk onerror', {
+      runId,
+      currentSpeechRunId: speechRunId,
+      chunkIndex,
+      chunkCount: speechChunks.length,
+      lastSpeechResetReason,
+      error: event.error,
+      voicesCount: voices.length,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+      utteranceLang: utterance.lang,
+      utteranceRate: utterance.rate,
+      textLength: utterance.text.length,
+      event,
+    });
+    if (runId !== speechRunId || activeUtterance !== utterance) return;
+
+    if (event.error === 'interrupted' && speechState === 'starting') {
+      logSpeech('ignored interrupted error during speech queue reset', {
+        ...getSpeechSynthesisStateSnapshot(runId),
+        chunkIndex,
+        error: event.error,
+      });
+      return;
+    }
+
+    clearSpeechStartWatchdog();
+    activeUtterance = null;
+    showSpeechError(`読み上げに失敗しました（${event.error}）。${speechUnavailableMessage}`);
+  };
+
+  activeUtterance = utterance;
+  setSpeechState('starting');
+  logSpeech('calling speechSynthesis.speak() directly for chunk', {
+    runId,
+    chunkIndex,
+    chunkCount: speechChunks.length,
+    rate: utterance.rate,
+    lang: utterance.lang,
+    textLength: utterance.text.length,
+    voicesCount: availableSpeechVoices.length,
+    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    voiceAssignment: 'lang-only',
+    pending: window.speechSynthesis.pending,
+    speaking: window.speechSynthesis.speaking,
+    paused: window.speechSynthesis.paused,
+  });
+  window.speechSynthesis.speak(utterance);
+  logSpeech('speechSynthesis state immediately after direct chunk speak()', {
+    ...getSpeechSynthesisStateSnapshot(runId),
+    chunkIndex,
+    chunkCount: speechChunks.length,
+  });
+  if (utteranceStarted) return;
+
+  handleSpeechStartWatchdog(runId, utterance, chunkIndex, () => utteranceStarted);
 };
 
 const speakFromStart = () => {
@@ -235,63 +472,45 @@ const speakFromStart = () => {
 
   speechRunId += 1;
   const runId = speechRunId;
-  const utterance = new SpeechSynthesisUtterance(currentAudioScriptText);
-  utterance.lang = selectedSpeechVoice?.lang ?? 'ja-JP';
-  utterance.voice = selectedSpeechVoice;
-  utterance.rate = Number(speechRateSelect.value);
-  utterance.onstart = (event) => {
-    logSpeech('SpeechSynthesisUtterance onstart', { runId, event });
-  };
-  utterance.onpause = (event) => {
-    logSpeech('SpeechSynthesisUtterance onpause', { runId, event });
-  };
-  utterance.onresume = (event) => {
-    logSpeech('SpeechSynthesisUtterance onresume', { runId, event });
-  };
-  utterance.onend = (event) => {
-    logSpeech('SpeechSynthesisUtterance onend', {
-      runId,
-      currentSpeechRunId: speechRunId,
-      lastSpeechResetReason,
-      event,
-    });
-    if (runId !== speechRunId) return;
-    activeUtterance = null;
-    setSpeechState('ended');
-  };
-  utterance.onerror = (event) => {
-    const voices = getAvailableSpeechVoices();
-    logSpeechError('SpeechSynthesisUtterance onerror', {
-      runId,
-      currentSpeechRunId: speechRunId,
-      lastSpeechResetReason,
-      error: event.error,
-      voicesCount: voices.length,
-      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-      utteranceLang: utterance.lang,
-      utteranceRate: utterance.rate,
-      textLength: utterance.text.length,
-      event,
-    });
-    if (runId !== speechRunId) return;
-    activeUtterance = null;
-    showSpeechError(`読み上げに失敗しました（${event.error}）。${speechUnavailableMessage}`);
-  };
-  activeUtterance = utterance;
-  setSpeechState('speaking');
-  lastSpeechResetReason = 'play-request';
-  logSpeech('calling speechSynthesis.speak()', {
+  speechChunks = splitSpeechTextIntoChunks(currentAudioScriptText);
+  currentChunkIndex = 0;
+  if (speechChunks.length === 0) {
+    showSpeechError(
+      '読み上げ用テキストをチャンク分割できませんでした。音声スクリプトの内容を確認してください。'
+    );
+    return;
+  }
+  logSpeech('speech text split into chunks', {
     runId,
-    rate: utterance.rate,
-    lang: utterance.lang,
-    textLength: utterance.text.length,
-    voicesCount: availableSpeechVoices.length,
-    selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
-    pending: window.speechSynthesis.pending,
-    speaking: window.speechSynthesis.speaking,
-    paused: window.speechSynthesis.paused,
+    chunkCount: speechChunks.length,
+    chunkLengths: speechChunks.map((chunk) => chunk.length),
+    maxSpeechChunkLength,
   });
-  window.speechSynthesis.speak(utterance);
+
+  lastSpeechResetReason = 'play-request';
+  clearSpeechStartWatchdog();
+  const beforeSpeakState = getSpeechSynthesisStateSnapshot(runId);
+  if (
+    beforeSpeakState.speaking ||
+    beforeSpeakState.pending ||
+    beforeSpeakState.paused ||
+    speechState === 'uncertain' ||
+    speechState === 'error' ||
+    speechState === 'ended'
+  ) {
+    logSpeech('speakFromStart: clearing active speechSynthesis queue before direct speak()', {
+      ...beforeSpeakState,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    });
+    window.speechSynthesis.cancel();
+  } else {
+    logSpeech('speakFromStart: speechSynthesis queue is already clear before direct speak()', {
+      ...beforeSpeakState,
+      selectedVoice: selectedSpeechVoice ? describeVoice(selectedSpeechVoice) : null,
+    });
+  }
+
+  speakChunk(runId, 0);
 };
 
 const handleSpeechToggle = () => {
@@ -307,15 +526,47 @@ const handleSpeechToggle = () => {
     return;
   }
 
-  if (speechState === 'idle' || speechState === 'ended' || speechState === 'error') {
+  if (
+    speechState === 'idle' ||
+    speechState === 'ended' ||
+    speechState === 'error' ||
+    speechState === 'uncertain'
+  ) {
     speakFromStart();
   }
+};
+
+const restartCurrentChunkForRateChange = (previousSpeechState) => {
+  if (!['speaking', 'paused', 'uncertain'].includes(previousSpeechState)) return false;
+  if (speechChunks.length === 0) return false;
+
+  const previousRunId = speechRunId;
+  const restartChunkIndex = currentChunkIndex;
+  speechRunId += 1;
+  const runId = speechRunId;
+  clearSpeechStartWatchdog();
+  lastSpeechResetReason = 'rate-change';
+  logSpeech('rate change restart current chunk', {
+    runId,
+    previousRunId,
+    currentChunkIndex: restartChunkIndex,
+    chunkCount: speechChunks.length,
+    newRate: Number(speechRateSelect.value),
+    previousSpeechState,
+    ...getSpeechSynthesisStateSnapshot(runId),
+  });
+  window.speechSynthesis.cancel();
+  speechMessage.textContent = '速度変更を現在の区切りから反映しました。';
+  speechMessage.hidden = false;
+  speakChunk(runId, restartChunkIndex);
+  return true;
 };
 
 const mobileChapterSelectorQuery = window.matchMedia('(max-width: 780px)');
 
 const syncChapterSelectorState = () => {
   chapterSelector.open = !mobileChapterSelectorQuery.matches;
+  audioTocPanel.open = !mobileChapterSelectorQuery.matches;
 };
 
 const renderMarkdown = (markdown) => {
@@ -325,6 +576,52 @@ const renderMarkdown = (markdown) => {
 
   const escaped = markdown.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   return `<pre>${escaped}</pre>`;
+};
+
+const normalizeHeadingId = (text, index) => {
+  const normalized = text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+  return `audio-heading-${normalized || index + 1}`;
+};
+
+const addExternalLinkAttributes = (root) => {
+  root.querySelectorAll('a[href]').forEach((link) => {
+    const href = link.getAttribute('href') ?? '';
+    if (!/^https?:\/\//u.test(href)) return;
+
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+  });
+};
+
+const buildAudioTableOfContents = () => {
+  audioTocList.innerHTML = '';
+
+  const headings = Array.from(audioScriptMarkdown.querySelectorAll('h2, h3'));
+  const usedIds = new Set();
+  headings.forEach((heading, index) => {
+    const baseHeadingId = normalizeHeadingId(heading.textContent ?? '', index);
+    let headingId = baseHeadingId;
+    let suffix = 2;
+    while (usedIds.has(headingId)) {
+      headingId = `${baseHeadingId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(headingId);
+    heading.id = headingId;
+
+    const item = document.createElement('li');
+    item.className = `audio-toc__item audio-toc__item--${heading.tagName.toLowerCase()}`;
+
+    const link = document.createElement('a');
+    link.href = `#${headingId}`;
+    link.textContent = heading.textContent;
+    item.append(link);
+    audioTocList.append(item);
+  });
 };
 
 const fetchText = async (path) => {
@@ -390,11 +687,13 @@ const selectChapterByIndex = async (chapterIndex) => {
   selectedMinutes.textContent = `音声目安：約${chapter.estimatedMinutes}分`;
   selectedStatus.textContent = chapter.status;
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
+  audioTocList.innerHTML = '';
   noteMarkdown.textContent = '要点メモを読み込み中...';
 
   try {
     const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
     audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
+    buildAudioTableOfContents();
     currentAudioScriptText = stripMarkdownForSpeech(audioScript);
     logSpeech('audio script loaded', {
       chapterId: chapter.id,
@@ -410,6 +709,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   try {
     const note = await fetchText(chapter.notePath);
     noteMarkdown.innerHTML = renderMarkdown(note);
+    addExternalLinkAttributes(noteMarkdown);
   } catch (error) {
     noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
   }
@@ -430,12 +730,22 @@ nextChapterButton.addEventListener('click', () => {
 
 speechToggleButton.addEventListener('click', handleSpeechToggle);
 speechRateSelect.addEventListener('change', () => {
+  const previousSpeechState = speechState;
+  const newRate = Number(speechRateSelect.value);
   logSpeech('speech rate changed', {
-    rate: Number(speechRateSelect.value),
+    newRate,
     speechState,
+    runId: speechRunId,
+    currentSpeechRunId: speechRunId,
+    currentChunkIndex,
+    chunkCount: speechChunks.length,
+    previousSpeechState,
     appliesTo:
-      speechState === 'speaking' || speechState === 'paused' ? 'next playback' : 'next utterance',
+      speechState === 'speaking' || speechState === 'paused' || speechState === 'uncertain'
+        ? 'current chunk restart'
+        : 'next utterance',
   });
+  restartCurrentChunkForRateChange(previousSpeechState);
 });
 
 if (
