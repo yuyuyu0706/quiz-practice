@@ -13,12 +13,17 @@ const noteMarkdown = document.querySelector('#note-markdown');
 const speechPreviousButton = document.querySelector('#speech-previous');
 const speechToggleButton = document.querySelector('#speech-toggle');
 const speechNextButton = document.querySelector('#speech-next');
+const tocSpeechPreviousButton = document.querySelector('#toc-speech-previous');
+const tocSpeechToggleButton = document.querySelector('#toc-speech-toggle');
+const tocSpeechNextButton = document.querySelector('#toc-speech-next');
 const speechRateSelect = document.querySelector('#speech-rate');
 const speechStatus = document.querySelector('#speech-status');
 const speechMessage = document.querySelector('#speech-message');
 const speechCurrentPosition = document.querySelector('#speech-current-position');
 const speechProgressLabel = document.querySelector('#speech-progress-label');
 const speechProgressBar = document.querySelector('#speech-progress-bar');
+const tocSpeechCurrentPosition = document.querySelector('#toc-speech-current-position');
+const tocSpeechProgressLabel = document.querySelector('#toc-speech-progress-label');
 
 let chapters = [];
 let selectedChapterIndex = 0;
@@ -283,17 +288,18 @@ const buildSpeechSectionsFromRenderedMarkdown = () => {
         node = node.nextElementSibling;
       }
 
-      const text = stripMarkdownForSpeech(`${heading.textContent ?? ''}\n${parts.join('\n')}`);
+      const headingTitle = heading.dataset.speechTitle || heading.textContent?.trim() || '';
+      const text = stripMarkdownForSpeech(`${headingTitle}\n${parts.join('\n')}`);
       const chunks = splitSpeechTextIntoChunks(text).map((chunkText, chunkOffset) => ({
         text: chunkText,
         sectionIndex: index,
-        sectionTitle: heading.textContent?.trim() || `区切り ${index + 1}`,
+        sectionTitle: headingTitle || `区切り ${index + 1}`,
         headingId: heading.id,
         chunkOffset,
       }));
 
       return {
-        title: heading.textContent?.trim() || `区切り ${index + 1}`,
+        title: headingTitle || `区切り ${index + 1}`,
         headingId: heading.id,
         text,
         chunks,
@@ -315,7 +321,9 @@ const updateSpeechProgressUI = () => {
   const displayIndex = hasProgress ? Math.min(currentChunkIndex + 1, totalChunks) : 0;
   const sectionLabel = hasProgress ? getChunkSectionLabel(currentChunkIndex) : '未再生';
   speechCurrentPosition.textContent = `現在：${sectionLabel}`;
+  tocSpeechCurrentPosition.textContent = `現在：${sectionLabel}`;
   speechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
+  tocSpeechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
   speechProgressBar.max = String(Math.max(totalChunks, 1));
   speechProgressBar.value = displayIndex;
   speechProgressBar.textContent = `${totalChunks === 0 ? 0 : Math.round((displayIndex / totalChunks) * 100)}%`;
@@ -323,17 +331,26 @@ const updateSpeechProgressUI = () => {
   const canMove =
     totalChunks > 0 &&
     ['starting', 'uncertain', 'speaking', 'paused', 'ended'].includes(speechState);
-  speechPreviousButton.disabled = !canMove || currentChunkIndex <= 0;
-  speechNextButton.disabled = !canMove || currentChunkIndex >= totalChunks - 1;
-  speechPreviousButton.setAttribute('aria-disabled', String(speechPreviousButton.disabled));
-  speechNextButton.setAttribute('aria-disabled', String(speechNextButton.disabled));
+  const isPreviousDisabled = !canMove || currentChunkIndex <= 0;
+  const isNextDisabled = !canMove || currentChunkIndex >= totalChunks - 1;
+  speechPreviousButton.disabled = isPreviousDisabled;
+  tocSpeechPreviousButton.disabled = isPreviousDisabled;
+  speechNextButton.disabled = isNextDisabled;
+  tocSpeechNextButton.disabled = isNextDisabled;
+  speechPreviousButton.setAttribute('aria-disabled', String(isPreviousDisabled));
+  tocSpeechPreviousButton.setAttribute('aria-disabled', String(isPreviousDisabled));
+  speechNextButton.setAttribute('aria-disabled', String(isNextDisabled));
+  tocSpeechNextButton.setAttribute('aria-disabled', String(isNextDisabled));
 };
 
 const updateSpeechUI = () => {
   const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
   speechToggleButton.textContent = speechButtonLabels[speechState];
-  speechToggleButton.disabled =
-    unavailable || speechState === 'starting' || !currentAudioScriptText;
+  tocSpeechToggleButton.textContent = speechButtonLabels[speechState];
+  tocSpeechToggleButton.setAttribute('aria-label', speechButtonLabels[speechState]);
+  const isToggleDisabled = unavailable || speechState === 'starting' || !currentAudioScriptText;
+  speechToggleButton.disabled = isToggleDisabled;
+  tocSpeechToggleButton.disabled = isToggleDisabled;
   speechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
   updateSpeechProgressUI();
@@ -708,7 +725,9 @@ const buildAudioTableOfContents = () => {
   const headings = Array.from(audioScriptMarkdown.querySelectorAll('h2, h3'));
   const usedIds = new Set();
   headings.forEach((heading, index) => {
-    const baseHeadingId = normalizeHeadingId(heading.textContent ?? '', index);
+    const headingTitle = heading.dataset.speechTitle || heading.textContent?.trim() || '';
+    heading.dataset.speechTitle = headingTitle;
+    const baseHeadingId = normalizeHeadingId(headingTitle, index);
     let headingId = baseHeadingId;
     let suffix = 2;
     while (usedIds.has(headingId)) {
@@ -723,14 +742,16 @@ const buildAudioTableOfContents = () => {
 
     const link = document.createElement('a');
     link.href = `#${headingId}`;
-    link.textContent = heading.textContent;
-    const playButton = document.createElement('button');
-    playButton.type = 'button';
-    playButton.className = 'audio-toc__play';
-    playButton.textContent = '再生';
-    playButton.setAttribute('aria-label', `${heading.textContent}から再生`);
-    playButton.addEventListener('click', () => playSectionFromHeading(headingId));
-    item.append(link, playButton);
+    link.textContent = headingTitle;
+    item.append(link);
+
+    const headingPlayButton = document.createElement('button');
+    headingPlayButton.type = 'button';
+    headingPlayButton.className = 'audio-heading-play';
+    headingPlayButton.textContent = '▶';
+    headingPlayButton.setAttribute('aria-label', `${headingTitle}から再生`);
+    headingPlayButton.addEventListener('click', () => playSectionFromHeading(headingId));
+    heading.append(headingPlayButton);
     audioTocList.append(item);
   });
 };
@@ -843,8 +864,11 @@ nextChapterButton.addEventListener('click', () => {
 });
 
 speechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
+tocSpeechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
 speechToggleButton.addEventListener('click', handleSpeechToggle);
+tocSpeechToggleButton.addEventListener('click', handleSpeechToggle);
 speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
+tocSpeechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 speechRateSelect.addEventListener('change', () => {
   const previousSpeechState = speechState;
   const newRate = Number(speechRateSelect.value);
