@@ -119,7 +119,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('.audio-card .audio-toc')).toHaveCount(0);
     await expect(page.locator('.chapter-panel #audio-toc-panel')).toContainText('この教材の目次');
     await expect(
-      page.locator('.speech-controls + #speech-message + #audio-script-markdown')
+      page.locator('.speech-controls + .speech-progress + #speech-message + #audio-script-markdown')
     ).toBeVisible();
     const isMobileViewport = await page.evaluate(
       () => window.matchMedia('(max-width: 780px)').matches
@@ -153,11 +153,26 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown')).not.toContainText('音声スクリプト:');
     await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
+    await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
+    await expect(page.locator('#speech-previous')).toBeDisabled();
+    await expect(page.locator('#speech-next')).toBeDisabled();
+    await expect(page.locator('#speech-progress-bar')).toHaveJSProperty('value', 0);
 
     await page.locator('#speech-rate').selectOption('1.2');
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(page.locator('#speech-current-position')).not.toHaveText('現在：未再生');
+    await expect(page.locator('#speech-progress-label')).toContainText('進捗：1 /');
+    await expect(page.locator('#speech-previous')).toBeDisabled();
+    await expect(page.locator('#speech-next')).toBeEnabled();
+
+    await page.locator('#speech-next').click();
+    await expect(page.locator('#speech-progress-label')).toContainText('進捗：2 /');
+    await expect(page.locator('#speech-previous')).toBeEnabled();
+    await page.locator('#speech-previous').click();
+    await expect(page.locator('#speech-progress-label')).toContainText('進捗：1 /');
 
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
@@ -172,6 +187,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-status')).toHaveText('未再生');
+    await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
+    await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
+    await expect(page.locator('#speech-previous')).toBeDisabled();
+    await expect(page.locator('#speech-next')).toBeDisabled();
     await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
     await expect(
@@ -406,6 +425,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       }
     });
     await expect(page.locator('#speech-status')).toHaveText('読み上げ完了');
+    await expect(page.locator('#speech-next')).toBeDisabled();
+    await expect(page.locator('#speech-previous')).toBeEnabled();
     speakCalls = await page.evaluate(() =>
       window.__speechCalls.filter((call) => call.type === 'speak')
     );

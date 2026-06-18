@@ -361,6 +361,83 @@ body {
   opacity: 0.7;
 }
 
+.speech-button--secondary {
+  color: var(--color-primary);
+  background: #ffffff;
+}
+
+.speech-button--secondary:hover:not(:disabled) {
+  color: #ffffff;
+}
+
+.speech-progress {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #cdd5ff;
+  border-radius: 12px;
+  background: var(--color-primary-soft);
+}
+
+.speech-progress__position,
+.speech-progress__label {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.speech-progress__bar {
+  width: 100%;
+  height: 0.7rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #dbe4ff;
+}
+
+.speech-progress__bar::-webkit-progress-bar {
+  border-radius: 999px;
+  background: #dbe4ff;
+}
+
+.speech-progress__bar::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.speech-progress__bar::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.audio-toc__item {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.audio-toc__play {
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid #cdd5ff;
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.audio-toc__play:hover {
+  border-color: var(--color-primary);
+  color: #ffffff;
+  background: var(--color-primary);
+}
+
 .speech-rate {
   display: flex;
   gap: 0.5rem;
