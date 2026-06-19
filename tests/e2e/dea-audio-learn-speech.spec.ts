@@ -6,6 +6,9 @@ const chapters = JSON.parse(
   readFileSync(new URL('../../dea-audio-learn/data/chapters.json', import.meta.url), 'utf8')
 );
 const firstChapter = chapters[0];
+const quizzes = JSON.parse(
+  readFileSync(new URL('../../dea-audio-learn/data/quizzes.json', import.meta.url), 'utf8')
+);
 
 declare global {
   interface Window {
@@ -87,13 +90,47 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#content-markdown')).toHaveCount(0);
     await expect(page.locator('.step-item').filter({ hasText: /^聞く利用可能$/ })).toBeVisible();
     await expect(page.locator('.step-item').filter({ hasText: /^要点利用可能$/ })).toBeVisible();
+    await expect(page.locator('.step-item').filter({ hasText: /^解く利用可能$/ })).toBeVisible();
     await expect(
-      page.locator('.step-item').filter({ hasText: /^解くPhase 8で追加予定$/ })
-    ).toBeVisible();
-    await expect(
-      page.locator('.step-item').filter({ hasText: /^記録Phase 9で追加予定$/ })
+      page.locator('.step-item').filter({ hasText: /^記録Phase 10で追加予定$/ })
     ).toBeVisible();
     await expect(page.getByRole('heading', { name: '要点メモ' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'ミニクイズ' })).toBeVisible();
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('input[type="radio"]')
+    ).toHaveCount(4);
+    await page
+      .locator('#mini-quiz-list .quiz-question')
+      .first()
+      .getByRole('button', { name: '回答する' })
+      .click();
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-feedback')
+    ).toContainText('選択肢を選んでから回答してください。');
+    await page
+      .locator('#mini-quiz-list .quiz-question')
+      .first()
+      .locator('input[type="radio"]')
+      .first()
+      .check();
+    await page
+      .locator('#mini-quiz-list .quiz-question')
+      .first()
+      .getByRole('button', { name: '回答する' })
+      .click();
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-feedback')
+    ).toContainText(/正解です。|不正解です。/);
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-feedback')
+    ).toContainText('解説：');
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-references a').first()
+    ).toHaveAttribute('target', '_blank');
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-references a').first()
+    ).toHaveAttribute('rel', 'noopener noreferrer');
     await expect(page.locator('#note-markdown')).toContainText(
       'Databricks Intelligence Platformは'
     );
@@ -215,6 +252,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-next')).toBeDisabled();
     await expect(page.locator('#toc-speech-next')).toBeDisabled();
     await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#mini-quiz-list')).toContainText(
+      'Lakehouseの説明として最も適切なもの'
+    );
+    await expect(page.locator('#mini-quiz-list')).not.toContainText(
+      'Databricks Intelligence Platformを理解するうえで'
+    );
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
     await expect(
       page.getByRole('heading', { name: 'データレイクだけでは困ること', level: 3 })
@@ -663,5 +707,36 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-message')).toContainText(
       'このブラウザでは読み上げ機能に対応していません。'
     );
+  });
+});
+
+test.describe('[DEA][Data] Audio Learn quizzes', () => {
+  test('uses the lightweight Audio Learn quiz schema', () => {
+    expect(quizzes).toHaveLength(6);
+    expect(quizzes.map((quiz: { id: string }) => quiz.id)).toEqual([
+      'DEA-DAL-001',
+      'DEA-DAL-002',
+      'DEA-DAL-003',
+      'DEA-DAL-004',
+      'DEA-DAL-005',
+      'DEA-DAL-006',
+    ]);
+
+    for (const chapter of chapters) {
+      expect(
+        quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
+      ).toHaveLength(3);
+    }
+
+    for (const quiz of quizzes) {
+      expect(Object.keys(quiz.choices)).toEqual(['A', 'B', 'C', 'D']);
+      expect(['A', 'B', 'C', 'D']).toContain(quiz.answer);
+      expect(quiz.answerIndex).toBeUndefined();
+      expect(quiz.whyWrong).toBeTruthy();
+      expect(quiz.references.length).toBeGreaterThan(0);
+      for (const excludedKey of ['domain', 'tags', 'difficulty', 'sourceType', 'notes']) {
+        expect(quiz[excludedKey]).toBeUndefined();
+      }
+    }
   });
 });

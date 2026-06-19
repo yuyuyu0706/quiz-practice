@@ -24,8 +24,12 @@ const speechProgressLabel = document.querySelector('#speech-progress-label');
 const speechProgressBar = document.querySelector('#speech-progress-bar');
 const tocSpeechCurrentPosition = document.querySelector('#toc-speech-current-position');
 const tocSpeechProgressLabel = document.querySelector('#toc-speech-progress-label');
+const miniQuizList = document.querySelector('#mini-quiz-list');
+const miniQuizSummary = document.querySelector('#mini-quiz-summary');
 
 let chapters = [];
+let quizzes = [];
+let shuffledChoicesByQuestionId = new Map();
 let selectedChapterIndex = 0;
 let currentAudioScriptText = '';
 let speechSections = [];
@@ -756,6 +760,134 @@ const buildAudioTableOfContents = () => {
   });
 };
 
+const shuffleEntries = (entries) =>
+  entries
+    .map((entry) => ({ entry, sort: Math.random() }))
+    .sort((left, right) => left.sort - right.sort)
+    .map(({ entry }) => entry);
+
+const getShuffledChoices = (question) => {
+  if (!shuffledChoicesByQuestionId.has(question.id)) {
+    shuffledChoicesByQuestionId.set(
+      question.id,
+      shuffleEntries(Object.entries(question.choices)).map(([key, text]) => ({ key, text }))
+    );
+  }
+  return shuffledChoicesByQuestionId.get(question.id);
+};
+
+const renderQuizFeedback = (question, selectedChoiceKey, feedbackElement) => {
+  if (!selectedChoiceKey) {
+    feedbackElement.hidden = false;
+    feedbackElement.className = 'quiz-feedback quiz-feedback--notice';
+    feedbackElement.textContent = '選択肢を選んでから回答してください。';
+    return;
+  }
+
+  const isCorrect = selectedChoiceKey === question.answer;
+  const selectedText = question.choices[selectedChoiceKey];
+  const answerText = question.choices[question.answer];
+  const wrongReason = !isCorrect ? question.whyWrong?.[selectedChoiceKey] : '';
+  feedbackElement.hidden = false;
+  feedbackElement.className = `quiz-feedback ${isCorrect ? 'quiz-feedback--correct' : 'quiz-feedback--incorrect'}`;
+  feedbackElement.innerHTML = '';
+
+  const result = document.createElement('p');
+  result.className = 'quiz-feedback__result';
+  result.textContent = isCorrect
+    ? '正解です。'
+    : `不正解です。正解は${question.answer}：${answerText}です。`;
+  feedbackElement.append(result);
+
+  if (!isCorrect && wrongReason) {
+    const reason = document.createElement('p');
+    reason.textContent = `選んだ${selectedChoiceKey}：${selectedText} — ${wrongReason}`;
+    feedbackElement.append(reason);
+  }
+
+  const explanation = document.createElement('p');
+  explanation.textContent = `解説：${question.explanation}`;
+  feedbackElement.append(explanation);
+
+  if (question.references?.length > 0) {
+    const references = document.createElement('div');
+    references.className = 'quiz-references';
+    const label = document.createElement('span');
+    label.textContent = '参考リンク：';
+    references.append(label);
+    question.references.forEach((reference, index) => {
+      if (index > 0) references.append(document.createTextNode(' / '));
+      const link = document.createElement('a');
+      link.href = reference.url;
+      link.textContent = reference.title;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      references.append(link);
+    });
+    feedbackElement.append(references);
+  }
+};
+
+const renderMiniQuizzes = (chapterId) => {
+  const chapterQuizzes = quizzes.filter((quiz) => quiz.chapterId === chapterId);
+  miniQuizList.innerHTML = '';
+  miniQuizSummary.textContent = chapterQuizzes.length
+    ? `${chapterQuizzes.length}問のミニクイズで、聞いた内容を思い出せるか確認します。`
+    : 'このチャプターのミニクイズは準備中です。';
+
+  if (chapterQuizzes.length === 0) {
+    miniQuizList.textContent = 'このチャプターのミニクイズは準備中です。';
+    return;
+  }
+
+  chapterQuizzes.forEach((question, index) => {
+    const article = document.createElement('article');
+    article.className = 'quiz-question';
+    article.dataset.quizId = question.id;
+
+    const title = document.createElement('h3');
+    title.textContent = `Q${index + 1}. ${question.question}`;
+    article.append(title);
+
+    const choices = document.createElement('div');
+    choices.className = 'quiz-choices';
+    choices.setAttribute('role', 'radiogroup');
+    choices.setAttribute('aria-label', `${question.id}の選択肢`);
+
+    getShuffledChoices(question).forEach((choice) => {
+      const label = document.createElement('label');
+      label.className = 'quiz-choice';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = question.id;
+      input.value = choice.key;
+      const text = document.createElement('span');
+      text.textContent = `${choice.key}. ${choice.text}`;
+      label.append(input, text);
+      choices.append(label);
+    });
+    article.append(choices);
+
+    const answerButton = document.createElement('button');
+    answerButton.type = 'button';
+    answerButton.className = 'quiz-answer-button';
+    answerButton.textContent = '回答する';
+    article.append(answerButton);
+
+    const feedback = document.createElement('div');
+    feedback.className = 'quiz-feedback';
+    feedback.hidden = true;
+    article.append(feedback);
+
+    answerButton.addEventListener('click', () => {
+      const selected = article.querySelector(`input[name="${question.id}"]:checked`);
+      renderQuizFeedback(question, selected?.value, feedback);
+    });
+
+    miniQuizList.append(article);
+  });
+};
+
 const fetchText = async (path) => {
   const response = await fetch(path);
   if (!response.ok) {
@@ -821,6 +953,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
   audioTocList.innerHTML = '';
   noteMarkdown.textContent = '要点メモを読み込み中...';
+  renderMiniQuizzes(chapter.id);
 
   try {
     const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
@@ -913,6 +1046,12 @@ const init = async () => {
       throw new Error('chapters.json の読み込みに失敗しました');
     }
     chapters = await response.json();
+    const quizResponse = await fetch('data/quizzes.json');
+    if (!quizResponse.ok) {
+      throw new Error('quizzes.json の読み込みに失敗しました');
+    }
+    quizzes = await quizResponse.json();
+    shuffledChoicesByQuestionId = new Map();
     renderChapterList();
     await selectChapterByIndex(0);
   } catch (error) {
