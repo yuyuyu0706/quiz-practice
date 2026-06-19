@@ -10,14 +10,25 @@ const nextChapterButton = document.querySelector('#next-chapter');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
 const audioTocList = document.querySelector('#audio-toc-list');
 const noteMarkdown = document.querySelector('#note-markdown');
+const speechPreviousButton = document.querySelector('#speech-previous');
 const speechToggleButton = document.querySelector('#speech-toggle');
+const speechNextButton = document.querySelector('#speech-next');
+const tocSpeechPreviousButton = document.querySelector('#toc-speech-previous');
+const tocSpeechToggleButton = document.querySelector('#toc-speech-toggle');
+const tocSpeechNextButton = document.querySelector('#toc-speech-next');
 const speechRateSelect = document.querySelector('#speech-rate');
 const speechStatus = document.querySelector('#speech-status');
 const speechMessage = document.querySelector('#speech-message');
+const speechCurrentPosition = document.querySelector('#speech-current-position');
+const speechProgressLabel = document.querySelector('#speech-progress-label');
+const speechProgressBar = document.querySelector('#speech-progress-bar');
+const tocSpeechCurrentPosition = document.querySelector('#toc-speech-current-position');
+const tocSpeechProgressLabel = document.querySelector('#toc-speech-progress-label');
 
 let chapters = [];
 let selectedChapterIndex = 0;
 let currentAudioScriptText = '';
+let speechSections = [];
 let speechChunks = [];
 let currentChunkIndex = 0;
 let speechState = 'idle';
@@ -254,13 +265,95 @@ const splitSpeechTextIntoChunks = (text, maxLength = maxSpeechChunkLength) => {
   return chunks;
 };
 
+const getChunkSectionLabel = (chunkIndex) => {
+  const chunk = speechChunks[chunkIndex];
+  return chunk?.sectionTitle ?? '未再生';
+};
+
+const buildSpeechSectionsFromRenderedMarkdown = () => {
+  const headings = Array.from(audioScriptMarkdown.querySelectorAll('h2, h3'));
+  return headings
+    .map((heading, index) => {
+      const parts = [];
+      let node = heading.nextElementSibling;
+      while (node && !['H2', 'H3'].includes(node.tagName)) {
+        if (!node.matches('pre, table')) {
+          const clone = node.cloneNode(true);
+          clone
+            .querySelectorAll?.('pre, table, code.language-mermaid')
+            .forEach((excluded) => excluded.remove());
+          const text = clone.textContent?.trim();
+          if (text) parts.push(text);
+        }
+        node = node.nextElementSibling;
+      }
+
+      const headingTitle = heading.dataset.speechTitle || heading.textContent?.trim() || '';
+      const text = stripMarkdownForSpeech(`${headingTitle}\n${parts.join('\n')}`);
+      const chunks = splitSpeechTextIntoChunks(text).map((chunkText, chunkOffset) => ({
+        text: chunkText,
+        sectionIndex: index,
+        sectionTitle: headingTitle || `区切り ${index + 1}`,
+        headingId: heading.id,
+        chunkOffset,
+      }));
+
+      return {
+        title: headingTitle || `区切り ${index + 1}`,
+        headingId: heading.id,
+        text,
+        chunks,
+      };
+    })
+    .filter((section) => section.chunks.length > 0);
+};
+
+const rebuildSpeechChunksFromSections = () => {
+  speechChunks = speechSections.flatMap((section) => section.chunks);
+  currentChunkIndex = Math.min(currentChunkIndex, Math.max(speechChunks.length - 1, 0));
+};
+
+const updateSpeechProgressUI = () => {
+  const totalChunks = speechChunks.length;
+  const hasProgress =
+    totalChunks > 0 &&
+    ['starting', 'uncertain', 'speaking', 'paused', 'ended'].includes(speechState);
+  const displayIndex = hasProgress ? Math.min(currentChunkIndex + 1, totalChunks) : 0;
+  const sectionLabel = hasProgress ? getChunkSectionLabel(currentChunkIndex) : '未再生';
+  speechCurrentPosition.textContent = `現在：${sectionLabel}`;
+  tocSpeechCurrentPosition.textContent = `現在：${sectionLabel}`;
+  speechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
+  tocSpeechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
+  speechProgressBar.max = String(Math.max(totalChunks, 1));
+  speechProgressBar.value = displayIndex;
+  speechProgressBar.textContent = `${totalChunks === 0 ? 0 : Math.round((displayIndex / totalChunks) * 100)}%`;
+
+  const canMove =
+    totalChunks > 0 &&
+    ['starting', 'uncertain', 'speaking', 'paused', 'ended'].includes(speechState);
+  const isPreviousDisabled = !canMove || currentChunkIndex <= 0;
+  const isNextDisabled = !canMove || currentChunkIndex >= totalChunks - 1;
+  speechPreviousButton.disabled = isPreviousDisabled;
+  tocSpeechPreviousButton.disabled = isPreviousDisabled;
+  speechNextButton.disabled = isNextDisabled;
+  tocSpeechNextButton.disabled = isNextDisabled;
+  speechPreviousButton.setAttribute('aria-disabled', String(isPreviousDisabled));
+  tocSpeechPreviousButton.setAttribute('aria-disabled', String(isPreviousDisabled));
+  speechNextButton.setAttribute('aria-disabled', String(isNextDisabled));
+  tocSpeechNextButton.setAttribute('aria-disabled', String(isNextDisabled));
+};
+
 const updateSpeechUI = () => {
   const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
   speechToggleButton.textContent = speechButtonLabels[speechState];
-  speechToggleButton.disabled =
-    unavailable || speechState === 'starting' || !currentAudioScriptText;
+  tocSpeechToggleButton.textContent = speechButtonLabels[speechState];
+  tocSpeechToggleButton.setAttribute('aria-label', speechButtonLabels[speechState]);
+  const isToggleDisabled = unavailable || speechState === 'starting' || !currentAudioScriptText;
+  speechToggleButton.disabled = isToggleDisabled;
+  tocSpeechToggleButton.disabled = isToggleDisabled;
   speechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
+  updateSpeechProgressUI();
   if (speechState === 'unsupported') {
     speechMessage.hidden = false;
     speechMessage.textContent =
@@ -283,6 +376,7 @@ const setSpeechState = (nextState) => {
 
 const resetSpeechForChapterChange = () => {
   currentAudioScriptText = '';
+  speechSections = [];
   speechChunks = [];
   currentChunkIndex = 0;
   const canUseSpeechApi = isSpeechSupported();
@@ -345,7 +439,7 @@ const speakChunk = (runId, chunkIndex) => {
   if (runId !== speechRunId || chunkIndex >= speechChunks.length) return;
 
   currentChunkIndex = chunkIndex;
-  const chunkText = speechChunks[chunkIndex];
+  const chunkText = speechChunks[chunkIndex].text ?? speechChunks[chunkIndex];
   const utterance = new SpeechSynthesisUtterance(chunkText);
   let utteranceStarted = false;
   utterance.lang = 'ja-JP';
@@ -472,7 +566,7 @@ const speakFromStart = () => {
 
   speechRunId += 1;
   const runId = speechRunId;
-  speechChunks = splitSpeechTextIntoChunks(currentAudioScriptText);
+  rebuildSpeechChunksFromSections();
   currentChunkIndex = 0;
   if (speechChunks.length === 0) {
     showSpeechError(
@@ -483,7 +577,7 @@ const speakFromStart = () => {
   logSpeech('speech text split into chunks', {
     runId,
     chunkCount: speechChunks.length,
-    chunkLengths: speechChunks.map((chunk) => chunk.length),
+    chunkLengths: speechChunks.map((chunk) => (chunk.text ?? chunk).length),
     maxSpeechChunkLength,
   });
 
@@ -534,6 +628,34 @@ const handleSpeechToggle = () => {
   ) {
     speakFromStart();
   }
+};
+
+const jumpToSpeechChunk = (targetChunkIndex, options = {}) => {
+  if (speechChunks.length === 0) rebuildSpeechChunksFromSections();
+  if (speechChunks.length === 0) return;
+  const safeChunkIndex = Math.min(Math.max(targetChunkIndex, 0), speechChunks.length - 1);
+  const shouldResume =
+    options.play === true ||
+    ['speaking', 'starting', 'uncertain', 'paused', 'ended'].includes(speechState);
+  currentChunkIndex = safeChunkIndex;
+  if (!shouldResume) {
+    updateSpeechUI();
+    return;
+  }
+
+  speechRunId += 1;
+  const runId = speechRunId;
+  clearSpeechStartWatchdog();
+  lastSpeechResetReason = 'chunk-navigation';
+  window.speechSynthesis.cancel();
+  speakChunk(runId, safeChunkIndex);
+};
+
+const playSectionFromHeading = (headingId) => {
+  if (speechChunks.length === 0) rebuildSpeechChunksFromSections();
+  const chunkIndex = speechChunks.findIndex((chunk) => chunk.headingId === headingId);
+  if (chunkIndex === -1) return;
+  jumpToSpeechChunk(chunkIndex, { play: true });
 };
 
 const restartCurrentChunkForRateChange = (previousSpeechState) => {
@@ -603,7 +725,9 @@ const buildAudioTableOfContents = () => {
   const headings = Array.from(audioScriptMarkdown.querySelectorAll('h2, h3'));
   const usedIds = new Set();
   headings.forEach((heading, index) => {
-    const baseHeadingId = normalizeHeadingId(heading.textContent ?? '', index);
+    const headingTitle = heading.dataset.speechTitle || heading.textContent?.trim() || '';
+    heading.dataset.speechTitle = headingTitle;
+    const baseHeadingId = normalizeHeadingId(headingTitle, index);
     let headingId = baseHeadingId;
     let suffix = 2;
     while (usedIds.has(headingId)) {
@@ -618,8 +742,16 @@ const buildAudioTableOfContents = () => {
 
     const link = document.createElement('a');
     link.href = `#${headingId}`;
-    link.textContent = heading.textContent;
+    link.textContent = headingTitle;
     item.append(link);
+
+    const headingPlayButton = document.createElement('button');
+    headingPlayButton.type = 'button';
+    headingPlayButton.className = 'audio-heading-play';
+    headingPlayButton.textContent = '▶';
+    headingPlayButton.setAttribute('aria-label', `${headingTitle}から再生`);
+    headingPlayButton.addEventListener('click', () => playSectionFromHeading(headingId));
+    heading.append(headingPlayButton);
     audioTocList.append(item);
   });
 };
@@ -694,7 +826,10 @@ const selectChapterByIndex = async (chapterIndex) => {
     const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
     audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
     buildAudioTableOfContents();
-    currentAudioScriptText = stripMarkdownForSpeech(audioScript);
+    speechSections = buildSpeechSectionsFromRenderedMarkdown();
+    rebuildSpeechChunksFromSections();
+    currentAudioScriptText = speechChunks.map((chunk) => chunk.text).join('\n');
+    updateSpeechUI();
     logSpeech('audio script loaded', {
       chapterId: chapter.id,
       markdownLength: audioScript.length,
@@ -728,7 +863,12 @@ nextChapterButton.addEventListener('click', () => {
   selectChapterByIndex(selectedChapterIndex + 1);
 });
 
+speechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
+tocSpeechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
 speechToggleButton.addEventListener('click', handleSpeechToggle);
+tocSpeechToggleButton.addEventListener('click', handleSpeechToggle);
+speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
+tocSpeechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 speechRateSelect.addEventListener('change', () => {
   const previousSpeechState = speechState;
   const newRate = Number(speechRateSelect.value);
