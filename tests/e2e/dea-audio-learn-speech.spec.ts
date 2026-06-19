@@ -6,6 +6,10 @@ const chapters = JSON.parse(
   readFileSync(new URL('../../dea-audio-learn/data/chapters.json', import.meta.url), 'utf8')
 );
 const firstChapter = chapters[0];
+const quizzes = JSON.parse(
+  readFileSync(new URL('../../dea-audio-learn/data/quizzes.json', import.meta.url), 'utf8')
+);
+const appSource = readFileSync(new URL('../../dea-audio-learn/app.js', import.meta.url), 'utf8');
 
 declare global {
   interface Window {
@@ -81,19 +85,79 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-status')).toHaveText(firstChapter.status);
     await expect(page.locator('#selected-chapter-no')).toHaveCount(0);
     await expect(page.locator('#selected-position')).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: '音声教材' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '音声教材', exact: true })).toBeVisible();
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
     await expect(page.locator('#content-markdown')).toHaveCount(0);
     await expect(page.locator('.step-item').filter({ hasText: /^聞く利用可能$/ })).toBeVisible();
     await expect(page.locator('.step-item').filter({ hasText: /^要点利用可能$/ })).toBeVisible();
+    await expect(page.locator('.step-item').filter({ hasText: /^解く利用可能$/ })).toBeVisible();
     await expect(
-      page.locator('.step-item').filter({ hasText: /^解くPhase 8で追加予定$/ })
-    ).toBeVisible();
-    await expect(
-      page.locator('.step-item').filter({ hasText: /^記録Phase 9で追加予定$/ })
+      page.locator('.step-item').filter({ hasText: /^記録Phase 10で追加予定$/ })
     ).toBeVisible();
     await expect(page.getByRole('heading', { name: '要点メモ' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'ミニクイズ' })).toBeVisible();
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('input[type="radio"]')
+    ).toHaveCount(4);
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-choice span')
+    ).toHaveText([/A\. /, /B\. /, /C\. /, /D\. /]);
+    await expect
+      .poll(() =>
+        page
+          .locator('#mini-quiz-list .quiz-question')
+          .first()
+          .locator('input[type="radio"]')
+          .evaluateAll((inputs) =>
+            inputs
+              .map((input) => (input as HTMLInputElement).value)
+              .sort()
+              .join('')
+          )
+      )
+      .toBe('ABCD');
+    await page
+      .locator('#mini-quiz-list .quiz-question')
+      .first()
+      .getByRole('button', { name: '回答する' })
+      .click();
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-feedback')
+    ).toContainText('選択肢を選んでから回答してください。');
+    const firstQuiz = page.locator('#mini-quiz-list .quiz-question').first();
+    const firstQuizFeedback = firstQuiz.locator('.quiz-feedback');
+    const firstQuizAnswerButton = firstQuiz.getByRole('button', { name: '回答する' });
+
+    await firstQuiz.locator('input[type="radio"][value="D"]').check();
+    await firstQuizAnswerButton.click();
+    await expect(firstQuizFeedback).toContainText('不正解です。');
+    await expect(firstQuizFeedback).toContainText(
+      '正解は「取り込み、管理、分析、AI活用までをつなぐ統合基盤として見る」です。'
+    );
+    await expect(firstQuizFeedback).toContainText(
+      '選んだ回答について：機械学習専用ではなく、データ活用全体を支えるプラットフォームです。'
+    );
+    await expect(firstQuizFeedback).toContainText(
+      '解説：Databricks Intelligence Platformは、データの取り込みから管理、分析、AI活用までを統合的に扱う基盤として押さえることが重要です。'
+    );
+    await expect(firstQuizFeedback).not.toContainText(/正解は[A-D]/);
+    await expect(firstQuizFeedback).not.toContainText(/選んだ[A-D]/);
+    await expect(firstQuiz.locator('.quiz-references a').first()).toHaveAttribute(
+      'target',
+      '_blank'
+    );
+    await expect(firstQuiz.locator('.quiz-references a').first()).toHaveAttribute(
+      'rel',
+      'noopener noreferrer'
+    );
+
+    await firstQuiz.locator('input[type="radio"][value="B"]').check();
+    await firstQuizAnswerButton.click();
+    await expect(firstQuizFeedback).toContainText('正解です。');
+    await expect(firstQuizFeedback).not.toContainText(/正解は[A-D]/);
+    await expect(firstQuizFeedback).not.toContainText(/選んだ[A-D]/);
     await expect(page.locator('#note-markdown')).toContainText(
       'Databricks Intelligence Platformは'
     );
@@ -135,8 +199,16 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-toc-list a')).toContainText([
       'はじめに',
       '従来のデータ基盤の課題',
+      '要点メモ',
+      'ミニクイズ',
     ]);
+    await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveText('要点メモ');
+    await expect(page.locator('#audio-toc-list a[href="#mini-quiz-title"]')).toHaveText(
+      'ミニクイズ'
+    );
     await expect(page.locator('#audio-toc-list button', { hasText: '再生' })).toHaveCount(0);
+    await expect(page.locator('#note-title .audio-heading-play')).toHaveCount(0);
+    await expect(page.locator('#mini-quiz-title .audio-heading-play')).toHaveCount(0);
     await expect(
       page.locator('#audio-script-markdown h2', { hasText: '背景' }).locator('.audio-heading-play')
     ).toHaveText('▶');
@@ -215,6 +287,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-next')).toBeDisabled();
     await expect(page.locator('#toc-speech-next')).toBeDisabled();
     await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#mini-quiz-list')).toContainText(
+      'Lakehouseの説明として最も適切なもの'
+    );
+    await expect(page.locator('#mini-quiz-list')).not.toContainText(
+      'Databricks Intelligence Platformを理解するうえで'
+    );
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
     await expect(
       page.getByRole('heading', { name: 'データレイクだけでは困ること', level: 3 })
@@ -663,5 +742,40 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-message')).toContainText(
       'このブラウザでは読み上げ機能に対応していません。'
     );
+  });
+});
+
+test.describe('[DEA][Data] Audio Learn quizzes', () => {
+  test('uses the lightweight Audio Learn quiz schema', () => {
+    expect(quizzes).toHaveLength(6);
+    expect(quizzes.map((quiz: { id: string }) => quiz.id)).toEqual([
+      'DEA-DAL-001',
+      'DEA-DAL-002',
+      'DEA-DAL-003',
+      'DEA-DAL-004',
+      'DEA-DAL-005',
+      'DEA-DAL-006',
+    ]);
+
+    for (const chapter of chapters) {
+      expect(
+        quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
+      ).toHaveLength(3);
+    }
+
+    expect(appSource).not.toContain('getDisplayExplanation');
+    expect(appSource).not.toMatch(/replace\(\/\^正解は\[A-D\]です。/u);
+
+    for (const quiz of quizzes) {
+      expect(Object.keys(quiz.choices)).toEqual(['A', 'B', 'C', 'D']);
+      expect(['A', 'B', 'C', 'D']).toContain(quiz.answer);
+      expect(quiz.answerIndex).toBeUndefined();
+      expect(quiz.explanation).not.toMatch(/^正解は[A-D]です。/u);
+      expect(quiz.whyWrong).toBeTruthy();
+      expect(quiz.references.length).toBeGreaterThan(0);
+      for (const excludedKey of ['domain', 'tags', 'difficulty', 'sourceType', 'notes']) {
+        expect(quiz[excludedKey]).toBeUndefined();
+      }
+    }
   });
 });

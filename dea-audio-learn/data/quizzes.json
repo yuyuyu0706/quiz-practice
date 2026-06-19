@@ -1,0 +1,162 @@
+[
+  {
+    "id": "DEA-DAL-001",
+    "chapterId": "dea-dip-001",
+    "section": "1",
+    "sectionTitle": "Databricks Intelligence Platform",
+    "question": "Databricks Intelligence Platformを理解するうえで最も重要な考え方はどれですか？",
+    "choices": {
+      "A": "データ保存だけを担当する独立したストレージとして見る",
+      "B": "取り込み、管理、分析、AI活用までをつなぐ統合基盤として見る",
+      "C": "SQLクエリだけを実行する軽量なBIツールとして見る",
+      "D": "機械学習だけに特化した実験用サービスとして見る"
+    },
+    "answer": "B",
+    "explanation": "Databricks Intelligence Platformは、データの取り込みから管理、分析、AI活用までを統合的に扱う基盤として押さえることが重要です。",
+    "whyWrong": {
+      "A": "保存だけではなく、処理、管理、分析、AI活用まで含む点がポイントです。",
+      "C": "SQLだけでなく、データエンジニアリングやガバナンス、機械学習の領域も扱います。",
+      "D": "機械学習専用ではなく、データ活用全体を支えるプラットフォームです。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-002",
+    "chapterId": "dea-dip-001",
+    "section": "2",
+    "sectionTitle": "従来のデータ基盤の課題",
+    "question": "従来のデータ基盤で、データレイク、DWH、AI基盤が分かれすぎると起きやすい問題はどれですか？",
+    "choices": {
+      "A": "データのコピーや移動が増え、管理や品質担保が難しくなる",
+      "B": "すべてのデータが自動的に削除される",
+      "C": "SQLを一切使えなくなる",
+      "D": "クラウド環境ではデータを保存できなくなる"
+    },
+    "answer": "A",
+    "explanation": "基盤が分断されると、データ移動や重複管理が増え、品質や権限の一貫性も保ちにくくなります。",
+    "whyWrong": {
+      "B": "分断によって自動削除されるわけではありません。問題はコピーや管理の複雑化です。",
+      "C": "SQLが使えなくなることではなく、複数基盤をまたぐ運用が複雑になることが課題です。",
+      "D": "クラウドで保存できないという意味ではありません。保存後の活用や管理が分散しやすい点が問題です。"
+    },
+    "references": [
+      {
+        "title": "Databricks Lakehouse Platform",
+        "url": "https://www.databricks.com/product/data-lakehouse"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-003",
+    "chapterId": "dea-dip-001",
+    "section": "3",
+    "sectionTitle": "統合基盤で扱うという発想",
+    "question": "音声教材で説明した「統合基盤で扱う」という発想に最も近いものはどれですか？",
+    "choices": {
+      "A": "用途ごとにデータを完全に別々の場所へ複製し続ける",
+      "B": "データを一か所で扱いながら、用途に応じて分析やAIへ展開しやすくする",
+      "C": "AI活用のためにデータ品質や権限管理を省略する",
+      "D": "データエンジニアリングと分析を必ず別組織で分断する"
+    },
+    "answer": "B",
+    "explanation": "統合基盤の狙いは、データを扱う流れをつなげ、分析やAI活用へ無理なく展開できるようにすることです。",
+    "whyWrong": {
+      "A": "完全分離と複製を増やすのではなく、分断を減らす考え方です。",
+      "C": "AI活用でもデータ品質や権限管理は重要です。",
+      "D": "組織や工程を分断するのではなく、データ活用の流れをつなぐことを重視します。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-004",
+    "chapterId": "dea-dip-002",
+    "section": "1",
+    "sectionTitle": "Lakehouseの位置づけ",
+    "question": "Lakehouseの説明として最も適切なものはどれですか？",
+    "choices": {
+      "A": "データレイクの柔軟性とDWHの管理性を組み合わせる考え方",
+      "B": "画像ファイルだけを保存するための専用サービス",
+      "C": "Delta Lakeとは無関係なオンプレミス専用DB",
+      "D": "BIダッシュボードの色を管理する機能"
+    },
+    "answer": "A",
+    "explanation": "Lakehouseは、データレイクの柔軟性を活かしながら、DWHに近い信頼性や管理性を持たせるアーキテクチャとして理解します。",
+    "whyWrong": {
+      "B": "画像専用ではなく、多様なデータを分析やAIに活用するための考え方です。",
+      "C": "Databricks上ではDelta LakeがLakehouseの信頼性を支える重要な技術です。",
+      "D": "画面デザイン機能ではなく、データ基盤のアーキテクチャに関する概念です。"
+    },
+    "references": [
+      {
+        "title": "What is a data lakehouse?",
+        "url": "https://www.databricks.com/glossary/data-lakehouse"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-005",
+    "chapterId": "dea-dip-002",
+    "section": "2",
+    "sectionTitle": "Delta Lakeの役割",
+    "question": "Delta LakeがLakehouseの中で担う役割として最も近いものはどれですか？",
+    "choices": {
+      "A": "生データを一切保存しないようにする",
+      "B": "トランザクションや履歴管理などにより、信頼できるテーブル管理を支える",
+      "C": "ユーザーのブラウザ履歴を管理する",
+      "D": "音声読み上げの速度だけを調整する"
+    },
+    "answer": "B",
+    "explanation": "Delta Lakeは、ACIDトランザクションや履歴管理などを通じて、データレイク上のテーブルを信頼して扱えるようにします。",
+    "whyWrong": {
+      "A": "生データを排除するのではなく、データレイク上のデータを信頼できる形で扱いやすくします。",
+      "C": "ブラウザ履歴ではなく、データテーブルの管理に関わる技術です。",
+      "D": "音声機能ではなく、Lakehouseのデータ管理を支える技術です。"
+    },
+    "references": [
+      {
+        "title": "Delta Lake documentation",
+        "url": "https://docs.delta.io/latest/index.html"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-006",
+    "chapterId": "dea-dip-002",
+    "section": "3",
+    "sectionTitle": "LakehouseとDelta Lakeの関係",
+    "question": "LakehouseとDelta Lakeの関係として最も適切なものはどれですか？",
+    "choices": {
+      "A": "Lakehouseは全体の考え方で、Delta Lakeは信頼できるテーブル管理を支える技術",
+      "B": "LakehouseとDelta Lakeはどちらも単なる音声教材の章タイトル",
+      "C": "Delta LakeはLakehouseを使えなくするための制約",
+      "D": "LakehouseはDelta Lakeの旧称で、意味は完全に同じ"
+    },
+    "answer": "A",
+    "explanation": "Lakehouseはアーキテクチャの考え方、Delta Lakeはその中で信頼性あるテーブル管理を担う技術として整理すると覚えやすくなります。",
+    "whyWrong": {
+      "B": "教材上の章タイトルではなく、実際のデータ基盤に関する概念と技術です。",
+      "C": "Delta LakeはLakehouseを妨げるものではなく、実現を支える役割です。",
+      "D": "同義語ではありません。全体像であるLakehouseと、テーブル管理技術であるDelta Lakeを区別します。"
+    },
+    "references": [
+      {
+        "title": "Databricks glossary: Data Lakehouse",
+        "url": "https://www.databricks.com/glossary/data-lakehouse"
+      },
+      {
+        "title": "Delta Lake documentation",
+        "url": "https://docs.delta.io/latest/index.html"
+      }
+    ]
+  }
+]
