@@ -723,6 +723,17 @@ const addExternalLinkAttributes = (root) => {
   });
 };
 
+const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
+  const item = document.createElement('li');
+  item.className = className;
+
+  const link = document.createElement('a');
+  link.href = href;
+  link.textContent = text;
+  item.append(link);
+  audioTocList.append(item);
+};
+
 const buildAudioTableOfContents = () => {
   audioTocList.innerHTML = '';
 
@@ -741,13 +752,11 @@ const buildAudioTableOfContents = () => {
     usedIds.add(headingId);
     heading.id = headingId;
 
-    const item = document.createElement('li');
-    item.className = `audio-toc__item audio-toc__item--${heading.tagName.toLowerCase()}`;
-
-    const link = document.createElement('a');
-    link.href = `#${headingId}`;
-    link.textContent = headingTitle;
-    item.append(link);
+    appendAudioTocLink(
+      `#${headingId}`,
+      headingTitle,
+      `audio-toc__item audio-toc__item--${heading.tagName.toLowerCase()}`
+    );
 
     const headingPlayButton = document.createElement('button');
     headingPlayButton.type = 'button';
@@ -756,8 +765,14 @@ const buildAudioTableOfContents = () => {
     headingPlayButton.setAttribute('aria-label', `${headingTitle}から再生`);
     headingPlayButton.addEventListener('click', () => playSectionFromHeading(headingId));
     heading.append(headingPlayButton);
-    audioTocList.append(item);
   });
+
+  appendAudioTocLink('#note-title', '要点メモ', 'audio-toc__item audio-toc__item--page-section');
+  appendAudioTocLink(
+    '#mini-quiz-title',
+    'ミニクイズ',
+    'audio-toc__item audio-toc__item--page-section'
+  );
 };
 
 const shuffleEntries = (entries) =>
@@ -794,14 +809,12 @@ const renderQuizFeedback = (question, selectedChoiceKey, feedbackElement) => {
 
   const result = document.createElement('p');
   result.className = 'quiz-feedback__result';
-  result.textContent = isCorrect
-    ? '正解です。'
-    : `不正解です。正解は${question.answer}：${answerText}です。`;
+  result.textContent = isCorrect ? '正解です。' : `不正解です。正解は「${answerText}」です。`;
   feedbackElement.append(result);
 
   if (!isCorrect && wrongReason) {
     const reason = document.createElement('p');
-    reason.textContent = `選んだ${selectedChoiceKey}：${selectedText} — ${wrongReason}`;
+    reason.textContent = `選んだ選択肢：${selectedText} — ${wrongReason}`;
     feedbackElement.append(reason);
   }
 
@@ -854,7 +867,9 @@ const renderMiniQuizzes = (chapterId) => {
     choices.setAttribute('role', 'radiogroup');
     choices.setAttribute('aria-label', `${question.id}の選択肢`);
 
-    getShuffledChoices(question).forEach((choice) => {
+    const displayLabels = ['A', 'B', 'C', 'D'];
+
+    getShuffledChoices(question).forEach((choice, choiceIndex) => {
       const label = document.createElement('label');
       label.className = 'quiz-choice';
       const input = document.createElement('input');
@@ -862,7 +877,7 @@ const renderMiniQuizzes = (chapterId) => {
       input.name = question.id;
       input.value = choice.key;
       const text = document.createElement('span');
-      text.textContent = `${choice.key}. ${choice.text}`;
+      text.textContent = `${displayLabels[choiceIndex]}. ${choice.text}`;
       label.append(input, text);
       choices.append(label);
     });

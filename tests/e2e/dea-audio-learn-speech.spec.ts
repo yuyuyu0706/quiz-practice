@@ -100,6 +100,23 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(
       page.locator('#mini-quiz-list .quiz-question').first().locator('input[type="radio"]')
     ).toHaveCount(4);
+    await expect(
+      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-choice span')
+    ).toHaveText([/A\. /, /B\. /, /C\. /, /D\. /]);
+    await expect
+      .poll(() =>
+        page
+          .locator('#mini-quiz-list .quiz-question')
+          .first()
+          .locator('input[type="radio"]')
+          .evaluateAll((inputs) =>
+            inputs
+              .map((input) => (input as HTMLInputElement).value)
+              .sort()
+              .join('')
+          )
+      )
+      .toBe('ABCD');
     await page
       .locator('#mini-quiz-list .quiz-question')
       .first()
@@ -172,8 +189,16 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-toc-list a')).toContainText([
       'はじめに',
       '従来のデータ基盤の課題',
+      '要点メモ',
+      'ミニクイズ',
     ]);
+    await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveText('要点メモ');
+    await expect(page.locator('#audio-toc-list a[href="#mini-quiz-title"]')).toHaveText(
+      'ミニクイズ'
+    );
     await expect(page.locator('#audio-toc-list button', { hasText: '再生' })).toHaveCount(0);
+    await expect(page.locator('#note-title .audio-heading-play')).toHaveCount(0);
+    await expect(page.locator('#mini-quiz-title .audio-heading-play')).toHaveCount(0);
     await expect(
       page.locator('#audio-script-markdown h2', { hasText: '背景' }).locator('.audio-heading-play')
     ).toHaveText('▶');
