@@ -630,13 +630,13 @@ const handleSpeechToggle = () => {
   }
 };
 
-const jumpToSpeechChunk = (targetChunkIndex) => {
+const jumpToSpeechChunk = (targetChunkIndex, options = {}) => {
   if (speechChunks.length === 0) rebuildSpeechChunksFromSections();
   if (speechChunks.length === 0) return;
   const safeChunkIndex = Math.min(Math.max(targetChunkIndex, 0), speechChunks.length - 1);
-  const shouldResume = ['speaking', 'starting', 'uncertain', 'paused', 'ended'].includes(
-    speechState
-  );
+  const shouldResume =
+    options.play === true ||
+    ['speaking', 'starting', 'uncertain', 'paused', 'ended'].includes(speechState);
   currentChunkIndex = safeChunkIndex;
   if (!shouldResume) {
     updateSpeechUI();
@@ -655,7 +655,7 @@ const playSectionFromHeading = (headingId) => {
   if (speechChunks.length === 0) rebuildSpeechChunksFromSections();
   const chunkIndex = speechChunks.findIndex((chunk) => chunk.headingId === headingId);
   if (chunkIndex === -1) return;
-  jumpToSpeechChunk(chunkIndex);
+  jumpToSpeechChunk(chunkIndex, { play: true });
 };
 
 const restartCurrentChunkForRateChange = (previousSpeechState) => {
