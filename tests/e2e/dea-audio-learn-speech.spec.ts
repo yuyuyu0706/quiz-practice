@@ -747,20 +747,64 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
 test.describe('[DEA][Data] Audio Learn quizzes', () => {
   test('uses the lightweight Audio Learn quiz schema', () => {
-    expect(quizzes).toHaveLength(6);
-    expect(quizzes.map((quiz: { id: string }) => quiz.id)).toEqual([
-      'DEA-DAL-001',
-      'DEA-DAL-002',
-      'DEA-DAL-003',
-      'DEA-DAL-004',
-      'DEA-DAL-005',
-      'DEA-DAL-006',
-    ]);
+    expect(chapters).toHaveLength(8);
+    expect(new Set(chapters.map((chapter: { domain: string }) => chapter.domain))).toEqual(
+      new Set([
+        'Databricks Intelligence Platform',
+        'Data Ingestion and Loading',
+        'Data Transformation and Modeling',
+        'Working with Lakeflow Jobs',
+        'Implementing CI/CD',
+        'Troubleshooting, Monitoring, and Optimization',
+        'Governance and Security',
+      ])
+    );
+    expect(quizzes).toHaveLength(24);
+    expect(quizzes.map((quiz: { id: string }) => quiz.id)).toEqual(
+      Array.from({ length: 24 }, (_, index) => `DEA-DAL-${String(index + 1).padStart(3, '0')}`)
+    );
 
     for (const chapter of chapters) {
       expect(
         quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
       ).toHaveLength(3);
+    }
+
+    const addedChapters = chapters.filter(
+      (chapter: { id: string }) => !['dea-dip-001', 'dea-dip-002'].includes(chapter.id)
+    );
+    for (const chapter of addedChapters) {
+      expect(chapter.audioScriptPath).toBe(`audio-scripts/${chapter.id}.md`);
+      expect(chapter.notePath).toBe(`notes/${chapter.id}.md`);
+      const audioScript = readFileSync(
+        new URL(`../../dea-audio-learn/${chapter.audioScriptPath}`, import.meta.url),
+        'utf8'
+      );
+      const note = readFileSync(
+        new URL(`../../dea-audio-learn/${chapter.notePath}`, import.meta.url),
+        'utf8'
+      );
+      expect(audioScript).toContain(`# 音声スクリプト: ${chapter.title}`);
+      for (const heading of [
+        '## はじめに',
+        '## 本チャプターのゴール',
+        '## 背景',
+        '## 重要な考え方',
+        '## 具体的なイメージ',
+        '## 次の学習へのつながり',
+      ]) {
+        expect(audioScript).toContain(heading);
+      }
+      expect(note).toContain(`# 要点メモ: ${chapter.title}`);
+      for (const heading of [
+        '## 本チャプターのポイント',
+        '## 試験での注意点',
+        '## キーワード一覧',
+        '## 参考リンク',
+      ]) {
+        expect(note).toContain(heading);
+      }
+      expect(note).not.toContain('ミニクイズ前の確認');
     }
 
     expect(appSource).not.toContain('getDisplayExplanation');

@@ -158,5 +158,473 @@
         "url": "https://docs.delta.io/latest/index.html"
       }
     ]
+  },
+  {
+    "id": "DEA-DAL-007",
+    "chapterId": "dea-ingestion-001",
+    "section": "1",
+    "sectionTitle": "Data Ingestion and Loading",
+    "question": "Data Ingestion and Loadingで最初に押さえるべき観点として最も近いものはどれですか？",
+    "choices": {
+      "A": "batch / streaming / incremental loadingなど、要件に応じた設計観点を選ぶ",
+      "B": "すべてを手動作業だけで完結させる",
+      "C": "後続工程の品質や権限管理を考えない",
+      "D": "データ量や更新頻度に関係なく同じ方法だけを使う"
+    },
+    "answer": "A",
+    "explanation": "Data Ingestion and Loadingでは、機能名だけでなく要件に応じて適切な設計や運用方法を選ぶことが重要です。",
+    "whyWrong": {
+      "B": "継続運用では自動化や再現性が重要です。",
+      "C": "品質や権限管理を無視すると信頼できるデータ基盤になりません。",
+      "D": "要件により適切な方式は変わります。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-008",
+    "chapterId": "dea-ingestion-001",
+    "section": "2",
+    "sectionTitle": "Data Ingestion and Loading",
+    "question": "Data Ingestion and Loadingの試験対策で重要な学び方はどれですか？",
+    "choices": {
+      "A": "用語を実務上の目的や使う場面と結び付ける",
+      "B": "似た用語を区別せず同じものとして扱う",
+      "C": "Databricks以外の一般論だけを覚える",
+      "D": "ガバナンスや運用性を常に対象外にする"
+    },
+    "answer": "A",
+    "explanation": "試験では、用語の意味に加えて、どの状況でどの機能や考え方を選ぶかを判断する力が問われます。",
+    "whyWrong": {
+      "B": "似た用語ほど役割や利用場面で区別する必要があります。",
+      "C": "Databricks上での機能や運用の文脈が重要です。",
+      "D": "ガバナンスや運用性はデータ基盤全体の重要な観点です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-009",
+    "chapterId": "dea-ingestion-001",
+    "section": "3",
+    "sectionTitle": "Data Ingestion and Loading",
+    "question": "Data Ingestion and Loadingを他領域とつなげて理解する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "取り込み、変換、運用、CI/CD、監視、ガバナンスは一連の流れとして関係するため",
+      "B": "各領域は完全に独立しており相互に影響しないため",
+      "C": "音声教材ではクイズを表示できないため",
+      "D": "すべての領域で同じ設定値だけを暗記すればよいため"
+    },
+    "answer": "A",
+    "explanation": "Databricksのデータエンジニアリングは領域間のつながりが重要で、前後の工程を意識すると判断問題に対応しやすくなります。",
+    "whyWrong": {
+      "B": "実務のパイプラインでは領域同士が密接に関係します。",
+      "C": "教材機能ではなく、学習内容のつながりに関する理由です。",
+      "D": "同じ設定値の暗記ではなく、状況に応じた判断が必要です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-010",
+    "chapterId": "dea-transform-001",
+    "section": "1",
+    "sectionTitle": "Data Transformation and Modeling",
+    "question": "Data Transformation and Modelingで最初に押さえるべき観点として最も近いものはどれですか？",
+    "choices": {
+      "A": "Bronze / Silver / Goldなど、要件に応じた設計観点を選ぶ",
+      "B": "すべてを手動作業だけで完結させる",
+      "C": "後続工程の品質や権限管理を考えない",
+      "D": "データ量や更新頻度に関係なく同じ方法だけを使う"
+    },
+    "answer": "A",
+    "explanation": "Data Transformation and Modelingでは、機能名だけでなく要件に応じて適切な設計や運用方法を選ぶことが重要です。",
+    "whyWrong": {
+      "B": "継続運用では自動化や再現性が重要です。",
+      "C": "品質や権限管理を無視すると信頼できるデータ基盤になりません。",
+      "D": "要件により適切な方式は変わります。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-011",
+    "chapterId": "dea-transform-001",
+    "section": "2",
+    "sectionTitle": "Data Transformation and Modeling",
+    "question": "Data Transformation and Modelingの試験対策で重要な学び方はどれですか？",
+    "choices": {
+      "A": "用語を実務上の目的や使う場面と結び付ける",
+      "B": "似た用語を区別せず同じものとして扱う",
+      "C": "Databricks以外の一般論だけを覚える",
+      "D": "ガバナンスや運用性を常に対象外にする"
+    },
+    "answer": "A",
+    "explanation": "試験では、用語の意味に加えて、どの状況でどの機能や考え方を選ぶかを判断する力が問われます。",
+    "whyWrong": {
+      "B": "似た用語ほど役割や利用場面で区別する必要があります。",
+      "C": "Databricks上での機能や運用の文脈が重要です。",
+      "D": "ガバナンスや運用性はデータ基盤全体の重要な観点です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-012",
+    "chapterId": "dea-transform-001",
+    "section": "3",
+    "sectionTitle": "Data Transformation and Modeling",
+    "question": "Data Transformation and Modelingを他領域とつなげて理解する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "取り込み、変換、運用、CI/CD、監視、ガバナンスは一連の流れとして関係するため",
+      "B": "各領域は完全に独立しており相互に影響しないため",
+      "C": "音声教材ではクイズを表示できないため",
+      "D": "すべての領域で同じ設定値だけを暗記すればよいため"
+    },
+    "answer": "A",
+    "explanation": "Databricksのデータエンジニアリングは領域間のつながりが重要で、前後の工程を意識すると判断問題に対応しやすくなります。",
+    "whyWrong": {
+      "B": "実務のパイプラインでは領域同士が密接に関係します。",
+      "C": "教材機能ではなく、学習内容のつながりに関する理由です。",
+      "D": "同じ設定値の暗記ではなく、状況に応じた判断が必要です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-013",
+    "chapterId": "dea-lakeflow-jobs-001",
+    "section": "1",
+    "sectionTitle": "Working with Lakeflow Jobs",
+    "question": "Working with Lakeflow Jobsで最初に押さえるべき観点として最も近いものはどれですか？",
+    "choices": {
+      "A": "Lakeflow Jobsなど、要件に応じた設計観点を選ぶ",
+      "B": "すべてを手動作業だけで完結させる",
+      "C": "後続工程の品質や権限管理を考えない",
+      "D": "データ量や更新頻度に関係なく同じ方法だけを使う"
+    },
+    "answer": "A",
+    "explanation": "Working with Lakeflow Jobsでは、機能名だけでなく要件に応じて適切な設計や運用方法を選ぶことが重要です。",
+    "whyWrong": {
+      "B": "継続運用では自動化や再現性が重要です。",
+      "C": "品質や権限管理を無視すると信頼できるデータ基盤になりません。",
+      "D": "要件により適切な方式は変わります。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-014",
+    "chapterId": "dea-lakeflow-jobs-001",
+    "section": "2",
+    "sectionTitle": "Working with Lakeflow Jobs",
+    "question": "Working with Lakeflow Jobsの試験対策で重要な学び方はどれですか？",
+    "choices": {
+      "A": "用語を実務上の目的や使う場面と結び付ける",
+      "B": "似た用語を区別せず同じものとして扱う",
+      "C": "Databricks以外の一般論だけを覚える",
+      "D": "ガバナンスや運用性を常に対象外にする"
+    },
+    "answer": "A",
+    "explanation": "試験では、用語の意味に加えて、どの状況でどの機能や考え方を選ぶかを判断する力が問われます。",
+    "whyWrong": {
+      "B": "似た用語ほど役割や利用場面で区別する必要があります。",
+      "C": "Databricks上での機能や運用の文脈が重要です。",
+      "D": "ガバナンスや運用性はデータ基盤全体の重要な観点です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-015",
+    "chapterId": "dea-lakeflow-jobs-001",
+    "section": "3",
+    "sectionTitle": "Working with Lakeflow Jobs",
+    "question": "Working with Lakeflow Jobsを他領域とつなげて理解する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "取り込み、変換、運用、CI/CD、監視、ガバナンスは一連の流れとして関係するため",
+      "B": "各領域は完全に独立しており相互に影響しないため",
+      "C": "音声教材ではクイズを表示できないため",
+      "D": "すべての領域で同じ設定値だけを暗記すればよいため"
+    },
+    "answer": "A",
+    "explanation": "Databricksのデータエンジニアリングは領域間のつながりが重要で、前後の工程を意識すると判断問題に対応しやすくなります。",
+    "whyWrong": {
+      "B": "実務のパイプラインでは領域同士が密接に関係します。",
+      "C": "教材機能ではなく、学習内容のつながりに関する理由です。",
+      "D": "同じ設定値の暗記ではなく、状況に応じた判断が必要です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-016",
+    "chapterId": "dea-cicd-001",
+    "section": "1",
+    "sectionTitle": "Implementing CI/CD",
+    "question": "Implementing CI/CDで最初に押さえるべき観点として最も近いものはどれですか？",
+    "choices": {
+      "A": "Databricks Git Foldersなど、要件に応じた設計観点を選ぶ",
+      "B": "すべてを手動作業だけで完結させる",
+      "C": "後続工程の品質や権限管理を考えない",
+      "D": "データ量や更新頻度に関係なく同じ方法だけを使う"
+    },
+    "answer": "A",
+    "explanation": "Implementing CI/CDでは、機能名だけでなく要件に応じて適切な設計や運用方法を選ぶことが重要です。",
+    "whyWrong": {
+      "B": "継続運用では自動化や再現性が重要です。",
+      "C": "品質や権限管理を無視すると信頼できるデータ基盤になりません。",
+      "D": "要件により適切な方式は変わります。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-017",
+    "chapterId": "dea-cicd-001",
+    "section": "2",
+    "sectionTitle": "Implementing CI/CD",
+    "question": "Implementing CI/CDの試験対策で重要な学び方はどれですか？",
+    "choices": {
+      "A": "用語を実務上の目的や使う場面と結び付ける",
+      "B": "似た用語を区別せず同じものとして扱う",
+      "C": "Databricks以外の一般論だけを覚える",
+      "D": "ガバナンスや運用性を常に対象外にする"
+    },
+    "answer": "A",
+    "explanation": "試験では、用語の意味に加えて、どの状況でどの機能や考え方を選ぶかを判断する力が問われます。",
+    "whyWrong": {
+      "B": "似た用語ほど役割や利用場面で区別する必要があります。",
+      "C": "Databricks上での機能や運用の文脈が重要です。",
+      "D": "ガバナンスや運用性はデータ基盤全体の重要な観点です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-018",
+    "chapterId": "dea-cicd-001",
+    "section": "3",
+    "sectionTitle": "Implementing CI/CD",
+    "question": "Implementing CI/CDを他領域とつなげて理解する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "取り込み、変換、運用、CI/CD、監視、ガバナンスは一連の流れとして関係するため",
+      "B": "各領域は完全に独立しており相互に影響しないため",
+      "C": "音声教材ではクイズを表示できないため",
+      "D": "すべての領域で同じ設定値だけを暗記すればよいため"
+    },
+    "answer": "A",
+    "explanation": "Databricksのデータエンジニアリングは領域間のつながりが重要で、前後の工程を意識すると判断問題に対応しやすくなります。",
+    "whyWrong": {
+      "B": "実務のパイプラインでは領域同士が密接に関係します。",
+      "C": "教材機能ではなく、学習内容のつながりに関する理由です。",
+      "D": "同じ設定値の暗記ではなく、状況に応じた判断が必要です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-019",
+    "chapterId": "dea-ops-001",
+    "section": "1",
+    "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
+    "question": "Troubleshooting, Monitoring, and Optimizationで最初に押さえるべき観点として最も近いものはどれですか？",
+    "choices": {
+      "A": "Lakeflow Jobs run historyなど、要件に応じた設計観点を選ぶ",
+      "B": "すべてを手動作業だけで完結させる",
+      "C": "後続工程の品質や権限管理を考えない",
+      "D": "データ量や更新頻度に関係なく同じ方法だけを使う"
+    },
+    "answer": "A",
+    "explanation": "Troubleshooting, Monitoring, and Optimizationでは、機能名だけでなく要件に応じて適切な設計や運用方法を選ぶことが重要です。",
+    "whyWrong": {
+      "B": "継続運用では自動化や再現性が重要です。",
+      "C": "品質や権限管理を無視すると信頼できるデータ基盤になりません。",
+      "D": "要件により適切な方式は変わります。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-020",
+    "chapterId": "dea-ops-001",
+    "section": "2",
+    "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
+    "question": "Troubleshooting, Monitoring, and Optimizationの試験対策で重要な学び方はどれですか？",
+    "choices": {
+      "A": "用語を実務上の目的や使う場面と結び付ける",
+      "B": "似た用語を区別せず同じものとして扱う",
+      "C": "Databricks以外の一般論だけを覚える",
+      "D": "ガバナンスや運用性を常に対象外にする"
+    },
+    "answer": "A",
+    "explanation": "試験では、用語の意味に加えて、どの状況でどの機能や考え方を選ぶかを判断する力が問われます。",
+    "whyWrong": {
+      "B": "似た用語ほど役割や利用場面で区別する必要があります。",
+      "C": "Databricks上での機能や運用の文脈が重要です。",
+      "D": "ガバナンスや運用性はデータ基盤全体の重要な観点です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-021",
+    "chapterId": "dea-ops-001",
+    "section": "3",
+    "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
+    "question": "Troubleshooting, Monitoring, and Optimizationを他領域とつなげて理解する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "取り込み、変換、運用、CI/CD、監視、ガバナンスは一連の流れとして関係するため",
+      "B": "各領域は完全に独立しており相互に影響しないため",
+      "C": "音声教材ではクイズを表示できないため",
+      "D": "すべての領域で同じ設定値だけを暗記すればよいため"
+    },
+    "answer": "A",
+    "explanation": "Databricksのデータエンジニアリングは領域間のつながりが重要で、前後の工程を意識すると判断問題に対応しやすくなります。",
+    "whyWrong": {
+      "B": "実務のパイプラインでは領域同士が密接に関係します。",
+      "C": "教材機能ではなく、学習内容のつながりに関する理由です。",
+      "D": "同じ設定値の暗記ではなく、状況に応じた判断が必要です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-022",
+    "chapterId": "dea-governance-001",
+    "section": "1",
+    "sectionTitle": "Governance and Security",
+    "question": "Governance and Securityで最初に押さえるべき観点として最も近いものはどれですか？",
+    "choices": {
+      "A": "Unity Catalogなど、要件に応じた設計観点を選ぶ",
+      "B": "すべてを手動作業だけで完結させる",
+      "C": "後続工程の品質や権限管理を考えない",
+      "D": "データ量や更新頻度に関係なく同じ方法だけを使う"
+    },
+    "answer": "A",
+    "explanation": "Governance and Securityでは、機能名だけでなく要件に応じて適切な設計や運用方法を選ぶことが重要です。",
+    "whyWrong": {
+      "B": "継続運用では自動化や再現性が重要です。",
+      "C": "品質や権限管理を無視すると信頼できるデータ基盤になりません。",
+      "D": "要件により適切な方式は変わります。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-023",
+    "chapterId": "dea-governance-001",
+    "section": "2",
+    "sectionTitle": "Governance and Security",
+    "question": "Governance and Securityの試験対策で重要な学び方はどれですか？",
+    "choices": {
+      "A": "用語を実務上の目的や使う場面と結び付ける",
+      "B": "似た用語を区別せず同じものとして扱う",
+      "C": "Databricks以外の一般論だけを覚える",
+      "D": "ガバナンスや運用性を常に対象外にする"
+    },
+    "answer": "A",
+    "explanation": "試験では、用語の意味に加えて、どの状況でどの機能や考え方を選ぶかを判断する力が問われます。",
+    "whyWrong": {
+      "B": "似た用語ほど役割や利用場面で区別する必要があります。",
+      "C": "Databricks上での機能や運用の文脈が重要です。",
+      "D": "ガバナンスや運用性はデータ基盤全体の重要な観点です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-024",
+    "chapterId": "dea-governance-001",
+    "section": "3",
+    "sectionTitle": "Governance and Security",
+    "question": "Governance and Securityを他領域とつなげて理解する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "取り込み、変換、運用、CI/CD、監視、ガバナンスは一連の流れとして関係するため",
+      "B": "各領域は完全に独立しており相互に影響しないため",
+      "C": "音声教材ではクイズを表示できないため",
+      "D": "すべての領域で同じ設定値だけを暗記すればよいため"
+    },
+    "answer": "A",
+    "explanation": "Databricksのデータエンジニアリングは領域間のつながりが重要で、前後の工程を意識すると判断問題に対応しやすくなります。",
+    "whyWrong": {
+      "B": "実務のパイプラインでは領域同士が密接に関係します。",
+      "C": "教材機能ではなく、学習内容のつながりに関する理由です。",
+      "D": "同じ設定値の暗記ではなく、状況に応じた判断が必要です。"
+    },
+    "references": [
+      {
+        "title": "Databricks documentation",
+        "url": "https://docs.databricks.com/"
+      }
+    ]
   }
 ]
