@@ -791,6 +791,8 @@ const getShuffledChoices = (question) => {
   return shuffledChoicesByQuestionId.get(question.id);
 };
 
+const getDisplayExplanation = (explanation) => explanation.replace(/^正解は[A-D]です。/u, '');
+
 const renderQuizFeedback = (question, selectedChoiceKey, feedbackElement) => {
   if (!selectedChoiceKey) {
     feedbackElement.hidden = false;
@@ -800,7 +802,6 @@ const renderQuizFeedback = (question, selectedChoiceKey, feedbackElement) => {
   }
 
   const isCorrect = selectedChoiceKey === question.answer;
-  const selectedText = question.choices[selectedChoiceKey];
   const answerText = question.choices[question.answer];
   const wrongReason = !isCorrect ? question.whyWrong?.[selectedChoiceKey] : '';
   feedbackElement.hidden = false;
@@ -814,12 +815,12 @@ const renderQuizFeedback = (question, selectedChoiceKey, feedbackElement) => {
 
   if (!isCorrect && wrongReason) {
     const reason = document.createElement('p');
-    reason.textContent = `選んだ選択肢：${selectedText} — ${wrongReason}`;
+    reason.textContent = `選んだ回答について：${wrongReason}`;
     feedbackElement.append(reason);
   }
 
   const explanation = document.createElement('p');
-  explanation.textContent = `解説：${question.explanation}`;
+  explanation.textContent = `解説：${getDisplayExplanation(question.explanation)}`;
   feedbackElement.append(explanation);
 
   if (question.references?.length > 0) {

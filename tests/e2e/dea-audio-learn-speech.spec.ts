@@ -125,29 +125,38 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(
       page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-feedback')
     ).toContainText('選択肢を選んでから回答してください。');
-    await page
-      .locator('#mini-quiz-list .quiz-question')
-      .first()
-      .locator('input[type="radio"]')
-      .first()
-      .check();
-    await page
-      .locator('#mini-quiz-list .quiz-question')
-      .first()
-      .getByRole('button', { name: '回答する' })
-      .click();
-    await expect(
-      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-feedback')
-    ).toContainText(/正解です。|不正解です。/);
-    await expect(
-      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-feedback')
-    ).toContainText('解説：');
-    await expect(
-      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-references a').first()
-    ).toHaveAttribute('target', '_blank');
-    await expect(
-      page.locator('#mini-quiz-list .quiz-question').first().locator('.quiz-references a').first()
-    ).toHaveAttribute('rel', 'noopener noreferrer');
+    const firstQuiz = page.locator('#mini-quiz-list .quiz-question').first();
+    const firstQuizFeedback = firstQuiz.locator('.quiz-feedback');
+    const firstQuizAnswerButton = firstQuiz.getByRole('button', { name: '回答する' });
+
+    await firstQuiz.locator('input[type="radio"][value="D"]').check();
+    await firstQuizAnswerButton.click();
+    await expect(firstQuizFeedback).toContainText('不正解です。');
+    await expect(firstQuizFeedback).toContainText(
+      '正解は「取り込み、管理、分析、AI活用までをつなぐ統合基盤として見る」です。'
+    );
+    await expect(firstQuizFeedback).toContainText(
+      '選んだ回答について：機械学習専用ではなく、データ活用全体を支えるプラットフォームです。'
+    );
+    await expect(firstQuizFeedback).toContainText(
+      '解説：Databricks Intelligence Platformは、データの取り込みから管理、分析、AI活用までを統合的に扱う基盤として押さえることが重要です。'
+    );
+    await expect(firstQuizFeedback).not.toContainText(/正解は[A-D]/);
+    await expect(firstQuizFeedback).not.toContainText(/選んだ[A-D]/);
+    await expect(firstQuiz.locator('.quiz-references a').first()).toHaveAttribute(
+      'target',
+      '_blank'
+    );
+    await expect(firstQuiz.locator('.quiz-references a').first()).toHaveAttribute(
+      'rel',
+      'noopener noreferrer'
+    );
+
+    await firstQuiz.locator('input[type="radio"][value="B"]').check();
+    await firstQuizAnswerButton.click();
+    await expect(firstQuizFeedback).toContainText('正解です。');
+    await expect(firstQuizFeedback).not.toContainText(/正解は[A-D]/);
+    await expect(firstQuizFeedback).not.toContainText(/選んだ[A-D]/);
     await expect(page.locator('#note-markdown')).toContainText(
       'Databricks Intelligence Platformは'
     );
