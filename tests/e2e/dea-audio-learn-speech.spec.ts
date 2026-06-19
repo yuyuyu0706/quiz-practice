@@ -9,6 +9,7 @@ const firstChapter = chapters[0];
 const quizzes = JSON.parse(
   readFileSync(new URL('../../dea-audio-learn/data/quizzes.json', import.meta.url), 'utf8')
 );
+const appSource = readFileSync(new URL('../../dea-audio-learn/app.js', import.meta.url), 'utf8');
 
 declare global {
   interface Window {
@@ -762,10 +763,14 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
       ).toHaveLength(3);
     }
 
+    expect(appSource).not.toContain('getDisplayExplanation');
+    expect(appSource).not.toMatch(/replace\(\/\^正解は\[A-D\]です。/u);
+
     for (const quiz of quizzes) {
       expect(Object.keys(quiz.choices)).toEqual(['A', 'B', 'C', 'D']);
       expect(['A', 'B', 'C', 'D']).toContain(quiz.answer);
       expect(quiz.answerIndex).toBeUndefined();
+      expect(quiz.explanation).not.toMatch(/^正解は[A-D]です。/u);
       expect(quiz.whyWrong).toBeTruthy();
       expect(quiz.references.length).toBeGreaterThan(0);
       for (const excludedKey of ['domain', 'tags', 'difficulty', 'sourceType', 'notes']) {

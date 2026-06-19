@@ -791,8 +791,6 @@ const getShuffledChoices = (question) => {
   return shuffledChoicesByQuestionId.get(question.id);
 };
 
-const getDisplayExplanation = (explanation) => explanation.replace(/^正解は[A-D]です。/u, '');
-
 const renderQuizFeedback = (question, selectedChoiceKey, feedbackElement) => {
   if (!selectedChoiceKey) {
     feedbackElement.hidden = false;
@@ -820,7 +818,7 @@ const renderQuizFeedback = (question, selectedChoiceKey, feedbackElement) => {
   }
 
   const explanation = document.createElement('p');
-  explanation.textContent = `解説：${getDisplayExplanation(question.explanation)}`;
+  explanation.textContent = `解説：${question.explanation}`;
   feedbackElement.append(explanation);
 
   if (question.references?.length > 0) {
