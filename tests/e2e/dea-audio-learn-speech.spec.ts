@@ -393,8 +393,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(autoLoaderInlineLink).not.toHaveAttribute('target', '_blank');
     await autoLoaderInlineLink.click();
     await expect(page).toHaveURL(/#keyword-auto-loader/u);
+    await expect(page.locator('#note-markdown')).toContainText('Auto Loader');
     await expect(page.locator('#note-markdown')).toContainText(
-      'Auto Loader：クラウドストレージ上に継続到着するファイルを増分検出して取り込む仕組み。'
+      'クラウドストレージ上に継続到着するファイルを増分検出して取り込む仕組み。'
     );
     await expect(page.locator('#audio-script-markdown h3')).toHaveCount(6);
     await expect(page.locator('#audio-script-markdown')).toContainText(
@@ -1188,27 +1189,50 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         );
         expect(audioScript).toContain('schemaLocation');
         expect(audioScript).toContain('checkpointLocation');
+        const boldPhrases = audioScript.match(/\*\*[^*]+\*\*/g) ?? [];
+        expect(boldPhrases.length).toBeGreaterThanOrEqual(10);
+        expect(boldPhrases.length).toBeLessThanOrEqual(18);
+        expect(boldPhrases).toEqual(
+          expect.arrayContaining([
+            '**後続処理が安心して使える状態にすること**',
+            '**データの性質と運用要件から選び分けること**',
+            '**単発のファイル読み込みではなく、継続運用を前提にした取り込み**',
+          ])
+        );
+        const nextSection = audioScript.split('## 次の学習へのつなぎ')[1] ?? '';
+        expect(nextSection.split(/\n\n/u).filter((paragraph) => paragraph.trim()).length).toBe(2);
+        for (const phrase of [
+          'データが一度だけ届くのか、継続的に届くのか',
+          'ファイル、データベース、SaaSなどどこから取り込むのか',
+          'データ量や到着頻度',
+          'スキーマ変化や品質確認',
+          '再処理や監査の起点',
+          'Data Transformation and Modeling',
+        ]) {
+          expect(nextSection).toContain(phrase);
+        }
+        expect(nextSection).not.toContain('Working with Lakeflow Jobs');
+        expect(nextSection).not.toContain('Governance and Security');
         expect(audioScript).toContain('toTable');
         expect(audioScript).toContain('Data Transformation and Modeling');
-        expect(audioScript).toContain('Working with Lakeflow Jobs');
-        expect(audioScript).toContain('Governance and Security');
         const keywordEntries = [
-          '<a id="keyword-batch-loading"></a>**batch loading**：一定期間分のデータをまとめて取り込む方式。',
-          '<a id="keyword-streaming"></a>**streaming**：到着するデータを継続的に処理する方式。',
-          '<a id="keyword-incremental-loading"></a>**incremental loading**：前回処理後に追加・更新された分だけを取り込む方式。',
-          '<a id="keyword-copy-into"></a>**COPY INTO**：ファイルをDeltaテーブルへ繰り返し取り込むためのSQLベースの仕組み。',
-          '<a id="keyword-auto-loader"></a>**Auto Loader**：クラウドストレージ上に継続到着するファイルを増分検出して取り込む仕組み。',
-          '<a id="keyword-schema-enforcement"></a>**schema enforcement**：想定外のデータ構造を検知し、品質を守る考え方。',
-          '<a id="keyword-schema-evolution"></a>**schema evolution**：スキーマの変更を必要に応じて取り込めるようにする考え方。',
-          '<a id="keyword-lakeflow-connect"></a>**Lakeflow Connect**：SaaSやデータベースなどの外部システムから、管理された形でデータを取り込むための仕組み。',
-          '<a id="keyword-unity-catalog"></a>**Unity Catalog**：データ資産、権限、監査を統一的に管理する仕組み。',
-          '<a id="keyword-bronze"></a>**Bronze**：生データをできるだけ保持し、監査や再処理の起点とする層。',
-          '<a id="keyword-checkpoint-location"></a>**checkpointLocation**：ストリーミング処理で、どこまで処理済みかを記録する場所。',
-          '<a id="keyword-schema-location"></a>**schemaLocation**：Auto Loaderが検出したスキーマ情報を保存する場所。',
+          `<a id="keyword-batch-loading"></a>**batch loading**\n  一定期間分のデータをまとめて取り込む方式。`,
+          `<a id="keyword-streaming"></a>**streaming**\n  到着するデータを継続的に処理する方式。`,
+          `<a id="keyword-incremental-loading"></a>**incremental loading**\n  前回処理後に追加・更新された分だけを取り込む方式。`,
+          `<a id="keyword-copy-into"></a>**COPY INTO**\n  ファイルをDeltaテーブルへ繰り返し取り込むためのSQLベースの仕組み。`,
+          `<a id="keyword-auto-loader"></a>**Auto Loader**\n  クラウドストレージ上に継続到着するファイルを増分検出して取り込む仕組み。`,
+          `<a id="keyword-schema-enforcement"></a>**schema enforcement**\n  想定外のデータ構造を検知し、取り込み時の品質を守る考え方。`,
+          `<a id="keyword-schema-evolution"></a>**schema evolution**\n  スキーマの変更を必要に応じて取り込めるようにする考え方。`,
+          `<a id="keyword-lakeflow-connect"></a>**Lakeflow Connect**\n  SaaSやデータベースなどの外部システムから、管理された形でデータを取り込むための仕組み。`,
+          `<a id="keyword-unity-catalog"></a>**Unity Catalog**\n  データ資産、権限、監査を統一的に管理する仕組み。`,
+          `<a id="keyword-bronze"></a>**Bronze**\n  生データをできるだけ保持し、監査や再処理の起点とする層。`,
+          `<a id="keyword-checkpoint-location"></a>**checkpointLocation**\n  ストリーミング処理で、どこまで処理済みかを記録する場所。`,
+          `<a id="keyword-schema-location"></a>**schemaLocation**\n  Auto Loaderが検出したスキーマ情報を保存する場所。`,
         ];
         for (const keywordEntry of keywordEntries) {
           expect(note).toContain(keywordEntry);
         }
+        expect(note).not.toContain('**Auto Loader**：');
         const keywordSection = note.split('## キーワード一覧')[1]?.split('## 参考リンク')[0] ?? '';
         expect(keywordSection).not.toContain('https://learn.microsoft.com');
         for (const anchor of [
