@@ -499,6 +499,55 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestCicdSpeakCall?.text)).not.toContain('etl_pipeline');
     expect(String(latestCicdSpeakCall?.text)).not.toContain('| 観点 |');
 
+    await page
+      .getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
+      .click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Troubleshooting, Monitoring, and Optimizationの全体像'
+    );
+    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
+      'Troubleshooting, Monitoring, and Optimization'
+    );
+    await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
+      'Troubleshooting, Monitoring, and Optimizationの全体像'
+    );
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(10);
+    for (const keyword of [
+      'run history',
+      'DAG',
+      'Spark UI',
+      'data skew',
+      'shuffle',
+      'disk spilling',
+      'OOM',
+    ]) {
+      await expect(page.locator('#audio-script-markdown')).toContainText(keyword);
+    }
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'Job run time increased'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-python')).toContainText(
+      'spark.sql.adaptive.enabled'
+    );
+    await expect(page.locator('#audio-toc-list')).toContainText(
+      'Spark UIでは、ステージごとの偏りとデータ移動を見る'
+    );
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await page
+      .locator('#audio-script-markdown h3', { hasText: 'Spark UIでは' })
+      .locator('.audio-heading-play')
+      .click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    const latestOpsSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(latestOpsSpeakCall?.text)).not.toContain('flowchart TD');
+    expect(String(latestOpsSpeakCall?.text)).not.toContain('spark.sql.shuffle.partitions');
+    expect(String(latestOpsSpeakCall?.text)).not.toContain('| 症状 |');
+
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
       expect.arrayContaining([
@@ -1032,6 +1081,23 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```yaml');
         expect(audioScript).toContain('etl_pipeline');
+      }
+      if (chapter.id === 'dea-ops-001') {
+        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(10);
+        for (const keyword of [
+          'run history',
+          'DAG',
+          'Spark UI',
+          'data skew',
+          'shuffle',
+          'disk spilling',
+          'OOM',
+        ]) {
+          expect(audioScript).toContain(keyword);
+        }
+        expect(audioScript).toContain('```mermaid');
+        expect(audioScript).toContain('```python');
+        expect(audioScript).toContain('spark.sql.adaptive.enabled');
       }
       expect(note).toContain(`# 要点メモ: ${chapter.title}`);
       for (const heading of [
