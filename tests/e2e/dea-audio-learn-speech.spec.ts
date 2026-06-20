@@ -85,6 +85,28 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-status')).toHaveText(firstChapter.status);
     await expect(page.locator('#selected-chapter-no')).toHaveCount(0);
     await expect(page.locator('#selected-position')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: '領域を選ぶ' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'この領域のチャプター' })).toBeVisible();
+    await expect(page.locator('#domain-list .domain-button')).toHaveText([
+      'Databricks Intelligence Platform',
+      'Data Ingestion and Loading',
+      'Data Transformation and Modeling',
+      'Working with Lakeflow Jobs',
+      'Implementing CI/CD',
+      'Troubleshooting, Monitoring, and Optimization',
+      'Governance and Security',
+    ]);
+    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
+      'Databricks Intelligence Platform'
+    );
+    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(2);
+    await expect(page.locator('#chapter-list .chapter-button')).toContainText([
+      'Chapter 1',
+      'Chapter 2',
+    ]);
+    await expect(page.locator('#chapter-list .chapter-button').first()).not.toContainText(
+      'Databricks Intelligence Platform'
+    );
     await expect(page.getByRole('heading', { name: '音声教材', exact: true })).toBeVisible();
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
@@ -300,6 +322,22 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     ).toBeVisible();
     await expect(page.locator('#audio-toc-list')).toContainText(
       'Delta Lakeは信頼できるテーブル管理'
+    );
+
+    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Data Ingestion and Loadingの全体像'
+    );
+    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
+      'Data Ingestion and Loading'
+    );
+    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(1);
+    await expect(page.locator('#chapter-list .chapter-button')).toContainText([
+      'Chapter 3 Data Ingestion and Loadingの全体像',
+    ]);
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#mini-quiz-list')).toContainText(
+      'Data Ingestion and Loadingで最初に押さえるべき観点'
     );
 
     const calls = await page.evaluate(() => window.__speechCalls);

@@ -1,3 +1,4 @@
+const domainList = document.querySelector('#domain-list');
 const chapterList = document.querySelector('#chapter-list');
 const chapterSelector = document.querySelector('#chapter-selector');
 const audioTocPanel = document.querySelector('#audio-toc-panel');
@@ -31,6 +32,7 @@ let chapters = [];
 let quizzes = [];
 let shuffledChoicesByQuestionId = new Map();
 let selectedChapterIndex = 0;
+let selectedDomainName = '';
 let currentAudioScriptText = '';
 let speechSections = [];
 let speechChunks = [];
@@ -910,10 +912,37 @@ const fetchText = async (path) => {
   return response.text();
 };
 
-const renderChapterList = () => {
-  chapterList.innerHTML = '';
+const getDomains = () => [...new Set(chapters.map((chapter) => chapter.domain))];
 
-  chapters.forEach((chapter) => {
+const getChaptersByDomain = (domain) =>
+  chapters
+    .filter((chapter) => chapter.domain === domain)
+    .sort((left, right) => left.chapterNo - right.chapterNo);
+
+const renderDomainList = () => {
+  domainList.innerHTML = '';
+
+  getDomains().forEach((domain) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'domain-button';
+    button.dataset.domain = domain;
+    button.textContent = domain;
+    button.addEventListener('click', () => selectDomain(domain));
+    domainList.append(button);
+  });
+};
+
+const renderChapterList = (domain = selectedDomainName) => {
+  chapterList.innerHTML = '';
+  const domainChapters = getChaptersByDomain(domain);
+
+  if (domainChapters.length === 0) {
+    chapterList.textContent = 'この領域のチャプターは準備中です。';
+    return;
+  }
+
+  domainChapters.forEach((chapter) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'chapter-button';
@@ -921,10 +950,21 @@ const renderChapterList = () => {
     button.innerHTML = `
       <span>Chapter ${chapter.chapterNo}</span>
       <strong>${chapter.title}</strong>
-      <small>${chapter.domain}</small>
     `;
     button.addEventListener('click', () => selectChapterById(chapter.id));
     chapterList.append(button);
+  });
+};
+
+const updateActiveDomain = (domain) => {
+  document.querySelectorAll('.domain-button').forEach((button) => {
+    const isActive = button.dataset.domain === domain;
+    button.classList.toggle('is-active', isActive);
+    if (isActive) {
+      button.setAttribute('aria-current', 'true');
+    } else {
+      button.removeAttribute('aria-current');
+    }
   });
 };
 
@@ -938,6 +978,12 @@ const updateActiveChapter = (chapterId) => {
       button.removeAttribute('aria-current');
     }
   });
+};
+
+const selectDomain = async (domain) => {
+  const firstChapter = getChaptersByDomain(domain)[0];
+  if (!firstChapter) return;
+  await selectChapterById(firstChapter.id);
 };
 
 const updateChapterNavigation = () => {
@@ -958,6 +1004,11 @@ const selectChapterByIndex = async (chapterIndex) => {
 
   resetSpeechForChapterChange();
   selectedChapterIndex = chapterIndex;
+  if (selectedDomainName !== chapter.domain) {
+    selectedDomainName = chapter.domain;
+    renderChapterList(chapter.domain);
+  }
+  updateActiveDomain(chapter.domain);
   updateActiveChapter(chapter.id);
   updateChapterNavigation();
   selectedDomain.textContent = chapter.domain;
@@ -1066,9 +1117,12 @@ const init = async () => {
     }
     quizzes = await quizResponse.json();
     shuffledChoicesByQuestionId = new Map();
-    renderChapterList();
+    selectedDomainName = chapters[0]?.domain ?? '';
+    renderDomainList();
+    renderChapterList(selectedDomainName);
     await selectChapterByIndex(0);
   } catch (error) {
+    domainList.textContent = error.message;
     chapterList.textContent = error.message;
     selectedTitle.textContent = '読み込みエラー';
   }
