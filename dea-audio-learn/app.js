@@ -204,6 +204,9 @@ const clearSpeechStartWatchdog = () => {
 const removeAudioScriptTitle = (markdown) =>
   markdown.replace(/^#\s*音声スクリプト:[^\n]*(?:\r?\n)+/u, '').trimStart();
 
+const removeNoteTitle = (markdown) =>
+  markdown.replace(/^#\s*要点メモ:[^\n]*(?:\r?\n)+/u, '').trimStart();
+
 const stripMarkdownForSpeech = (markdown) =>
   markdown
     .replace(/```[\s\S]*?```/g, ' ')
@@ -1040,7 +1043,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   }
 
   try {
-    const note = await fetchText(chapter.notePath);
+    const note = removeNoteTitle(await fetchText(chapter.notePath));
     noteMarkdown.innerHTML = renderMarkdown(note);
     addExternalLinkAttributes(noteMarkdown);
   } catch (error) {

@@ -107,6 +107,18 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#chapter-list .chapter-button').first()).not.toContainText(
       'Databricks Intelligence Platform'
     );
+    const domainButtonHeights = await page
+      .locator('#domain-list .domain-button')
+      .evaluateAll((buttons) =>
+        buttons.map((button) => Math.round(button.getBoundingClientRect().height))
+      );
+    expect(Math.max(...domainButtonHeights)).toBeLessThanOrEqual(52);
+    const chapterButtonHeights = await page
+      .locator('#chapter-list .chapter-button')
+      .evaluateAll((buttons) =>
+        buttons.map((button) => Math.round(button.getBoundingClientRect().height))
+      );
+    expect(Math.max(...chapterButtonHeights)).toBeLessThanOrEqual(58);
     await expect(page.getByRole('heading', { name: '音声教材', exact: true })).toBeVisible();
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
@@ -180,6 +192,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#note-markdown')).toContainText(
       'Databricks Intelligence Platformは'
     );
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
     await expect(page.locator('#note-markdown')).not.toContainText('Phase 6で追加予定');
     await expect(page.locator('#audio-script-markdown')).toContainText('はじめに');
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
@@ -351,6 +364,20 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#mini-quiz-list')).toContainText(
       'Data Ingestion and Loadingで最初に押さえるべき観点'
     );
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
+    await expect(page.locator('#note-markdown')).not.toContainText('要点メモ:');
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(6);
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'flowchart LR'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-python')).toContainText(
+      'spark.readStream.format'
+    );
+    await expect(page.locator('#audio-toc-list')).toContainText(
+      'クラウドストレージ上のファイルをBronzeへ取り込む'
+    );
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await expect(page.locator('#toc-speech-toggle')).toHaveText('再生');
 
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
@@ -844,6 +871,15 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         '## 次の学習へのつながり',
       ]) {
         expect(audioScript).toContain(heading);
+      }
+      if (chapter.id === 'dea-ingestion-001') {
+        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(6);
+        expect(audioScript).toContain('```mermaid');
+        expect(audioScript).toContain('```python');
+        expect(audioScript).toContain('spark.readStream.format("cloudFiles")');
+        expect(audioScript).toContain('Data Transformation and Modeling');
+        expect(audioScript).toContain('Working with Lakeflow Jobs');
+        expect(audioScript).toContain('Governance and Security');
       }
       expect(note).toContain(`# 要点メモ: ${chapter.title}`);
       for (const heading of [
