@@ -196,6 +196,12 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#note-markdown')).not.toContainText('Phase 6で追加予定');
     await expect(page.locator('#audio-script-markdown')).toContainText('はじめに');
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
+    await expect(page.locator('#audio-script-markdown')).toContainText('重要な考え方');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('中心となる考え方');
+    await expect(page.locator('#note-markdown')).toContainText('本チャプターのポイント');
+    await expect(page.locator('#note-markdown')).toContainText('試験での注意点');
+    await expect(page.locator('#note-markdown')).not.toContainText('試験で押さえるポイント');
+    await expect(page.locator('#note-markdown')).not.toContainText('ひっかけ注意');
     await expect(page.getByRole('heading', { name: '背景', level: 2 })).toBeVisible();
     await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toHaveCount(1);
     await expect(page.locator('.audio-toc__play')).toHaveCount(0);
@@ -339,6 +345,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Databricks Intelligence Platformを理解するうえで'
     );
     await expect(page.locator('#audio-script-markdown')).toContainText('本チャプターのゴール');
+    await expect(page.locator('#audio-script-markdown')).toContainText('重要な考え方');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('中心となる考え方');
+    await expect(page.locator('#note-markdown')).toContainText('本チャプターのポイント');
+    await expect(page.locator('#note-markdown')).toContainText('試験での注意点');
+    await expect(page.locator('#note-markdown')).not.toContainText('試験で押さえるポイント');
+    await expect(page.locator('#note-markdown')).not.toContainText('ひっかけ注意');
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
     await expect(
       page.getByRole('heading', { name: 'データレイクだけでは困ること', level: 3 })
     ).toBeVisible();
@@ -1066,6 +1079,34 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
       expect(
         quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
       ).toHaveLength(3);
+    }
+
+    const headingOrder = [
+      '## 本チャプターのポイント',
+      '## 試験での注意点',
+      '## キーワード一覧',
+      '## 参考リンク',
+    ];
+    const baseChapters = chapters.filter((chapter: { id: string }) =>
+      ['dea-dip-001', 'dea-dip-002'].includes(chapter.id)
+    );
+    for (const chapter of baseChapters) {
+      const audioScript = readFileSync(
+        new URL(`../../dea-audio-learn/${chapter.audioScriptPath}`, import.meta.url),
+        'utf8'
+      );
+      const note = readFileSync(
+        new URL(`../../dea-audio-learn/${chapter.notePath}`, import.meta.url),
+        'utf8'
+      );
+      expect(audioScript).not.toContain('## 中心となる考え方');
+      expect(audioScript).toContain('## 重要な考え方');
+      expect(note).toContain(`# 要点メモ: ${chapter.title}`);
+      expect(note).not.toContain('## 試験で押さえるポイント');
+      expect(note).not.toContain('## ひっかけ注意');
+      const positions = headingOrder.map((heading) => note.indexOf(heading));
+      expect(positions.every((position) => position >= 0)).toBe(true);
+      expect(positions).toEqual([...positions].sort((a, b) => a - b));
     }
 
     const addedChapters = chapters.filter(
