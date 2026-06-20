@@ -548,6 +548,58 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestOpsSpeakCall?.text)).not.toContain('spark.sql.shuffle.partitions');
     expect(String(latestOpsSpeakCall?.text)).not.toContain('| 症状 |');
 
+    await page.getByRole('button', { name: 'Governance and Security' }).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Governance and Securityの全体像'
+    );
+    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
+      'Governance and Security'
+    );
+    await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
+      'Governance and Securityの全体像'
+    );
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(10);
+    for (const keyword of [
+      'Unity Catalog',
+      'managed table',
+      'external table',
+      'GRANT',
+      'REVOKE',
+      'DENY',
+      'row-level security',
+      'column masking',
+      'ABAC',
+    ]) {
+      await expect(page.locator('#audio-script-markdown')).toContainText(keyword);
+    }
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'Audit / Policy / Access Control'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-sql')).toContainText(
+      'GRANT USE CATALOG'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-sql')).toContainText(
+      'mask_email'
+    );
+    await expect(page.locator('#audio-toc-list')).toContainText(
+      'Unity Catalogは、データ資産を一元的に把握し統制する土台'
+    );
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await page
+      .locator('#audio-script-markdown h3', { hasText: 'Unity Catalogは' })
+      .locator('.audio-heading-play')
+      .click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    const latestGovernanceSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(latestGovernanceSpeakCall?.text)).not.toContain('flowchart LR');
+    expect(String(latestGovernanceSpeakCall?.text)).not.toContain('GRANT USE CATALOG');
+    expect(String(latestGovernanceSpeakCall?.text)).not.toContain('| 観点 |');
+
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
       expect.arrayContaining([
@@ -1098,6 +1150,23 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```python');
         expect(audioScript).toContain('spark.sql.adaptive.enabled');
+      }
+      if (chapter.id === 'dea-governance-001') {
+        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(10);
+        for (const keyword of [
+          'Unity Catalog',
+          'managed table',
+          'external table',
+          'GRANT / REVOKE / DENY',
+          'row-level security',
+          'column masking',
+          'ABAC',
+        ]) {
+          expect(audioScript).toContain(keyword);
+        }
+        expect(audioScript).toContain('```mermaid');
+        expect(audioScript).toContain('```sql');
+        expect(audioScript).toContain('mask_email');
       }
       expect(note).toContain(`# 要点メモ: ${chapter.title}`);
       for (const heading of [
