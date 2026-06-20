@@ -420,6 +420,44 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestTransformSpeakCall?.text)).not.toContain('spark.table');
     expect(String(latestTransformSpeakCall?.text)).not.toContain('| 観点 |');
 
+    await page.getByRole('button', { name: 'Working with Lakeflow Jobs' }).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Working with Lakeflow Jobsの全体像'
+    );
+    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
+      'Working with Lakeflow Jobs'
+    );
+    await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
+      'Working with Lakeflow Jobsの全体像'
+    );
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(7);
+    await expect(page.locator('#audio-script-markdown')).toContainText('DAG');
+    await expect(page.locator('#audio-script-markdown')).toContainText('retry');
+    await expect(page.locator('#audio-script-markdown')).toContainText('trigger');
+    await expect(page.locator('#audio-script-markdown')).toContainText('task dependency');
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'Retry / Alert'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-yaml')).toContainText(
+      'daily_sales_pipeline'
+    );
+    await expect(page.locator('#audio-toc-list')).toContainText('DAGで依存関係を明示する');
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await page
+      .locator('#audio-script-markdown h3', { hasText: 'DAGで依存関係を明示する' })
+      .locator('.audio-heading-play')
+      .click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    const latestJobsSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(latestJobsSpeakCall?.text)).not.toContain('flowchart LR');
+    expect(String(latestJobsSpeakCall?.text)).not.toContain('daily_sales_pipeline');
+    expect(String(latestJobsSpeakCall?.text)).not.toContain('| 判断観点 |');
+
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
       expect.arrayContaining([
@@ -932,6 +970,16 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```python');
         expect(audioScript).toContain('dropDuplicates(["order_id"])');
+      }
+      if (chapter.id === 'dea-lakeflow-jobs-001') {
+        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(7);
+        expect(audioScript).toContain('DAG');
+        expect(audioScript).toContain('retry');
+        expect(audioScript).toContain('trigger');
+        expect(audioScript).toContain('task dependency');
+        expect(audioScript).toContain('```mermaid');
+        expect(audioScript).toContain('```yaml');
+        expect(audioScript).toContain('daily_sales_pipeline');
       }
       expect(note).toContain(`# 要点メモ: ${chapter.title}`);
       for (const heading of [
