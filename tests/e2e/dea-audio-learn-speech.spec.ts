@@ -111,12 +111,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
     await expect(page.locator('#content-markdown')).toHaveCount(0);
-    await expect(page.locator('.step-item').filter({ hasText: /^聞く利用可能$/ })).toBeVisible();
-    await expect(page.locator('.step-item').filter({ hasText: /^要点利用可能$/ })).toBeVisible();
-    await expect(page.locator('.step-item').filter({ hasText: /^解く利用可能$/ })).toBeVisible();
-    await expect(
-      page.locator('.step-item').filter({ hasText: /^記録Phase 10で追加予定$/ })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: '学習ステップ' })).toHaveCount(0);
+    await expect(page.locator('.step-item')).toHaveCount(0);
+    await expect(page.getByText('Phase 10で追加予定')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '要点メモ' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'ミニクイズ' })).toBeVisible();
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
@@ -215,6 +212,18 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       await expect(page.locator('#audio-toc-panel')).not.toHaveAttribute('open', '');
     }
     await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = false;
+    });
+    await expect(page.locator('.toc-speech-controls')).toBeVisible();
+    await expect(page.locator('.toc-speech-controls')).not.toHaveCSS('display', 'none');
+    const overviewActionsBox = await page.locator('.chapter-overview-actions').boundingBox();
+    const minutesBox = await page.locator('#selected-minutes').boundingBox();
+    const chapterNavBox = await page.locator('.chapter-nav').boundingBox();
+    expect(overviewActionsBox).not.toBeNull();
+    expect(minutesBox).not.toBeNull();
+    expect(chapterNavBox).not.toBeNull();
+    expect(Math.abs((minutesBox?.y ?? 0) - (chapterNavBox?.y ?? 0))).toBeLessThan(48);
+    await page.locator('#audio-toc-panel').evaluate((details) => {
       (details as HTMLDetailsElement).open = true;
     });
     await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toBeVisible();
@@ -253,7 +262,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(
       page.locator('#audio-script-markdown a[href="#lakehouse"]').first()
     ).not.toHaveAttribute('target', '_blank');
-    await expect(page.getByRole('heading', { name: '学習ステップ' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '学習ステップ' })).toHaveCount(0);
     await expect(page.locator('#audio-script-markdown h1')).toHaveCount(0);
     await expect(page.locator('#audio-script-markdown')).not.toContainText('音声スクリプト:');
     await expect(page.locator('#speech-status')).toHaveText('未再生');
@@ -335,6 +344,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
       'Chapter 3 Data Ingestion and Loadingの全体像',
     ]);
+    await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
+      'Data Ingestion and Loadingの全体像'
+    );
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#mini-quiz-list')).toContainText(
       'Data Ingestion and Loadingで最初に押さえるべき観点'
