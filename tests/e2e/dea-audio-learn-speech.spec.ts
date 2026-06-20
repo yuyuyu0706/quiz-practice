@@ -379,7 +379,23 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#note-markdown h1')).toHaveCount(0);
     await expect(page.locator('#note-markdown')).not.toContainText('要点メモ:');
+    await expect(page.locator('#note-markdown a')).toHaveCount(13);
+    await expect(page.locator('#note-markdown a').first()).toHaveAttribute(
+      'href',
+      /learn\.microsoft\.com\/ja-jp\/azure\/databricks\//u
+    );
     await expect(page.locator('#audio-script-markdown h3')).toHaveCount(6);
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '以下の表は、取り込み方式を選ぶときに見る代表的な軸を整理したものです。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '以下は、landing領域からBronze、Silver、Goldへ進む基本的な流れです。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '以下は、JSONファイルを読み込み、Bronzeテーブルへ書き込む概念例です。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText('次の学習へのつなぎ');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('次の学習へのつながり');
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'flowchart LR'
     );
@@ -391,6 +407,17 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#toc-speech-toggle')).toHaveText('再生');
+    await page
+      .locator('#audio-script-markdown h3', { hasText: 'Auto Loaderで継続取り込みする例' })
+      .locator('.audio-heading-play')
+      .click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    const latestIngestionSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(latestIngestionSpeakCall?.text)).not.toContain('flowchart LR');
+    expect(String(latestIngestionSpeakCall?.text)).not.toContain('spark.readStream.format');
 
     await page.getByRole('button', { name: 'Data Transformation and Modeling' }).click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
@@ -1130,18 +1157,50 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         '## 背景',
         '## 重要な考え方',
         '## 具体的なイメージ',
-        '## 次の学習へのつながり',
       ]) {
         expect(audioScript).toContain(heading);
       }
       if (chapter.id === 'dea-ingestion-001') {
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).not.toContain('## 次の学習へのつながり');
         expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(6);
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```python');
         expect(audioScript).toContain('spark.readStream.format("cloudFiles")');
+        expect(audioScript).toContain('以下の表は、取り込み方式を選ぶときに見る代表的な軸');
+        expect(audioScript).toContain(
+          '以下は、landing領域からBronze、Silver、Goldへ進む基本的な流れ'
+        );
+        expect(audioScript).toContain(
+          '以下は、JSONファイルを読み込み、Bronzeテーブルへ書き込む概念例'
+        );
+        expect(audioScript).toContain('schemaLocation');
+        expect(audioScript).toContain('checkpointLocation');
+        expect(audioScript).toContain('toTable');
         expect(audioScript).toContain('Data Transformation and Modeling');
         expect(audioScript).toContain('Working with Lakeflow Jobs');
         expect(audioScript).toContain('Governance and Security');
+        const keywordLinks = [
+          '[batch / streaming / incremental loading](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)',
+          '[COPY INTO](https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-copy-into)',
+          '[Auto Loader](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/)',
+          '[schema enforcement / schema evolution](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)',
+          '[Lakeflow Connect](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)',
+          '[JDBC / ODBC / REST clients](https://learn.microsoft.com/ja-jp/azure/databricks/connect/)',
+          '[Unity Catalog governed tables](https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/)',
+          '[semi-structured / unstructured data](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)',
+        ];
+        for (const keywordLink of keywordLinks) {
+          expect(note).toContain(keywordLink);
+        }
+        const referenceSection = note.split('## 参考リンク')[1] ?? '';
+        const referenceLinks =
+          referenceSection.match(
+            /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
+          ) ?? [];
+        expect(referenceLinks).toHaveLength(5);
+      } else {
+        expect(audioScript).toContain('## 次の学習へのつながり');
       }
       if (chapter.id === 'dea-transform-001') {
         expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(6);

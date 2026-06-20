@@ -14,15 +14,19 @@
 
 ## キーワード一覧
 
-- batch / streaming / incremental loading
-- COPY INTO
-- Auto Loader
-- schema enforcement / schema evolution
-- Lakeflow Connect
-- JDBC / ODBC / REST clients
-- Unity Catalog governed tables
-- semi-structured / unstructured data
+- [batch / streaming / incremental loading](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)
+- [COPY INTO](https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-copy-into)
+- [Auto Loader](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/)
+- [schema enforcement / schema evolution](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)
+- [Lakeflow Connect](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)
+- [JDBC / ODBC / REST clients](https://learn.microsoft.com/ja-jp/azure/databricks/connect/)
+- [Unity Catalog governed tables](https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/)
+- [semi-structured / unstructured data](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)
 
 ## 参考リンク
 
-- [Databricks documentation](https://docs.databricks.com/)
+- [Auto Loader を使用したファイルの取り込み](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/)
+- [COPY INTO を使用したデータの読み込み](https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-copy-into)
+- [Auto Loader のスキーマ推論とスキーマ進化](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)
+- [Lakeflow Connect の概要](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)
+- [Unity Catalog とは](https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/)
