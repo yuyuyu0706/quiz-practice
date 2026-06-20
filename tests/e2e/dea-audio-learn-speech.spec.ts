@@ -379,10 +379,22 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#note-markdown h1')).toHaveCount(0);
     await expect(page.locator('#note-markdown')).not.toContainText('要点メモ:');
-    await expect(page.locator('#note-markdown a')).toHaveCount(13);
-    await expect(page.locator('#note-markdown a').first()).toHaveAttribute(
-      'href',
-      /learn\.microsoft\.com\/ja-jp\/azure\/databricks\//u
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(12);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]').first()).not.toHaveAttribute(
+      'href'
+    );
+    await expect(page.locator('#note-markdown a[href^="https://learn.microsoft.com"]')).toHaveCount(
+      5
+    );
+    const autoLoaderInlineLink = page.locator(
+      '#audio-script-markdown a[href="#keyword-auto-loader"]'
+    );
+    await expect(autoLoaderInlineLink).toHaveCount(1);
+    await expect(autoLoaderInlineLink).not.toHaveAttribute('target', '_blank');
+    await autoLoaderInlineLink.click();
+    await expect(page).toHaveURL(/#keyword-auto-loader/u);
+    await expect(page.locator('#note-markdown')).toContainText(
+      'Auto Loader：クラウドストレージ上に継続到着するファイルを増分検出して取り込む仕組み。'
     );
     await expect(page.locator('#audio-script-markdown h3')).toHaveCount(6);
     await expect(page.locator('#audio-script-markdown')).toContainText(
@@ -1180,18 +1192,40 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('Data Transformation and Modeling');
         expect(audioScript).toContain('Working with Lakeflow Jobs');
         expect(audioScript).toContain('Governance and Security');
-        const keywordLinks = [
-          '[batch / streaming / incremental loading](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)',
-          '[COPY INTO](https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-copy-into)',
-          '[Auto Loader](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/)',
-          '[schema enforcement / schema evolution](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)',
-          '[Lakeflow Connect](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)',
-          '[JDBC / ODBC / REST clients](https://learn.microsoft.com/ja-jp/azure/databricks/connect/)',
-          '[Unity Catalog governed tables](https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/)',
-          '[semi-structured / unstructured data](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)',
+        const keywordEntries = [
+          '<a id="keyword-batch-loading"></a>**batch loading**：一定期間分のデータをまとめて取り込む方式。',
+          '<a id="keyword-streaming"></a>**streaming**：到着するデータを継続的に処理する方式。',
+          '<a id="keyword-incremental-loading"></a>**incremental loading**：前回処理後に追加・更新された分だけを取り込む方式。',
+          '<a id="keyword-copy-into"></a>**COPY INTO**：ファイルをDeltaテーブルへ繰り返し取り込むためのSQLベースの仕組み。',
+          '<a id="keyword-auto-loader"></a>**Auto Loader**：クラウドストレージ上に継続到着するファイルを増分検出して取り込む仕組み。',
+          '<a id="keyword-schema-enforcement"></a>**schema enforcement**：想定外のデータ構造を検知し、品質を守る考え方。',
+          '<a id="keyword-schema-evolution"></a>**schema evolution**：スキーマの変更を必要に応じて取り込めるようにする考え方。',
+          '<a id="keyword-lakeflow-connect"></a>**Lakeflow Connect**：SaaSやデータベースなどの外部システムから、管理された形でデータを取り込むための仕組み。',
+          '<a id="keyword-unity-catalog"></a>**Unity Catalog**：データ資産、権限、監査を統一的に管理する仕組み。',
+          '<a id="keyword-bronze"></a>**Bronze**：生データをできるだけ保持し、監査や再処理の起点とする層。',
+          '<a id="keyword-checkpoint-location"></a>**checkpointLocation**：ストリーミング処理で、どこまで処理済みかを記録する場所。',
+          '<a id="keyword-schema-location"></a>**schemaLocation**：Auto Loaderが検出したスキーマ情報を保存する場所。',
         ];
-        for (const keywordLink of keywordLinks) {
-          expect(note).toContain(keywordLink);
+        for (const keywordEntry of keywordEntries) {
+          expect(note).toContain(keywordEntry);
+        }
+        const keywordSection = note.split('## キーワード一覧')[1]?.split('## 参考リンク')[0] ?? '';
+        expect(keywordSection).not.toContain('https://learn.microsoft.com');
+        for (const anchor of [
+          '#keyword-batch-loading',
+          '#keyword-streaming',
+          '#keyword-incremental-loading',
+          '#keyword-copy-into',
+          '#keyword-auto-loader',
+          '#keyword-schema-enforcement',
+          '#keyword-schema-evolution',
+          '#keyword-lakeflow-connect',
+          '#keyword-unity-catalog',
+          '#keyword-bronze',
+          '#keyword-checkpoint-location',
+          '#keyword-schema-location',
+        ]) {
+          expect(audioScript).toContain(`](${anchor})`);
         }
         const referenceSection = note.split('## 参考リンク')[1] ?? '';
         const referenceLinks =

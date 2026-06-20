@@ -14,14 +14,18 @@
 
 ## キーワード一覧
 
-- [batch / streaming / incremental loading](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)
-- [COPY INTO](https://learn.microsoft.com/ja-jp/azure/databricks/sql/language-manual/delta-copy-into)
-- [Auto Loader](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/)
-- [schema enforcement / schema evolution](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)
-- [Lakeflow Connect](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/overview)
-- [JDBC / ODBC / REST clients](https://learn.microsoft.com/ja-jp/azure/databricks/connect/)
-- [Unity Catalog governed tables](https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/)
-- [semi-structured / unstructured data](https://learn.microsoft.com/ja-jp/azure/databricks/ingestion/cloud-object-storage/auto-loader/schema)
+- <a id="keyword-batch-loading"></a>**batch loading**：一定期間分のデータをまとめて取り込む方式。
+- <a id="keyword-streaming"></a>**streaming**：到着するデータを継続的に処理する方式。
+- <a id="keyword-incremental-loading"></a>**incremental loading**：前回処理後に追加・更新された分だけを取り込む方式。
+- <a id="keyword-copy-into"></a>**COPY INTO**：ファイルをDeltaテーブルへ繰り返し取り込むためのSQLベースの仕組み。
+- <a id="keyword-auto-loader"></a>**Auto Loader**：クラウドストレージ上に継続到着するファイルを増分検出して取り込む仕組み。
+- <a id="keyword-schema-enforcement"></a>**schema enforcement**：想定外のデータ構造を検知し、品質を守る考え方。
+- <a id="keyword-schema-evolution"></a>**schema evolution**：スキーマの変更を必要に応じて取り込めるようにする考え方。
+- <a id="keyword-lakeflow-connect"></a>**Lakeflow Connect**：SaaSやデータベースなどの外部システムから、管理された形でデータを取り込むための仕組み。
+- <a id="keyword-unity-catalog"></a>**Unity Catalog**：データ資産、権限、監査を統一的に管理する仕組み。
+- <a id="keyword-bronze"></a>**Bronze**：生データをできるだけ保持し、監査や再処理の起点とする層。
+- <a id="keyword-checkpoint-location"></a>**checkpointLocation**：ストリーミング処理で、どこまで処理済みかを記録する場所。
+- <a id="keyword-schema-location"></a>**schemaLocation**：Auto Loaderが検出したスキーマ情報を保存する場所。
 
 ## 参考リンク
 
