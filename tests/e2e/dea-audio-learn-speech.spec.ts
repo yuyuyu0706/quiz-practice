@@ -458,6 +458,47 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestJobsSpeakCall?.text)).not.toContain('daily_sales_pipeline');
     expect(String(latestJobsSpeakCall?.text)).not.toContain('| 判断観点 |');
 
+    await page.getByRole('button', { name: 'Implementing CI/CD' }).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText('Implementing CI/CDの全体像');
+    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
+      'Implementing CI/CD'
+    );
+    await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
+      'Implementing CI/CDの全体像'
+    );
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(8);
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'データ基盤では「変更＝データの変化」'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText('dev');
+    await expect(page.locator('#audio-script-markdown')).toContainText('staging');
+    await expect(page.locator('#audio-script-markdown')).toContainText('prod');
+    await expect(page.locator('#audio-script-markdown')).toContainText('Databricks Asset Bundles');
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'Lakeflow Jobs / Pipelines'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-yaml')).toContainText(
+      'etl_pipeline'
+    );
+    await expect(page.locator('#audio-toc-list')).toContainText(
+      'データパイプラインもソフトウェアと同じくバージョン管理する'
+    );
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await page
+      .locator('#audio-script-markdown h3', { hasText: 'データパイプラインもソフトウェア' })
+      .locator('.audio-heading-play')
+      .click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    const latestCicdSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(latestCicdSpeakCall?.text)).not.toContain('flowchart LR');
+    expect(String(latestCicdSpeakCall?.text)).not.toContain('etl_pipeline');
+    expect(String(latestCicdSpeakCall?.text)).not.toContain('| 観点 |');
+
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
       expect.arrayContaining([
@@ -980,6 +1021,17 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```yaml');
         expect(audioScript).toContain('daily_sales_pipeline');
+      }
+      if (chapter.id === 'dea-cicd-001') {
+        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(8);
+        expect(audioScript).toContain('データ基盤では「変更＝データの変化」である');
+        expect(audioScript).toContain('dev');
+        expect(audioScript).toContain('staging');
+        expect(audioScript).toContain('prod');
+        expect(audioScript).toContain('Databricks Asset Bundles');
+        expect(audioScript).toContain('```mermaid');
+        expect(audioScript).toContain('```yaml');
+        expect(audioScript).toContain('etl_pipeline');
       }
       expect(note).toContain(`# 要点メモ: ${chapter.title}`);
       for (const heading of [
