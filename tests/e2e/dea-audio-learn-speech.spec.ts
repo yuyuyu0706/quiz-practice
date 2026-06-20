@@ -379,6 +379,47 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#toc-speech-toggle')).toHaveText('再生');
 
+    await page.getByRole('button', { name: 'Data Transformation and Modeling' }).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Data Transformation and Modelingの全体像'
+    );
+    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
+      'Data Transformation and Modeling'
+    );
+    await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
+      'Data Transformation and Modelingの全体像'
+    );
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
+    await expect(page.locator('#note-markdown h1')).toHaveCount(0);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(6);
+    await expect(page.locator('#audio-script-markdown')).toContainText('SoR');
+    await expect(page.locator('#audio-script-markdown')).toContainText('SoI');
+    await expect(page.locator('#audio-script-markdown')).toContainText('Bronze');
+    await expect(page.locator('#audio-script-markdown')).toContainText('Silver');
+    await expect(page.locator('#audio-script-markdown')).toContainText('Gold');
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'daily_sales_summary'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-python')).toContainText(
+      'dropDuplicates'
+    );
+    await expect(page.locator('#audio-toc-list')).toContainText(
+      'SoRからSoIへ、データの役割を変える'
+    );
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await page
+      .locator('#audio-script-markdown h3', { hasText: 'SoRからSoIへ' })
+      .locator('.audio-heading-play')
+      .click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    const latestTransformSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(latestTransformSpeakCall?.text)).not.toContain('flowchart LR');
+    expect(String(latestTransformSpeakCall?.text)).not.toContain('spark.table');
+    expect(String(latestTransformSpeakCall?.text)).not.toContain('| 観点 |');
+
     const calls = await page.evaluate(() => window.__speechCalls);
     expect(calls).toEqual(
       expect.arrayContaining([
@@ -880,6 +921,17 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('Data Transformation and Modeling');
         expect(audioScript).toContain('Working with Lakeflow Jobs');
         expect(audioScript).toContain('Governance and Security');
+      }
+      if (chapter.id === 'dea-transform-001') {
+        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(6);
+        expect(audioScript).toContain('SoR');
+        expect(audioScript).toContain('SoI');
+        expect(audioScript).toContain('Bronze');
+        expect(audioScript).toContain('Silver');
+        expect(audioScript).toContain('Gold');
+        expect(audioScript).toContain('```mermaid');
+        expect(audioScript).toContain('```python');
+        expect(audioScript).toContain('dropDuplicates(["order_id"])');
       }
       expect(note).toContain(`# 要点メモ: ${chapter.title}`);
       for (const heading of [
