@@ -444,12 +444,41 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#note-markdown h1')).toHaveCount(0);
-    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(6);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(7);
+    await expect(page.locator('#audio-script-markdown strong')).toContainText([
+      'Data Transformation and Modelingは、SoRとしての生データを、再利用可能なSoIへ育てる工程',
+      '品質や用途に応じて段階的に整える考え方',
+      'Bronze / Silver / Goldへの処理を、依存関係、再試行、実行履歴を持つワークフローとして運用すること',
+    ]);
     await expect(page.locator('#audio-script-markdown')).toContainText('SoR');
     await expect(page.locator('#audio-script-markdown')).toContainText('SoI');
     await expect(page.locator('#audio-script-markdown')).toContainText('Bronze');
     await expect(page.locator('#audio-script-markdown')).toContainText('Silver');
     await expect(page.locator('#audio-script-markdown')).toContainText('Gold');
+    await expect(page.locator('#audio-script-markdown')).toContainText('メダリオンアーキテクチャ');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '次の表では、両者の違いを目的、粒度、品質、利用者の観点で整理します。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'この図では、各層を分ける目的を見ます。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'Silver化では、生データをただ書き換えるのではなく'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText('次の学習へのつなぎ');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('次の学習へのつながり');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText(
+      'Governance and Security'
+    );
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(13);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]').first()).not.toHaveAttribute(
+      'href'
+    );
+    const medallionLink = page.locator(
+      '#audio-script-markdown a[href="#keyword-medallion-architecture"]'
+    );
+    await expect(medallionLink).toHaveCount(1);
+    await expect(medallionLink).not.toHaveAttribute('target', '_blank');
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'daily_sales_summary'
     );
@@ -1257,19 +1286,84 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
             /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
           ) ?? [];
         expect(referenceLinks).toHaveLength(5);
-      } else {
+      } else if (chapter.id !== 'dea-transform-001') {
         expect(audioScript).toContain('## 次の学習へのつながり');
       }
       if (chapter.id === 'dea-transform-001') {
-        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(6);
+        expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(7);
         expect(audioScript).toContain('SoR');
         expect(audioScript).toContain('SoI');
+        expect(audioScript).toContain('メダリオンアーキテクチャ');
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).not.toContain('## 次の学習へのつながり');
+        expect(audioScript).toContain(
+          '次の表では、両者の違いを目的、粒度、品質、利用者の観点で整理します。'
+        );
+        expect(audioScript).toContain('この図では、各層を分ける目的を見ます。');
+        expect(audioScript).toContain('Silver化では、生データをただ書き換えるのではなく');
+        const transformBoldPhrases = audioScript.match(/\*\*[^*]+\*\*/g) ?? [];
+        expect(transformBoldPhrases.length).toBeGreaterThanOrEqual(8);
+        expect(transformBoldPhrases.length).toBeLessThanOrEqual(16);
+        expect(transformBoldPhrases).toEqual(
+          expect.arrayContaining([
+            '**Data Transformation and Modelingは、SoRとしての生データを、再利用可能なSoIへ育てる工程**',
+            '**品質や用途に応じて段階的に整える考え方**',
+            '**データの利用可能性を高める工程**',
+          ])
+        );
+        const transformNextSection = audioScript.split('## 次の学習へのつなぎ')[1] ?? '';
+        expect(
+          transformNextSection.split(/\n\n/u).filter((paragraph) => paragraph.trim()).length
+        ).toBe(2);
+        expect(transformNextSection).toContain('Working with Lakeflow Jobs');
+        expect(transformNextSection).not.toContain('Governance and Security');
         expect(audioScript).toContain('Bronze');
         expect(audioScript).toContain('Silver');
         expect(audioScript).toContain('Gold');
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```python');
         expect(audioScript).toContain('dropDuplicates(["order_id"])');
+        const transformKeywordEntries = [
+          `<a id="keyword-sor"></a>**SoR**
+  System of Record。元システムの業務処理のために作られた記録データ。`,
+          `<a id="keyword-soi"></a>**SoI**
+  System of Insight。分析、BI、AI、業務改善で再利用しやすい形に整えた情報。`,
+          `<a id="keyword-medallion-architecture"></a>**メダリオンアーキテクチャ**
+  Bronze / Silver / Goldの層で、データの責務と品質水準を段階的に分ける設計パターン。`,
+          `<a id="keyword-materialized-view"></a>**materialized view**
+  クエリ結果を保持し、分析や集計を効率よく提供するためのビュー。`,
+          `<a id="keyword-streaming-table"></a>**streaming table**
+  継続的に到着するデータを取り込み、更新されるテーブル。`,
+        ];
+        for (const keywordEntry of transformKeywordEntries) {
+          expect(note).toContain(keywordEntry);
+        }
+        const transformKeywordSection =
+          note.split('## キーワード一覧')[1]?.split('## 参考リンク')[0] ?? '';
+        expect(transformKeywordSection).not.toContain('https://learn.microsoft.com');
+        for (const anchor of [
+          '#keyword-sor',
+          '#keyword-soi',
+          '#keyword-medallion-architecture',
+          '#keyword-bronze',
+          '#keyword-silver',
+          '#keyword-gold',
+          '#keyword-pyspark',
+          '#keyword-sql',
+          '#keyword-join',
+          '#keyword-deduplication',
+          '#keyword-aggregation',
+          '#keyword-materialized-view',
+          '#keyword-streaming-table',
+        ]) {
+          expect(audioScript).toContain(`](${anchor})`);
+        }
+        const transformReferenceSection = note.split('## 参考リンク')[1] ?? '';
+        const transformReferenceLinks =
+          transformReferenceSection.match(
+            /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
+          ) ?? [];
+        expect(transformReferenceLinks).toHaveLength(5);
       }
       if (chapter.id === 'dea-lakeflow-jobs-001') {
         expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(7);
