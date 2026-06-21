@@ -580,7 +580,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown')).toContainText('dev');
     await expect(page.locator('#audio-script-markdown')).toContainText('stg');
     await expect(page.locator('#audio-script-markdown')).toContainText('prod');
-    await expect(page.locator('#audio-script-markdown')).toContainText('Databricks Asset Bundles');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'Declarative Automation Bundles'
+    );
     await expect(page.locator('#audio-script-markdown strong')).toContainText([
       'DatabricksにおけるCI/CDは、データパイプラインの変更を安全かつ再現可能に反映するための仕組み',
       '環境差分をコードから切り離して管理すること',
@@ -597,7 +599,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Gitで管理された定義は、そのまま本番へ置くのではなく、検証、成果物化、環境ごとのdeploymentを通して段階的に反映します。'
     );
     await expect(page.locator('#audio-script-markdown')).toContainText(
-      'Databricks Asset Bundlesは、ジョブやパイプラインなどのDatabricks資源を、コードとして管理・配布するための定義です。'
+      'Declarative Automation Bundlesは、ジョブやパイプラインなどのDatabricks資源を、コードとして管理・配布するための定義です。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '2026年3月に旧称Databricks Asset Bundlesから名称変更'
     );
     await expect(page.locator('#audio-script-markdown')).toContainText('次の学習へのつなぎ');
     await expect(page.locator('#audio-script-markdown')).not.toContainText('次の学習へのつながり');
@@ -1497,7 +1502,7 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('dev');
         expect(audioScript).toContain('stg');
         expect(audioScript).toContain('prod');
-        expect(audioScript).toContain('Databricks Asset Bundles');
+        expect(audioScript).toContain('Declarative Automation Bundles');
         expect(audioScript).not.toContain('ゴールは、');
         expect(audioScript).toContain('## 次の学習へのつなぎ');
         expect(audioScript).not.toContain('## 次の学習へのつながり');
@@ -1511,8 +1516,9 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           'Gitで管理された定義は、そのまま本番へ置くのではなく、検証、成果物化、環境ごとのdeploymentを通して段階的に反映します。'
         );
         expect(audioScript).toContain(
-          'Databricks Asset Bundlesは、ジョブやパイプラインなどのDatabricks資源を、コードとして管理・配布するための定義です。'
+          'Declarative Automation Bundlesは、ジョブやパイプラインなどのDatabricks資源を、コードとして管理・配布するための定義です。'
         );
+        expect(audioScript).toContain('2026年3月に旧称Databricks Asset Bundlesから名称変更');
         const cicdBoldPhrases = audioScript.match(/\*\*[^*]+\*\*/g) ?? [];
         expect(cicdBoldPhrases.length).toBeGreaterThanOrEqual(6);
         expect(cicdBoldPhrases.length).toBeLessThanOrEqual(12);
@@ -1537,8 +1543,8 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
   変更内容をテストや検証にかけ、本番へ進めてよいかを確認する継続的インテグレーション。`,
           `<a id="keyword-cd"></a>**CD**
   検証済みの定義を環境へ安全に反映する継続的デリバリーまたはデプロイ。`,
-          `<a id="keyword-databricks-asset-bundles"></a>**Databricks Asset Bundles**
-  ジョブやパイプラインなどのDatabricks資源をコードとして定義し、環境へ配布する仕組み。`,
+          `<a id="keyword-declarative-automation-bundles"></a>**Declarative Automation Bundles**
+  旧称Databricks Asset Bundles。ジョブやパイプラインなどのDatabricks資源をコードとして定義し、環境へ配布する仕組み。`,
           `<a id="keyword-bundle-validate"></a>**bundle validate**
   Bundlesの定義や設定が妥当かをデプロイ前に確認する検証操作。`,
           `<a id="keyword-promotion"></a>**promotion**
@@ -1560,7 +1566,7 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           '#keyword-stg',
           '#keyword-prod',
           '#keyword-environment',
-          '#keyword-databricks-asset-bundles',
+          '#keyword-declarative-automation-bundles',
           '#keyword-bundle-validate',
           '#keyword-deployment',
           '#keyword-promotion',

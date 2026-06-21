@@ -41,8 +41,8 @@
 - <a id="keyword-environment"></a>**environment**
   dev、stg、prodなど、データ・権限・設定が分かれた実行環境。
 
-- <a id="keyword-databricks-asset-bundles"></a>**Databricks Asset Bundles**
-  ジョブやパイプラインなどのDatabricks資源をコードとして定義し、環境へ配布する仕組み。
+- <a id="keyword-declarative-automation-bundles"></a>**Declarative Automation Bundles**
+  旧称Databricks Asset Bundles。ジョブやパイプラインなどのDatabricks資源をコードとして定義し、環境へ配布する仕組み。
 
 - <a id="keyword-bundle-validate"></a>**bundle validate**
   Bundlesの定義や設定が妥当かをデプロイ前に確認する検証操作。
