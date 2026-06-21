@@ -796,12 +796,16 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'Audit / Policy / Access Control'
     );
-    await expect(page.locator('#audio-script-markdown pre code.language-sql')).toContainText(
-      'GRANT USE CATALOG'
-    );
-    await expect(page.locator('#audio-script-markdown pre code.language-sql')).toContainText(
-      'mask_email'
-    );
+    await expect(
+      page.locator('#audio-script-markdown pre code.language-sql', {
+        hasText: 'GRANT USE CATALOG',
+      })
+    ).toContainText('GRANT USE CATALOG');
+    await expect(
+      page.locator('#audio-script-markdown pre code.language-sql', {
+        hasText: 'mask_email',
+      })
+    ).toContainText('mask_email');
     await expect(page.locator('#audio-toc-list')).toContainText(
       'Unity Catalogは、データ資産を一元的に把握し統制する土台'
     );
