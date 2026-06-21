@@ -737,9 +737,41 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'row-level security',
       'column masking',
       'ABAC',
+      'user',
+      'group',
+      'service principal',
     ]) {
       await expect(page.locator('#audio-script-markdown')).toContainText(keyword);
     }
+    await expect(page.locator('#audio-script-markdown strong')).toContainText([
+      'Governance and Securityは、データ活用を止めずに、安全にスケールさせるための仕組み',
+      'Unity Catalogは、データ資産とアクセス制御を一元的に扱うための基盤',
+      '同じテーブルを使いながら、利用者ごとに見える範囲を変えること',
+    ]);
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('ゴールは、');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '利用者やテーブルが増えるほど、個人やテーブル単位で権限を手作業管理し続けることには限界があります。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'データ基盤では、利用者ごとに見せるデータ範囲を変えることが重要です。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'catalog、schema、tableには階層があります。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'テーブル全体を拒否すると、分析や業務利用まで止まってしまうことがあります。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText('次の学習へのつなぎ');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('次の学習へのつながり');
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(12);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]').first()).not.toHaveAttribute(
+      'href'
+    );
+    const governanceInlineLink = page.locator(
+      '#audio-script-markdown a[href="#keyword-unity-catalog"]'
+    );
+    await expect(governanceInlineLink).toHaveCount(1);
+    await expect(governanceInlineLink).not.toHaveAttribute('target', '_blank');
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'Audit / Policy / Access Control'
     );
@@ -1371,9 +1403,13 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           ) ?? [];
         expect(referenceLinks).toHaveLength(5);
       } else if (
-        !['dea-transform-001', 'dea-lakeflow-jobs-001', 'dea-cicd-001', 'dea-ops-001'].includes(
-          chapter.id
-        )
+        ![
+          'dea-transform-001',
+          'dea-lakeflow-jobs-001',
+          'dea-cicd-001',
+          'dea-ops-001',
+          'dea-governance-001',
+        ].includes(chapter.id)
       ) {
         expect(audioScript).toContain('## 次の学習へのつながり');
       }
@@ -1705,12 +1741,83 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           'row-level security',
           'column masking',
           'ABAC',
+          'user',
+          'group',
+          'service principal',
         ]) {
           expect(audioScript).toContain(keyword);
         }
+        expect(audioScript).not.toContain('ゴールは、');
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).not.toContain('## 次の学習へのつながり');
+        expect(audioScript).toContain(
+          '利用者やテーブルが増えるほど、個人やテーブル単位で権限を手作業管理し続けることには限界があります。'
+        );
+        expect(audioScript).toContain(
+          'データ基盤では、利用者ごとに見せるデータ範囲を変えることが重要です。'
+        );
+        expect(audioScript).toContain('catalog、schema、tableには階層があります。');
+        expect(audioScript).toContain(
+          'テーブル全体を拒否すると、分析や業務利用まで止まってしまうことがあります。'
+        );
+        const governanceBoldPhrases = audioScript.match(/\*\*[^*]+\*\*/g) ?? [];
+        expect(governanceBoldPhrases.length).toBeGreaterThanOrEqual(6);
+        expect(governanceBoldPhrases.length).toBeLessThanOrEqual(14);
+        expect(governanceBoldPhrases).toEqual(
+          expect.arrayContaining([
+            '**Governance and Securityは、データ活用を止めずに、安全にスケールさせるための仕組み**',
+            '**Unity Catalogは、データ資産とアクセス制御を一元的に扱うための基盤**',
+            '**同じテーブルを使いながら、利用者ごとに見える範囲を変えること**',
+          ])
+        );
+        const governanceNextSection = audioScript.split('## 次の学習へのつなぎ')[1] ?? '';
+        expect(
+          governanceNextSection.split(/\n\n/u).filter((paragraph) => paragraph.trim()).length
+        ).toBe(2);
+        expect(governanceNextSection).toContain('データ品質、運用、権限、再利用性');
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```sql');
         expect(audioScript).toContain('mask_email');
+        const governanceKeywordEntries = [
+          `<a id="keyword-unity-catalog"></a>**Unity Catalog**
+  データ資産、権限、監査、リネージを統一的に管理するDatabricksのガバナンス基盤。`,
+          `<a id="keyword-managed-table"></a>**managed table**
+  Databricksがデータとメタデータを一体で管理しやすいテーブル。`,
+          `<a id="keyword-row-level-security"></a>**row-level security**
+  利用者や所属に応じて、同じテーブル内で見える行を変える制御。`,
+          `<a id="keyword-column-masking"></a>**column masking**
+  メールアドレスや個人情報などの機密列を、利用者に応じてマスクする制御。`,
+          `<a id="keyword-service-principal"></a>**service principal**
+  ジョブや自動化処理など、アプリケーションやサービスが使う非個人の実行主体。`,
+        ];
+        for (const keywordEntry of governanceKeywordEntries) {
+          expect(note).toContain(keywordEntry);
+        }
+        const governanceKeywordSection =
+          note.split('## キーワード一覧')[1]?.split('## 参考リンク')[0] ?? '';
+        expect(governanceKeywordSection).not.toContain('https://learn.microsoft.com');
+        for (const anchor of [
+          '#keyword-unity-catalog',
+          '#keyword-managed-table',
+          '#keyword-external-table',
+          '#keyword-grant',
+          '#keyword-revoke',
+          '#keyword-deny',
+          '#keyword-row-level-security',
+          '#keyword-column-masking',
+          '#keyword-abac',
+          '#keyword-user',
+          '#keyword-group',
+          '#keyword-service-principal',
+        ]) {
+          expect(audioScript).toContain(`](${anchor})`);
+        }
+        const governanceReferenceSection = note.split('## 参考リンク')[1] ?? '';
+        const governanceReferenceLinks =
+          governanceReferenceSection.match(
+            /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
+          ) ?? [];
+        expect(governanceReferenceLinks).toHaveLength(5);
       }
       expect(note).toContain(`# 要点メモ: ${chapter.title}`);
       for (const heading of [
