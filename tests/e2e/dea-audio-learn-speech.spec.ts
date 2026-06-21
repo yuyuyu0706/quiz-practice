@@ -659,9 +659,38 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'shuffle',
       'disk spilling',
       'OOM',
+      'AQE',
+      'Liquid Clustering',
+      'predictive optimization',
     ]) {
       await expect(page.locator('#audio-script-markdown')).toContainText(keyword);
     }
+    await expect(page.locator('#audio-script-markdown strong')).toContainText([
+      '監視は、成功・失敗を見るだけでなく、性能劣化を早く見つけるための仕組み',
+      '分散処理のどこに偏りやデータ移動があるかを確認する入口',
+      '最適化は、測定、変更、再測定までを含む運用サイクル',
+    ]);
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('ゴールは、');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '遅延や失敗は、単一の原因だけで起きるとは限りません。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '調査は推測から始めるのではなく、run historyで実行時間の変化を確認し'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'Spark UIでdata skew、shuffle、disk spillingを確認してから、設定変更や設計変更を検討します。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText('次の学習へのつなぎ');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('次の学習へのつながり');
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(10);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]').first()).not.toHaveAttribute(
+      'href'
+    );
+    const opsInlineLink = page.locator(
+      '#audio-script-markdown a[href="#keyword-lakeflow-jobs-run-history"]'
+    );
+    await expect(opsInlineLink).toHaveCount(1);
+    await expect(opsInlineLink).not.toHaveAttribute('target', '_blank');
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'Job run time increased'
     );
@@ -1342,7 +1371,9 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           ) ?? [];
         expect(referenceLinks).toHaveLength(5);
       } else if (
-        !['dea-transform-001', 'dea-lakeflow-jobs-001', 'dea-cicd-001'].includes(chapter.id)
+        !['dea-transform-001', 'dea-lakeflow-jobs-001', 'dea-cicd-001', 'dea-ops-001'].includes(
+          chapter.id
+        )
       ) {
         expect(audioScript).toContain('## 次の学習へのつながり');
       }
@@ -1590,12 +1621,79 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           'shuffle',
           'disk spilling',
           'OOM',
+          'AQE',
+          'Liquid Clustering',
+          'predictive optimization',
         ]) {
           expect(audioScript).toContain(keyword);
         }
+        expect(audioScript).not.toContain('ゴールは、');
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).not.toContain('## 次の学習へのつながり');
+        expect(audioScript).toContain('遅延や失敗は、単一の原因だけで起きるとは限りません。');
+        expect(audioScript).toContain(
+          '調査は推測から始めるのではなく、run historyで実行時間の変化を確認し'
+        );
+        expect(audioScript).toContain(
+          'Spark UIでdata skew、shuffle、disk spillingを確認してから、設定変更や設計変更を検討します。'
+        );
+        const opsBoldPhrases = audioScript.match(/\*\*[^*]+\*\*/g) ?? [];
+        expect(opsBoldPhrases.length).toBeGreaterThanOrEqual(7);
+        expect(opsBoldPhrases.length).toBeLessThanOrEqual(14);
+        expect(opsBoldPhrases).toEqual(
+          expect.arrayContaining([
+            '**監視は、成功・失敗を見るだけでなく、性能劣化を早く見つけるための仕組み**',
+            '**分散処理のどこに偏りやデータ移動があるかを確認する入口**',
+            '**最適化は、測定、変更、再測定までを含む運用サイクル**',
+          ])
+        );
+        const opsNextSection = audioScript.split('## 次の学習へのつなぎ')[1] ?? '';
+        expect(opsNextSection.split(/\n\n/u).filter((paragraph) => paragraph.trim()).length).toBe(
+          2
+        );
+        expect(opsNextSection).toContain('Governance and Security');
+        expect(opsNextSection).not.toContain('CI/CD');
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```python');
         expect(audioScript).toContain('spark.sql.adaptive.enabled');
+        const opsKeywordEntries = [
+          `<a id="keyword-lakeflow-jobs-run-history"></a>**Lakeflow Jobs run history**
+  ジョブの実行結果、所要時間、失敗、再試行、タスクごとの状態を確認する履歴。`,
+          `<a id="keyword-spark-ui"></a>**Spark UI**
+  Sparkジョブのステージ、タスク、shuffle、spill、入力サイズなどを確認するための画面。`,
+          `<a id="keyword-data-skew"></a>**data skew**
+  特定のキーやパーティションにデータが偏り、一部タスクだけ極端に遅くなる状態。`,
+          `<a id="keyword-liquid-clustering"></a>**Liquid Clustering**
+  テーブルのデータ配置をクラスタリングキーに基づいて最適化し、クエリ性能を支える仕組み。`,
+          `<a id="keyword-predictive-optimization"></a>**predictive optimization**
+  Unity Catalog管理テーブルの保守や最適化を自動化し、性能とコスト効率を支える仕組み。`,
+        ];
+        for (const keywordEntry of opsKeywordEntries) {
+          expect(note).toContain(keywordEntry);
+        }
+        const opsKeywordSection =
+          note.split('## キーワード一覧')[1]?.split('## 参考リンク')[0] ?? '';
+        expect(opsKeywordSection).not.toContain('https://learn.microsoft.com');
+        for (const anchor of [
+          '#keyword-lakeflow-jobs-run-history',
+          '#keyword-dag',
+          '#keyword-spark-ui',
+          '#keyword-data-skew',
+          '#keyword-shuffle',
+          '#keyword-disk-spilling',
+          '#keyword-oom',
+          '#keyword-aqe',
+          '#keyword-liquid-clustering',
+          '#keyword-predictive-optimization',
+        ]) {
+          expect(audioScript).toContain(`](${anchor})`);
+        }
+        const opsReferenceSection = note.split('## 参考リンク')[1] ?? '';
+        const opsReferenceLinks =
+          opsReferenceSection.match(
+            /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
+          ) ?? [];
+        expect(opsReferenceLinks).toHaveLength(5);
       }
       if (chapter.id === 'dea-governance-001') {
         expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(10);
