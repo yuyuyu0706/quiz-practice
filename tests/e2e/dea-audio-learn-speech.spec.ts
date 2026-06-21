@@ -747,7 +747,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#note-markdown h1')).toHaveCount(0);
-    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(10);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(11);
     for (const keyword of [
       'Unity Catalog',
       'managed table',
