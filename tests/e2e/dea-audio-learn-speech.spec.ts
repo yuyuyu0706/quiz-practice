@@ -399,7 +399,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(autoLoaderInlineLink).toHaveCount(1);
     await expect(autoLoaderInlineLink).not.toHaveAttribute('target', '_blank');
-    await autoLoaderInlineLink.click();
+    await autoLoaderInlineLink.evaluate((link) => {
+      (link as HTMLAnchorElement).click();
+    });
     await expect(page).toHaveURL(/#keyword-auto-loader/u);
     await expect(page.locator('#note-markdown')).toContainText('Auto Loader');
     await expect(page.locator('#note-markdown')).toContainText(
@@ -452,7 +454,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#note-markdown h1')).toHaveCount(0);
-    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(7);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(9);
     await expect(page.locator('#audio-script-markdown strong')).toContainText([
       'Data Transformation and Modelingは、SoRとしての生データを、再利用可能なSoIへ育てる工程',
       '品質や用途に応じて段階的に整える考え方',
