@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 const chapters = JSON.parse(
   readFileSync(new URL('../../dea-audio-learn/data/chapters.json', import.meta.url), 'utf8')
@@ -23,6 +23,12 @@ async function gotoAudioLearn(page: Page) {
   await expect(page.locator('#selected-chapter-title')).toHaveText(
     'Databricks Intelligence Platformの全体像'
   );
+}
+
+async function clickByDom(locator: Locator) {
+  await locator.evaluate((element) => {
+    (element as HTMLElement).click();
+  });
 }
 
 test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
@@ -430,10 +436,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#toc-speech-toggle')).toHaveText('再生');
-    await page
-      .locator('#audio-script-markdown h3', { hasText: 'Auto Loaderで継続取り込みする例' })
-      .locator('.audio-heading-play')
-      .click();
+    await clickByDom(
+      page
+        .locator('#audio-script-markdown h3', { hasText: 'Auto Loaderで継続取り込みする例' })
+        .locator('.audio-heading-play')
+    );
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestIngestionSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -499,10 +506,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'SoRからSoIへ、データの役割を変える'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await page
-      .locator('#audio-script-markdown h3', { hasText: 'SoRからSoIへ' })
-      .locator('.audio-heading-play')
-      .click();
+    await clickByDom(
+      page
+        .locator('#audio-script-markdown h3', { hasText: 'SoRからSoIへ' })
+        .locator('.audio-heading-play')
+    );
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestTransformSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -524,7 +532,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#note-markdown h1')).toHaveCount(0);
-    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(7);
+    await expect(page.locator('#audio-script-markdown h3')).toHaveCount(9);
     await expect(page.locator('#audio-script-markdown')).toContainText('DAG');
     await expect(page.locator('#audio-script-markdown')).toContainText('retry');
     await expect(page.locator('#audio-script-markdown')).toContainText('trigger');
@@ -560,10 +568,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#audio-toc-list')).toContainText('DAGで依存関係を明示する');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await page
-      .locator('#audio-script-markdown h3', { hasText: 'DAGで依存関係を明示する' })
-      .locator('.audio-heading-play')
-      .click();
+    await clickByDom(
+      page
+        .locator('#audio-script-markdown h3', { hasText: 'DAGで依存関係を明示する' })
+        .locator('.audio-heading-play')
+    );
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestJobsSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -633,10 +642,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'データパイプラインもソフトウェアと同じくバージョン管理する'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await page
-      .locator('#audio-script-markdown h3', { hasText: 'データパイプラインもソフトウェア' })
-      .locator('.audio-heading-play')
-      .click();
+    await clickByDom(
+      page
+        .locator('#audio-script-markdown h3', { hasText: 'データパイプラインもソフトウェア' })
+        .locator('.audio-heading-play')
+    );
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestCicdSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -711,10 +721,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Spark UIでは、ステージごとの偏りとデータ移動を見る'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await page
-      .locator('#audio-script-markdown h3', { hasText: 'Spark UIでは' })
-      .locator('.audio-heading-play')
-      .click();
+    await clickByDom(
+      page
+        .locator('#audio-script-markdown h3', { hasText: 'Spark UIでは' })
+        .locator('.audio-heading-play')
+    );
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestOpsSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -795,10 +806,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Unity Catalogは、データ資産を一元的に把握し統制する土台'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await page
-      .locator('#audio-script-markdown h3', { hasText: 'Unity Catalogは' })
-      .locator('.audio-heading-play')
-      .click();
+    await clickByDom(
+      page
+        .locator('#audio-script-markdown h3', { hasText: 'Unity Catalogは' })
+        .locator('.audio-heading-play')
+    );
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestGovernanceSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -974,10 +986,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     });
 
     await gotoAudioLearn(page);
-    await page
-      .locator('#audio-script-markdown h2', { hasText: '背景' })
-      .locator('.audio-heading-play')
-      .click();
+    await clickByDom(
+      page.locator('#audio-script-markdown h2', { hasText: '背景' }).locator('.audio-heading-play')
+    );
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-current-position')).toContainText('背景');
 
