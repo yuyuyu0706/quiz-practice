@@ -85,6 +85,14 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-status')).toHaveText(firstChapter.status);
     await expect(page.locator('#selected-chapter-no')).toHaveCount(0);
     await expect(page.locator('#selected-position')).toHaveCount(0);
+    const isMobileChapterViewport = await page.evaluate(
+      () => window.matchMedia('(max-width: 780px)').matches
+    );
+    if (isMobileChapterViewport) {
+      await page.locator('#chapter-selector').evaluate((details) => {
+        (details as HTMLDetailsElement).open = true;
+      });
+    }
     await expect(page.getByRole('heading', { name: '領域を選ぶ' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'この領域のチャプター' })).toBeVisible();
     await expect(page.locator('#domain-list .domain-button')).toHaveText([
@@ -105,7 +113,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Chapter 2',
     ]);
     await expect(page.locator('#chapter-list .chapter-button').first()).not.toContainText(
-      'Databricks Intelligence Platform'
+      'Data Ingestion and Loading'
     );
     const domainButtonHeights = await page
       .locator('#domain-list .domain-button')
