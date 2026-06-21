@@ -578,9 +578,36 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'データ基盤では「変更＝データの変化」'
     );
     await expect(page.locator('#audio-script-markdown')).toContainText('dev');
-    await expect(page.locator('#audio-script-markdown')).toContainText('staging');
+    await expect(page.locator('#audio-script-markdown')).toContainText('stg');
     await expect(page.locator('#audio-script-markdown')).toContainText('prod');
     await expect(page.locator('#audio-script-markdown')).toContainText('Databricks Asset Bundles');
+    await expect(page.locator('#audio-script-markdown strong')).toContainText([
+      'DatabricksにおけるCI/CDは、データパイプラインの変更を安全かつ再現可能に反映するための仕組み',
+      '環境差分をコードから切り離して管理すること',
+      'デプロイ後の実行を観測し、問題を切り分け、改善し続けること',
+    ]);
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('ゴールは、');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'devは、開発者が変更を試す環境です。stgは、本番に近い条件で動作確認する環境です。prodは、業務・分析利用者に実際のデータを提供する環境です。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'CIとCDはどちらも自動化に関係しますが、役割は同じではありません。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'Gitで管理された定義は、そのまま本番へ置くのではなく、検証、成果物化、環境ごとのdeploymentを通して段階的に反映します。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'Databricks Asset Bundlesは、ジョブやパイプラインなどのDatabricks資源を、コードとして管理・配布するための定義です。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText('次の学習へのつなぎ');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('次の学習へのつながり');
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(13);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]').first()).not.toHaveAttribute(
+      'href'
+    );
+    const cicdInlineLink = page.locator('#audio-script-markdown a[href="#keyword-ci"]');
+    await expect(cicdInlineLink).toHaveCount(1);
+    await expect(cicdInlineLink).not.toHaveAttribute('target', '_blank');
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'Lakeflow Jobs / Pipelines'
     );
@@ -1309,7 +1336,9 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
             /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
           ) ?? [];
         expect(referenceLinks).toHaveLength(5);
-      } else if (!['dea-transform-001', 'dea-lakeflow-jobs-001'].includes(chapter.id)) {
+      } else if (
+        !['dea-transform-001', 'dea-lakeflow-jobs-001', 'dea-cicd-001'].includes(chapter.id)
+      ) {
         expect(audioScript).toContain('## 次の学習へのつながり');
       }
       if (chapter.id === 'dea-transform-001') {
@@ -1466,12 +1495,84 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(8);
         expect(audioScript).toContain('データ基盤では「変更＝データの変化」である');
         expect(audioScript).toContain('dev');
-        expect(audioScript).toContain('staging');
+        expect(audioScript).toContain('stg');
         expect(audioScript).toContain('prod');
         expect(audioScript).toContain('Databricks Asset Bundles');
+        expect(audioScript).not.toContain('ゴールは、');
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).not.toContain('## 次の学習へのつながり');
+        expect(audioScript).toContain(
+          'devは、開発者が変更を試す環境です。stgは、本番に近い条件で動作確認する環境です。prodは、業務・分析利用者に実際のデータを提供する環境です。'
+        );
+        expect(audioScript).toContain(
+          'CIとCDはどちらも自動化に関係しますが、役割は同じではありません。'
+        );
+        expect(audioScript).toContain(
+          'Gitで管理された定義は、そのまま本番へ置くのではなく、検証、成果物化、環境ごとのdeploymentを通して段階的に反映します。'
+        );
+        expect(audioScript).toContain(
+          'Databricks Asset Bundlesは、ジョブやパイプラインなどのDatabricks資源を、コードとして管理・配布するための定義です。'
+        );
+        const cicdBoldPhrases = audioScript.match(/\*\*[^*]+\*\*/g) ?? [];
+        expect(cicdBoldPhrases.length).toBeGreaterThanOrEqual(6);
+        expect(cicdBoldPhrases.length).toBeLessThanOrEqual(12);
+        expect(cicdBoldPhrases).toEqual(
+          expect.arrayContaining([
+            '**DatabricksにおけるCI/CDは、データパイプラインの変更を安全かつ再現可能に反映するための仕組み**',
+            '**環境差分をコードから切り離して管理すること**',
+            '**データを壊さずに変化させるための安全装置**',
+          ])
+        );
+        const cicdNextSection = audioScript.split('## 次の学習へのつなぎ')[1] ?? '';
+        expect(cicdNextSection.split(/\n\n/u).filter((paragraph) => paragraph.trim()).length).toBe(
+          2
+        );
+        expect(cicdNextSection).toContain('Troubleshooting, Monitoring, and Optimization');
+        expect(cicdNextSection).not.toContain('Governance and Security');
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```yaml');
         expect(audioScript).toContain('etl_pipeline');
+        const cicdKeywordEntries = [
+          `<a id="keyword-ci"></a>**CI**
+  変更内容をテストや検証にかけ、本番へ進めてよいかを確認する継続的インテグレーション。`,
+          `<a id="keyword-cd"></a>**CD**
+  検証済みの定義を環境へ安全に反映する継続的デリバリーまたはデプロイ。`,
+          `<a id="keyword-databricks-asset-bundles"></a>**Databricks Asset Bundles**
+  ジョブやパイプラインなどのDatabricks資源をコードとして定義し、環境へ配布する仕組み。`,
+          `<a id="keyword-bundle-validate"></a>**bundle validate**
+  Bundlesの定義や設定が妥当かをデプロイ前に確認する検証操作。`,
+          `<a id="keyword-promotion"></a>**promotion**
+  devからstg、prodへ段階的に同じ定義を進めること。`,
+        ];
+        for (const keywordEntry of cicdKeywordEntries) {
+          expect(note).toContain(keywordEntry);
+        }
+        const cicdKeywordSection =
+          note.split('## キーワード一覧')[1]?.split('## 参考リンク')[0] ?? '';
+        expect(cicdKeywordSection).not.toContain('https://learn.microsoft.com');
+        for (const anchor of [
+          '#keyword-ci',
+          '#keyword-cd',
+          '#keyword-git',
+          '#keyword-branch',
+          '#keyword-pull-request',
+          '#keyword-dev',
+          '#keyword-stg',
+          '#keyword-prod',
+          '#keyword-environment',
+          '#keyword-databricks-asset-bundles',
+          '#keyword-bundle-validate',
+          '#keyword-deployment',
+          '#keyword-promotion',
+        ]) {
+          expect(audioScript).toContain(`](${anchor})`);
+        }
+        const cicdReferenceSection = note.split('## 参考リンク')[1] ?? '';
+        const cicdReferenceLinks =
+          cicdReferenceSection.match(
+            /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
+          ) ?? [];
+        expect(cicdReferenceLinks).toHaveLength(5);
       }
       if (chapter.id === 'dea-ops-001') {
         expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(10);
