@@ -161,6 +161,110 @@
   },
   {
     "id": "DEA-DAL-007",
+    "chapterId": "dea-dip-003",
+    "section": "1",
+    "sectionTitle": "Compute servicesとワークロード選定",
+    "question": "複数ユーザーが同じ時間帯にダッシュボードやSQLクエリを使う場合、compute選定で最も重視すべき観点はどれですか？",
+    "choices": {
+      "A": "SQL Warehouseを候補にし、同時利用、起動時間、SQL向け性能を確認する",
+      "B": "探索用ノートブックの柔軟性だけを重視してAll-Purpose Computeに固定する",
+      "C": "定期ETLの実行分離だけを重視し、SQL利用者の待ち時間は考えない",
+      "D": "処理内容に関係なく最大サイズの非サーバレスcomputeだけを選ぶ"
+    },
+    "answer": "A",
+    "explanation": "SQL分析やBIでは、SQL Warehouseを軸に、複数ユーザーの同時実行や起動時間、SQL向け性能を確認します。",
+    "whyWrong": {
+      "B": "探索開発には有効な観点ですが、複数ユーザーのSQL分析ではSQL向けの同時利用や起動性が重要です。",
+      "C": "実行分離は重要ですが、この場面ではSQL利用者の待ち時間や同時利用を無視できません。",
+      "D": "サイズだけでは判断できません。ワークロードの種類と運用要件から選びます。"
+    },
+    "references": [
+      {
+        "title": "SQL ウェアハウスに接続する - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/sql-warehouse/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-008",
+    "chapterId": "dea-dip-003",
+    "section": "2",
+    "sectionTitle": "定期ETLと実行分離",
+    "question": "毎朝のETLを安定して実行したい場合、Job Computeや実行分離を検討する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "非対話型の定期処理をジョブの運用単位で実行し、他の探索作業の影響を受けにくくするため",
+      "B": "BIダッシュボードの同時利用数だけを最大化するため",
+      "C": "ノートブックの手作業を増やして、毎回異なる環境で実行するため",
+      "D": "Delta Lakeのテーブル履歴を削除して処理を単純化するため"
+    },
+    "answer": "A",
+    "explanation": "定期ETLでは、再現性、運用性、他ワークロードからの分離が重要なため、Job Computeが候補になります。",
+    "whyWrong": {
+      "B": "同時利用はSQL分析で特に重視する観点です。定期ETLでは再現性や分離が中心です。",
+      "C": "手作業や毎回異なる環境は、定期ETLの安定性を下げます。",
+      "D": "テーブル履歴の削除はcompute選定の理由ではありません。"
+    },
+    "references": [
+      {
+        "title": "ジョブのコンピューティングを構成する - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/jobs/compute"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-009",
+    "chapterId": "dea-dip-003",
+    "section": "3",
+    "sectionTitle": "探索的開発",
+    "question": "新しい変換ロジックをノートブックで少しずつ試し、結果を見ながら修正したい場合、All-Purpose Computeを候補にする背景はどれですか？",
+    "choices": {
+      "A": "対話的にコードを実行し、反復速度と柔軟性を重視したいから",
+      "B": "本番の定期ETLを必ず手動で実行したいから",
+      "C": "SQL WarehouseではなくすべてのBIクエリをPythonに置き換えるため",
+      "D": "サーバレスの利用可否や環境制御を確認しなくてよいから"
+    },
+    "answer": "A",
+    "explanation": "探索的開発では、ノートブックで試行錯誤する対話性、反復速度、柔軟性が重要です。",
+    "whyWrong": {
+      "B": "本番定期ETLは手動実行ではなく、Job Computeなど運用しやすい構成を検討します。",
+      "C": "BIやSQL分析ではSQL Warehouseが候補になります。Pythonへ置き換えることが目的ではありません。",
+      "D": "サーバレスや環境制御の確認は、compute選定で引き続き重要です。"
+    },
+    "references": [
+      {
+        "title": "コンピューティングの選択に関する推奨事項 - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/choose-compute"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-010",
+    "chapterId": "dea-dip-003",
+    "section": "4",
+    "sectionTitle": "サーバレスと非サーバレス",
+    "question": "compute選定でサーバレスを優先候補に置きつつ、非サーバレスも検討する条件として最も適切なものはどれですか？",
+    "choices": {
+      "A": "まず運用負担や起動性の観点でサーバレスを確認し、明示的なネットワーク、ライブラリ、実行環境の制御が必要なら非サーバレスも検討する",
+      "B": "サーバレスは常に不適切なので、要件に関係なく非サーバレスだけを選ぶ",
+      "C": "非サーバレスは常に不要なので、組織のネットワーク制約やライブラリ要件は無視する",
+      "D": "コストや制約を見ず、過去に使ったcomputeを毎回そのまま使う"
+    },
+    "answer": "A",
+    "explanation": "サーバレスは運用負担を減らす有力候補ですが、制御範囲や組織の制約を満たせない場合は非サーバレスも検討します。",
+    "whyWrong": {
+      "B": "利用可能な場合はサーバレスが有力候補です。常に除外するのは適切ではありません。",
+      "C": "ネットワークやライブラリなどの制御要件がある場合は、非サーバレスの検討が必要です。",
+      "D": "compute選定は要件、制約、コストの見直しが必要です。"
+    },
+    "references": [
+      {
+        "title": "コンピューティングの選択に関する推奨事項 - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/compute/choose-compute"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-011",
     "chapterId": "dea-ingestion-001",
     "section": "1",
     "sectionTitle": "Data Ingestion and Loading",
@@ -186,7 +290,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-008",
+    "id": "DEA-DAL-012",
     "chapterId": "dea-ingestion-001",
     "section": "2",
     "sectionTitle": "Data Ingestion and Loading",
@@ -212,7 +316,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-009",
+    "id": "DEA-DAL-013",
     "chapterId": "dea-ingestion-001",
     "section": "3",
     "sectionTitle": "Data Ingestion and Loading",
@@ -238,7 +342,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-010",
+    "id": "DEA-DAL-014",
     "chapterId": "dea-transform-001",
     "section": "1",
     "sectionTitle": "Data Transformation and Modeling",
@@ -264,7 +368,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-011",
+    "id": "DEA-DAL-015",
     "chapterId": "dea-transform-001",
     "section": "2",
     "sectionTitle": "Data Transformation and Modeling",
@@ -290,7 +394,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-012",
+    "id": "DEA-DAL-016",
     "chapterId": "dea-transform-001",
     "section": "3",
     "sectionTitle": "Data Transformation and Modeling",
@@ -316,7 +420,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-013",
+    "id": "DEA-DAL-017",
     "chapterId": "dea-lakeflow-jobs-001",
     "section": "1",
     "sectionTitle": "Working with Lakeflow Jobs",
@@ -342,7 +446,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-014",
+    "id": "DEA-DAL-018",
     "chapterId": "dea-lakeflow-jobs-001",
     "section": "2",
     "sectionTitle": "Working with Lakeflow Jobs",
@@ -368,7 +472,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-015",
+    "id": "DEA-DAL-019",
     "chapterId": "dea-lakeflow-jobs-001",
     "section": "3",
     "sectionTitle": "Working with Lakeflow Jobs",
@@ -394,7 +498,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-016",
+    "id": "DEA-DAL-020",
     "chapterId": "dea-cicd-001",
     "section": "1",
     "sectionTitle": "Implementing CI/CD",
@@ -420,7 +524,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-017",
+    "id": "DEA-DAL-021",
     "chapterId": "dea-cicd-001",
     "section": "2",
     "sectionTitle": "Implementing CI/CD",
@@ -446,7 +550,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-018",
+    "id": "DEA-DAL-022",
     "chapterId": "dea-cicd-001",
     "section": "3",
     "sectionTitle": "Implementing CI/CD",
@@ -472,7 +576,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-019",
+    "id": "DEA-DAL-023",
     "chapterId": "dea-ops-001",
     "section": "1",
     "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
@@ -498,7 +602,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-020",
+    "id": "DEA-DAL-024",
     "chapterId": "dea-ops-001",
     "section": "2",
     "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
@@ -524,7 +628,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-021",
+    "id": "DEA-DAL-025",
     "chapterId": "dea-ops-001",
     "section": "3",
     "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
@@ -550,7 +654,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-022",
+    "id": "DEA-DAL-026",
     "chapterId": "dea-governance-001",
     "section": "1",
     "sectionTitle": "Governance and Security",
@@ -576,7 +680,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-023",
+    "id": "DEA-DAL-027",
     "chapterId": "dea-governance-001",
     "section": "2",
     "sectionTitle": "Governance and Security",
@@ -602,7 +706,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-024",
+    "id": "DEA-DAL-028",
     "chapterId": "dea-governance-001",
     "section": "3",
     "sectionTitle": "Governance and Security",

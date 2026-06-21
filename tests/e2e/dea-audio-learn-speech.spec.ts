@@ -113,10 +113,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
       'Databricks Intelligence Platform'
     );
-    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(2);
+    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(3);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
       'Chapter 1',
       'Chapter 2',
+      'Chapter 3',
     ]);
     await expect(page.locator('#chapter-list .chapter-button').first()).not.toContainText(
       'Data Ingestion and Loading'
@@ -373,6 +374,28 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Delta Lakeは信頼できるテーブル管理'
     );
 
+    await page.locator('#next-chapter').click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Compute servicesとワークロード選定'
+    );
+    await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(4);
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'サーバレス優先、制約があれば非サーバレスも検討。'
+    );
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(10);
+    await expect(
+      page.locator('#audio-script-markdown a[href="#keyword-serverless-compute"]')
+    ).toHaveCount(1);
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '次は、Unity Catalogによる資産管理とガバナンスの考え方へ進みます。'
+    );
+    await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
+      'ServerlessCheck'
+    );
+    await expect(page.locator('#mini-quiz-list')).toContainText(
+      '複数ユーザーが同じ時間帯にダッシュボードやSQLクエリを使う場合'
+    );
+
     await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
@@ -382,7 +405,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(1);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
-      'Chapter 3 Data Ingestion and Loadingの全体像',
+      'Chapter 4 Data Ingestion and Loadingの全体像',
     ]);
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Data Ingestion and Loadingの全体像'
@@ -1268,7 +1291,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
 test.describe('[DEA][Data] Audio Learn quizzes', () => {
   test('uses the lightweight Audio Learn quiz schema', () => {
-    expect(chapters).toHaveLength(8);
+    expect(chapters).toHaveLength(9);
     expect(new Set(chapters.map((chapter: { domain: string }) => chapter.domain))).toEqual(
       new Set([
         'Databricks Intelligence Platform',
@@ -1280,15 +1303,15 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         'Governance and Security',
       ])
     );
-    expect(quizzes).toHaveLength(24);
+    expect(quizzes).toHaveLength(28);
     expect(quizzes.map((quiz: { id: string }) => quiz.id)).toEqual(
-      Array.from({ length: 24 }, (_, index) => `DEA-DAL-${String(index + 1).padStart(3, '0')}`)
+      Array.from({ length: 28 }, (_, index) => `DEA-DAL-${String(index + 1).padStart(3, '0')}`)
     );
 
     for (const chapter of chapters) {
       expect(
         quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
-      ).toHaveLength(3);
+      ).toHaveLength(chapter.id === 'dea-dip-003' ? 4 : 3);
     }
 
     const headingOrder = [
@@ -1427,6 +1450,18 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
             /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
           ) ?? [];
         expect(referenceLinks).toHaveLength(5);
+      } else if (chapter.id === 'dea-dip-003') {
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).not.toContain('## 次の学習へのつながり');
+        expect(audioScript).toContain('Serverless Compute](#keyword-serverless-compute)');
+        expect(audioScript).toContain('次の表は、computeの名前を覚えるためではなく');
+        expect(audioScript).toContain(
+          'この図では、ワークロードからcompute候補へ進む基本的な判断順'
+        );
+        expect(note).toContain(
+          'https://learn.microsoft.com/ja-jp/azure/databricks/compute/choose-compute'
+        );
+        expect(note).not.toContain('https://docs.databricks.com');
       } else if (
         ![
           'dea-transform-001',
