@@ -519,6 +519,29 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown')).toContainText('retry');
     await expect(page.locator('#audio-script-markdown')).toContainText('trigger');
     await expect(page.locator('#audio-script-markdown')).toContainText('task dependency');
+    await expect(page.locator('#audio-script-markdown strong')).toContainText([
+      'Lakeflow Jobsは、個別の処理を運用可能なワークフローへ変える仕組み',
+      '責務ごとにタスクを分けること',
+      'ジョブやノートブックなどの定義をGitで管理し、dev / stg / prodへ安全に反映すること',
+    ]);
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('ゴールは、');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('Chapter 3');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('Chapter 4');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'この図では、タスクを責務ごとに分け、依存関係で実行順を制御する意味を見ます。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'Jobs定義は、処理コードの代替ではありません。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText('次の学習へのつなぎ');
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('次の学習へのつながり');
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(11);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]').first()).not.toHaveAttribute(
+      'href'
+    );
+    const jobsInlineLink = page.locator('#audio-script-markdown a[href="#keyword-lakeflow-jobs"]');
+    await expect(jobsInlineLink).toHaveCount(1);
+    await expect(jobsInlineLink).not.toHaveAttribute('target', '_blank');
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'Retry / Alert'
     );
@@ -1286,7 +1309,7 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
             /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
           ) ?? [];
         expect(referenceLinks).toHaveLength(5);
-      } else if (chapter.id !== 'dea-transform-001') {
+      } else if (!['dea-transform-001', 'dea-lakeflow-jobs-001'].includes(chapter.id)) {
         expect(audioScript).toContain('## 次の学習へのつながり');
       }
       if (chapter.id === 'dea-transform-001') {
@@ -1371,9 +1394,73 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('retry');
         expect(audioScript).toContain('trigger');
         expect(audioScript).toContain('task dependency');
+        expect(audioScript).not.toContain('ゴールは、');
+        expect(audioScript).not.toContain('Chapter 3');
+        expect(audioScript).not.toContain('Chapter 4');
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).not.toContain('## 次の学習へのつながり');
+        expect(audioScript).toContain(
+          'この図では、タスクを責務ごとに分け、依存関係で実行順を制御する意味を見ます。'
+        );
+        expect(audioScript).toContain('Jobs定義は、処理コードの代替ではありません。');
+        const jobsBoldPhrases = audioScript.match(/\*\*[^*]+\*\*/g) ?? [];
+        expect(jobsBoldPhrases.length).toBeGreaterThanOrEqual(7);
+        expect(jobsBoldPhrases.length).toBeLessThanOrEqual(14);
+        expect(jobsBoldPhrases).toEqual(
+          expect.arrayContaining([
+            '**Lakeflow Jobsは、個別の処理を運用可能なワークフローへ変える仕組み**',
+            '**責務ごとにタスクを分けること**',
+            '**コードを運用可能なワークフローへ包む役割**',
+          ])
+        );
+        const jobsNextSection = audioScript.split('## 次の学習へのつなぎ')[1] ?? '';
+        expect(jobsNextSection.split(/\n\n/u).filter((paragraph) => paragraph.trim()).length).toBe(
+          2
+        );
+        expect(jobsNextSection).toContain('Implementing CI/CD');
+        expect(jobsNextSection).not.toContain('Troubleshooting, Monitoring, and Optimization');
         expect(audioScript).toContain('```mermaid');
         expect(audioScript).toContain('```yaml');
         expect(audioScript).toContain('daily_sales_pipeline');
+        const jobsKeywordEntries = [
+          `<a id="keyword-lakeflow-jobs"></a>**Lakeflow Jobs**
+  個別の処理を依存関係と運用ルールを持つワークフローとして実行する仕組み。`,
+          `<a id="keyword-task"></a>**task**
+  Notebook、SQL、Pipeline、Dashboardなど、ジョブ内で独立して実行する責務単位。`,
+          `<a id="keyword-task-dependency"></a>**task dependency**
+  上流タスクの完了を条件に、下流タスクを実行する依存関係。`,
+          `<a id="keyword-file-arrival"></a>**file arrival**
+  クラウドストレージなどにファイルが到着したことを起点にするトリガー。`,
+          `<a id="keyword-table-update"></a>**table update**
+  前提テーブルの更新を起点に下流処理を開始するトリガー。`,
+        ];
+        for (const keywordEntry of jobsKeywordEntries) {
+          expect(note).toContain(keywordEntry);
+        }
+        const jobsKeywordSection =
+          note.split('## キーワード一覧')[1]?.split('## 参考リンク')[0] ?? '';
+        expect(jobsKeywordSection).not.toContain('https://learn.microsoft.com');
+        for (const anchor of [
+          '#keyword-lakeflow-jobs',
+          '#keyword-task',
+          '#keyword-dag',
+          '#keyword-task-dependency',
+          '#keyword-retry',
+          '#keyword-trigger',
+          '#keyword-schedule',
+          '#keyword-file-arrival',
+          '#keyword-table-update',
+          '#keyword-branching',
+          '#keyword-looping',
+        ]) {
+          expect(audioScript).toContain(`](${anchor})`);
+        }
+        const jobsReferenceSection = note.split('## 参考リンク')[1] ?? '';
+        const jobsReferenceLinks =
+          jobsReferenceSection.match(
+            /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
+          ) ?? [];
+        expect(jobsReferenceLinks).toHaveLength(5);
       }
       if (chapter.id === 'dea-cicd-001') {
         expect(audioScript.match(/^### /gm)?.length).toBeGreaterThanOrEqual(8);
