@@ -406,7 +406,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(1);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
-      'Chapter 4 Data Ingestion and Loadingの全体像',
+      'Chapter 5 Data Ingestion and Loadingの全体像',
     ]);
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Data Ingestion and Loadingの全体像'
