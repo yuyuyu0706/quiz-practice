@@ -113,11 +113,12 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
       'Databricks Intelligence Platform'
     );
-    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(3);
+    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(4);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
       'Chapter 1',
       'Chapter 2',
       'Chapter 3',
+      'Chapter 4',
     ]);
     await expect(page.locator('#chapter-list .chapter-button').first()).not.toContainText(
       'Data Ingestion and Loading'
@@ -405,7 +406,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(1);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
-      'Chapter 4 Data Ingestion and Loadingの全体像',
+      'Chapter 5 Data Ingestion and Loadingの全体像',
     ]);
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Data Ingestion and Loadingの全体像'
@@ -1291,7 +1292,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
 test.describe('[DEA][Data] Audio Learn quizzes', () => {
   test('uses the lightweight Audio Learn quiz schema', () => {
-    expect(chapters).toHaveLength(9);
+    expect(chapters).toHaveLength(10);
     expect(new Set(chapters.map((chapter: { domain: string }) => chapter.domain))).toEqual(
       new Set([
         'Databricks Intelligence Platform',
@@ -1303,15 +1304,15 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         'Governance and Security',
       ])
     );
-    expect(quizzes).toHaveLength(28);
+    expect(quizzes).toHaveLength(32);
     expect(quizzes.map((quiz: { id: string }) => quiz.id)).toEqual(
-      Array.from({ length: 28 }, (_, index) => `DEA-DAL-${String(index + 1).padStart(3, '0')}`)
+      Array.from({ length: 32 }, (_, index) => `DEA-DAL-${String(index + 1).padStart(3, '0')}`)
     );
 
     for (const chapter of chapters) {
       expect(
         quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
-      ).toHaveLength(chapter.id === 'dea-dip-003' ? 4 : 3);
+      ).toHaveLength(['dea-dip-003', 'dea-dip-004'].includes(chapter.id) ? 4 : 3);
     }
 
     const headingOrder = [
@@ -1462,6 +1463,45 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           'https://learn.microsoft.com/ja-jp/azure/databricks/compute/choose-compute'
         );
         expect(note).not.toContain('https://docs.databricks.com');
+      } else if (chapter.id === 'dea-dip-004') {
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
+        expect(audioScript).toContain('Unity Catalog](#keyword-unity-catalog)');
+        expect(audioScript).toContain('Catalog](#keyword-catalog)');
+        expect(audioScript).toContain('Schema](#keyword-schema)');
+        expect(audioScript).toContain('次の表は、階層の名前を暗記するためではなく');
+        expect(audioScript).toContain('この図では、環境と業務領域を階層で分ける考え方');
+        expect(audioScript).toContain('次の流れは、リネージを使って数値の根拠をたどるときの見方');
+        expect(audioScript).toContain(
+          'GRANT / REVOKE / DENY、row filter、column mask、ABACの具体実装や、managed table / external tableの詳細な運用・設計判断は扱いません'
+        );
+        expect(audioScript).not.toContain('```sql');
+        expect(note).toContain(
+          'https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/'
+        );
+        expect(note).toContain(
+          'https://learn.microsoft.com/ja-jp/azure/databricks/discover/database-objects'
+        );
+        expect(note).not.toContain('https://docs.databricks.com');
+        const ucReferenceSection = note.split('## 参考リンク')[1] ?? '';
+        const ucReferenceLinks =
+          ucReferenceSection.match(
+            /^- \[[^\]]+\]\(https:\/\/learn\.microsoft\.com\/ja-jp\/azure\/databricks\/[^)]+\)$/gm
+          ) ?? [];
+        expect(ucReferenceLinks).toHaveLength(4);
+        for (const anchor of [
+          '#keyword-unity-catalog',
+          '#keyword-catalog',
+          '#keyword-schema',
+          '#keyword-volume',
+          '#keyword-managed-table',
+          '#keyword-external-table',
+          '#keyword-data-discovery',
+          '#keyword-data-governance',
+          '#keyword-data-lineage',
+          '#keyword-principals',
+        ]) {
+          expect(audioScript).toContain(`](${anchor})`);
+        }
       } else if (
         ![
           'dea-transform-001',

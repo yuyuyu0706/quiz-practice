@@ -265,6 +265,110 @@
   },
   {
     "id": "DEA-DAL-011",
+    "chapterId": "dea-dip-004",
+    "section": "1",
+    "sectionTitle": "Unity Catalogの目的",
+    "question": "Unity Catalogを導入する主目的として最も適切なものはどれですか？",
+    "choices": {
+      "A": "権限設定だけでなく、データ・AI・分析資産を発見可能で統制された状態へ整えるため",
+      "B": "computeのサイズを自動的に最大化し、コストを常に増やすため",
+      "C": "すべてのテーブル名を利用者ごとに別名へ変換するため",
+      "D": "ダッシュボードを作成できないように分析利用を禁止するため"
+    },
+    "answer": "A",
+    "explanation": "Unity Catalogは、アクセス制御だけでなく、資産整理、発見、リネージ、監査などを支える統合ガバナンス基盤として理解します。",
+    "whyWrong": {
+      "B": "computeサイズの選定ではなく、資産管理と統制の基盤に関する機能です。",
+      "C": "利用者ごとに名前を変えることが目的ではなく、共通の整理と発見可能性が重要です。",
+      "D": "分析利用を禁止するためではなく、安全に利用できる状態を作るための基盤です。"
+    },
+    "references": [
+      {
+        "title": "Unity Catalog とは - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-012",
+    "chapterId": "dea-dip-004",
+    "section": "2",
+    "sectionTitle": "catalog / schemaによる資産整理",
+    "question": "catalog / schema / table・view・volumeの捉え方として最も適切なものはどれですか？",
+    "choices": {
+      "A": "資産を組織、環境、業務領域、資産種類に応じて整理する階層として見る",
+      "B": "音声教材の再生速度を調整するための階層として見る",
+      "C": "すべて同じ意味なので、どの名前を使っても管理上の違いはない",
+      "D": "SQL Warehouseの起動時間だけを短くする設定として見る"
+    },
+    "answer": "A",
+    "explanation": "catalogやschemaは、環境や業務領域などの境界を表し、その下にtable、view、volumeなどの資産を整理するために使います。",
+    "whyWrong": {
+      "B": "音声再生とは関係ありません。データ資産の整理単位です。",
+      "C": "階層ごとに整理上の役割が異なります。",
+      "D": "computeの起動時間ではなく、Unity Catalog上の資産管理に関する考え方です。"
+    },
+    "references": [
+      {
+        "title": "データベース オブジェクトの探索 - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/discover/database-objects"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-013",
+    "chapterId": "dea-dip-004",
+    "section": "3",
+    "sectionTitle": "リネージと監査",
+    "question": "ダッシュボードの売上数値が急に変わり、元データや変換処理の影響を調べたい場合に重要な観点はどれですか？",
+    "choices": {
+      "A": "データリネージや監査により、データの流れや利用状況をたどれるようにする",
+      "B": "すべての元データを削除してから数値を確認する",
+      "C": "catalogとschemaを使わず、全資産を同じ場所へ置く",
+      "D": "権限の詳細構文だけを暗記し、数値の根拠は確認しない"
+    },
+    "answer": "A",
+    "explanation": "数値の根拠や変更影響を調べるには、元データから変換、集計、ダッシュボードまでの流れをたどれることが重要です。",
+    "whyWrong": {
+      "B": "元データを削除すると原因調査が困難になります。",
+      "C": "整理をなくすと資産の発見や影響確認が難しくなります。",
+      "D": "この章では詳細構文より、リネージや監査を含む統制の考え方を重視します。"
+    },
+    "references": [
+      {
+        "title": "Unity カタログのデータ系列 - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/data-lineage"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-014",
+    "chapterId": "dea-dip-004",
+    "section": "4",
+    "sectionTitle": "環境と業務領域の境界",
+    "question": "開発環境と本番環境に同名の customer_summary テーブルがあり、検証用テーブルを本番分析へ誤って使わないようにしたい。最も適切な考え方はどれですか？",
+    "choices": {
+      "A": "catalogやschemaで環境・業務領域の境界を表し、同名テーブルでも所属する文脈を判断できるようにする",
+      "B": "テーブル名だけを見て判断し、同名であれば開発用も本番用も同じ意味の資産として扱う",
+      "C": "本番分析ではviewやvolumeを一切使わず、すべての資産を単一のschemaへ集約する",
+      "D": "利用者ごとにcustomer_summaryの物理コピーを作り、各自が正しいコピーを覚えて使い分ける"
+    },
+    "answer": "A",
+    "explanation": "同名のテーブルが複数環境にある場合は、catalogやschemaで環境・業務領域の境界を表し、資産がどの文脈に属するかを判断できるようにすることが重要です。",
+    "whyWrong": {
+      "B": "同名であることだけを根拠にすると、検証用と本番用の文脈を取り違えやすくなります。",
+      "C": "単一のschemaへ集約すると境界が曖昧になり、環境や業務領域を判断しにくくなります。",
+      "D": "利用者ごとの物理コピーを増やすと、正しさや所有者、更新状況の管理が難しくなります。"
+    },
+    "references": [
+      {
+        "title": "Unity Catalog とは - Azure Databricks",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/data-governance/unity-catalog/"
+      }
+    ]
+  },
+  {
+    "id": "DEA-DAL-015",
     "chapterId": "dea-ingestion-001",
     "section": "1",
     "sectionTitle": "Data Ingestion and Loading",
@@ -290,7 +394,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-012",
+    "id": "DEA-DAL-016",
     "chapterId": "dea-ingestion-001",
     "section": "2",
     "sectionTitle": "Data Ingestion and Loading",
@@ -316,7 +420,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-013",
+    "id": "DEA-DAL-017",
     "chapterId": "dea-ingestion-001",
     "section": "3",
     "sectionTitle": "Data Ingestion and Loading",
@@ -342,7 +446,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-014",
+    "id": "DEA-DAL-018",
     "chapterId": "dea-transform-001",
     "section": "1",
     "sectionTitle": "Data Transformation and Modeling",
@@ -368,7 +472,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-015",
+    "id": "DEA-DAL-019",
     "chapterId": "dea-transform-001",
     "section": "2",
     "sectionTitle": "Data Transformation and Modeling",
@@ -394,7 +498,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-016",
+    "id": "DEA-DAL-020",
     "chapterId": "dea-transform-001",
     "section": "3",
     "sectionTitle": "Data Transformation and Modeling",
@@ -420,7 +524,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-017",
+    "id": "DEA-DAL-021",
     "chapterId": "dea-lakeflow-jobs-001",
     "section": "1",
     "sectionTitle": "Working with Lakeflow Jobs",
@@ -446,7 +550,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-018",
+    "id": "DEA-DAL-022",
     "chapterId": "dea-lakeflow-jobs-001",
     "section": "2",
     "sectionTitle": "Working with Lakeflow Jobs",
@@ -472,7 +576,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-019",
+    "id": "DEA-DAL-023",
     "chapterId": "dea-lakeflow-jobs-001",
     "section": "3",
     "sectionTitle": "Working with Lakeflow Jobs",
@@ -498,7 +602,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-020",
+    "id": "DEA-DAL-024",
     "chapterId": "dea-cicd-001",
     "section": "1",
     "sectionTitle": "Implementing CI/CD",
@@ -524,7 +628,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-021",
+    "id": "DEA-DAL-025",
     "chapterId": "dea-cicd-001",
     "section": "2",
     "sectionTitle": "Implementing CI/CD",
@@ -550,7 +654,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-022",
+    "id": "DEA-DAL-026",
     "chapterId": "dea-cicd-001",
     "section": "3",
     "sectionTitle": "Implementing CI/CD",
@@ -576,7 +680,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-023",
+    "id": "DEA-DAL-027",
     "chapterId": "dea-ops-001",
     "section": "1",
     "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
@@ -602,7 +706,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-024",
+    "id": "DEA-DAL-028",
     "chapterId": "dea-ops-001",
     "section": "2",
     "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
@@ -628,7 +732,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-025",
+    "id": "DEA-DAL-029",
     "chapterId": "dea-ops-001",
     "section": "3",
     "sectionTitle": "Troubleshooting, Monitoring, and Optimization",
@@ -654,7 +758,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-026",
+    "id": "DEA-DAL-030",
     "chapterId": "dea-governance-001",
     "section": "1",
     "sectionTitle": "Governance and Security",
@@ -680,7 +784,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-027",
+    "id": "DEA-DAL-031",
     "chapterId": "dea-governance-001",
     "section": "2",
     "sectionTitle": "Governance and Security",
@@ -706,7 +810,7 @@
     ]
   },
   {
-    "id": "DEA-DAL-028",
+    "id": "DEA-DAL-032",
     "chapterId": "dea-governance-001",
     "section": "3",
     "sectionTitle": "Governance and Security",
