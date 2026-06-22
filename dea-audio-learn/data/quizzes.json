@@ -82,24 +82,24 @@
     "chapterId": "dea-dip-002",
     "section": "1",
     "sectionTitle": "Lakehouseの位置づけ",
-    "question": "Lakehouseの説明として最も適切なものはどれですか？",
+    "question": "ECサイトでクリックログ、注文データ、半構造化イベントを保存し、BI分析とレコメンドモデルの両方で同じデータを使いたいです。Lakehouseを採用する理由として最も適切なものはどれですか？",
     "choices": {
-      "A": "データレイクの柔軟性とDWHの管理性を組み合わせる考え方",
-      "B": "画像ファイルだけを保存するための専用サービス",
-      "C": "Delta Lakeとは無関係なオンプレミス専用DB",
-      "D": "BIダッシュボードの色を管理する機能"
+      "A": "多様な形式のデータを柔軟に保持しつつ、管理されたテーブルとして分析・AI活用へ共有しやすくするため",
+      "B": "BI用に整形済みの集計結果だけをDWHへ複製し、機械学習用の生ログは別基盤で個別管理するため",
+      "C": "ストレージ費用を下げることだけを目的に、品質管理や履歴確認は各利用者に任せるため",
+      "D": "分析担当者向けのSQL体験だけを優先し、新しいログ形式やAI用途は後続フェーズまで扱わないため"
     },
     "answer": "A",
-    "explanation": "Lakehouseは、データレイクの柔軟性を活かしながら、DWHに近い信頼性や管理性を持たせるアーキテクチャとして理解します。",
+    "explanation": "Lakehouseは、データレイクの柔軟性とデータウェアハウスの管理性を近づけ、同じ信頼できるデータをBI分析やAI活用で使いやすくする考え方です。",
     "whyWrong": {
-      "B": "画像専用ではなく、多様なデータを分析やAIに活用するための考え方です。",
-      "C": "Databricks上ではDelta LakeがLakehouseの信頼性を支える重要な技術です。",
-      "D": "画面デザイン機能ではなく、データ基盤のアーキテクチャに関する概念です。"
+      "B": "整形済みデータと生ログを分断すると、同じデータを共有するLakehouseの狙いから外れます。DWHの利点はありますが、AI用途との一体運用が弱くなります。",
+      "C": "コスト最適化は重要ですが、品質管理や履歴確認を利用者任せにすると、信頼できるデータ基盤にはなりません。",
+      "D": "SQL体験は重要な一部ですが、多様なデータ形式やAI用途も含めて扱う点がLakehouseの判断軸です。"
     },
     "references": [
       {
-        "title": "What is a data lakehouse?",
-        "url": "https://www.databricks.com/glossary/data-lakehouse"
+        "title": "Azure Databricks とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/introduction/"
       }
     ]
   },
@@ -108,24 +108,32 @@
     "chapterId": "dea-dip-002",
     "section": "2",
     "sectionTitle": "Delta Lakeの役割",
-    "question": "Delta LakeがLakehouseの中で担う役割として最も近いものはどれですか？",
+    "question": "日次パイプラインとストリーミング処理が同じ売上テーブルを更新し、列追加や過去状態の確認も必要です。Delta Lakeを重視する理由として最も適切なものはどれですか？",
     "choices": {
-      "A": "生データを一切保存しないようにする",
-      "B": "トランザクションや履歴管理などにより、信頼できるテーブル管理を支える",
-      "C": "ユーザーのブラウザ履歴を管理する",
-      "D": "音声読み上げの速度だけを調整する"
+      "A": "同時更新、スキーマ変化、履歴確認に対して、ACIDトランザクションやスキーマ管理、テーブル履歴で信頼性を高められるため",
+      "B": "更新処理をすべて手動承認にすれば、トランザクションログや履歴確認の仕組みが不要になるため",
+      "C": "列の追加が起きるたびに別テーブルを作り直し、過去データとの整合性確認を後回しにできるため",
+      "D": "ストリーミング処理だけを優先し、バッチ処理やBI参照は同じテーブルから切り離すため"
     },
-    "answer": "B",
-    "explanation": "Delta Lakeは、ACIDトランザクションや履歴管理などを通じて、データレイク上のテーブルを信頼して扱えるようにします。",
+    "answer": "A",
+    "explanation": "Delta Lakeは、ACIDトランザクション、スキーマ管理、テーブル履歴などにより、データレイク上のテーブルを複数ワークロードから信頼して扱いやすくします。",
     "whyWrong": {
-      "A": "生データを排除するのではなく、データレイク上のデータを信頼できる形で扱いやすくします。",
-      "C": "ブラウザ履歴ではなく、データテーブルの管理に関わる技術です。",
-      "D": "音声機能ではなく、Lakehouseのデータ管理を支える技術です。"
+      "B": "手動承認は運用統制の一部にはなりますが、同時更新や履歴確認を技術的に支える仕組みの代替にはなりません。",
+      "C": "別テーブルを作り直すだけでは、スキーマ変化や過去状態との整合性を継続的に管理しにくくなります。",
+      "D": "ストリーミングだけに閉じると、同じテーブルをバッチやBIでも使うLakehouseの利点が弱くなります。"
     },
     "references": [
       {
-        "title": "Delta Lake documentation",
-        "url": "https://docs.delta.io/latest/index.html"
+        "title": "Azure Databricks の Delta Lake とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/"
+      },
+      {
+        "title": "Azure Databricksでの ACID 保証とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/acid"
+      },
+      {
+        "title": "テーブル履歴の操作",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/history"
       }
     ]
   },
@@ -134,28 +142,28 @@
     "chapterId": "dea-dip-002",
     "section": "3",
     "sectionTitle": "LakehouseとDelta Lakeの関係",
-    "question": "LakehouseとDelta Lakeの関係として最も適切なものはどれですか？",
+    "question": "チーム内で「Lakehouseを導入する」と「Delta Lakeを使う」が混同されています。設計レビューでの説明として最も適切なものはどれですか？",
     "choices": {
-      "A": "Lakehouseは全体の考え方で、Delta Lakeは信頼できるテーブル管理を支える技術",
-      "B": "LakehouseとDelta Lakeはどちらも単なる音声教材の章タイトル",
-      "C": "Delta LakeはLakehouseを使えなくするための制約",
-      "D": "LakehouseはDelta Lakeの旧称で、意味は完全に同じ"
+      "A": "Lakehouseは柔軟な保存と管理された分析を両立する全体アーキテクチャの考え方で、Delta Lakeはその中で信頼できるテーブル管理を支える技術である",
+      "B": "Delta Lakeを使えばcompute選定や権限設計も自動で完了するため、Lakehouseの設計判断は不要である",
+      "C": "LakehouseはDWHの置き換えだけを意味し、Delta Lakeは生データ保存用の別名として扱えばよい",
+      "D": "Lakehouseは分析部門向けの運用ルールで、Delta Lakeは機械学習部門だけが使う個別技術である"
     },
     "answer": "A",
-    "explanation": "Lakehouseはアーキテクチャの考え方、Delta Lakeはその中で信頼性あるテーブル管理を担う技術として整理すると覚えやすくなります。",
+    "explanation": "Lakehouseは基盤全体の方向性、Delta Lakeは信頼できるテーブル管理を実現する技術として分けると、設計判断を整理しやすくなります。",
     "whyWrong": {
-      "B": "教材上の章タイトルではなく、実際のデータ基盤に関する概念と技術です。",
-      "C": "Delta LakeはLakehouseを妨げるものではなく、実現を支える役割です。",
-      "D": "同義語ではありません。全体像であるLakehouseと、テーブル管理技術であるDelta Lakeを区別します。"
+      "B": "Delta Lakeはテーブル信頼性を支えますが、compute選定や権限設計などLakehouse全体の判断まで自動で完了するわけではありません。",
+      "C": "Lakehouseは単なるDWH置き換えではなく、データレイクの柔軟性も含めた考え方です。Delta Lakeも生データ保存の別名ではありません。",
+      "D": "LakehouseもDelta Lakeも特定部門だけのものではなく、分析、パイプライン、AI活用をつなぐ基盤設計で使う概念です。"
     },
     "references": [
       {
-        "title": "Databricks glossary: Data Lakehouse",
-        "url": "https://www.databricks.com/glossary/data-lakehouse"
+        "title": "Azure Databricks とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/introduction/"
       },
       {
-        "title": "Delta Lake documentation",
-        "url": "https://docs.delta.io/latest/index.html"
+        "title": "Azure Databricks の Delta Lake とは",
+        "url": "https://learn.microsoft.com/ja-jp/azure/databricks/delta/"
       }
     ]
   },

@@ -2,11 +2,11 @@
 
 ## 本チャプターのポイント
 
-- Lakehouseは、データレイクの柔軟性とデータウェアハウスの管理性を組み合わせるアーキテクチャの考え方です。
+- [Lakehouse](#keyword-lakehouse)は、データレイクの柔軟性とデータウェアハウスの管理性を組み合わせるアーキテクチャの考え方です。
 - データレイクだけでは、品質、スキーマ、履歴、更新・削除の管理が弱くなりやすい点を押さえます。
 - データウェアハウスだけでは、多様な形式の生データやAI・機械学習向けデータ活用で柔軟性が足りない場合があります。
-- Delta Lakeは、Lakehouse上のデータを信頼できるテーブルとして扱うための中核技術です。
-- Delta Lakeの代表キーワードとして、ACIDトランザクション、スキーマ管理、履歴管理、更新・削除を押さえます。
+- [Delta Lake](#keyword-delta-lake)は、Lakehouse上のデータを信頼できるテーブルとして扱うための中核技術です。
+- Delta Lakeの代表キーワードとして、[ACIDトランザクション](#keyword-acid-transaction)、[スキーマ管理](#keyword-schema-management)、[履歴管理](#keyword-history-management)、更新・削除を押さえます。
 
 ## 試験での注意点
 
@@ -17,27 +17,31 @@
 
 ## キーワード一覧
 
-<a id="lakehouse"></a>
+<a id="keyword-lakehouse"></a>
 
 ### Lakehouse
 
 データレイクとデータウェアハウスの利点を組み合わせ、柔軟な保存と管理された分析を両立しようとする考え方です。
 
-<a id="delta-lake"></a>
+<a id="keyword-delta-lake"></a>
 
 ### Delta Lake
 
 データレイク上のファイルを、信頼性の高いテーブルとして扱いやすくするオープンソースのストレージレイヤーです。
 
-<a id="acid-transaction"></a>
+<a id="keyword-acid-transaction"></a>
 
 ### ACIDトランザクション
 
 データ操作の一貫性や信頼性を保つための性質です。複数の処理が関わるテーブル更新でも、途中で壊れた状態になりにくくします。
 
+<a id="keyword-schema-management"></a>
+
 ### スキーマ管理
 
 テーブルの列名やデータ型を管理し、想定外の構造変更によるデータ品質の低下を防ぎやすくします。
+
+<a id="keyword-history-management"></a>
 
 ### 履歴管理
 
@@ -45,6 +49,7 @@
 
 ## 参考リンク
 
-- [What is a lakehouse?](https://docs.databricks.com/aws/en/lakehouse/)
-- [Delta Lake documentation](https://docs.databricks.com/aws/en/delta/)
-- [What is Delta Lake?](https://delta.io/learn/getting-started/)
+- [Azure Databricks とは](https://learn.microsoft.com/ja-jp/azure/databricks/introduction/)
+- [Azure Databricks の Delta Lake とは](https://learn.microsoft.com/ja-jp/azure/databricks/delta/)
+- [Azure Databricksでの ACID 保証とは](https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/acid)
+- [テーブル履歴の操作](https://learn.microsoft.com/ja-jp/azure/databricks/delta/history)

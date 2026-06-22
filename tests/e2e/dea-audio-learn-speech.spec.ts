@@ -367,7 +367,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#mini-quiz-list')).toContainText(
-      'Lakehouseの説明として最も適切なもの'
+      'BI分析とレコメンドモデルの両方で同じデータを使いたい'
     );
     await expect(page.locator('#mini-quiz-list')).not.toContainText(
       'Databricks Intelligence Platformを理解するうえで'
@@ -387,6 +387,37 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Delta Lakeは信頼できるテーブル管理'
     );
 
+    await expect(page.locator('#audio-script-markdown a[href="#keyword-lakehouse"]')).toHaveCount(
+      1
+    );
+    await expect(page.locator('#audio-script-markdown a[href="#keyword-delta-lake"]')).toHaveCount(
+      1
+    );
+    await expect(
+      page.locator('#audio-script-markdown a[href="#keyword-acid-transaction"]')
+    ).toHaveCount(1);
+    await expect(
+      page.locator('#audio-script-markdown a[href="#keyword-schema-management"]')
+    ).toHaveCount(1);
+    await expect(
+      page.locator('#audio-script-markdown a[href="#keyword-history-management"]')
+    ).toHaveCount(1);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(5);
+    await expect(
+      page.locator('#note-markdown a[href^="https://learn.microsoft.com/ja-jp/azure/databricks/"]')
+    ).toHaveCount(4);
+    await expect(page.locator('#note-markdown')).not.toContainText('delta.io');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '左から右へ、保存基盤の考え方、テーブル管理、分析・AI活用の順に読みます。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'どれが優れているかを決める表ではありません。'
+    );
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '次のChapter 3では、その土台の上でSQL、ジョブ、ノートブック、サーバレスなどのワークロードに応じて、どのcomputeを選ぶかへ進みます。'
+    );
+    await expect(page.locator('#mini-quiz-list')).toContainText('同時更新、スキーマ変化、履歴確認');
+    await expect(page.locator('#mini-quiz-list')).toContainText('設計レビューでの説明');
     await page.locator('#next-chapter').click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Compute servicesとワークロード選定'
@@ -1326,6 +1357,22 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
       ).toHaveLength(['dea-dip-003', 'dea-dip-004'].includes(chapter.id) ? 4 : 3);
     }
+
+    const chapter2Quizzes = quizzes.filter(
+      (quiz: { chapterId: string }) => quiz.chapterId === 'dea-dip-002'
+    );
+    expect(
+      chapter2Quizzes.flatMap((quiz: { references: Array<{ url: string }> }) =>
+        quiz.references.map((reference) => reference.url)
+      )
+    ).toEqual([
+      'https://learn.microsoft.com/ja-jp/azure/databricks/introduction/',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/delta/',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/acid',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/delta/history',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/introduction/',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/delta/',
+    ]);
 
     const headingOrder = [
       '## 本チャプターのポイント',
