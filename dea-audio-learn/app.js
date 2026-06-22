@@ -6,6 +6,9 @@ const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
 const selectedMinutes = document.querySelector('#selected-minutes');
 const selectedStatus = document.querySelector('#selected-status');
+const learningContextDomain = document.querySelector('#learning-context-domain');
+const learningContextProgress = document.querySelector('#learning-context-progress');
+const learningContextTitle = document.querySelector('#learning-context-title');
 const previousChapterButton = document.querySelector('#previous-chapter');
 const nextChapterButton = document.querySelector('#next-chapter');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
@@ -917,6 +920,37 @@ const fetchText = async (path) => {
 
 const getDomains = () => [...new Set(chapters.map((chapter) => chapter.domain))];
 
+const getChapterProgress = (chapterId) => {
+  const chapterIndex = chapters.findIndex((chapter) => chapter.id === chapterId);
+  const chapter = chapters[chapterIndex];
+
+  if (!chapter) {
+    return null;
+  }
+
+  return {
+    domain: chapter.domain,
+    current: chapterIndex + 1,
+    total: chapters.length,
+    title: chapter.title,
+  };
+};
+
+const renderLearningContextBar = (chapterId) => {
+  const progress = getChapterProgress(chapterId);
+
+  if (!progress) {
+    learningContextDomain.textContent = '-';
+    learningContextProgress.textContent = 'Chapter - / -';
+    learningContextTitle.textContent = 'チャプターを読み込み中...';
+    return;
+  }
+
+  learningContextDomain.textContent = progress.domain;
+  learningContextProgress.textContent = `Chapter ${progress.current} / ${progress.total}`;
+  learningContextTitle.textContent = progress.title;
+};
+
 const getChaptersByDomain = (domain) =>
   chapters
     .filter((chapter) => chapter.domain === domain)
@@ -1018,6 +1052,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   selectedTitle.textContent = chapter.title;
   selectedMinutes.textContent = `音声目安：約${chapter.estimatedMinutes}分`;
   selectedStatus.textContent = chapter.status;
+  renderLearningContextBar(chapter.id);
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
   audioTocList.innerHTML = '';
   noteMarkdown.textContent = '要点メモを読み込み中...';
@@ -1128,6 +1163,7 @@ const init = async () => {
     domainList.textContent = error.message;
     chapterList.textContent = error.message;
     selectedTitle.textContent = '読み込みエラー';
+    renderLearningContextBar();
   }
 };
 

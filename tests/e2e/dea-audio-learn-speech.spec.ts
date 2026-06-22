@@ -6,6 +6,7 @@ const chapters = JSON.parse(
   readFileSync(new URL('../../dea-audio-learn/data/chapters.json', import.meta.url), 'utf8')
 );
 const firstChapter = chapters[0];
+const totalChapters = chapters.length;
 const quizzes = JSON.parse(
   readFileSync(new URL('../../dea-audio-learn/data/quizzes.json', import.meta.url), 'utf8')
 );
@@ -32,6 +33,37 @@ async function clickByDom(locator: Locator) {
 }
 
 test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
+  test('shows the learning context bar on mobile without overlapping progress and title', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+
+    const contextBar = page.locator('#learning-context-bar');
+    await expect(contextBar).toBeVisible();
+    await expect(page.locator('#learning-context-domain')).toHaveText(firstChapter.domain);
+    await expect(page.locator('#learning-context-progress')).toHaveText(
+      `Chapter 1 / ${totalChapters}`
+    );
+    await expect(page.locator('#learning-context-title')).toHaveText(firstChapter.title);
+
+    const boxes = await page.evaluate(() => {
+      const progress = document
+        .querySelector('#learning-context-progress')
+        ?.getBoundingClientRect();
+      const title = document.querySelector('#learning-context-title')?.getBoundingClientRect();
+      return progress && title
+        ? {
+            progressBottom: progress.bottom,
+            titleTop: title.top,
+            titleHeight: title.height,
+          }
+        : null;
+    });
+    expect(boxes).not.toBeNull();
+    expect(boxes?.titleTop).toBeGreaterThanOrEqual(boxes?.progressBottom ?? 0);
+    expect(boxes?.titleHeight).toBeGreaterThan(20);
+  });
   test('uses one button to play, pause, resume, and resets on chapter change', async ({ page }) => {
     await page.addInitScript(() => {
       window.__speechCalls = [];
@@ -89,8 +121,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       `音声目安：約${firstChapter.estimatedMinutes}分`
     );
     await expect(page.locator('#selected-status')).toHaveText(firstChapter.status);
-    await expect(page.locator('#selected-chapter-no')).toHaveCount(0);
-    await expect(page.locator('#selected-position')).toHaveCount(0);
+    await expect(page.locator('#learning-context-domain')).toHaveText(firstChapter.domain);
+    await expect(page.locator('#learning-context-progress')).toHaveText(
+      `Chapter 1 / ${totalChapters}`
+    );
+    await expect(page.locator('#learning-context-title')).toHaveText(firstChapter.title);
     const isMobileChapterViewport = await page.evaluate(
       () => window.matchMedia('(max-width: 780px)').matches
     );
@@ -442,6 +477,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Data Ingestion and Loadingの全体像'
+    );
+    await expect(page.locator('#learning-context-domain')).toHaveText('Data Ingestion and Loading');
+    await expect(page.locator('#learning-context-progress')).toHaveText(
+      `Chapter 5 / ${totalChapters}`
+    );
+    await expect(page.locator('#learning-context-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
     await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
