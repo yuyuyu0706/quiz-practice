@@ -91,8 +91,8 @@ flowchart LR
 
 このように流れを追えると、影響分析や原因調査がしやすくなります。どのテーブル変更がどのダッシュボードに影響するかを考える場面でも、リネージは重要です。
 
-## 領域7へのつなぎ
+## 次の学習へのつなぎ
 
-この章では、[Principals](#keyword-principals)をユーザー、グループ、サービスプリンシパルなどのアクセス主体として紹介するに留めます。GRANT / REVOKE / DENY、row filter、column mask、ABACの具体実装は扱いません。
+この章では、[Principals](#keyword-principals)をユーザー、グループ、サービスプリンシパルなどのアクセス主体として紹介するに留めます。GRANT / REVOKE / DENY、row filter、column mask、ABACの具体実装や、managed table / external tableの詳細な運用・設計判断は扱いません。
 
 ここで学んだ資産管理と統制の考え方は、取り込み、変換、ジョブ運用、CI/CD、性能改善、ガバナンスのすべてに共通する土台になります。詳細なアクセス制御は、後続のガバナンス領域で、どの主体にどの権限を与えるかという実装レベルの判断として学びます。

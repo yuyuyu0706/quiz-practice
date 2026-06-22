@@ -1463,7 +1463,7 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         );
         expect(note).not.toContain('https://docs.databricks.com');
       } else if (chapter.id === 'dea-dip-004') {
-        expect(audioScript).toContain('## 領域7へのつなぎ');
+        expect(audioScript).toContain('## 次の学習へのつなぎ');
         expect(audioScript).toContain('Unity Catalog](#keyword-unity-catalog)');
         expect(audioScript).toContain('Catalog](#keyword-catalog)');
         expect(audioScript).toContain('Schema](#keyword-schema)');
@@ -1471,7 +1471,7 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         expect(audioScript).toContain('この図では、環境と業務領域を階層で分ける考え方');
         expect(audioScript).toContain('次の流れは、リネージを使って数値の根拠をたどるときの見方');
         expect(audioScript).toContain(
-          'GRANT / REVOKE / DENY、row filter、column mask、ABACの具体実装は扱いません'
+          'GRANT / REVOKE / DENY、row filter、column mask、ABACの具体実装や、managed table / external tableの詳細な運用・設計判断は扱いません'
         );
         expect(audioScript).not.toContain('```sql');
         expect(note).toContain(
