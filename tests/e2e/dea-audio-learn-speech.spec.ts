@@ -418,10 +418,6 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#mini-quiz-list')).toContainText('同時更新、スキーマ変化、履歴確認');
     await expect(page.locator('#mini-quiz-list')).toContainText('設計レビューでの説明');
-    await expect(
-      page.locator('#mini-quiz-list a[href^="https://learn.microsoft.com/ja-jp/azure/databricks/"]')
-    ).toHaveCount(6);
-
     await page.locator('#next-chapter').click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Compute servicesとワークロード選定'
@@ -1361,6 +1357,22 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
         quizzes.filter((quiz: { chapterId: string }) => quiz.chapterId === chapter.id)
       ).toHaveLength(['dea-dip-003', 'dea-dip-004'].includes(chapter.id) ? 4 : 3);
     }
+
+    const chapter2Quizzes = quizzes.filter(
+      (quiz: { chapterId: string }) => quiz.chapterId === 'dea-dip-002'
+    );
+    expect(
+      chapter2Quizzes.flatMap((quiz: { references: Array<{ url: string }> }) =>
+        quiz.references.map((reference) => reference.url)
+      )
+    ).toEqual([
+      'https://learn.microsoft.com/ja-jp/azure/databricks/introduction/',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/delta/',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/lakehouse/acid',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/delta/history',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/introduction/',
+      'https://learn.microsoft.com/ja-jp/azure/databricks/delta/',
+    ]);
 
     const headingOrder = [
       '## 本チャプターのポイント',
