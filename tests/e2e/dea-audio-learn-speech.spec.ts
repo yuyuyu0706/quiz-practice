@@ -41,6 +41,12 @@ async function expectPageScrolledToTop(page: Page) {
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 }
 
+async function openChapterSelector(page: Page) {
+  await page.locator('#chapter-selector').evaluate((details) => {
+    (details as HTMLDetailsElement).open = true;
+  });
+}
+
 async function installMockSpeech(page: Page) {
   await page.addInitScript(() => {
     window.__speechCalls = [];
@@ -151,6 +157,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
     await scrollNearPageBottom(page);
+    await openChapterSelector(page);
     await page
       .locator('#chapter-list .chapter-button')
       .filter({ hasText: 'LakehouseとDelta Lakeの位置づけ' })
@@ -172,6 +179,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await scrollNearPageBottom(page);
+    await openChapterSelector(page);
     await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
