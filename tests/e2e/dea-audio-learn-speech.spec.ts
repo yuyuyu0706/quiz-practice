@@ -113,11 +113,12 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
       'Databricks Intelligence Platform'
     );
-    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(3);
+    await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(4);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
       'Chapter 1',
       'Chapter 2',
       'Chapter 3',
+      'Chapter 4',
     ]);
     await expect(page.locator('#chapter-list .chapter-button').first()).not.toContainText(
       'Data Ingestion and Loading'
