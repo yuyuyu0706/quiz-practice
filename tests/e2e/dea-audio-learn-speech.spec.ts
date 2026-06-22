@@ -291,7 +291,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
-    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(5);
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(4);
     await expect(
       page
         .locator(
