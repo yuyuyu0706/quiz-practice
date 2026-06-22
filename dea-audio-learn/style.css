@@ -588,6 +588,27 @@ body {
   content: '▲';
 }
 
+.chapter-context-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  align-items: center;
+}
+
+.chapter-progress-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0.14rem 0.55rem;
+  border: 1px solid #cdd5ff;
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
 .markdown-body {
   max-width: 70ch;
 }
@@ -685,6 +706,15 @@ body {
   .speech-rate {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .chapter-context-line {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .chapter-progress-pill {
+    max-width: 100%;
   }
 
   .audio-toc {

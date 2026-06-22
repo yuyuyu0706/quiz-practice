@@ -6,6 +6,7 @@ const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
 const selectedMinutes = document.querySelector('#selected-minutes');
 const selectedStatus = document.querySelector('#selected-status');
+const selectedChapterProgress = document.querySelector('#selected-chapter-progress');
 const previousChapterButton = document.querySelector('#previous-chapter');
 const nextChapterButton = document.querySelector('#next-chapter');
 const audioScriptMarkdown = document.querySelector('#audio-script-markdown');
@@ -917,6 +918,30 @@ const fetchText = async (path) => {
 
 const getDomains = () => [...new Set(chapters.map((chapter) => chapter.domain))];
 
+const getChapterProgress = (chapterId) => {
+  const chapterIndex = chapters.findIndex((chapter) => chapter.id === chapterId);
+  const chapter = chapters[chapterIndex];
+
+  if (!chapter) {
+    return null;
+  }
+
+  return {
+    domain: chapter.domain,
+    current: chapterIndex + 1,
+    total: chapters.length,
+    title: chapter.title,
+  };
+};
+
+const renderChapterOverviewProgress = (chapterId) => {
+  const progress = getChapterProgress(chapterId);
+
+  selectedChapterProgress.textContent = progress
+    ? `Chapter ${progress.current} / ${progress.total}`
+    : 'Chapter - / -';
+};
+
 const getChaptersByDomain = (domain) =>
   chapters
     .filter((chapter) => chapter.domain === domain)
@@ -1018,6 +1043,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   selectedTitle.textContent = chapter.title;
   selectedMinutes.textContent = `音声目安：約${chapter.estimatedMinutes}分`;
   selectedStatus.textContent = chapter.status;
+  renderChapterOverviewProgress(chapter.id);
   audioScriptMarkdown.textContent = '音声スクリプトを読み込み中...';
   audioTocList.innerHTML = '';
   noteMarkdown.textContent = '要点メモを読み込み中...';
@@ -1128,6 +1154,7 @@ const init = async () => {
     domainList.textContent = error.message;
     chapterList.textContent = error.message;
     selectedTitle.textContent = '読み込みエラー';
+    renderChapterOverviewProgress();
   }
 };
 
