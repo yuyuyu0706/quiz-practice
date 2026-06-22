@@ -48,6 +48,14 @@ let speechStartWatchdogId = null;
 const speechStartWatchdogMs = 3000;
 const maxSpeechChunkLength = 320;
 
+const scrollToChapterStart = () => {
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: 'auto',
+  });
+};
+
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
 const logSpeech = (message, detail) => {
@@ -1050,30 +1058,34 @@ const selectChapterByIndex = async (chapterIndex) => {
   renderMiniQuizzes(chapter.id);
 
   try {
-    const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
-    audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
-    buildAudioTableOfContents();
-    speechSections = buildSpeechSectionsFromRenderedMarkdown();
-    rebuildSpeechChunksFromSections();
-    currentAudioScriptText = speechChunks.map((chunk) => chunk.text).join('\n');
-    updateSpeechUI();
-    logSpeech('audio script loaded', {
-      chapterId: chapter.id,
-      markdownLength: audioScript.length,
-      speechTextLength: currentAudioScriptText.length,
-      speechTextPreview: currentAudioScriptText.slice(0, 200),
-    });
-    refreshSpeechVoices('audio-script-loaded');
-  } catch (error) {
-    audioScriptMarkdown.textContent = error.message;
-  }
+    try {
+      const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
+      audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
+      buildAudioTableOfContents();
+      speechSections = buildSpeechSectionsFromRenderedMarkdown();
+      rebuildSpeechChunksFromSections();
+      currentAudioScriptText = speechChunks.map((chunk) => chunk.text).join('\n');
+      updateSpeechUI();
+      logSpeech('audio script loaded', {
+        chapterId: chapter.id,
+        markdownLength: audioScript.length,
+        speechTextLength: currentAudioScriptText.length,
+        speechTextPreview: currentAudioScriptText.slice(0, 200),
+      });
+      refreshSpeechVoices('audio-script-loaded');
+    } catch (error) {
+      audioScriptMarkdown.textContent = error.message;
+    }
 
-  try {
-    const note = removeNoteTitle(await fetchText(chapter.notePath));
-    noteMarkdown.innerHTML = renderMarkdown(note);
-    addExternalLinkAttributes(noteMarkdown);
-  } catch (error) {
-    noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
+    try {
+      const note = removeNoteTitle(await fetchText(chapter.notePath));
+      noteMarkdown.innerHTML = renderMarkdown(note);
+      addExternalLinkAttributes(noteMarkdown);
+    } catch (error) {
+      noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
+    }
+  } finally {
+    scrollToChapterStart();
   }
 };
 
