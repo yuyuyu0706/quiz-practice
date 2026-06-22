@@ -32,6 +32,69 @@ async function clickByDom(locator: Locator) {
   });
 }
 
+async function scrollNearPageBottom(page: Page) {
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+}
+
+async function expectPageScrolledToTop(page: Page) {
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+}
+
+async function installMockSpeech(page: Page) {
+  await page.addInitScript(() => {
+    window.__speechCalls = [];
+    class MockSpeechSynthesisUtterance {
+      text: string;
+      lang = '';
+      rate = 1;
+      voice: SpeechSynthesisVoice | null = null;
+      onstart: ((event: SpeechSynthesisEvent) => void) | null = null;
+      onend: ((event: SpeechSynthesisEvent) => void) | null = null;
+      onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
+
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+      configurable: true,
+      value: MockSpeechSynthesisUtterance,
+    });
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        speak: (utterance: SpeechSynthesisUtterance) => {
+          window.__speechCalls.push({
+            type: 'speak',
+            text: utterance.text,
+            lang: utterance.lang,
+            rate: utterance.rate,
+            voice: utterance.voice?.lang,
+          });
+          utterance.onstart?.(new Event('start') as SpeechSynthesisEvent);
+        },
+        pause: () => window.__speechCalls.push({ type: 'pause' }),
+        resume: () => window.__speechCalls.push({ type: 'resume' }),
+        cancel: () => window.__speechCalls.push({ type: 'cancel' }),
+        getVoices: () => [
+          {
+            name: 'Mock Japanese Voice',
+            lang: 'ja-JP',
+            default: true,
+            localService: true,
+            voiceURI: 'mock-ja-JP',
+          },
+        ],
+        addEventListener: () => undefined,
+        pending: false,
+        speaking: false,
+        paused: false,
+      } as unknown as SpeechSynthesis,
+    });
+  });
+}
+
 test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   test('shows chapter overview progress on mobile without overlapping the title', async ({
     page,
@@ -62,6 +125,67 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(boxes).not.toBeNull();
     expect(boxes?.titleTop).toBeGreaterThanOrEqual(boxes?.progressBottom ?? 0);
     expect(boxes?.titleHeight).toBeGreaterThan(20);
+  });
+  test('resets page position and speech state for every chapter switching route', async ({
+    page,
+  }) => {
+    await installMockSpeech(page);
+    await gotoAudioLearn(page);
+
+    await scrollNearPageBottom(page);
+    await page.locator('#next-chapter').click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'LakehouseとDelta Lakeの位置づけ'
+    );
+    await expectPageScrolledToTop(page);
+
+    await scrollNearPageBottom(page);
+    await page.locator('#previous-chapter').click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Databricks Intelligence Platformの全体像'
+    );
+    await expectPageScrolledToTop(page);
+
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await scrollNearPageBottom(page);
+    await page
+      .locator('#chapter-list .chapter-button')
+      .filter({ hasText: 'LakehouseとDelta Lakeの位置づけ' })
+      .click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'LakehouseとDelta Lakeの位置づけ'
+    );
+    await expectPageScrolledToTop(page);
+    await expect(page.locator('#speech-status')).toHaveText('未再生');
+    await expect(page.locator('#speech-toggle')).toHaveText('再生');
+    await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
+    await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
+    await expect(page.locator('#speech-progress-bar')).toHaveJSProperty('value', 0);
+    await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
+    await expect(page.locator('#mini-quiz-list')).toContainText(
+      'BI分析とレコメンドモデルの両方で同じデータを使いたい'
+    );
+
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await scrollNearPageBottom(page);
+    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Data Ingestion and Loadingの全体像'
+    );
+    await expectPageScrolledToTop(page);
+    await expect(page.locator('#speech-status')).toHaveText('未再生');
+    await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
+    await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      'Data Ingestion and Loading'
+    );
+    await expect(page.locator('#mini-quiz-list')).toContainText(
+      'Data Ingestion and Loadingで最初に押さえるべき観点'
+    );
   });
   test('uses one button to play, pause, resume, and resets on chapter change', async ({ page }) => {
     await page.addInitScript(() => {
