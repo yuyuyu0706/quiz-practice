@@ -28,12 +28,25 @@ const tocSpeechCurrentPosition = document.querySelector('#toc-speech-current-pos
 const tocSpeechProgressLabel = document.querySelector('#toc-speech-progress-label');
 const miniQuizList = document.querySelector('#mini-quiz-list');
 const miniQuizSummary = document.querySelector('#mini-quiz-summary');
+const learningTrackerCurrent = document.querySelector('#learning-tracker-current');
+const learningTrackerItems = Array.from(document.querySelectorAll('.learning-tracker__item'));
+const learningTrackerButtons = Array.from(document.querySelectorAll('[data-stage-target]'));
+const learningStageSections = Array.from(document.querySelectorAll('[data-learning-stage]'));
 
 let chapters = [];
 let quizzes = [];
 let shuffledChoicesByQuestionId = new Map();
 let selectedChapterIndex = 0;
 let selectedDomainName = '';
+let currentLearningStage = 'audio';
+let highestReachedLearningStageIndex = 0;
+let learningStageObserver = null;
+let learningStageRafId = null;
+const learningStages = [
+  { key: 'audio', label: '音声教材', sectionId: 'audio-material-section' },
+  { key: 'note', label: '要点メモ', sectionId: 'note-section' },
+  { key: 'quiz', label: 'ミニクイズ', sectionId: 'mini-quiz-section' },
+];
 let currentAudioScriptText = '';
 let speechSections = [];
 let speechChunks = [];
@@ -54,6 +67,98 @@ const scrollToChapterStart = () => {
     left: 0,
     behavior: 'auto',
   });
+};
+
+const getLearningStageIndex = (stageKey) =>
+  learningStages.findIndex((stage) => stage.key === stageKey);
+
+const updateLearningTrackerUI = () => {
+  const currentStage =
+    learningStages.find((stage) => stage.key === currentLearningStage) ?? learningStages[0];
+  learningTrackerCurrent.textContent = `現在：${currentStage.label}`;
+
+  learningTrackerItems.forEach((item) => {
+    const stageKey = item.dataset.stage;
+    const stageIndex = getLearningStageIndex(stageKey);
+    const isCurrent = stageKey === currentLearningStage;
+    const isReached = stageIndex <= highestReachedLearningStageIndex;
+    const status = item.querySelector('.learning-tracker__status');
+
+    item.classList.toggle('is-current', isCurrent);
+    item.classList.toggle('is-reached', isReached && !isCurrent);
+    item.classList.toggle('is-unreached', !isReached && !isCurrent);
+    item.setAttribute('aria-current', isCurrent ? 'step' : 'false');
+    status.textContent = isCurrent ? '現在位置' : isReached ? '到達済み' : '未到達';
+  });
+};
+
+const setCurrentLearningStage = (stageKey) => {
+  const stageIndex = getLearningStageIndex(stageKey);
+  if (stageIndex === -1) return;
+  currentLearningStage = stageKey;
+  highestReachedLearningStageIndex = Math.max(highestReachedLearningStageIndex, stageIndex);
+  updateLearningTrackerUI();
+};
+
+const resetLearningTracker = () => {
+  currentLearningStage = 'audio';
+  highestReachedLearningStageIndex = 0;
+  updateLearningTrackerUI();
+};
+
+const getMostCentralLearningStage = () => {
+  const viewportCenter = window.innerHeight / 2;
+  return learningStageSections
+    .map((section) => {
+      const rect = section.getBoundingClientRect();
+      const sectionCenter = Math.min(Math.max(viewportCenter, rect.top), rect.bottom);
+      const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+      return {
+        stageKey: section.dataset.learningStage,
+        stageIndex: getLearningStageIndex(section.dataset.learningStage),
+        distance: Math.abs(sectionCenter - viewportCenter),
+        visibleHeight,
+      };
+    })
+    .filter((candidate) => candidate.visibleHeight > 0)
+    .sort((left, right) => left.distance - right.distance || left.stageIndex - right.stageIndex)[0];
+};
+
+const refreshLearningStageFromViewport = () => {
+  learningStageRafId = null;
+  const centralStage = getMostCentralLearningStage();
+  if (!centralStage) return;
+  setCurrentLearningStage(centralStage.stageKey);
+};
+
+const queueLearningStageRefresh = () => {
+  if (learningStageRafId !== null) return;
+  learningStageRafId = window.requestAnimationFrame(refreshLearningStageFromViewport);
+};
+
+const setupLearningStageObserver = () => {
+  if (learningStageObserver) learningStageObserver.disconnect();
+  if (!('IntersectionObserver' in window)) {
+    window.addEventListener('scroll', queueLearningStageRefresh, { passive: true });
+    window.addEventListener('resize', queueLearningStageRefresh);
+    return;
+  }
+
+  learningStageObserver = new IntersectionObserver(queueLearningStageRefresh, {
+    root: null,
+    threshold: [0, 0.15, 0.35, 0.55, 0.75, 1],
+  });
+  learningStageSections.forEach((section) => learningStageObserver.observe(section));
+  window.addEventListener('resize', queueLearningStageRefresh);
+};
+
+const scrollToLearningStage = (stageKey) => {
+  const stage = learningStages.find((candidate) => candidate.key === stageKey);
+  const section = stage ? document.getElementById(stage.sectionId) : null;
+  if (!section) return;
+  if (section instanceof HTMLDetailsElement) section.open = true;
+  setCurrentLearningStage(stageKey);
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
@@ -1039,6 +1144,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   }
 
   resetSpeechForChapterChange();
+  resetLearningTracker();
   selectedChapterIndex = chapterIndex;
   if (selectedDomainName !== chapter.domain) {
     selectedDomainName = chapter.domain;
@@ -1108,6 +1214,9 @@ speechToggleButton.addEventListener('click', handleSpeechToggle);
 tocSpeechToggleButton.addEventListener('click', handleSpeechToggle);
 speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 tocSpeechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
+learningTrackerButtons.forEach((button) => {
+  button.addEventListener('click', () => scrollToLearningStage(button.dataset.stageTarget));
+});
 speechRateSelect.addEventListener('change', () => {
   const previousSpeechState = speechState;
   const newRate = Number(speechRateSelect.value);
@@ -1144,6 +1253,7 @@ if (
 
 const init = async () => {
   syncChapterSelectorState();
+  setupLearningStageObserver();
   mobileChapterSelectorQuery.addEventListener('change', syncChapterSelectorState);
 
   try {

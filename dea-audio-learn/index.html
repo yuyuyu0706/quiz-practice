@@ -105,9 +105,51 @@
         </div>
       </aside>
 
+      <nav class="panel learning-tracker" aria-labelledby="learning-tracker-title">
+        <div class="learning-tracker__heading">
+          <p class="eyebrow">Chapter Stage</p>
+          <h2 id="learning-tracker-title">学習追跡</h2>
+          <p id="learning-tracker-current" class="learning-tracker__current">現在：音声教材</p>
+        </div>
+        <ol
+          id="learning-tracker-list"
+          class="learning-tracker__list"
+          aria-label="チャプター内の学習段階"
+        >
+          <li class="learning-tracker__item" data-stage="audio">
+            <span class="learning-tracker__marker" aria-hidden="true">1</span>
+            <span class="learning-tracker__label">音声教材</span>
+            <span class="learning-tracker__status">現在位置</span>
+          </li>
+          <li class="learning-tracker__item" data-stage="note">
+            <span class="learning-tracker__marker" aria-hidden="true">2</span>
+            <span class="learning-tracker__label">要点メモ</span>
+            <span class="learning-tracker__status">未到達</span>
+          </li>
+          <li class="learning-tracker__item" data-stage="quiz">
+            <span class="learning-tracker__marker" aria-hidden="true">3</span>
+            <span class="learning-tracker__label">ミニクイズ</span>
+            <span class="learning-tracker__status">未到達</span>
+          </li>
+        </ol>
+        <div class="learning-tracker__actions" aria-label="チャプター内ナビゲーション">
+          <button class="learning-tracker__button" type="button" data-stage-target="audio">
+            音声教材へ
+          </button>
+          <button class="learning-tracker__button" type="button" data-stage-target="note">
+            要点メモへ
+          </button>
+          <button class="learning-tracker__button" type="button" data-stage-target="quiz">
+            クイズへ
+          </button>
+        </div>
+      </nav>
+
       <details
+        id="audio-material-section"
         class="panel markdown-card audio-card audio-card--primary"
         aria-labelledby="audio-material-title"
+        data-learning-stage="audio"
         open
       >
         <summary>
@@ -143,14 +185,24 @@
         <div id="audio-script-markdown" class="markdown-body">音声スクリプトを読み込み中...</div>
       </details>
 
-      <section class="panel markdown-card note-card" aria-labelledby="note-title">
+      <section
+        id="note-section"
+        class="panel markdown-card note-card"
+        aria-labelledby="note-title"
+        data-learning-stage="note"
+      >
         <div class="section-heading section-heading--compact">
           <h2 id="note-title" class="card-title">要点メモ</h2>
         </div>
         <div id="note-markdown" class="markdown-body">要点メモを読み込み中...</div>
       </section>
 
-      <section class="panel quiz-card" aria-labelledby="mini-quiz-title">
+      <section
+        id="mini-quiz-section"
+        class="panel quiz-card"
+        aria-labelledby="mini-quiz-title"
+        data-learning-stage="quiz"
+      >
         <div class="section-heading section-heading--compact">
           <h2 id="mini-quiz-title" class="card-title">ミニクイズ</h2>
           <p id="mini-quiz-summary" class="quiz-summary">
