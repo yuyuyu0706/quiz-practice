@@ -181,13 +181,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await firstQuizAnswerButton.click();
     await expect(firstQuizFeedback).toContainText('不正解です。');
     await expect(firstQuizFeedback).toContainText(
-      '正解は「取り込み、管理、分析、AI活用までをつなぐ統合基盤として見る」です。'
+      '正解は「取り込み、変換、管理、分析、AI活用を共通の文脈で扱い、信頼できるデータを共有しやすくする」です。'
     );
     await expect(firstQuizFeedback).toContainText(
-      '選んだ回答について：機械学習専用ではなく、データ活用全体を支えるプラットフォームです。'
+      '選んだ回答について：SQL画面の利便性は一部の改善ですが、データ移動や権限管理の分断を残すため判断軸が不十分です。'
     );
     await expect(firstQuizFeedback).toContainText(
-      '解説：Databricks Intelligence Platformは、データの取り込みから管理、分析、AI活用までを統合的に扱う基盤として押さえることが重要です。'
+      '解説：統合基盤の価値は、部門ごとに分断されたデータや権限、実行管理を共通の文脈へ寄せ、同じ信頼できるデータを利用しやすくすることです。'
     );
     await expect(firstQuizFeedback).not.toContainText(/正解は[A-D]/);
     await expect(firstQuizFeedback).not.toContainText(/選んだ[A-D]/);
@@ -232,6 +232,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(
       page.locator('#audio-script-markdown strong').filter({ hasText: '統合基盤' })
     ).toHaveCount(2);
+    await expect(page.locator('#audio-script-markdown')).toContainText(
+      '次の図は、業務システムから取り込んだデータが、変換、権限・品質管理を経て分析やAI活用へ渡る流れを示します。'
+    );
     await expect(page.locator('#audio-script-markdown pre code.language-mermaid')).toContainText(
       'flowchart LR'
     );
@@ -288,14 +291,23 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
+    await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(4);
     await expect(
-      page.locator('#note-markdown a[href="https://docs.databricks.com/"]').first()
+      page
+        .locator(
+          '#note-markdown a[href="https://learn.microsoft.com/ja-jp/azure/databricks/introduction/"]'
+        )
+        .first()
     ).toHaveAttribute('target', '_blank');
     await expect(
-      page.locator('#note-markdown a[href="https://docs.databricks.com/"]').first()
+      page
+        .locator(
+          '#note-markdown a[href="https://learn.microsoft.com/ja-jp/azure/databricks/introduction/"]'
+        )
+        .first()
     ).toHaveAttribute('rel', 'noopener noreferrer');
     await expect(
-      page.locator('#audio-script-markdown a[href="#lakehouse"]').first()
+      page.locator('#audio-script-markdown a[href="#keyword-lakehouse"]').first()
     ).not.toHaveAttribute('target', '_blank');
     await expect(page.getByRole('heading', { name: '学習ステップ' })).toHaveCount(0);
     await expect(page.locator('#audio-script-markdown h1')).toHaveCount(0);
@@ -1463,6 +1475,7 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
           'https://learn.microsoft.com/ja-jp/azure/databricks/compute/choose-compute'
         );
         expect(note).not.toContain('https://docs.databricks.com');
+        expect(note).toContain('https://learn.microsoft.com/ja-jp/azure/databricks/');
       } else if (chapter.id === 'dea-dip-004') {
         expect(audioScript).toContain('## 次の学習へのつなぎ');
         expect(audioScript).toContain('Unity Catalog](#keyword-unity-catalog)');
