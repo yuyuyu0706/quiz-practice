@@ -483,6 +483,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
     await expect(page.locator('#toc-speech-current-position')).toHaveText('現在：未再生');
+    await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
+    await expect(page.locator('#tracker-speech-status')).toHaveText('未再生');
+    await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
@@ -496,6 +499,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#toc-speech-toggle')).toHaveText('一時停止');
+    await expect(page.locator('#tracker-speech-toggle')).toHaveText('一時停止');
+    await expect(page.locator('#tracker-speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-current-position')).not.toHaveText('現在：未再生');
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：1 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
@@ -505,6 +510,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#toc-speech-next').click();
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：2 /');
     await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：2 /');
+    await expect(page.locator('#tracker-speech-position')).toHaveText(/.+ \| 2 \/ \d+ 区切り/);
     await expect(page.locator('#speech-previous')).toBeEnabled();
     await expect(page.locator('#toc-speech-previous')).toBeEnabled();
     await page.locator('#toc-speech-previous').click();
@@ -512,7 +518,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await page.locator('#toc-speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
+    await expect(page.locator('#tracker-speech-toggle')).toHaveText('再開');
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await expect(page.locator('#tracker-speech-status')).toHaveText('一時停止中');
 
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
@@ -525,6 +533,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
     await expect(page.locator('#toc-speech-current-position')).toHaveText('現在：未再生');
+    await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
+    await expect(page.locator('#tracker-speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
@@ -677,6 +687,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#toc-speech-toggle')).toHaveText('再生');
+    await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
+    await page.locator('#tracker-speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
+    await page.locator('#tracker-speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await expect(page.locator('#speech-toggle')).toHaveText('再開');
     await clickByDom(
       page
         .locator('#audio-script-markdown h3', { hasText: 'Auto Loaderで継続取り込みする例' })
