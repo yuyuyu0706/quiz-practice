@@ -208,6 +208,49 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expectHeadingClearOfTracker(page, '#mini-quiz-title');
   });
 
+  test('renders three keyboard-operable sidebar navigation menus with current values', async ({
+    page,
+  }) => {
+    await gotoAudioLearn(page);
+
+    await expect(page.locator('#section-selector')).not.toHaveAttribute('open', '');
+    await expect(page.locator('#chapter-selector')).toHaveAttribute('open', '');
+    await expect(page.locator('#audio-toc-panel')).not.toHaveAttribute('open', '');
+    await expect(page.locator('#section-list-title')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#chapter-list-title')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#sidebar-section-current')).toHaveText(
+      'Databricks Intelligence Platform'
+    );
+    await expect(page.locator('#sidebar-chapter-current')).toHaveText(
+      'Chapter 1 / 10：Databricks Intelligence Platformの全体像'
+    );
+    await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：音声教材');
+    await expect(page.locator('.sidebar-menu__icon svg')).toHaveCount(3);
+
+    await page.locator('#audio-toc-title').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
+    await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
+    await page.locator('#audio-toc-list a[href="#note-title"]').click();
+    await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：要点メモ');
+    await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
+
+    await page.locator('#section-list-title').focus();
+    await page.keyboard.press('Space');
+    await expect(page.locator('#section-selector')).toHaveAttribute('open', '');
+    await expect(page.locator('#section-list-title')).toHaveAttribute('aria-expanded', 'true');
+
+    await page
+      .locator('#domain-list .domain-button')
+      .filter({ hasText: 'Data Ingestion and Loading' })
+      .click();
+    await expect(page.locator('#sidebar-section-current')).toHaveText('Data Ingestion and Loading');
+  });
+
   test('keeps existing quiz feedback behavior working', async ({ page }) => {
     await gotoAudioLearn(page);
     await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();

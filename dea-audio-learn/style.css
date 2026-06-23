@@ -182,11 +182,94 @@ body {
   opacity: 0.65;
 }
 
-.chapter-selector summary {
+.sidebar-menu {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.sidebar-menu + .sidebar-menu {
+  margin-top: 0.75rem;
+}
+
+.sidebar-menu__summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.65rem 0.7rem;
   cursor: pointer;
+  list-style: none;
+}
+
+.sidebar-menu__summary::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
   color: var(--color-primary);
-  font-size: 0.92rem;
+  flex: 0 0 auto;
+}
+
+.sidebar-menu__icon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sidebar-menu__text {
+  min-width: 0;
+}
+
+.sidebar-menu__label,
+.sidebar-menu__value {
+  display: block;
+}
+
+.sidebar-menu__label {
+  color: var(--color-muted);
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sidebar-menu__value {
+  margin-top: 0.08rem;
+  overflow: hidden;
+  color: var(--color-primary);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-menu__chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 1.7px solid var(--color-primary);
+  border-bottom: 1.7px solid var(--color-primary);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.sidebar-menu[open] .sidebar-menu__chevron {
+  transform: rotate(225deg);
+}
+
+.sidebar-menu .chapter-domain-section,
+.sidebar-menu .audio-toc {
+  padding: 0 0.7rem 0.75rem;
 }
 
 .chapter-domain-section {
@@ -528,19 +611,6 @@ body {
 
 .audio-card--primary .markdown-body > :first-child {
   margin-top: 0.75rem;
-}
-
-.audio-toc-panel {
-  margin-top: 1rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.audio-toc-panel summary {
-  cursor: pointer;
-  color: var(--color-primary);
-  font-size: 0.92rem;
-  font-weight: 400;
 }
 
 .audio-toc {
@@ -958,14 +1028,6 @@ body {
 
   .audio-toc__item--h3 {
     margin-left: 0.5rem;
-  }
-
-  .chapter-selector:not([open]) .chapter-list {
-    display: none;
-  }
-
-  .audio-toc-panel:not([open]) .audio-toc {
-    display: none;
   }
 }
 

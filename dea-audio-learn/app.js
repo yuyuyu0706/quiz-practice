@@ -1,7 +1,11 @@
 const domainList = document.querySelector('#domain-list');
 const chapterList = document.querySelector('#chapter-list');
+const sectionSelector = document.querySelector('#section-selector');
 const chapterSelector = document.querySelector('#chapter-selector');
 const audioTocPanel = document.querySelector('#audio-toc-panel');
+const sidebarSectionCurrent = document.querySelector('#sidebar-section-current');
+const sidebarChapterCurrent = document.querySelector('#sidebar-chapter-current');
+const sidebarTocCurrent = document.querySelector('#sidebar-toc-current');
 const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
 const selectedMinutes = document.querySelector('#selected-minutes');
@@ -85,6 +89,9 @@ const updateLearningTrackerUI = () => {
   const currentStage =
     learningStages.find((stage) => stage.key === currentLearningStage) ?? learningStages[0];
   learningTrackerCurrent.textContent = `現在：${currentStage.label}`;
+  if (sidebarTocCurrent) {
+    sidebarTocCurrent.textContent = `現在位置：${currentStage.label}`;
+  }
 
   learningTrackerItems.forEach((item) => {
     const stageKey = item.dataset.stage;
@@ -842,11 +849,26 @@ const restartCurrentChunkForRateChange = (previousSpeechState) => {
   return true;
 };
 
-const mobileChapterSelectorQuery = window.matchMedia('(max-width: 780px)');
+const sidebarMenus = [sectionSelector, chapterSelector, audioTocPanel].filter(Boolean);
+
+const syncSidebarMenuExpandedState = (menu) => {
+  const summary = menu.querySelector('summary');
+  if (!summary) return;
+  summary.setAttribute('aria-expanded', String(menu.open));
+};
+
+const setupSidebarMenus = () => {
+  sidebarMenus.forEach((menu) => {
+    syncSidebarMenuExpandedState(menu);
+    menu.addEventListener('toggle', () => syncSidebarMenuExpandedState(menu));
+  });
+};
 
 const syncChapterSelectorState = () => {
-  chapterSelector.open = !mobileChapterSelectorQuery.matches;
-  audioTocPanel.open = !mobileChapterSelectorQuery.matches;
+  if (sectionSelector) sectionSelector.open = false;
+  chapterSelector.open = true;
+  audioTocPanel.open = false;
+  sidebarMenus.forEach(syncSidebarMenuExpandedState);
 };
 
 const renderMarkdown = (markdown) => {
@@ -1078,10 +1100,19 @@ const getChapterProgress = (chapterId) => {
 
 const renderChapterOverviewProgress = (chapterId) => {
   const progress = getChapterProgress(chapterId);
-
-  selectedChapterProgress.textContent = progress
+  const progressText = progress
     ? `Chapter ${progress.current} / ${progress.total}`
     : 'Chapter - / -';
+
+  selectedChapterProgress.textContent = progressText;
+  if (sidebarChapterCurrent) {
+    sidebarChapterCurrent.textContent = progress
+      ? `${progressText}：${progress.title}`
+      : progressText;
+  }
+  if (sidebarSectionCurrent) {
+    sidebarSectionCurrent.textContent = progress?.domain ?? '読み込み中...';
+  }
 };
 
 const getChaptersByDomain = (domain) =>
@@ -1280,9 +1311,9 @@ if (
 }
 
 const init = async () => {
+  setupSidebarMenus();
   syncChapterSelectorState();
   setupLearningStageObserver();
-  mobileChapterSelectorQuery.addEventListener('change', syncChapterSelectorState);
 
   try {
     const response = await fetch('data/chapters.json');
