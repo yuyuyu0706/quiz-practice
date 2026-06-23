@@ -681,38 +681,6 @@ body {
   background: var(--color-primary);
 }
 
-.audio-toc__item {
-  display: flex;
-  gap: 0.35rem;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.audio-heading-play {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.55rem;
-  min-width: 1.55rem;
-  height: 1.55rem;
-  margin-left: 0.45rem;
-  padding: 0;
-  border: 1px solid #cdd5ff;
-  border-radius: 999px;
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
-  font-size: 0.72rem;
-  line-height: 1;
-  vertical-align: middle;
-  cursor: pointer;
-}
-
-.audio-heading-play:hover {
-  border-color: var(--color-primary);
-  color: #ffffff;
-  background: var(--color-primary);
-}
-
 .speech-rate {
   display: flex;
   gap: 0.5rem;

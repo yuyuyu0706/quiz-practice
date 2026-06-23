@@ -816,13 +816,6 @@ const jumpToSpeechChunk = (targetChunkIndex, options = {}) => {
   speakChunk(runId, safeChunkIndex);
 };
 
-const playSectionFromHeading = (headingId) => {
-  if (speechChunks.length === 0) rebuildSpeechChunksFromSections();
-  const chunkIndex = speechChunks.findIndex((chunk) => chunk.headingId === headingId);
-  if (chunkIndex === -1) return;
-  jumpToSpeechChunk(chunkIndex, { play: true });
-};
-
 const restartCurrentChunkForRateChange = (previousSpeechState) => {
   if (!['speaking', 'paused', 'uncertain'].includes(previousSpeechState)) return false;
   if (speechChunks.length === 0) return false;
@@ -918,14 +911,6 @@ const buildAudioTableOfContents = () => {
       headingTitle,
       `audio-toc__item audio-toc__item--${heading.tagName.toLowerCase()}`
     );
-
-    const headingPlayButton = document.createElement('button');
-    headingPlayButton.type = 'button';
-    headingPlayButton.className = 'audio-heading-play';
-    headingPlayButton.textContent = '▶';
-    headingPlayButton.setAttribute('aria-label', `${headingTitle}から再生`);
-    headingPlayButton.addEventListener('click', () => playSectionFromHeading(headingId));
-    heading.append(headingPlayButton);
   });
 
   updateActiveAudioTocItem();
