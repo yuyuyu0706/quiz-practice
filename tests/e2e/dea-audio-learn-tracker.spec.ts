@@ -31,6 +31,33 @@ async function expectHeadingClearOfTracker(page: Page, headingSelector: string) 
   expect(geometry?.headingBottom).toBeGreaterThan(geometry?.trackerBottom ?? 0);
 }
 
+async function expectStatusBesideJumpIcon(page: Page, stage: string) {
+  const geometry = await page.locator(`[data-stage="${stage}"]`).evaluate((item) => {
+    const status = item.querySelector('.learning-tracker__status')?.getBoundingClientRect();
+    const jump = item.querySelector('.learning-tracker__jump')?.getBoundingClientRect();
+    return status && jump
+      ? {
+          statusRight: status.right,
+          jumpLeft: jump.left,
+          verticalDelta: Math.abs(status.top - jump.top),
+        }
+      : null;
+  });
+  expect(geometry).not.toBeNull();
+  expect(geometry?.statusRight).toBeLessThanOrEqual((geometry?.jumpLeft ?? 0) + 1);
+  expect(geometry?.verticalDelta).toBeLessThan(12);
+}
+
+async function expectJumpTooltip(page: Page, label: string, tooltip: string) {
+  const button = page.getByRole('button', { name: `${tooltip}移動` });
+  await expect(button).toHaveAttribute('data-tooltip', tooltip);
+  await expect(button).toHaveAttribute('aria-label', label);
+  const tooltipContent = await button.evaluate(
+    (element) => window.getComputedStyle(element, '::after').content
+  );
+  expect(tooltipContent).toContain(tooltip);
+}
+
 test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
   test('tracks initial state, icon navigation, reached states, and chapter reset', async ({
     page,
@@ -46,6 +73,12 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
       '未到達'
     );
     await expect(page.locator('.learning-tracker__actions')).toHaveCount(0);
+    await expectJumpTooltip(page, '音声教材へ移動', '音声教材へ');
+    await expectJumpTooltip(page, '要点メモへ移動', '要点メモへ');
+    await expectJumpTooltip(page, 'ミニクイズへ移動', 'ミニクイズへ');
+    await expectStatusBesideJumpIcon(page, 'audio');
+    await expectStatusBesideJumpIcon(page, 'note');
+    await expectStatusBesideJumpIcon(page, 'quiz');
 
     await page.getByRole('button', { name: '要点メモへ移動' }).click();
     await expect(await currentStage(page)).toHaveText('要点メモ');
@@ -93,6 +126,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoAudioLearn(page);
     await expect(page.locator('.learning-tracker')).toHaveCSS('position', 'sticky');
+    await expectStatusBesideJumpIcon(page, 'quiz');
     await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
     await expectHeadingClearOfTracker(page, '#mini-quiz-title');
   });
