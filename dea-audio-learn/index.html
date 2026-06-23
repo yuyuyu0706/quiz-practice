@@ -120,29 +120,42 @@
             <span class="learning-tracker__marker" aria-hidden="true">1</span>
             <span class="learning-tracker__label">音声教材</span>
             <span class="learning-tracker__status">現在位置</span>
+            <button
+              class="learning-tracker__jump"
+              type="button"
+              data-stage-target="audio"
+              aria-label="音声教材へ移動"
+            >
+              <span aria-hidden="true">↗</span>
+            </button>
           </li>
           <li class="learning-tracker__item" data-stage="note">
             <span class="learning-tracker__marker" aria-hidden="true">2</span>
             <span class="learning-tracker__label">要点メモ</span>
             <span class="learning-tracker__status">未到達</span>
+            <button
+              class="learning-tracker__jump"
+              type="button"
+              data-stage-target="note"
+              aria-label="要点メモへ移動"
+            >
+              <span aria-hidden="true">↗</span>
+            </button>
           </li>
           <li class="learning-tracker__item" data-stage="quiz">
             <span class="learning-tracker__marker" aria-hidden="true">3</span>
             <span class="learning-tracker__label">ミニクイズ</span>
             <span class="learning-tracker__status">未到達</span>
+            <button
+              class="learning-tracker__jump"
+              type="button"
+              data-stage-target="quiz"
+              aria-label="ミニクイズへ移動"
+            >
+              <span aria-hidden="true">↗</span>
+            </button>
           </li>
         </ol>
-        <div class="learning-tracker__actions" aria-label="チャプター内ナビゲーション">
-          <button class="learning-tracker__button" type="button" data-stage-target="audio">
-            音声教材へ
-          </button>
-          <button class="learning-tracker__button" type="button" data-stage-target="note">
-            要点メモへ
-          </button>
-          <button class="learning-tracker__button" type="button" data-stage-target="quiz">
-            クイズへ
-          </button>
-        </div>
       </nav>
 
       <details

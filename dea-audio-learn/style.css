@@ -10,6 +10,7 @@
   --color-text: #1d2433;
   --color-muted: #5f6b7a;
   --shadow-card: 0 8px 24px rgba(16, 24, 40, 0.08);
+  --learning-tracker-scroll-offset: 8rem;
   color: var(--color-text);
   background: var(--color-bg);
   font-family: 'Inter', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
@@ -303,9 +304,10 @@ body {
 
 .learning-tracker__item {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.1rem 0.45rem;
-  align-items: center;
+  align-items: start;
+  position: relative;
   padding: 0.55rem;
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -363,28 +365,36 @@ body {
   opacity: 0.78;
 }
 
-.learning-tracker__actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.learning-tracker__button {
-  min-height: 36px;
-  padding: 0.42rem 0.55rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 10px;
+.learning-tracker__jump {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid #cdd5ff;
+  border-radius: 999px;
   color: var(--color-primary);
   background: #ffffff;
-  font-size: 0.84rem;
-  font-weight: 800;
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1;
   cursor: pointer;
 }
 
-.learning-tracker__button:hover {
+.learning-tracker__jump:hover,
+.learning-tracker__jump:focus-visible {
+  border-color: var(--color-primary-strong);
   color: #ffffff;
   background: var(--color-primary-strong);
+  outline: 3px solid #cdd5ff;
+  outline-offset: 2px;
+}
+
+[data-learning-stage] {
+  scroll-margin-top: var(--learning-tracker-scroll-offset);
 }
 
 .audio-card--primary .markdown-body {
@@ -827,8 +837,7 @@ body {
   }
 
   .nav-button,
-  .speech-button,
-  .learning-tracker__button {
+  .speech-button {
     width: 100%;
   }
 
@@ -871,11 +880,12 @@ body {
   }
 
   .learning-tracker__status {
-    grid-column: 3;
+    grid-column: 2;
   }
 
-  .learning-tracker__actions {
-    grid-template-columns: 1fr;
+  .learning-tracker__jump {
+    width: 2.1rem;
+    height: 2.1rem;
   }
 
   .audio-toc {

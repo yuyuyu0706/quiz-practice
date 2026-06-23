@@ -28,6 +28,7 @@ const tocSpeechCurrentPosition = document.querySelector('#toc-speech-current-pos
 const tocSpeechProgressLabel = document.querySelector('#toc-speech-progress-label');
 const miniQuizList = document.querySelector('#mini-quiz-list');
 const miniQuizSummary = document.querySelector('#mini-quiz-summary');
+const learningTracker = document.querySelector('.learning-tracker');
 const learningTrackerCurrent = document.querySelector('#learning-tracker-current');
 const learningTrackerItems = Array.from(document.querySelectorAll('.learning-tracker__item'));
 const learningTrackerButtons = Array.from(document.querySelectorAll('[data-stage-target]'));
@@ -67,6 +68,15 @@ const scrollToChapterStart = () => {
     left: 0,
     behavior: 'auto',
   });
+};
+
+const updateLearningTrackerScrollOffset = () => {
+  const trackerRect = learningTracker.getBoundingClientRect();
+  const computedStyle = window.getComputedStyle(learningTracker);
+  const stickyTop = Number.parseFloat(computedStyle.top) || 0;
+  const safetyGap = 16;
+  const offset = Math.ceil(trackerRect.height + stickyTop + safetyGap);
+  document.documentElement.style.setProperty('--learning-tracker-scroll-offset', `${offset}px`);
 };
 
 const getLearningStageIndex = (stageKey) =>
@@ -138,9 +148,13 @@ const queueLearningStageRefresh = () => {
 
 const setupLearningStageObserver = () => {
   if (learningStageObserver) learningStageObserver.disconnect();
+  updateLearningTrackerScrollOffset();
   if (!('IntersectionObserver' in window)) {
     window.addEventListener('scroll', queueLearningStageRefresh, { passive: true });
-    window.addEventListener('resize', queueLearningStageRefresh);
+    window.addEventListener('resize', () => {
+      updateLearningTrackerScrollOffset();
+      queueLearningStageRefresh();
+    });
     return;
   }
 
@@ -149,7 +163,10 @@ const setupLearningStageObserver = () => {
     threshold: [0, 0.15, 0.35, 0.55, 0.75, 1],
   });
   learningStageSections.forEach((section) => learningStageObserver.observe(section));
-  window.addEventListener('resize', queueLearningStageRefresh);
+  window.addEventListener('resize', () => {
+    updateLearningTrackerScrollOffset();
+    queueLearningStageRefresh();
+  });
 };
 
 const scrollToLearningStage = (stageKey) => {
@@ -157,6 +174,7 @@ const scrollToLearningStage = (stageKey) => {
   const section = stage ? document.getElementById(stage.sectionId) : null;
   if (!section) return;
   if (section instanceof HTMLDetailsElement) section.open = true;
+  updateLearningTrackerScrollOffset();
   setCurrentLearningStage(stageKey);
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
@@ -1145,6 +1163,7 @@ const selectChapterByIndex = async (chapterIndex) => {
 
   resetSpeechForChapterChange();
   resetLearningTracker();
+  updateLearningTrackerScrollOffset();
   selectedChapterIndex = chapterIndex;
   if (selectedDomainName !== chapter.domain) {
     selectedDomainName = chapter.domain;
