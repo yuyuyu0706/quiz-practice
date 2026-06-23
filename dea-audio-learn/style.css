@@ -356,10 +356,10 @@ body {
 }
 
 .learning-tracker__item.is-current .learning-tracker__status {
-  border-color: #0f5f52;
+  border-color: #32955e;
   color: #ffffff;
-  background: #166b5b;
-  font-weight: 650;
+  background: #32955e;
+  font-weight: 400;
 }
 
 .learning-tracker__item.is-current {

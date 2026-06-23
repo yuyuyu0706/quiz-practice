@@ -85,12 +85,7 @@ async function expectCompactNormalWeightCards(page: Page) {
     expect(card.height).toBeLessThanOrEqual(52);
     expect(Number(card.markerWeight)).toBeLessThanOrEqual(500);
     expect(Number(card.labelWeight)).toBeLessThanOrEqual(500);
-    if (card.isCurrent) {
-      expect(Number(card.statusWeight)).toBeGreaterThanOrEqual(600);
-      expect(Number(card.statusWeight)).toBeLessThanOrEqual(700);
-    } else {
-      expect(Number(card.statusWeight)).toBeLessThanOrEqual(500);
-    }
+    expect(Number(card.statusWeight)).toBeLessThanOrEqual(500);
     expect(Number(card.tooltipWeight)).toBeLessThanOrEqual(500);
   }
 }
@@ -115,15 +110,14 @@ async function expectCurrentStatusBadgeOnly(page: Page, currentStage: string) {
   expect(current?.isCurrent).toBe(true);
   expect(current?.text).toBe('現在位置');
   expect(current?.color).toBe('rgb(255, 255, 255)');
-  expect(current?.backgroundColor).toBe('rgb(22, 107, 91)');
-  expect(Number(current?.fontWeight)).toBeGreaterThanOrEqual(600);
-  expect(Number(current?.fontWeight)).toBeLessThanOrEqual(700);
+  expect(current?.backgroundColor).toBe('rgb(50, 149, 94)');
+  expect(Number(current?.fontWeight)).toBeLessThanOrEqual(500);
 
   for (const status of statuses.filter((candidate) => candidate.stage !== currentStage)) {
     expect(status.isCurrent).toBe(false);
     expect(status.text).not.toBe('現在位置');
     expect(status.color).not.toBe('rgb(255, 255, 255)');
-    expect(status.backgroundColor).not.toBe('rgb(22, 107, 91)');
+    expect(status.backgroundColor).not.toBe('rgb(50, 149, 94)');
     expect(Number(status.fontWeight)).toBeLessThanOrEqual(500);
   }
 }
