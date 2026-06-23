@@ -441,6 +441,83 @@ body {
   transform: translateY(0);
 }
 
+.learning-tracker-speech {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.55rem;
+  padding: 0.42rem 0.5rem;
+  border: 1px solid #dbe4ff;
+  border-radius: 12px;
+  background: #fbfcff;
+}
+
+.learning-tracker-speech__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.learning-tracker-speech__position {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.learning-tracker-speech__status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0.08rem 0.46rem;
+  border: 1px solid #cdd5ff;
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-size: 0.7rem;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.learning-tracker-speech__button {
+  min-width: 4.6rem;
+  min-height: 30px;
+  padding: 0.28rem 0.58rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 9px;
+  color: #ffffff;
+  background: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.learning-tracker-speech__button:hover:not(:disabled) {
+  border-color: var(--color-primary-strong);
+  background: var(--color-primary-strong);
+}
+
+.learning-tracker-speech__button:disabled {
+  border-color: #ccd3e0;
+  color: var(--color-muted);
+  background: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 [data-learning-stage] {
   scroll-margin-top: var(--learning-tracker-scroll-offset);
 }
@@ -940,6 +1017,24 @@ body {
   .learning-tracker__jump::after {
     bottom: auto;
     top: calc(100% + 0.35rem);
+  }
+
+  .learning-tracker-speech {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.28rem;
+    margin-top: 0.45rem;
+    padding: 0.34rem 0.42rem;
+  }
+
+  .learning-tracker-speech__button {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    min-width: 4.2rem;
+  }
+
+  .learning-tracker-speech__status {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .audio-toc {

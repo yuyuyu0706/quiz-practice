@@ -14,6 +14,12 @@ async function currentStage(page: Page) {
   return page.locator('.learning-tracker__item.is-current .learning-tracker__label');
 }
 
+async function expectTrackerSpeechInitialState(page: Page) {
+  await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
+  await expect(page.locator('#tracker-speech-status')).toHaveText(/^(未再生|利用不可)$/);
+  await expect(page.locator('#tracker-speech-toggle')).toHaveText(/^(再生|利用不可)$/);
+}
+
 async function expectHeadingClearOfTracker(page: Page, headingSelector: string) {
   await expect(page.locator(headingSelector)).toBeInViewport();
   const geometry = await page.evaluate((selector) => {
@@ -137,6 +143,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
       '未到達'
     );
     await expect(page.locator('.learning-tracker__actions')).toHaveCount(0);
+    await expectTrackerSpeechInitialState(page);
     await expectJumpTooltip(page, '音声教材へ移動', '音声教材へ');
     await expectJumpTooltip(page, '要点メモへ移動', '要点メモへ');
     await expectJumpTooltip(page, 'ミニクイズへ移動', 'ミニクイズへ');
@@ -171,6 +178,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('[data-stage="note"] .learning-tracker__status')).toHaveText(
       '未到達'
     );
+    await expectTrackerSpeechInitialState(page);
   });
 
   test('updates the current stage from scrolling near the viewport center', async ({ page }) => {

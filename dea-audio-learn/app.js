@@ -26,6 +26,9 @@ const speechProgressLabel = document.querySelector('#speech-progress-label');
 const speechProgressBar = document.querySelector('#speech-progress-bar');
 const tocSpeechCurrentPosition = document.querySelector('#toc-speech-current-position');
 const tocSpeechProgressLabel = document.querySelector('#toc-speech-progress-label');
+const trackerSpeechPosition = document.querySelector('#tracker-speech-position');
+const trackerSpeechStatus = document.querySelector('#tracker-speech-status');
+const trackerSpeechToggleButton = document.querySelector('#tracker-speech-toggle');
 const miniQuizList = document.querySelector('#mini-quiz-list');
 const miniQuizSummary = document.querySelector('#mini-quiz-summary');
 const learningTracker = document.querySelector('.learning-tracker');
@@ -225,6 +228,11 @@ const speechButtonLabels = {
   error: '再生',
   noVoices: '利用不可',
   unsupported: '利用不可',
+};
+
+const trackerSpeechButtonLabels = {
+  ...speechButtonLabels,
+  ended: '再生',
 };
 
 const speechUnavailableMessage =
@@ -471,6 +479,7 @@ const updateSpeechProgressUI = () => {
   tocSpeechCurrentPosition.textContent = `現在：${sectionLabel}`;
   speechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
   tocSpeechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
+  trackerSpeechPosition.textContent = `${sectionLabel} | ${displayIndex} / ${totalChunks} 区切り`;
   speechProgressBar.max = String(Math.max(totalChunks, 1));
   speechProgressBar.value = displayIndex;
   speechProgressBar.textContent = `${totalChunks === 0 ? 0 : Math.round((displayIndex / totalChunks) * 100)}%`;
@@ -494,12 +503,16 @@ const updateSpeechUI = () => {
   const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
   speechToggleButton.textContent = speechButtonLabels[speechState];
   tocSpeechToggleButton.textContent = speechButtonLabels[speechState];
+  trackerSpeechToggleButton.textContent = trackerSpeechButtonLabels[speechState];
   tocSpeechToggleButton.setAttribute('aria-label', speechButtonLabels[speechState]);
+  trackerSpeechToggleButton.setAttribute('aria-label', trackerSpeechButtonLabels[speechState]);
   const isToggleDisabled = unavailable || speechState === 'starting' || !currentAudioScriptText;
   speechToggleButton.disabled = isToggleDisabled;
   tocSpeechToggleButton.disabled = isToggleDisabled;
+  trackerSpeechToggleButton.disabled = isToggleDisabled;
   speechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
+  trackerSpeechStatus.textContent = speechStatusLabels[speechState];
   updateSpeechProgressUI();
   if (speechState === 'unsupported') {
     speechMessage.hidden = false;
@@ -1237,6 +1250,7 @@ speechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentCh
 tocSpeechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
 speechToggleButton.addEventListener('click', handleSpeechToggle);
 tocSpeechToggleButton.addEventListener('click', handleSpeechToggle);
+trackerSpeechToggleButton.addEventListener('click', handleSpeechToggle);
 speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 tocSpeechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 learningTrackerButtons.forEach((button) => {
