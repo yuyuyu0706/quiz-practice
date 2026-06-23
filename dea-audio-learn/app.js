@@ -15,17 +15,12 @@ const noteMarkdown = document.querySelector('#note-markdown');
 const speechPreviousButton = document.querySelector('#speech-previous');
 const speechToggleButton = document.querySelector('#speech-toggle');
 const speechNextButton = document.querySelector('#speech-next');
-const tocSpeechPreviousButton = document.querySelector('#toc-speech-previous');
-const tocSpeechToggleButton = document.querySelector('#toc-speech-toggle');
-const tocSpeechNextButton = document.querySelector('#toc-speech-next');
 const speechRateSelect = document.querySelector('#speech-rate');
 const speechStatus = document.querySelector('#speech-status');
 const speechMessage = document.querySelector('#speech-message');
 const speechCurrentPosition = document.querySelector('#speech-current-position');
 const speechProgressLabel = document.querySelector('#speech-progress-label');
 const speechProgressBar = document.querySelector('#speech-progress-bar');
-const tocSpeechCurrentPosition = document.querySelector('#toc-speech-current-position');
-const tocSpeechProgressLabel = document.querySelector('#toc-speech-progress-label');
 const trackerSpeechPosition = document.querySelector('#tracker-speech-position');
 const trackerSpeechStatus = document.querySelector('#tracker-speech-status');
 const trackerSpeechToggleButton = document.querySelector('#tracker-speech-toggle');
@@ -468,6 +463,24 @@ const rebuildSpeechChunksFromSections = () => {
   currentChunkIndex = Math.min(currentChunkIndex, Math.max(speechChunks.length - 1, 0));
 };
 
+const updateActiveAudioTocItem = () => {
+  const activeHeadingId = ['starting', 'uncertain', 'speaking', 'paused', 'ended'].includes(
+    speechState
+  )
+    ? speechChunks[currentChunkIndex]?.headingId
+    : null;
+
+  audioTocList.querySelectorAll('a[href^="#"]').forEach((link) => {
+    const isCurrent = activeHeadingId ? link.getAttribute('href') === `#${activeHeadingId}` : false;
+    link.parentElement?.classList.toggle('is-current', isCurrent);
+    if (isCurrent) {
+      link.setAttribute('aria-current', 'location');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+};
+
 const updateSpeechProgressUI = () => {
   const totalChunks = speechChunks.length;
   const hasProgress =
@@ -476,13 +489,12 @@ const updateSpeechProgressUI = () => {
   const displayIndex = hasProgress ? Math.min(currentChunkIndex + 1, totalChunks) : 0;
   const sectionLabel = hasProgress ? getChunkSectionLabel(currentChunkIndex) : '未再生';
   speechCurrentPosition.textContent = `現在：${sectionLabel}`;
-  tocSpeechCurrentPosition.textContent = `現在：${sectionLabel}`;
   speechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
-  tocSpeechProgressLabel.textContent = `進捗：${displayIndex} / ${totalChunks} 区切り`;
   trackerSpeechPosition.textContent = `${sectionLabel} | ${displayIndex} / ${totalChunks} 区切り`;
   speechProgressBar.max = String(Math.max(totalChunks, 1));
   speechProgressBar.value = displayIndex;
   speechProgressBar.textContent = `${totalChunks === 0 ? 0 : Math.round((displayIndex / totalChunks) * 100)}%`;
+  updateActiveAudioTocItem();
 
   const canMove =
     totalChunks > 0 &&
@@ -490,25 +502,18 @@ const updateSpeechProgressUI = () => {
   const isPreviousDisabled = !canMove || currentChunkIndex <= 0;
   const isNextDisabled = !canMove || currentChunkIndex >= totalChunks - 1;
   speechPreviousButton.disabled = isPreviousDisabled;
-  tocSpeechPreviousButton.disabled = isPreviousDisabled;
   speechNextButton.disabled = isNextDisabled;
-  tocSpeechNextButton.disabled = isNextDisabled;
   speechPreviousButton.setAttribute('aria-disabled', String(isPreviousDisabled));
-  tocSpeechPreviousButton.setAttribute('aria-disabled', String(isPreviousDisabled));
   speechNextButton.setAttribute('aria-disabled', String(isNextDisabled));
-  tocSpeechNextButton.setAttribute('aria-disabled', String(isNextDisabled));
 };
 
 const updateSpeechUI = () => {
   const unavailable = speechState === 'unsupported' || speechState === 'noVoices';
   speechToggleButton.textContent = speechButtonLabels[speechState];
-  tocSpeechToggleButton.textContent = speechButtonLabels[speechState];
   trackerSpeechToggleButton.textContent = trackerSpeechButtonLabels[speechState];
-  tocSpeechToggleButton.setAttribute('aria-label', speechButtonLabels[speechState]);
   trackerSpeechToggleButton.setAttribute('aria-label', trackerSpeechButtonLabels[speechState]);
   const isToggleDisabled = unavailable || speechState === 'starting' || !currentAudioScriptText;
   speechToggleButton.disabled = isToggleDisabled;
-  tocSpeechToggleButton.disabled = isToggleDisabled;
   trackerSpeechToggleButton.disabled = isToggleDisabled;
   speechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
@@ -811,13 +816,6 @@ const jumpToSpeechChunk = (targetChunkIndex, options = {}) => {
   speakChunk(runId, safeChunkIndex);
 };
 
-const playSectionFromHeading = (headingId) => {
-  if (speechChunks.length === 0) rebuildSpeechChunksFromSections();
-  const chunkIndex = speechChunks.findIndex((chunk) => chunk.headingId === headingId);
-  if (chunkIndex === -1) return;
-  jumpToSpeechChunk(chunkIndex, { play: true });
-};
-
 const restartCurrentChunkForRateChange = (previousSpeechState) => {
   if (!['speaking', 'paused', 'uncertain'].includes(previousSpeechState)) return false;
   if (speechChunks.length === 0) return false;
@@ -913,15 +911,9 @@ const buildAudioTableOfContents = () => {
       headingTitle,
       `audio-toc__item audio-toc__item--${heading.tagName.toLowerCase()}`
     );
-
-    const headingPlayButton = document.createElement('button');
-    headingPlayButton.type = 'button';
-    headingPlayButton.className = 'audio-heading-play';
-    headingPlayButton.textContent = '▶';
-    headingPlayButton.setAttribute('aria-label', `${headingTitle}から再生`);
-    headingPlayButton.addEventListener('click', () => playSectionFromHeading(headingId));
-    heading.append(headingPlayButton);
   });
+
+  updateActiveAudioTocItem();
 
   appendAudioTocLink('#note-title', '要点メモ', 'audio-toc__item audio-toc__item--page-section');
   appendAudioTocLink(
@@ -1247,12 +1239,9 @@ nextChapterButton.addEventListener('click', () => {
 });
 
 speechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
-tocSpeechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
 speechToggleButton.addEventListener('click', handleSpeechToggle);
-tocSpeechToggleButton.addEventListener('click', handleSpeechToggle);
 trackerSpeechToggleButton.addEventListener('click', handleSpeechToggle);
 speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
-tocSpeechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 learningTrackerButtons.forEach((button) => {
   button.addEventListener('click', () => scrollToLearningStage(button.dataset.stageTarget));
 });

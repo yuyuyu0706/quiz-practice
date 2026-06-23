@@ -419,8 +419,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#audio-toc-panel').evaluate((details) => {
       (details as HTMLDetailsElement).open = false;
     });
-    await expect(page.locator('.toc-speech-controls')).toBeVisible();
-    await expect(page.locator('.toc-speech-controls')).not.toHaveCSS('display', 'none');
+    await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
     const overviewActionsBox = await page.locator('.chapter-overview-actions').boundingBox();
     const minutesBox = await page.locator('#selected-minutes').boundingBox();
     const chapterNavBox = await page.locator('.chapter-nav').boundingBox();
@@ -443,17 +442,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'ミニクイズ'
     );
     await expect(page.locator('#audio-toc-list button', { hasText: '再生' })).toHaveCount(0);
-    await expect(page.locator('#note-title .audio-heading-play')).toHaveCount(0);
-    await expect(page.locator('#mini-quiz-title .audio-heading-play')).toHaveCount(0);
-    await expect(
-      page.locator('#audio-script-markdown h2', { hasText: '背景' }).locator('.audio-heading-play')
-    ).toHaveText('▶');
-    await expect(
-      page
-        .locator('#audio-script-markdown h3', { hasText: '従来のデータ基盤の課題' })
-        .locator('.audio-heading-play')
-    ).toHaveAttribute('aria-label', '従来のデータ基盤の課題から再生');
-    await expect(page.locator('.toc-speech-controls')).toBeVisible();
+    await expect(page.locator('.audio-heading-play')).toHaveCount(0);
+    await page.getByRole('link', { name: '背景' }).click();
+    await expect(page).toHaveURL(/#audio-heading-/);
+    await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
     await page.getByRole('link', { name: '統合基盤で扱うという発想' }).click();
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
@@ -482,41 +474,41 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
-    await expect(page.locator('#toc-speech-current-position')).toHaveText('現在：未再生');
     await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
     await expect(page.locator('#tracker-speech-status')).toHaveText('未再生');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
-    await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
-    await expect(page.locator('#toc-speech-previous')).toBeDisabled();
     await expect(page.locator('#speech-next')).toBeDisabled();
-    await expect(page.locator('#toc-speech-next')).toBeDisabled();
     await expect(page.locator('#speech-progress-bar')).toHaveJSProperty('value', 0);
 
     await page.locator('#speech-rate').selectOption('1.2');
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
-    await expect(page.locator('#toc-speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#tracker-speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-current-position')).not.toHaveText('現在：未再生');
+    await expect(page.locator('#audio-toc-list .audio-toc__item.is-current a')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：1 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
     await expect(page.locator('#speech-next')).toBeEnabled();
-    await expect(page.locator('#toc-speech-next')).toBeEnabled();
 
-    await page.locator('#toc-speech-next').click();
+    await page.locator('#speech-next').click();
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：2 /');
-    await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：2 /');
+    await expect(page.locator('#audio-toc-list .audio-toc__item.is-current a')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
     await expect(page.locator('#tracker-speech-position')).toHaveText(/.+ \| 2 \/ \d+ 区切り/);
     await expect(page.locator('#speech-previous')).toBeEnabled();
-    await expect(page.locator('#toc-speech-previous')).toBeEnabled();
-    await page.locator('#toc-speech-previous').click();
+    await page.locator('#speech-previous').click();
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：1 /');
 
-    await page.locator('#toc-speech-toggle').click();
+    await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再開');
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
@@ -532,15 +524,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
-    await expect(page.locator('#toc-speech-current-position')).toHaveText('現在：未再生');
     await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
     await expect(page.locator('#tracker-speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
-    await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
-    await expect(page.locator('#toc-speech-previous')).toBeDisabled();
     await expect(page.locator('#speech-next')).toBeDisabled();
-    await expect(page.locator('#toc-speech-next')).toBeDisabled();
     await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#mini-quiz-list')).toContainText(
@@ -686,7 +674,6 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'クラウドストレージ上のファイルをBronzeへ取り込む'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await expect(page.locator('#toc-speech-toggle')).toHaveText('再生');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
     await clickByDom(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
@@ -694,11 +681,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await clickByDom(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
-    await clickByDom(
-      page
-        .locator('#audio-script-markdown h3', { hasText: 'Auto Loaderで継続取り込みする例' })
-        .locator('.audio-heading-play')
-    );
+    await clickByDom(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestIngestionSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -764,11 +747,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'SoRからSoIへ、データの役割を変える'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(
-      page
-        .locator('#audio-script-markdown h3', { hasText: 'SoRからSoIへ' })
-        .locator('.audio-heading-play')
-    );
+    await clickByDom(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestTransformSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -826,11 +805,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#audio-toc-list')).toContainText('DAGで依存関係を明示する');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(
-      page
-        .locator('#audio-script-markdown h3', { hasText: 'DAGで依存関係を明示する' })
-        .locator('.audio-heading-play')
-    );
+    await clickByDom(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestJobsSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -900,11 +875,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'データパイプラインもソフトウェアと同じくバージョン管理する'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(
-      page
-        .locator('#audio-script-markdown h3', { hasText: 'データパイプラインもソフトウェア' })
-        .locator('.audio-heading-play')
-    );
+    await clickByDom(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestCicdSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -979,11 +950,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Spark UIでは、ステージごとの偏りとデータ移動を見る'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(
-      page
-        .locator('#audio-script-markdown h3', { hasText: 'Spark UIでは' })
-        .locator('.audio-heading-play')
-    );
+    await clickByDom(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestOpsSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -1068,11 +1035,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Unity Catalogは、データ資産を一元的に把握し統制する土台'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(
-      page
-        .locator('#audio-script-markdown h3', { hasText: 'Unity Catalogは' })
-        .locator('.audio-heading-play')
-    );
+    await clickByDom(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestGovernanceSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -1248,19 +1211,19 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     });
 
     await gotoAudioLearn(page);
-    await clickByDom(
-      page.locator('#audio-script-markdown h2', { hasText: '背景' }).locator('.audio-heading-play')
-    );
+    await clickByDom(page.locator('#speech-toggle'));
+    await clickByDom(page.locator('#speech-next'));
+    await clickByDom(page.locator('#speech-next'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-current-position')).toContainText('背景');
 
     let speakCalls = await page.evaluate(() =>
       window.__speechCalls.filter((call) => call.type === 'speak')
     );
-    expect(speakCalls).toHaveLength(1);
-    expect(speakCalls[0].textLength).toBeLessThanOrEqual(320);
-    expect(speakCalls[0].rate).toBe(1);
-    expect(speakCalls[0].voice).toBeUndefined();
+    expect(speakCalls).toHaveLength(3);
+    expect(speakCalls[2].textLength).toBeLessThanOrEqual(320);
+    expect(speakCalls[2].rate).toBe(1);
+    expect(speakCalls[2].voice).toBeUndefined();
 
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
@@ -1269,9 +1232,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     speakCalls = await page.evaluate(() =>
       window.__speechCalls.filter((call) => call.type === 'speak')
     );
-    expect(speakCalls).toHaveLength(2);
-    expect(speakCalls[1].text).toBe(speakCalls[0].text);
-    expect(speakCalls[1].rate).toBe(1.2);
+    expect(speakCalls).toHaveLength(4);
+    expect(speakCalls[3].text).toBe(speakCalls[2].text);
+    expect(speakCalls[3].rate).toBe(1.2);
     await expect(page.locator('#speech-message')).toBeHidden();
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
@@ -1288,13 +1251,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     });
     await expect
       .poll(() => page.evaluate(() => window.__speechCalls.filter((call) => call.type === 'speak')))
-      .toHaveLength(3);
+      .toHaveLength(5);
 
     speakCalls = await page.evaluate(() =>
       window.__speechCalls.filter((call) => call.type === 'speak')
     );
-    expect(speakCalls[2].text).not.toContain('flowchart LR');
-    expect(speakCalls[2].text).not.toContain('|');
+    expect(speakCalls[4].text).not.toContain('flowchart LR');
+    expect(speakCalls[4].text).not.toContain('|');
 
     await page.evaluate(() => {
       const utterances = (
