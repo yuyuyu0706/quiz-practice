@@ -582,6 +582,13 @@ body {
   text-decoration: underline;
 }
 
+.audio-toc__item.is-current a {
+  border-radius: 999px;
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+  font-weight: 700;
+}
+
 .note-card .markdown-body {
   margin-top: 0.75rem;
 }
@@ -704,70 +711,6 @@ body {
   border-color: var(--color-primary);
   color: #ffffff;
   background: var(--color-primary);
-}
-
-.toc-speech-controls {
-  display: grid;
-  gap: 0.45rem;
-  margin-top: 0.9rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.toc-speech-controls__title,
-.toc-speech-controls__position,
-.toc-speech-controls__progress {
-  margin: 0;
-}
-
-.toc-speech-controls__title {
-  color: var(--color-primary);
-  font-size: 0.84rem;
-  font-weight: 400;
-}
-
-.toc-speech-controls__buttons {
-  display: grid;
-  grid-template-columns: 2.4rem minmax(4.7rem, 1fr) 2.4rem;
-  gap: 0.35rem;
-}
-
-.toc-speech-button {
-  min-height: 34px;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 10px;
-  color: var(--color-primary);
-  background: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.toc-speech-button--primary {
-  color: #ffffff;
-  background: var(--color-primary);
-}
-
-.toc-speech-button:hover:not(:disabled) {
-  border-color: var(--color-primary-strong);
-  color: #ffffff;
-  background: var(--color-primary-strong);
-}
-
-.toc-speech-button:disabled {
-  border-color: #ccd3e0;
-  color: var(--color-muted);
-  background: #f1f5f9;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.toc-speech-controls__position,
-.toc-speech-controls__progress {
-  color: var(--color-primary);
-  font-size: 0.78rem;
-  font-weight: 400;
 }
 
 .speech-rate {

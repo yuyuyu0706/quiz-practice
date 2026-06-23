@@ -419,8 +419,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#audio-toc-panel').evaluate((details) => {
       (details as HTMLDetailsElement).open = false;
     });
-    await expect(page.locator('.toc-speech-controls')).toBeVisible();
-    await expect(page.locator('.toc-speech-controls')).not.toHaveCSS('display', 'none');
+    await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
     const overviewActionsBox = await page.locator('.chapter-overview-actions').boundingBox();
     const minutesBox = await page.locator('#selected-minutes').boundingBox();
     const chapterNavBox = await page.locator('.chapter-nav').boundingBox();
@@ -453,7 +452,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         .locator('#audio-script-markdown h3', { hasText: '従来のデータ基盤の課題' })
         .locator('.audio-heading-play')
     ).toHaveAttribute('aria-label', '従来のデータ基盤の課題から再生');
-    await expect(page.locator('.toc-speech-controls')).toBeVisible();
+    await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
     await page.getByRole('link', { name: '統合基盤で扱うという発想' }).click();
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
@@ -482,41 +481,41 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
-    await expect(page.locator('#toc-speech-current-position')).toHaveText('現在：未再生');
     await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
     await expect(page.locator('#tracker-speech-status')).toHaveText('未再生');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
-    await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
-    await expect(page.locator('#toc-speech-previous')).toBeDisabled();
     await expect(page.locator('#speech-next')).toBeDisabled();
-    await expect(page.locator('#toc-speech-next')).toBeDisabled();
     await expect(page.locator('#speech-progress-bar')).toHaveJSProperty('value', 0);
 
     await page.locator('#speech-rate').selectOption('1.2');
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
-    await expect(page.locator('#toc-speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('一時停止');
     await expect(page.locator('#tracker-speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-current-position')).not.toHaveText('現在：未再生');
+    await expect(page.locator('#audio-toc-list .audio-toc__item.is-current a')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：1 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
     await expect(page.locator('#speech-next')).toBeEnabled();
-    await expect(page.locator('#toc-speech-next')).toBeEnabled();
 
-    await page.locator('#toc-speech-next').click();
+    await page.locator('#speech-next').click();
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：2 /');
-    await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：2 /');
+    await expect(page.locator('#audio-toc-list .audio-toc__item.is-current a')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
     await expect(page.locator('#tracker-speech-position')).toHaveText(/.+ \| 2 \/ \d+ 区切り/);
     await expect(page.locator('#speech-previous')).toBeEnabled();
-    await expect(page.locator('#toc-speech-previous')).toBeEnabled();
-    await page.locator('#toc-speech-previous').click();
+    await page.locator('#speech-previous').click();
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：1 /');
 
-    await page.locator('#toc-speech-toggle').click();
+    await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再開');
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
@@ -532,15 +531,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-current-position')).toHaveText('現在：未再生');
-    await expect(page.locator('#toc-speech-current-position')).toHaveText('現在：未再生');
     await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
     await expect(page.locator('#tracker-speech-status')).toHaveText('未再生');
     await expect(page.locator('#speech-progress-label')).toContainText('進捗：0 /');
-    await expect(page.locator('#toc-speech-progress-label')).toContainText('進捗：0 /');
     await expect(page.locator('#speech-previous')).toBeDisabled();
-    await expect(page.locator('#toc-speech-previous')).toBeDisabled();
     await expect(page.locator('#speech-next')).toBeDisabled();
-    await expect(page.locator('#toc-speech-next')).toBeDisabled();
     await expect(page.locator('#note-markdown')).toContainText('Lakehouseは全体のアーキテクチャ');
     await expect(page.locator('#mini-quiz-list .quiz-question')).toHaveCount(3);
     await expect(page.locator('#mini-quiz-list')).toContainText(
@@ -686,7 +681,6 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'クラウドストレージ上のファイルをBronzeへ取り込む'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await expect(page.locator('#toc-speech-toggle')).toHaveText('再生');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
     await clickByDom(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
