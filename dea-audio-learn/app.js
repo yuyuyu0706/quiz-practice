@@ -77,6 +77,7 @@ const updateLearningTrackerScrollOffset = () => {
   const safetyGap = 16;
   const offset = Math.ceil(trackerRect.height + stickyTop + safetyGap);
   document.documentElement.style.setProperty('--learning-tracker-scroll-offset', `${offset}px`);
+  return offset;
 };
 
 const getLearningStageIndex = (stageKey) =>
@@ -174,9 +175,14 @@ const scrollToLearningStage = (stageKey) => {
   const section = stage ? document.getElementById(stage.sectionId) : null;
   if (!section) return;
   if (section instanceof HTMLDetailsElement) section.open = true;
-  updateLearningTrackerScrollOffset();
+  const scrollOffset = updateLearningTrackerScrollOffset();
   setCurrentLearningStage(stageKey);
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const targetTop = window.scrollY + section.getBoundingClientRect().top - scrollOffset;
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    left: 0,
+    behavior: 'auto',
+  });
 };
 
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
