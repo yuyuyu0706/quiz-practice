@@ -355,6 +355,13 @@ body {
   white-space: nowrap;
 }
 
+.learning-tracker__item.is-current .learning-tracker__status {
+  border-color: #0f5f52;
+  color: #ffffff;
+  background: #166b5b;
+  font-weight: 650;
+}
+
 .learning-tracker__item.is-current {
   border-color: var(--color-primary);
   background: var(--color-primary-soft);

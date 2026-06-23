@@ -71,6 +71,7 @@ async function expectCompactNormalWeightCards(page: Page) {
       const tooltipStyle = jump ? window.getComputedStyle(jump, '::after') : null;
       return {
         height: item.getBoundingClientRect().height,
+        isCurrent: item.classList.contains('is-current'),
         markerWeight: markerStyle?.fontWeight,
         labelWeight: labelStyle?.fontWeight,
         statusWeight: statusStyle?.fontWeight,
@@ -84,8 +85,46 @@ async function expectCompactNormalWeightCards(page: Page) {
     expect(card.height).toBeLessThanOrEqual(52);
     expect(Number(card.markerWeight)).toBeLessThanOrEqual(500);
     expect(Number(card.labelWeight)).toBeLessThanOrEqual(500);
-    expect(Number(card.statusWeight)).toBeLessThanOrEqual(500);
+    if (card.isCurrent) {
+      expect(Number(card.statusWeight)).toBeGreaterThanOrEqual(600);
+      expect(Number(card.statusWeight)).toBeLessThanOrEqual(700);
+    } else {
+      expect(Number(card.statusWeight)).toBeLessThanOrEqual(500);
+    }
     expect(Number(card.tooltipWeight)).toBeLessThanOrEqual(500);
+  }
+}
+
+async function expectCurrentStatusBadgeOnly(page: Page, currentStage: string) {
+  const statuses = await page.locator('.learning-tracker__item').evaluateAll((items) =>
+    items.map((item) => {
+      const status = item.querySelector('.learning-tracker__status');
+      const style = status ? window.getComputedStyle(status) : null;
+      return {
+        stage: (item as HTMLElement).dataset.stage,
+        text: status?.textContent?.trim(),
+        isCurrent: item.classList.contains('is-current'),
+        color: style?.color,
+        backgroundColor: style?.backgroundColor,
+        fontWeight: style?.fontWeight,
+      };
+    })
+  );
+
+  const current = statuses.find((status) => status.stage === currentStage);
+  expect(current?.isCurrent).toBe(true);
+  expect(current?.text).toBe('現在位置');
+  expect(current?.color).toBe('rgb(255, 255, 255)');
+  expect(current?.backgroundColor).toBe('rgb(22, 107, 91)');
+  expect(Number(current?.fontWeight)).toBeGreaterThanOrEqual(600);
+  expect(Number(current?.fontWeight)).toBeLessThanOrEqual(700);
+
+  for (const status of statuses.filter((candidate) => candidate.stage !== currentStage)) {
+    expect(status.isCurrent).toBe(false);
+    expect(status.text).not.toBe('現在位置');
+    expect(status.color).not.toBe('rgb(255, 255, 255)');
+    expect(status.backgroundColor).not.toBe('rgb(22, 107, 91)');
+    expect(Number(status.fontWeight)).toBeLessThanOrEqual(500);
   }
 }
 
@@ -111,12 +150,14 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expectStatusBesideJumpIcon(page, 'note');
     await expectStatusBesideJumpIcon(page, 'quiz');
     await expectCompactNormalWeightCards(page);
+    await expectCurrentStatusBadgeOnly(page, 'audio');
 
     await page.getByRole('button', { name: '要点メモへ移動' }).click();
     await expect(await currentStage(page)).toHaveText('要点メモ');
     await expect(page.locator('[data-stage="audio"] .learning-tracker__status')).toHaveText(
       '到達済み'
     );
+    await expectCurrentStatusBadgeOnly(page, 'note');
     await expectHeadingClearOfTracker(page, '#note-title');
 
     await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
@@ -124,6 +165,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('[data-stage="note"] .learning-tracker__status')).toHaveText(
       '到達済み'
     );
+    await expectCurrentStatusBadgeOnly(page, 'quiz');
     await expectHeadingClearOfTracker(page, '#mini-quiz-title');
 
     await page.locator('#next-chapter').click();
