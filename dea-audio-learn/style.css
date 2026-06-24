@@ -211,18 +211,18 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 1.95rem;
+  height: 1.95rem;
   color: var(--color-primary);
   flex: 0 0 auto;
 }
 
 .sidebar-menu__icon svg {
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 1.7rem;
+  height: 1.7rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 1.9;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -237,8 +237,8 @@ body {
 }
 
 .sidebar-menu__label {
-  color: var(--color-muted);
-  font-size: 0.72rem;
+  color: var(--color-primary);
+  font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -246,9 +246,9 @@ body {
 .sidebar-menu__value {
   margin-top: 0.08rem;
   overflow: hidden;
-  color: var(--color-primary);
+  color: var(--color-text);
   font-size: 0.86rem;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -269,7 +269,7 @@ body {
 
 .sidebar-menu .chapter-domain-section,
 .sidebar-menu .audio-toc {
-  padding: 0 0.75rem 0.65rem;
+  padding: 0 0.65rem 0.65rem;
 }
 
 .chapter-domain-section {
@@ -287,37 +287,39 @@ body {
 .domain-list,
 .chapter-list {
   display: grid;
-  gap: 0;
+  gap: 0.18rem;
 }
 
 .domain-button,
 .chapter-button {
   width: 100%;
   min-height: 34px;
-  padding: 0.42rem 0.45rem 0.42rem 0.65rem;
-  border: 0;
-  border-top: 1px solid var(--color-border);
-  border-radius: 0;
+  padding: 0.42rem 0.5rem 0.42rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
   color: var(--color-text);
-  background: transparent;
+  background: #ffffff;
   text-align: left;
   cursor: pointer;
 }
 
-.domain-button:first-child,
-.chapter-button:first-child {
-  border-top: 0;
-}
-
 .domain-button:hover,
 .chapter-button:hover {
+  border-color: #e3e9f4;
   background: #f8fafc;
+}
+
+.domain-button:focus-visible,
+.chapter-button:focus-visible {
+  outline: 2px solid #8fb3ff;
+  outline-offset: 2px;
 }
 
 .domain-button.is-active,
 .chapter-button.is-active {
   color: var(--color-primary-strong);
   background: var(--color-primary-soft);
+  border-color: #d7e1ff;
   box-shadow: inset 3px 0 0 var(--color-primary);
   font-weight: 700;
 }
@@ -965,7 +967,7 @@ body {
   .domain-button,
   .chapter-button {
     min-height: 38px;
-    padding: 0.5rem 0.45rem 0.5rem 0.65rem;
+    padding: 0.5rem 0.5rem 0.5rem 0.65rem;
   }
 
   .speech-controls {

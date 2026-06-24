@@ -1106,9 +1106,7 @@ const renderChapterOverviewProgress = (chapterId) => {
 
   selectedChapterProgress.textContent = progressText;
   if (sidebarChapterCurrent) {
-    sidebarChapterCurrent.textContent = progress
-      ? `${progressText}：${progress.title}`
-      : progressText;
+    sidebarChapterCurrent.textContent = progress?.title ?? '読み込み中...';
   }
   if (sidebarSectionCurrent) {
     sidebarSectionCurrent.textContent = progress?.domain ?? '読み込み中...';
