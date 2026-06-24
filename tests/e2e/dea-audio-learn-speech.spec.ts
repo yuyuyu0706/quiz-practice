@@ -47,6 +47,12 @@ async function openChapterSelector(page: Page) {
   });
 }
 
+async function openSectionSelector(page: Page) {
+  await page.locator('#section-selector').evaluate((details) => {
+    (details as HTMLDetailsElement).open = true;
+  });
+}
+
 async function installMockSpeech(page: Page) {
   await page.addInitScript(() => {
     window.__speechCalls = [];
@@ -179,7 +185,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await scrollNearPageBottom(page);
-    await openChapterSelector(page);
+    await openSectionSelector(page);
     await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
@@ -266,9 +272,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         (details as HTMLDetailsElement).open = true;
       });
     }
-    await expect(page.getByRole('heading', { name: '領域を選ぶ' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'この領域のチャプター' })).toBeVisible();
-    await expect(page.locator('#domain-list .domain-button')).toHaveText([
+    await openSectionSelector(page);
+    await expect(page.locator('#section-list-title')).toContainText('セクション');
+    await expect(page.locator('#chapter-list-title')).toContainText('チャプター');
+    await expect(page.locator('#domain-list .domain-button__label')).toHaveText([
       'Databricks Intelligence Platform',
       'Data Ingestion and Loading',
       'Data Transformation and Modeling',
@@ -277,9 +284,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Troubleshooting, Monitoring, and Optimization',
       'Governance and Security',
     ]);
-    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
-      'Databricks Intelligence Platform'
-    );
+    await expect(
+      page.locator('#domain-list .domain-button.is-active .domain-button__label')
+    ).toHaveText('Databricks Intelligence Platform');
     await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(4);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
       'Chapter 1',
@@ -605,6 +612,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '複数ユーザーが同じ時間帯にダッシュボードやSQLクエリを使う場合'
     );
 
+    await openSectionSelector(page);
     await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
@@ -616,9 +624,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
-    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
-      'Data Ingestion and Loading'
-    );
+    await expect(
+      page.locator('#domain-list .domain-button.is-active .domain-button__label')
+    ).toHaveText('Data Ingestion and Loading');
     await expect(page.locator('#chapter-list .chapter-button')).toHaveCount(1);
     await expect(page.locator('#chapter-list .chapter-button')).toContainText([
       'Chapter 5 Data Ingestion and Loadingの全体像',
@@ -694,9 +702,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Transformation and Modelingの全体像'
     );
-    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
-      'Data Transformation and Modeling'
-    );
+    await expect(
+      page.locator('#domain-list .domain-button.is-active .domain-button__label')
+    ).toHaveText('Data Transformation and Modeling');
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Data Transformation and Modelingの全体像'
     );
@@ -761,9 +769,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Working with Lakeflow Jobsの全体像'
     );
-    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
-      'Working with Lakeflow Jobs'
-    );
+    await expect(
+      page.locator('#domain-list .domain-button.is-active .domain-button__label')
+    ).toHaveText('Working with Lakeflow Jobs');
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Working with Lakeflow Jobsの全体像'
     );
@@ -817,9 +825,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await page.getByRole('button', { name: 'Implementing CI/CD' }).click();
     await expect(page.locator('#selected-chapter-title')).toHaveText('Implementing CI/CDの全体像');
-    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
-      'Implementing CI/CD'
-    );
+    await expect(
+      page.locator('#domain-list .domain-button.is-active .domain-button__label')
+    ).toHaveText('Implementing CI/CD');
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Implementing CI/CDの全体像'
     );
@@ -891,9 +899,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Troubleshooting, Monitoring, and Optimizationの全体像'
     );
-    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
-      'Troubleshooting, Monitoring, and Optimization'
-    );
+    await expect(
+      page.locator('#domain-list .domain-button.is-active .domain-button__label')
+    ).toHaveText('Troubleshooting, Monitoring, and Optimization');
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Troubleshooting, Monitoring, and Optimizationの全体像'
     );
@@ -964,9 +972,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
     );
-    await expect(page.locator('#domain-list .domain-button.is-active')).toHaveText(
-      'Governance and Security'
-    );
+    await expect(
+      page.locator('#domain-list .domain-button.is-active .domain-button__label')
+    ).toHaveText('Governance and Security');
     await expect(page.locator('#chapter-list .chapter-button.is-active')).toContainText(
       'Governance and Securityの全体像'
     );

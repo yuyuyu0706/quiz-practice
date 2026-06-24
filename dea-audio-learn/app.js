@@ -899,6 +899,18 @@ const addExternalLinkAttributes = (root) => {
   });
 };
 
+const setActiveAudioTocLink = (href) => {
+  audioTocList.querySelectorAll('a[href^="#"]').forEach((link) => {
+    const isCurrent = link.getAttribute('href') === href;
+    link.parentElement?.classList.toggle('is-current', isCurrent);
+    if (isCurrent) {
+      link.setAttribute('aria-current', 'location');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+};
+
 const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
   const item = document.createElement('li');
   item.className = className;
@@ -906,6 +918,7 @@ const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
   const link = document.createElement('a');
   link.href = href;
   link.textContent = text;
+  link.addEventListener('click', () => setActiveAudioTocLink(href));
   item.append(link);
   audioTocList.append(item);
 };
