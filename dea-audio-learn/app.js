@@ -1,7 +1,11 @@
 const domainList = document.querySelector('#domain-list');
 const chapterList = document.querySelector('#chapter-list');
+const sectionSelector = document.querySelector('#section-selector');
 const chapterSelector = document.querySelector('#chapter-selector');
 const audioTocPanel = document.querySelector('#audio-toc-panel');
+const sidebarSectionCurrent = document.querySelector('#sidebar-section-current');
+const sidebarChapterCurrent = document.querySelector('#sidebar-chapter-current');
+const sidebarTocCurrent = document.querySelector('#sidebar-toc-current');
 const selectedDomain = document.querySelector('#selected-domain');
 const selectedTitle = document.querySelector('#selected-chapter-title');
 const selectedMinutes = document.querySelector('#selected-minutes');
@@ -85,6 +89,9 @@ const updateLearningTrackerUI = () => {
   const currentStage =
     learningStages.find((stage) => stage.key === currentLearningStage) ?? learningStages[0];
   learningTrackerCurrent.textContent = `現在：${currentStage.label}`;
+  if (sidebarTocCurrent) {
+    sidebarTocCurrent.textContent = `現在位置：${currentStage.label}`;
+  }
 
   learningTrackerItems.forEach((item) => {
     const stageKey = item.dataset.stage;
@@ -842,11 +849,26 @@ const restartCurrentChunkForRateChange = (previousSpeechState) => {
   return true;
 };
 
-const mobileChapterSelectorQuery = window.matchMedia('(max-width: 780px)');
+const sidebarMenus = [sectionSelector, chapterSelector, audioTocPanel].filter(Boolean);
+
+const syncSidebarMenuExpandedState = (menu) => {
+  const summary = menu.querySelector('summary');
+  if (!summary) return;
+  summary.setAttribute('aria-expanded', String(menu.open));
+};
+
+const setupSidebarMenus = () => {
+  sidebarMenus.forEach((menu) => {
+    syncSidebarMenuExpandedState(menu);
+    menu.addEventListener('toggle', () => syncSidebarMenuExpandedState(menu));
+  });
+};
 
 const syncChapterSelectorState = () => {
-  chapterSelector.open = !mobileChapterSelectorQuery.matches;
-  audioTocPanel.open = !mobileChapterSelectorQuery.matches;
+  if (sectionSelector) sectionSelector.open = false;
+  chapterSelector.open = true;
+  audioTocPanel.open = false;
+  sidebarMenus.forEach(syncSidebarMenuExpandedState);
 };
 
 const renderMarkdown = (markdown) => {
@@ -877,6 +899,18 @@ const addExternalLinkAttributes = (root) => {
   });
 };
 
+const setActiveAudioTocLink = (href) => {
+  audioTocList.querySelectorAll('a[href^="#"]').forEach((link) => {
+    const isCurrent = link.getAttribute('href') === href;
+    link.parentElement?.classList.toggle('is-current', isCurrent);
+    if (isCurrent) {
+      link.setAttribute('aria-current', 'location');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+};
+
 const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
   const item = document.createElement('li');
   item.className = className;
@@ -884,6 +918,7 @@ const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
   const link = document.createElement('a');
   link.href = href;
   link.textContent = text;
+  link.addEventListener('click', () => setActiveAudioTocLink(href));
   item.append(link);
   audioTocList.append(item);
 };
@@ -1078,10 +1113,17 @@ const getChapterProgress = (chapterId) => {
 
 const renderChapterOverviewProgress = (chapterId) => {
   const progress = getChapterProgress(chapterId);
-
-  selectedChapterProgress.textContent = progress
+  const progressText = progress
     ? `Chapter ${progress.current} / ${progress.total}`
     : 'Chapter - / -';
+
+  selectedChapterProgress.textContent = progressText;
+  if (sidebarChapterCurrent) {
+    sidebarChapterCurrent.textContent = progress?.title ?? '読み込み中...';
+  }
+  if (sidebarSectionCurrent) {
+    sidebarSectionCurrent.textContent = progress?.domain ?? '読み込み中...';
+  }
 };
 
 const getChaptersByDomain = (domain) =>
@@ -1092,12 +1134,22 @@ const getChaptersByDomain = (domain) =>
 const renderDomainList = () => {
   domainList.innerHTML = '';
 
-  getDomains().forEach((domain) => {
+  getDomains().forEach((domain, index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'domain-button';
     button.dataset.domain = domain;
-    button.textContent = domain;
+
+    const marker = document.createElement('span');
+    marker.className = 'domain-button__marker';
+    marker.setAttribute('aria-hidden', 'true');
+    marker.textContent = String(index + 1);
+
+    const label = document.createElement('span');
+    label.className = 'domain-button__label';
+    label.textContent = domain;
+
+    button.append(marker, label);
     button.addEventListener('click', () => selectDomain(domain));
     domainList.append(button);
   });
@@ -1280,9 +1332,9 @@ if (
 }
 
 const init = async () => {
+  setupSidebarMenus();
   syncChapterSelectorState();
   setupLearningStageObserver();
-  mobileChapterSelectorQuery.addEventListener('change', syncChapterSelectorState);
 
   try {
     const response = await fetch('data/chapters.json');
