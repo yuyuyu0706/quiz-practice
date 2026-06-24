@@ -664,7 +664,7 @@ body {
 #audio-script-markdown :is(h2, h3)[id],
 #note-title,
 #mini-quiz-title {
-  scroll-margin-top: calc(var(--learning-tracker-scroll-offset) + 1.5rem);
+  scroll-margin-top: calc(var(--learning-tracker-scroll-offset) + 1.125rem);
 }
 
 .audio-card--primary .markdown-body {
