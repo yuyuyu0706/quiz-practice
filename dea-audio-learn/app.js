@@ -1121,12 +1121,22 @@ const getChaptersByDomain = (domain) =>
 const renderDomainList = () => {
   domainList.innerHTML = '';
 
-  getDomains().forEach((domain) => {
+  getDomains().forEach((domain, index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'domain-button';
     button.dataset.domain = domain;
-    button.textContent = domain;
+
+    const marker = document.createElement('span');
+    marker.className = 'domain-button__marker';
+    marker.setAttribute('aria-hidden', 'true');
+    marker.textContent = String(index + 1);
+
+    const label = document.createElement('span');
+    label.className = 'domain-button__label';
+    label.textContent = domain;
+
+    button.append(marker, label);
     button.addEventListener('click', () => selectDomain(domain));
     domainList.append(button);
   });

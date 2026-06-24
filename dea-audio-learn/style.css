@@ -211,18 +211,18 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.95rem;
-  height: 1.95rem;
+  width: 2.25rem;
+  height: 2.25rem;
   color: var(--color-primary);
   flex: 0 0 auto;
 }
 
 .sidebar-menu__icon svg {
-  width: 1.7rem;
-  height: 1.7rem;
+  width: 2rem;
+  height: 2rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.9;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -247,7 +247,7 @@ body {
   margin-top: 0.08rem;
   overflow: hidden;
   color: var(--color-text);
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 400;
   line-height: 1.25;
   text-overflow: ellipsis;
@@ -303,6 +303,32 @@ body {
   cursor: pointer;
 }
 
+.domain-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.domain-button__marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.08rem;
+  height: 1.08rem;
+  border: 1px solid #d7e1ff;
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: #f8fafc;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.domain-button__label {
+  min-width: 0;
+}
+
 .domain-button:hover,
 .chapter-button:hover {
   border-color: #e3e9f4;
@@ -339,6 +365,12 @@ body {
 
 .chapter-button.is-active span {
   color: var(--color-primary);
+}
+
+.domain-button.is-active .domain-button__marker {
+  border-color: var(--color-primary);
+  color: #ffffff;
+  background: var(--color-primary);
 }
 
 .domain-button {
@@ -498,7 +530,7 @@ body {
   border-radius: 999px;
   color: var(--color-primary);
   background: #ffffff;
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
@@ -620,6 +652,12 @@ body {
 
 [data-learning-stage] {
   scroll-margin-top: var(--learning-tracker-scroll-offset);
+}
+
+#audio-script-markdown :is(h2, h3)[id],
+#note-title,
+#mini-quiz-title {
+  scroll-margin-top: calc(var(--learning-tracker-scroll-offset) + 0.75rem);
 }
 
 .audio-card--primary .markdown-body {
