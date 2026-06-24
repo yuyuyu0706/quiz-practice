@@ -368,9 +368,10 @@ body {
 }
 
 .domain-button:hover .domain-button__marker {
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-strong);
   color: var(--color-primary-strong);
-  background: #e8eeff;
+  background: #dbe4ff;
+  box-shadow: 0 0 0 1px #c8d6ff;
 }
 
 .domain-button.is-active .domain-button__marker {
@@ -663,7 +664,7 @@ body {
 #audio-script-markdown :is(h2, h3)[id],
 #note-title,
 #mini-quiz-title {
-  scroll-margin-top: calc(var(--learning-tracker-scroll-offset) + 1.75rem);
+  scroll-margin-top: calc(var(--learning-tracker-scroll-offset) + 1.5rem);
 }
 
 .audio-card--primary .markdown-body {
