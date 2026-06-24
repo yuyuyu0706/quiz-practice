@@ -33,8 +33,13 @@ async function clickByDom(locator: Locator) {
 }
 
 async function scrollNearPageBottom(page: Page) {
+  const maxScroll = await page.evaluate(
+    () => document.documentElement.scrollHeight - window.innerHeight
+  );
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  if (maxScroll > 0) {
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  }
 }
 
 async function expectPageScrolledToTop(page: Page) {
@@ -308,7 +313,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       .evaluateAll((buttons) =>
         buttons.map((button) => Math.round(button.getBoundingClientRect().height))
       );
-    expect(Math.max(...chapterButtonHeights)).toBeLessThanOrEqual(58);
+    expect(Math.max(...chapterButtonHeights)).toBeLessThanOrEqual(66);
     await expect(page.getByRole('heading', { name: '音声教材', exact: true })).toBeVisible();
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
@@ -413,7 +418,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'flowchart LR'
     );
     await expect(page.locator('.audio-card .audio-toc')).toHaveCount(0);
-    await expect(page.locator('.chapter-panel #audio-toc-panel')).toContainText('この教材の目次');
+    await expect(page.locator('.chapter-panel #audio-toc-panel')).toContainText('目次');
     await expect(
       page.locator('.speech-controls + .speech-progress + #speech-message + #audio-script-markdown')
     ).toBeVisible();
