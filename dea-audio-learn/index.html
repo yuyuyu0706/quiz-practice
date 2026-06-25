@@ -19,7 +19,18 @@
       </div>
     </header>
 
-    <main class="layout" aria-live="polite">
+    <button
+      id="mobile-sidebar-open"
+      class="mobile-sidebar-open"
+      type="button"
+      aria-controls="chapter-sidebar"
+      aria-expanded="false"
+    >
+      ☰ 教材ナビ
+    </button>
+    <div id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop" hidden></div>
+
+    <main id="app-layout" class="layout" aria-live="polite" data-sidebar-state="expanded">
       <article class="panel meta-card" aria-labelledby="selected-chapter-title">
         <div class="meta-card__heading">
           <div>
@@ -50,9 +61,40 @@
         </div>
       </article>
 
-      <aside class="panel chapter-panel" aria-label="教材ナビゲーション">
+      <aside
+        id="chapter-sidebar"
+        class="panel chapter-panel"
+        aria-label="教材ナビゲーション"
+        data-mobile-open="false"
+      >
+        <div class="chapter-panel__toolbar">
+          <button
+            id="sidebar-toggle"
+            class="sidebar-toggle"
+            type="button"
+            aria-controls="app-layout"
+            aria-expanded="true"
+            aria-label="左ペインを折り畳む"
+          >
+            <svg
+              class="sidebar-toggle__icon"
+              viewBox="0 0 24 24"
+              focusable="false"
+              aria-hidden="true"
+            >
+              <path d="M15 6 9 12l6 6" />
+            </svg>
+          </button>
+          <button id="mobile-sidebar-close" class="mobile-sidebar-close" type="button">
+            閉じる
+          </button>
+        </div>
         <details id="section-selector" class="sidebar-menu sidebar-menu--section">
-          <summary id="section-list-title" class="sidebar-menu__summary">
+          <summary
+            id="section-list-title"
+            class="sidebar-menu__summary"
+            aria-label="セクション一覧"
+          >
             <span class="sidebar-menu__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />
@@ -72,7 +114,11 @@
         </details>
 
         <details id="chapter-selector" class="sidebar-menu chapter-selector" open>
-          <summary id="chapter-list-title" class="sidebar-menu__summary">
+          <summary
+            id="chapter-list-title"
+            class="sidebar-menu__summary"
+            aria-label="チャプター一覧"
+          >
             <span class="sidebar-menu__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <circle cx="5.5" cy="6.5" r="1.2" />
@@ -95,7 +141,7 @@
         </details>
 
         <details id="audio-toc-panel" class="sidebar-menu audio-toc-panel">
-          <summary id="audio-toc-title" class="sidebar-menu__summary">
+          <summary id="audio-toc-title" class="sidebar-menu__summary" aria-label="目次">
             <span class="sidebar-menu__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <circle cx="12" cy="12" r="8.5" />

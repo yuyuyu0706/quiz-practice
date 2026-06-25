@@ -1,3 +1,9 @@
+const appLayout = document.querySelector('#app-layout');
+const chapterSidebar = document.querySelector('#chapter-sidebar');
+const sidebarToggleButton = document.querySelector('#sidebar-toggle');
+const mobileSidebarOpenButton = document.querySelector('#mobile-sidebar-open');
+const mobileSidebarCloseButton = document.querySelector('#mobile-sidebar-close');
+const mobileSidebarBackdrop = document.querySelector('#mobile-sidebar-backdrop');
 const domainList = document.querySelector('#domain-list');
 const chapterList = document.querySelector('#chapter-list');
 const sectionSelector = document.querySelector('#section-selector');
@@ -42,6 +48,9 @@ let shuffledChoicesByQuestionId = new Map();
 let selectedChapterIndex = 0;
 let selectedDomainName = '';
 let currentLearningStage = 'audio';
+let sidebarState = 'expanded';
+let sidebarStateRafId = null;
+let isMobileSidebarOpen = false;
 let highestReachedLearningStageIndex = 0;
 let learningStageObserver = null;
 let learningStageRafId = null;
@@ -63,6 +72,50 @@ let selectedSpeechVoice = null;
 let speechStartWatchdogId = null;
 const speechStartWatchdogMs = 3000;
 const maxSpeechChunkLength = 320;
+
+const syncSidebarStateDom = () => {
+  appLayout?.setAttribute('data-sidebar-state', sidebarState);
+  sidebarToggleButton?.setAttribute('aria-expanded', String(sidebarState === 'expanded'));
+  sidebarToggleButton?.setAttribute(
+    'aria-label',
+    sidebarState === 'expanded' ? '左ペインを折り畳む' : '左ペインを展開する'
+  );
+};
+
+const setSidebarState = (nextState) => {
+  if (!['expanded', 'collapsed'].includes(nextState)) return;
+  sidebarState = nextState;
+  if (sidebarStateRafId !== null) window.cancelAnimationFrame(sidebarStateRafId);
+  sidebarStateRafId = window.requestAnimationFrame(() => {
+    sidebarStateRafId = null;
+    syncSidebarStateDom();
+  });
+};
+
+const setMobileSidebarOpen = (isOpen) => {
+  isMobileSidebarOpen = isOpen;
+  chapterSidebar?.setAttribute('data-mobile-open', String(isOpen));
+  mobileSidebarOpenButton?.setAttribute('aria-expanded', String(isOpen));
+  if (mobileSidebarBackdrop) mobileSidebarBackdrop.hidden = !isOpen;
+  document.body.classList.toggle('has-mobile-sidebar-open', isOpen);
+};
+
+const setupResponsiveSidebar = () => {
+  setSidebarState(sidebarState);
+  setMobileSidebarOpen(false);
+  sidebarToggleButton?.addEventListener('click', () => {
+    setSidebarState(sidebarState === 'expanded' ? 'collapsed' : 'expanded');
+  });
+  mobileSidebarOpenButton?.addEventListener('click', () => setMobileSidebarOpen(true));
+  mobileSidebarCloseButton?.addEventListener('click', () => setMobileSidebarOpen(false));
+  mobileSidebarBackdrop?.addEventListener('click', () => setMobileSidebarOpen(false));
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && isMobileSidebarOpen) setMobileSidebarOpen(false);
+  });
+  window.addEventListener('resize', () => {
+    if (isDesktopViewport()) setMobileSidebarOpen(false);
+  });
+};
 
 const scrollToChapterStart = () => {
   window.scrollTo({
@@ -863,6 +916,8 @@ const restartCurrentChunkForRateChange = (previousSpeechState) => {
 
 const sidebarMenus = [sectionSelector, chapterSelector, audioTocPanel].filter(Boolean);
 
+const isDesktopViewport = () => window.matchMedia('(min-width: 781px)').matches;
+
 const syncSidebarMenuExpandedState = (menu) => {
   const summary = menu.querySelector('summary');
   if (!summary) return;
@@ -871,7 +926,15 @@ const syncSidebarMenuExpandedState = (menu) => {
 
 const setupSidebarMenus = () => {
   sidebarMenus.forEach((menu) => {
+    const summary = menu.querySelector('summary');
     syncSidebarMenuExpandedState(menu);
+    summary?.addEventListener('click', (event) => {
+      if (sidebarState !== 'collapsed' || !isDesktopViewport()) return;
+      event.preventDefault();
+      setSidebarState('expanded');
+      menu.open = true;
+      sidebarMenus.forEach(syncSidebarMenuExpandedState);
+    });
     menu.addEventListener('toggle', () => syncSidebarMenuExpandedState(menu));
   });
 };
@@ -1321,6 +1384,7 @@ const selectChapterByIndex = async (chapterIndex) => {
       noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
     }
   } finally {
+    setMobileSidebarOpen(false);
     scrollToChapterStart();
   }
 };
@@ -1380,6 +1444,7 @@ if (
 }
 
 const init = async () => {
+  setupResponsiveSidebar();
   setupSidebarMenus();
   syncChapterSelectorState();
   setupLearningStageObserver();
