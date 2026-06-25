@@ -246,6 +246,12 @@ body {
   height: 2.25rem;
   color: var(--color-primary);
   flex: 0 0 auto;
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: center;
+  transition:
+    opacity 200ms var(--sidebar-transition-easing),
+    transform 200ms var(--sidebar-transition-easing);
 }
 
 .sidebar-menu__icon svg {
@@ -1110,15 +1116,13 @@ body {
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__summary {
-  grid-template-columns: 1fr;
-  justify-items: center;
-  gap: 0.2rem;
-  padding: 0.55rem 0.35rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  justify-items: stretch;
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__icon {
-  width: 2.1rem;
-  height: 2.1rem;
+  opacity: 0.92;
+  transform: scale(0.98);
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__text,
