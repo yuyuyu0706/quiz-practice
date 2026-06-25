@@ -1,7 +1,6 @@
 const appLayout = document.querySelector('#app-layout');
 const chapterSidebar = document.querySelector('#chapter-sidebar');
 const sidebarToggleButton = document.querySelector('#sidebar-toggle');
-const sidebarCurrentBadge = document.querySelector('#sidebar-current-badge');
 const mobileSidebarOpenButton = document.querySelector('#mobile-sidebar-open');
 const mobileSidebarCloseButton = document.querySelector('#mobile-sidebar-close');
 const mobileSidebarBackdrop = document.querySelector('#mobile-sidebar-backdrop');
@@ -1226,11 +1225,6 @@ const renderChapterOverviewProgress = (chapterId) => {
   }
   if (sidebarSectionCurrent) {
     sidebarSectionCurrent.textContent = progress?.domain ?? '読み込み中...';
-  }
-  if (sidebarCurrentBadge) {
-    sidebarCurrentBadge.textContent = progress
-      ? `Ch ${progress.current} / ${progress.total}`
-      : 'Chapter -';
   }
 };
 

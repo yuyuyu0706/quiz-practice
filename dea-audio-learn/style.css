@@ -71,11 +71,10 @@ body {
   display: grid;
   grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
   gap: 0.75rem;
-  width: min(1080px, calc(100% - 2rem));
+  width: min(1280px, calc(100% - 2rem));
   margin: 0.75rem auto 3rem;
   transition:
     grid-template-columns 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    width 320ms cubic-bezier(0.22, 1, 0.36, 1),
     gap 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -93,6 +92,7 @@ body {
   padding: 1rem;
   position: sticky;
   top: 1rem;
+  left: 0;
 }
 
 .meta-card,
@@ -994,37 +994,9 @@ body {
 }
 
 .chapter-panel__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.6rem;
-  align-items: center;
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 0.75rem;
-}
-
-.chapter-panel__current {
-  min-width: 0;
-}
-
-.chapter-panel__eyebrow {
-  display: block;
-  color: var(--color-muted);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.chapter-panel__current strong {
-  display: inline-flex;
-  max-width: 100%;
-  min-height: 26px;
-  align-items: center;
-  padding: 0.12rem 0.55rem;
-  border: 1px solid #cdd5ff;
-  border-radius: 999px;
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
-  font-size: 0.78rem;
-  line-height: 1.2;
 }
 
 .sidebar-toggle {
@@ -1077,28 +1049,21 @@ body {
 }
 
 .chapter-panel {
-  transition-property: width, padding, transform, opacity;
+  width: 100%;
+  transition-property: width, padding;
 }
 
 .layout[data-sidebar-state='collapsed'] {
   grid-template-columns: 5.25rem minmax(0, 1fr);
   gap: 0.55rem;
-  width: min(1280px, calc(100% - 1rem));
 }
 
 .layout[data-sidebar-state='collapsed'] .chapter-panel {
-  width: 5.25rem;
   padding: 0.65rem 0.45rem;
 }
 
 .layout[data-sidebar-state='collapsed'] .chapter-panel__toolbar {
-  grid-template-columns: 1fr;
-  gap: 0;
-  justify-items: center;
-}
-
-.layout[data-sidebar-state='collapsed'] .chapter-panel__current {
-  display: none;
+  justify-content: center;
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-toggle {
@@ -1188,7 +1153,7 @@ body {
     position: fixed;
     top: 0;
     bottom: 0;
-    left: 0;
+    left: -100vw;
     z-index: 30;
     width: min(22rem, calc(100vw - 2.5rem));
     max-width: 92vw;
@@ -1196,17 +1161,16 @@ body {
     order: 2;
     padding: 1rem;
     border-radius: 0 16px 16px 0;
-    transform: translateX(-105%);
+    transition-property: left, width, padding;
   }
 
   .chapter-panel[data-mobile-open='true'] {
-    transform: translateX(0);
+    left: 0;
   }
 
   .chapter-panel__toolbar,
   .layout[data-sidebar-state='collapsed'] .chapter-panel__toolbar {
-    grid-template-columns: minmax(0, 1fr) auto;
-    justify-items: stretch;
+    justify-content: flex-end;
   }
 
   .mobile-sidebar-close {
@@ -1223,14 +1187,6 @@ body {
 
   .sidebar-toggle {
     display: none;
-  }
-
-  .layout[data-sidebar-state='collapsed'] .chapter-panel__current {
-    display: block;
-  }
-
-  .layout[data-sidebar-state='collapsed'] .chapter-panel__eyebrow {
-    display: block;
   }
 
   .layout[data-sidebar-state='collapsed'] .sidebar-menu__summary {
