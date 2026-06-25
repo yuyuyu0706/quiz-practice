@@ -200,7 +200,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await scrollNearPageBottom(page);
     await openSectionSelector(page);
-    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
@@ -535,10 +535,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toHaveText(
       '▶'
     );
-    await page.getByRole('link', { name: '背景' }).click();
+    await clickByDom(page.getByRole('link', { name: '背景' }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
-    await page.getByRole('link', { name: '統合基盤で扱うという発想' }).click();
+    await clickByDom(page.getByRole('link', { name: '統合基盤で扱うという発想' }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
@@ -698,7 +698,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
 
     await openSectionSelector(page);
-    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
