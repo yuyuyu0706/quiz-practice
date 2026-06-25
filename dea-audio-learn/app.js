@@ -470,12 +470,22 @@ const rebuildSpeechChunksFromSections = () => {
   currentChunkIndex = Math.min(currentChunkIndex, Math.max(speechChunks.length - 1, 0));
 };
 
-const updateActiveAudioTocItem = () => {
-  const activeHeadingId = ['starting', 'uncertain', 'speaking', 'paused', 'ended'].includes(
-    speechState
-  )
+const getActiveSpeechHeadingId = () =>
+  ['starting', 'uncertain', 'speaking', 'paused', 'ended'].includes(speechState)
     ? speechChunks[currentChunkIndex]?.headingId
     : null;
+
+const updateActiveHeadingPlayButtons = () => {
+  const activeHeadingId = getActiveSpeechHeadingId();
+  audioScriptMarkdown.querySelectorAll('.audio-heading-play').forEach((button) => {
+    const isCurrent = activeHeadingId ? button.dataset.headingId === activeHeadingId : false;
+    button.classList.toggle('is-current', isCurrent);
+    button.setAttribute('aria-pressed', String(isCurrent));
+  });
+};
+
+const updateActiveAudioTocItem = () => {
+  const activeHeadingId = getActiveSpeechHeadingId();
 
   audioTocList.querySelectorAll('a[href^="#"]').forEach((link) => {
     const isCurrent = activeHeadingId ? link.getAttribute('href') === `#${activeHeadingId}` : false;
@@ -486,6 +496,8 @@ const updateActiveAudioTocItem = () => {
       link.removeAttribute('aria-current');
     }
   });
+
+  updateActiveHeadingPlayButtons();
 };
 
 const updateSpeechProgressUI = () => {
@@ -923,6 +935,41 @@ const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
   audioTocList.append(item);
 };
 
+const getFirstChunkIndexForHeading = (headingId) => {
+  if (speechChunks.length === 0) rebuildSpeechChunksFromSections();
+  return speechChunks.findIndex((chunk) => chunk.headingId === headingId);
+};
+
+const handleHeadingPlay = (headingId) => {
+  if (!refreshSpeechVoices('heading-play-button')) return;
+  const targetChunkIndex = getFirstChunkIndexForHeading(headingId);
+  if (targetChunkIndex < 0) {
+    showSpeechError('この見出しから再生できる読み上げ区切りが見つかりませんでした。');
+    return;
+  }
+  jumpToSpeechChunk(targetChunkIndex, { play: true });
+};
+
+const addHeadingPlayButtons = () => {
+  audioScriptMarkdown.querySelectorAll('.audio-heading-play').forEach((button) => button.remove());
+
+  audioScriptMarkdown.querySelectorAll('h2, h3').forEach((heading) => {
+    const headingTitle = heading.dataset.speechTitle || heading.textContent?.trim() || '';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'audio-heading-play';
+    button.dataset.headingId = heading.id;
+    button.textContent = '▶';
+    button.setAttribute('aria-label', `「${headingTitle}」から再生`);
+    button.setAttribute('aria-pressed', 'false');
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      handleHeadingPlay(heading.id);
+    });
+    heading.append(button);
+  });
+};
+
 const buildAudioTableOfContents = () => {
   audioTocList.innerHTML = '';
 
@@ -948,6 +995,7 @@ const buildAudioTableOfContents = () => {
     );
   });
 
+  addHeadingPlayButtons();
   updateActiveAudioTocItem();
 
   appendAudioTocLink('#note-title', '要点メモ', 'audio-toc__item audio-toc__item--page-section');
