@@ -49,6 +49,7 @@ let selectedChapterIndex = 0;
 let selectedDomainName = '';
 let currentLearningStage = 'audio';
 let sidebarState = 'expanded';
+let sidebarStateRafId = null;
 let isMobileSidebarOpen = false;
 let highestReachedLearningStageIndex = 0;
 let learningStageObserver = null;
@@ -72,15 +73,23 @@ let speechStartWatchdogId = null;
 const speechStartWatchdogMs = 3000;
 const maxSpeechChunkLength = 320;
 
-const setSidebarState = (nextState) => {
-  if (!['expanded', 'collapsed'].includes(nextState)) return;
-  sidebarState = nextState;
+const syncSidebarStateDom = () => {
   appLayout?.setAttribute('data-sidebar-state', sidebarState);
   sidebarToggleButton?.setAttribute('aria-expanded', String(sidebarState === 'expanded'));
   sidebarToggleButton?.setAttribute(
     'aria-label',
     sidebarState === 'expanded' ? '左ペインを折り畳む' : '左ペインを展開する'
   );
+};
+
+const setSidebarState = (nextState) => {
+  if (!['expanded', 'collapsed'].includes(nextState)) return;
+  sidebarState = nextState;
+  if (sidebarStateRafId !== null) window.cancelAnimationFrame(sidebarStateRafId);
+  sidebarStateRafId = window.requestAnimationFrame(() => {
+    sidebarStateRafId = null;
+    syncSidebarStateDom();
+  });
 };
 
 const setMobileSidebarOpen = (isOpen) => {

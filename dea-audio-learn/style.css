@@ -226,6 +226,12 @@ body {
     max-height var(--sidebar-transition-duration) var(--sidebar-transition-easing);
 }
 
+.sidebar-menu__text,
+.sidebar-menu .chapter-domain-section,
+.sidebar-menu .audio-toc {
+  transition-delay: 120ms, 0ms;
+}
+
 .sidebar-menu .chapter-domain-section,
 .sidebar-menu .audio-toc {
   max-height: 70vh;
@@ -1021,10 +1027,14 @@ body {
 }
 
 .sidebar-toggle {
-  min-height: 34px;
-  padding: 0.35rem 0.65rem;
+  aspect-ratio: 1 / 1;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
   border: 1px solid var(--color-primary);
-  border-radius: 999px;
+  border-radius: 50%;
   color: var(--color-primary);
   background: #ffffff;
   font-size: 0.78rem;
@@ -1036,8 +1046,9 @@ body {
 }
 
 .sidebar-toggle__icon {
-  width: 1.15rem;
-  height: 1.15rem;
+  display: block;
+  width: 1rem;
+  height: 1rem;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -1066,9 +1077,10 @@ body {
 .chapter-panel {
   box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
   overflow: hidden;
+  transform: translateZ(0);
   width: var(--sidebar-width);
   transition-property: width, box-shadow;
-  will-change: width;
+  will-change: width, transform;
 }
 
 .layout[data-sidebar-state='collapsed'] {
@@ -1086,8 +1098,8 @@ body {
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-toggle {
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 32px;
+  height: 32px;
   justify-content: center;
   padding: 0;
 }
@@ -1107,6 +1119,7 @@ body {
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__text,
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__chevron {
   opacity: 0;
+  transition-delay: 0ms;
   pointer-events: none;
   position: absolute;
 }
@@ -1114,6 +1127,7 @@ body {
 .layout[data-sidebar-state='collapsed'] .sidebar-menu .chapter-domain-section,
 .layout[data-sidebar-state='collapsed'] .sidebar-menu .audio-toc {
   margin-top: 0;
+  transition-delay: 0ms;
   max-height: 0;
   opacity: 0;
   padding-bottom: 0;
