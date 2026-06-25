@@ -105,7 +105,7 @@ const setupResponsiveSidebar = () => {
     if (event.key === 'Escape' && isMobileSidebarOpen) setMobileSidebarOpen(false);
   });
   window.addEventListener('resize', () => {
-    if (window.matchMedia('(min-width: 781px)').matches) setMobileSidebarOpen(false);
+    if (isDesktopViewport()) setMobileSidebarOpen(false);
   });
 };
 
@@ -908,6 +908,8 @@ const restartCurrentChunkForRateChange = (previousSpeechState) => {
 
 const sidebarMenus = [sectionSelector, chapterSelector, audioTocPanel].filter(Boolean);
 
+const isDesktopViewport = () => window.matchMedia('(min-width: 781px)').matches;
+
 const syncSidebarMenuExpandedState = (menu) => {
   const summary = menu.querySelector('summary');
   if (!summary) return;
@@ -916,7 +918,15 @@ const syncSidebarMenuExpandedState = (menu) => {
 
 const setupSidebarMenus = () => {
   sidebarMenus.forEach((menu) => {
+    const summary = menu.querySelector('summary');
     syncSidebarMenuExpandedState(menu);
+    summary?.addEventListener('click', (event) => {
+      if (sidebarState !== 'collapsed' || !isDesktopViewport()) return;
+      event.preventDefault();
+      setSidebarState('expanded');
+      menu.open = true;
+      sidebarMenus.forEach(syncSidebarMenuExpandedState);
+    });
     menu.addEventListener('toggle', () => syncSidebarMenuExpandedState(menu));
   });
 };

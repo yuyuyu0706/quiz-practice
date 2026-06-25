@@ -78,16 +78,27 @@
             type="button"
             aria-controls="app-layout"
             aria-expanded="true"
+            aria-label="左ペインを折り畳む"
           >
-            <span class="sidebar-toggle__expanded">折り畳む</span>
-            <span class="sidebar-toggle__collapsed" aria-hidden="true">開く</span>
+            <svg
+              class="sidebar-toggle__icon"
+              viewBox="0 0 24 24"
+              focusable="false"
+              aria-hidden="true"
+            >
+              <path d="M15 6 9 12l6 6" />
+            </svg>
           </button>
           <button id="mobile-sidebar-close" class="mobile-sidebar-close" type="button">
             閉じる
           </button>
         </div>
         <details id="section-selector" class="sidebar-menu sidebar-menu--section">
-          <summary id="section-list-title" class="sidebar-menu__summary">
+          <summary
+            id="section-list-title"
+            class="sidebar-menu__summary"
+            aria-label="セクション一覧"
+          >
             <span class="sidebar-menu__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />
@@ -107,7 +118,11 @@
         </details>
 
         <details id="chapter-selector" class="sidebar-menu chapter-selector" open>
-          <summary id="chapter-list-title" class="sidebar-menu__summary">
+          <summary
+            id="chapter-list-title"
+            class="sidebar-menu__summary"
+            aria-label="チャプター一覧"
+          >
             <span class="sidebar-menu__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <circle cx="5.5" cy="6.5" r="1.2" />
@@ -130,7 +145,7 @@
         </details>
 
         <details id="audio-toc-panel" class="sidebar-menu audio-toc-panel">
-          <summary id="audio-toc-title" class="sidebar-menu__summary">
+          <summary id="audio-toc-title" class="sidebar-menu__summary" aria-label="目次">
             <span class="sidebar-menu__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <circle cx="12" cy="12" r="8.5" />
