@@ -1219,6 +1219,7 @@ body {
     transition-property: left, width, padding;
   }
 
+
   .chapter-panel[data-mobile-open='true'] {
     left: 0;
   }
