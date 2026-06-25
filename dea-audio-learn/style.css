@@ -11,8 +11,8 @@
   --color-muted: #5f6b7a;
   --shadow-card: 0 8px 24px rgba(16, 24, 40, 0.08);
   --learning-tracker-scroll-offset: 8rem;
-  --sidebar-transition-duration: 600ms;
-  --sidebar-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --sidebar-transition-duration: 780ms;
+  --sidebar-transition-easing: cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--color-text);
   background: var(--color-bg);
   font-family: 'Inter', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
@@ -1054,6 +1054,11 @@ body {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transition: transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+}
+
+.layout[data-sidebar-state='collapsed'] .sidebar-toggle__icon {
+  transform: rotate(180deg);
 }
 
 .sidebar-toggle:hover,
