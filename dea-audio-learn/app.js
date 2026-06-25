@@ -959,7 +959,7 @@ const addHeadingPlayButtons = () => {
     button.type = 'button';
     button.className = 'audio-heading-play';
     button.dataset.headingId = heading.id;
-    button.textContent = '再生';
+    button.textContent = '▶';
     button.setAttribute('aria-label', `「${headingTitle}」から再生`);
     button.setAttribute('aria-pressed', 'false');
     button.addEventListener('click', (event) => {

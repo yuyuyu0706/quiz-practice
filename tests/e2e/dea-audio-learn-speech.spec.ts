@@ -224,6 +224,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     });
     const targetButton = targetHeading.locator('.audio-heading-play');
     await expect(targetButton).toHaveAttribute('aria-label', /従来のデータ基盤の課題/);
+    await expect(targetButton).toHaveText('▶');
 
     await targetButton.click();
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
@@ -255,6 +256,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     });
     const nextChapterButton = nextChapterHeading.locator('.audio-heading-play');
     await expect(nextChapterButton).toHaveAttribute('aria-label', /データレイクだけでは困ること/);
+    await expect(nextChapterButton).toHaveText('▶');
 
     await nextChapterButton.click();
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
@@ -520,7 +522,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'ミニクイズ'
     );
     await expect(page.locator('#audio-toc-list button', { hasText: '再生' })).toHaveCount(0);
-    await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toBeVisible();
+    await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toHaveText(
+      '▶'
+    );
     await page.getByRole('link', { name: '背景' }).click();
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);

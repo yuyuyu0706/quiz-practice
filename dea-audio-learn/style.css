@@ -676,8 +676,12 @@ body {
 .audio-heading-play {
   flex: 0 0 auto;
   border: 1px solid var(--color-primary);
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 999px;
-  padding: 0.18rem 0.55rem;
+  padding: 0;
   color: var(--color-primary);
   background: #ffffff;
   font-size: 0.74rem;
