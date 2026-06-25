@@ -11,8 +11,8 @@
   --color-muted: #5f6b7a;
   --shadow-card: 0 8px 24px rgba(16, 24, 40, 0.08);
   --learning-tracker-scroll-offset: 8rem;
-  --sidebar-transition-duration: 780ms;
-  --sidebar-transition-easing: cubic-bezier(0.16, 1, 0.3, 1);
+  --sidebar-transition-duration: 1014ms;
+  --sidebar-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
   color: var(--color-text);
   background: var(--color-bg);
   font-family: 'Inter', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
@@ -250,8 +250,8 @@ body {
   transform: scale(1);
   transform-origin: center;
   transition:
-    opacity 200ms var(--sidebar-transition-easing),
-    transform 200ms var(--sidebar-transition-easing);
+    opacity var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+    transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
 }
 
 .sidebar-menu__icon svg {
@@ -1116,8 +1116,11 @@ body {
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__summary {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  justify-items: stretch;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__icon {
