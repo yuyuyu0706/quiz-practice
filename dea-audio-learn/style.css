@@ -667,6 +667,32 @@ body {
   scroll-margin-top: calc(var(--learning-tracker-scroll-offset) - 0.3rem);
 }
 
+#audio-script-markdown :is(h2, h3) {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.audio-heading-play {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  color: var(--color-primary);
+  background: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.audio-heading-play:hover,
+.audio-heading-play:focus-visible,
+.audio-heading-play.is-current {
+  color: #ffffff;
+  background: var(--color-primary);
+}
+
 .audio-card--primary .markdown-body {
   max-width: 76ch;
 }

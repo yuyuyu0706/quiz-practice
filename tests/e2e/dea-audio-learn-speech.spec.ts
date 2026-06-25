@@ -206,6 +206,72 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Data Ingestion and Loadingで最初に押さえるべき観点'
     );
   });
+
+  test('restores center-pane heading play buttons and keeps them working after chapter changes', async ({
+    page,
+  }) => {
+    await installMockSpeech(page);
+    await gotoAudioLearn(page);
+
+    const headingPlayButtons = page.locator('#audio-script-markdown .audio-heading-play');
+    await expect(headingPlayButtons.first()).toBeVisible();
+    await expect(page.locator('#audio-toc-list .audio-heading-play')).toHaveCount(0);
+    await expect(page.locator('#audio-toc-list button', { hasText: '再生' })).toHaveCount(0);
+
+    const targetHeading = page.getByRole('heading', {
+      name: /従来のデータ基盤の課題/,
+      level: 3,
+    });
+    const targetButton = targetHeading.locator('.audio-heading-play');
+    await expect(targetButton).toHaveAttribute('aria-label', /従来のデータ基盤の課題/);
+
+    await targetButton.click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
+    await expect(page.locator('#speech-current-position')).toHaveText(
+      '現在：従来のデータ基盤の課題'
+    );
+    await expect(page.locator('#tracker-speech-position')).toContainText(
+      '従来のデータ基盤の課題 |'
+    );
+    await expect(targetButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#audio-toc-list .audio-toc__item.is-current a')).toHaveText(
+      '従来のデータ基盤の課題'
+    );
+    const firstHeadingSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(firstHeadingSpeakCall?.text)).toContain('従来のデータ基盤の課題');
+
+    await page.locator('#next-chapter').click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'LakehouseとDelta Lakeの位置づけ'
+    );
+    await expect(page.locator('#audio-toc-list .audio-heading-play')).toHaveCount(0);
+    const nextChapterHeading = page.getByRole('heading', {
+      name: /データレイクだけでは困ること/,
+      level: 3,
+    });
+    const nextChapterButton = nextChapterHeading.locator('.audio-heading-play');
+    await expect(nextChapterButton).toHaveAttribute('aria-label', /データレイクだけでは困ること/);
+
+    await nextChapterButton.click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(page.locator('#speech-current-position')).toHaveText(
+      '現在：データレイクだけでは困ること'
+    );
+    await expect(page.locator('#tracker-speech-position')).toContainText(
+      'データレイクだけでは困ること |'
+    );
+    await expect(nextChapterButton).toHaveAttribute('aria-pressed', 'true');
+    const nextChapterSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(nextChapterSpeakCall?.text)).toContain('データレイクだけでは困ること');
+  });
+
   test('uses one button to play, pause, resume, and resets on chapter change', async ({ page }) => {
     await page.addInitScript(() => {
       window.__speechCalls = [];
@@ -454,7 +520,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'ミニクイズ'
     );
     await expect(page.locator('#audio-toc-list button', { hasText: '再生' })).toHaveCount(0);
-    await expect(page.locator('.audio-heading-play')).toHaveCount(0);
+    await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toBeVisible();
     await page.getByRole('link', { name: '背景' }).click();
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
