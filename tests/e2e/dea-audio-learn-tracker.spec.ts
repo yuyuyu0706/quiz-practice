@@ -14,6 +14,14 @@ async function currentStage(page: Page) {
   return page.locator('.learning-tracker__item.is-current .learning-tracker__label');
 }
 
+async function openMobileSidebarIfNeeded(page: Page) {
+  const mobileSidebarOpen = page.locator('#mobile-sidebar-open');
+  if (await mobileSidebarOpen.isVisible()) {
+    await mobileSidebarOpen.click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+  }
+}
+
 async function expectTrackerSpeechInitialState(page: Page) {
   await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
   await expect(page.locator('#tracker-speech-status')).toHaveText(/^(未再生|利用不可)$/);
@@ -228,6 +236,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：音声教材');
     await expect(page.locator('.sidebar-menu__icon svg')).toHaveCount(3);
 
+    await openMobileSidebarIfNeeded(page);
     await page.locator('#audio-toc-title').focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');

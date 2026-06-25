@@ -46,7 +46,16 @@ async function expectPageScrolledToTop(page: Page) {
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 }
 
+async function openMobileSidebarIfNeeded(page: Page) {
+  const mobileSidebarOpen = page.locator('#mobile-sidebar-open');
+  if (await mobileSidebarOpen.isVisible()) {
+    await mobileSidebarOpen.click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+  }
+}
+
 async function openChapterSelector(page: Page) {
+  await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
     (details as HTMLDetailsElement).open = true;
   });
@@ -510,6 +519,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#audio-toc-panel').evaluate((details) => {
       (details as HTMLDetailsElement).open = true;
     });
+    await openMobileSidebarIfNeeded(page);
     await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toBeVisible();
     await expect(page.locator('#audio-toc-list a')).toContainText([
       'はじめに',
