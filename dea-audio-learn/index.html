@@ -19,7 +19,18 @@
       </div>
     </header>
 
-    <main class="layout" aria-live="polite">
+    <button
+      id="mobile-sidebar-open"
+      class="mobile-sidebar-open"
+      type="button"
+      aria-controls="chapter-sidebar"
+      aria-expanded="false"
+    >
+      ☰ 教材ナビ
+    </button>
+    <div id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop" hidden></div>
+
+    <main id="app-layout" class="layout" aria-live="polite" data-sidebar-state="expanded">
       <article class="panel meta-card" aria-labelledby="selected-chapter-title">
         <div class="meta-card__heading">
           <div>
@@ -50,7 +61,31 @@
         </div>
       </article>
 
-      <aside class="panel chapter-panel" aria-label="教材ナビゲーション">
+      <aside
+        id="chapter-sidebar"
+        class="panel chapter-panel"
+        aria-label="教材ナビゲーション"
+        data-mobile-open="false"
+      >
+        <div class="chapter-panel__toolbar">
+          <div class="chapter-panel__current" aria-live="polite">
+            <span class="chapter-panel__eyebrow">現在位置</span>
+            <strong id="sidebar-current-badge">Chapter -</strong>
+          </div>
+          <button
+            id="sidebar-toggle"
+            class="sidebar-toggle"
+            type="button"
+            aria-controls="app-layout"
+            aria-expanded="true"
+          >
+            <span class="sidebar-toggle__expanded">折り畳む</span>
+            <span class="sidebar-toggle__collapsed" aria-hidden="true">開く</span>
+          </button>
+          <button id="mobile-sidebar-close" class="mobile-sidebar-close" type="button">
+            閉じる
+          </button>
+        </div>
         <details id="section-selector" class="sidebar-menu sidebar-menu--section">
           <summary id="section-list-title" class="sidebar-menu__summary">
             <span class="sidebar-menu__icon" aria-hidden="true">
