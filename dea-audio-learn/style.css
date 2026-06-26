@@ -13,6 +13,7 @@
   --learning-tracker-scroll-offset: 8rem;
   --sidebar-transition-duration: 900ms;
   --sidebar-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --markdown-content-max-width: 900px;
   color: var(--color-text);
   background: var(--color-bg);
   font-family: 'Inter', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
@@ -736,10 +737,6 @@ body {
   background: var(--color-primary);
 }
 
-.audio-card--primary .markdown-body {
-  max-width: 76ch;
-}
-
 .audio-card--primary .markdown-body > :first-child {
   margin-top: 0.75rem;
 }
@@ -989,8 +986,9 @@ body {
   letter-spacing: 0.04em;
 }
 
-.markdown-body {
-  max-width: 70ch;
+.markdown-body,
+.audio-card--primary .markdown-body {
+  max-width: var(--markdown-content-max-width);
 }
 
 .markdown-body h1,
