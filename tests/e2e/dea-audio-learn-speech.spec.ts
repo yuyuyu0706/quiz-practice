@@ -61,9 +61,7 @@ async function openMobileSidebarIfNeeded(page: Page) {
   await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'true');
 
   await expect
-    .poll(() =>
-      chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left)
-    )
+    .poll(() => chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left))
     .toBeGreaterThanOrEqual(0);
 }
 
@@ -569,17 +567,12 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toHaveText(
       '▶'
     );
-    await openMobileSidebarIfNeeded(page);
 
-    await clickVisible(
-      page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })
-    );
+    await clickVisible(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
 
-    await clickVisible(
-      page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
-    );
+    await clickVisible(page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await closeMobileSidebarIfNeeded(page);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
