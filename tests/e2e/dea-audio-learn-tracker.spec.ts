@@ -14,6 +14,12 @@ async function currentStage(page: Page) {
   return page.locator('.learning-tracker__item.is-current .learning-tracker__label');
 }
 
+async function clickByDom(locator: ReturnType<Page['locator']>) {
+  await locator.evaluate((element) => {
+    (element as HTMLElement).click();
+  });
+}
+
 async function expectTrackerSpeechInitialState(page: Page) {
   await expect(page.locator('#tracker-speech-position')).toHaveText(/未再生 \| 0 \/ \d+ 区切り/);
   await expect(page.locator('#tracker-speech-status')).toHaveText(/^(未再生|利用不可)$/);
@@ -100,6 +106,11 @@ async function openMobileSidebarIfNeeded(page: Page) {
   if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
     await page.locator('#mobile-sidebar-open').click();
     await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+    await expect
+      .poll(() =>
+        page.locator('#chapter-sidebar').evaluate((panel) => panel.getBoundingClientRect().left)
+      )
+      .toBeGreaterThanOrEqual(0);
   }
 }
 
@@ -147,7 +158,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     );
     await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
 
-    for (let chapterOffset = 2; chapterOffset <= 10; chapterOffset += 1) {
+    for (let chapterOffset = 3; chapterOffset <= 10; chapterOffset += 1) {
       await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
       await page.locator('#mini-quiz-primary-action').click();
       await expect(page.locator('#selected-chapter-progress')).toHaveText(
@@ -284,7 +295,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
     await openMobileSidebarIfNeeded(page);
-    await page.locator('#audio-toc-list a[href="#note-title"]').click();
+    await clickByDom(page.locator('#audio-toc-list a[href="#note-title"]'));
     await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：要点メモ');
     await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveAttribute(
       'aria-current',

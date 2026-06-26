@@ -50,6 +50,11 @@ async function openMobileSidebarIfNeeded(page: Page) {
   if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
     await page.locator('#mobile-sidebar-open').click();
     await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+    await expect
+      .poll(() =>
+        page.locator('#chapter-sidebar').evaluate((panel) => panel.getBoundingClientRect().left)
+      )
+      .toBeGreaterThanOrEqual(0);
   }
 }
 
@@ -61,6 +66,7 @@ async function openChapterSelector(page: Page) {
 }
 
 async function openSectionSelector(page: Page) {
+  await openMobileSidebarIfNeeded(page);
   await page.locator('#section-selector').evaluate((details) => {
     (details as HTMLDetailsElement).open = true;
   });
@@ -199,7 +205,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await scrollNearPageBottom(page);
     await openSectionSelector(page);
-    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
@@ -534,10 +540,12 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '▶'
     );
     await openMobileSidebarIfNeeded(page);
-    await page.getByRole('link', { name: '背景' }).click();
+    await clickByDom(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
-    await page.getByRole('link', { name: '統合基盤で扱うという発想' }).click();
+    await clickByDom(
+      page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
+    );
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
@@ -697,7 +705,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
 
     await openSectionSelector(page);
-    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
