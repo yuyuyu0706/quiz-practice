@@ -61,9 +61,7 @@ async function openMobileSidebarIfNeeded(page: Page) {
   await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'true');
 
   await expect
-    .poll(() =>
-      chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left),
-    )
+    .poll(() => chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left))
     .toBeGreaterThanOrEqual(0);
 }
 
