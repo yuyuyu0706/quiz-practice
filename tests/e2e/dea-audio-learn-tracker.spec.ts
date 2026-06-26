@@ -150,7 +150,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
   test('offers mini quiz next actions for normal and final chapters', async ({ page }) => {
     await gotoAudioLearn(page);
 
-    await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+    await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
     await expect(page.locator('#mini-quiz-primary-action')).toHaveText('次のチャプターへ');
     await page.locator('#mini-quiz-primary-action').click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
@@ -159,7 +159,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
 
     for (let chapterOffset = 3; chapterOffset <= 10; chapterOffset += 1) {
-      await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+      await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
       await page.locator('#mini-quiz-primary-action').click();
       await expect(page.locator('#selected-chapter-progress')).toHaveText(
         `Chapter ${chapterOffset} / 10`
@@ -168,7 +168,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
     );
-    await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+    await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
     await expect(page.locator('#mini-quiz-primary-action')).toHaveText('領域一覧へ戻る');
     await page.locator('#mini-quiz-primary-action').click();
     await expect(page.locator('#section-selector')).toHaveAttribute('open', '');

@@ -58,6 +58,13 @@ async function openMobileSidebarIfNeeded(page: Page) {
   }
 }
 
+async function closeMobileSidebarIfNeeded(page: Page) {
+  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
+    await page.locator('#mobile-sidebar-close').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
+  }
+}
+
 async function openChapterSelector(page: Page) {
   await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
@@ -396,6 +403,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         buttons.map((button) => Math.round(button.getBoundingClientRect().height))
       );
     expect(Math.max(...chapterButtonHeights)).toBeLessThanOrEqual(66);
+    await closeMobileSidebarIfNeeded(page);
     await expect(page.getByRole('heading', { name: '音声教材', exact: true })).toBeVisible();
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
