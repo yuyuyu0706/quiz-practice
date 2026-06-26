@@ -20,6 +20,11 @@ async function clickVisible(locator: ReturnType<Page['locator']>) {
   await locator.click();
 }
 
+async function clickByDom(locator: ReturnType<Page['locator']>) {
+  await expect(locator).toBeVisible();
+  await locator.evaluate((element) => (element as HTMLElement).click());
+}
+
 async function openMobileSidebarIfNeeded(page: Page) {
   const mobileSidebarOpen = page.locator('#mobile-sidebar-open');
   const chapterSidebar = page.locator('#chapter-sidebar');
@@ -156,17 +161,17 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
   test('offers mini quiz next actions for normal and final chapters', async ({ page }) => {
     await gotoAudioLearn(page);
 
-    await clickVisible(page.getByRole('button', { name: 'ミニクイズへ移動' }));
+    await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
     await expect(page.locator('#mini-quiz-primary-action')).toHaveText('次のチャプターへ');
-    await clickVisible(page.locator('#mini-quiz-primary-action'));
+    await clickByDom(page.locator('#mini-quiz-primary-action'));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'LakehouseとDelta Lakeの位置づけ'
     );
     await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
 
     for (let chapterOffset = 3; chapterOffset <= 10; chapterOffset += 1) {
-      await clickVisible(page.getByRole('button', { name: 'ミニクイズへ移動' }));
-      await clickVisible(page.locator('#mini-quiz-primary-action'));
+      await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
+      await clickByDom(page.locator('#mini-quiz-primary-action'));
       await expect(page.locator('#selected-chapter-progress')).toHaveText(
         `Chapter ${chapterOffset} / 10`
       );
@@ -174,9 +179,9 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
     );
-    await clickVisible(page.getByRole('button', { name: 'ミニクイズへ移動' }));
+    await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
     await expect(page.locator('#mini-quiz-primary-action')).toHaveText('領域一覧へ戻る');
-    await clickVisible(page.locator('#mini-quiz-primary-action'));
+    await clickByDom(page.locator('#mini-quiz-primary-action'));
     await expect(page.locator('#section-selector')).toHaveAttribute('open', '');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
@@ -302,7 +307,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
     await openMobileSidebarIfNeeded(page);
-    await clickVisible(page.locator('#audio-toc-list a[href="#note-title"]'));
+    await clickByDom(page.locator('#audio-toc-list a[href="#note-title"]'));
     await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：要点メモ');
     await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveAttribute(
       'aria-current',

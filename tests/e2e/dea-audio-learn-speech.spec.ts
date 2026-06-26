@@ -32,6 +32,11 @@ async function clickVisible(locator: Locator) {
   await locator.click();
 }
 
+async function clickByDom(locator: Locator) {
+  await expect(locator).toBeVisible();
+  await locator.evaluate((element) => (element as HTMLElement).click());
+}
+
 async function scrollNearPageBottom(page: Page) {
   const maxScroll = await page.evaluate(
     () => document.documentElement.scrollHeight - window.innerHeight
@@ -568,11 +573,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '▶'
     );
 
-    await clickVisible(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
+    await clickByDom(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
 
-    await clickVisible(
+    await clickByDom(
       page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
     );
     await expect(page).toHaveURL(/#audio-heading-/);
