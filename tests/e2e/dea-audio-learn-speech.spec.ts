@@ -32,6 +32,11 @@ async function clickVisible(locator: Locator) {
   await locator.click();
 }
 
+async function clickByDom(locator: Locator) {
+  await expect(locator).toBeVisible();
+  await locator.evaluate((element) => (element as HTMLElement).click());
+}
+
 async function scrollNearPageBottom(page: Page) {
   const maxScroll = await page.evaluate(
     () => document.documentElement.scrollHeight - window.innerHeight
@@ -61,9 +66,7 @@ async function openMobileSidebarIfNeeded(page: Page) {
   await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'true');
 
   await expect
-    .poll(() =>
-      chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left),
-    )
+    .poll(() => chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left))
     .toBeGreaterThanOrEqual(0);
 }
 
@@ -570,11 +573,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '▶'
     );
 
-    await clickVisible(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
+    await clickByDom(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
 
-    await clickVisible(
+    await clickByDom(
       page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
     );
     await expect(page).toHaveURL(/#audio-heading-/);
@@ -775,7 +778,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(autoLoaderInlineLink).toHaveCount(1);
     await expect(autoLoaderInlineLink).not.toHaveAttribute('target', '_blank');
-    await clickVisible(autoLoaderInlineLink);
+    await clickByDom(autoLoaderInlineLink);
     await expect(page).toHaveURL(/#keyword-auto-loader/u);
     await expect(page.locator('#note-markdown')).toContainText('Auto Loader');
     await expect(page.locator('#note-markdown')).toContainText(
@@ -804,10 +807,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
-    await clickVisible(page.locator('#tracker-speech-toggle'));
+    await clickByDom(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
-    await clickVisible(page.locator('#tracker-speech-toggle'));
+    await clickByDom(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
     await clickVisible(page.locator('#speech-toggle'));

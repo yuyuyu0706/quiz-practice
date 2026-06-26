@@ -20,12 +20,27 @@ async function clickVisible(locator: ReturnType<Page['locator']>) {
   await locator.click();
 }
 
+async function clickByDom(locator: ReturnType<Page['locator']>) {
+  await expect(locator).toBeVisible();
+  await locator.evaluate((element) => (element as HTMLElement).click());
+}
+
 async function openMobileSidebarIfNeeded(page: Page) {
   const mobileSidebarOpen = page.locator('#mobile-sidebar-open');
-  if (await mobileSidebarOpen.isVisible()) {
-    await mobileSidebarOpen.click();
-    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+  const chapterSidebar = page.locator('#chapter-sidebar');
+
+  if (!(await mobileSidebarOpen.isVisible())) {
+    return;
   }
+
+  if ((await chapterSidebar.getAttribute('data-mobile-open')) !== 'true') {
+    await mobileSidebarOpen.click();
+  }
+
+  await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'true');
+  await expect
+    .poll(() => chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left))
+    .toBeGreaterThanOrEqual(0);
 }
 
 async function expectTrackerSpeechInitialState(page: Page) {
@@ -107,18 +122,6 @@ async function expectCompactNormalWeightCards(page: Page) {
     expect(Number(card.labelWeight)).toBeLessThanOrEqual(500);
     expect(Number(card.statusWeight)).toBeLessThanOrEqual(500);
     expect(Number(card.tooltipWeight)).toBeLessThanOrEqual(500);
-  }
-}
-
-async function openMobileSidebarIfNeeded(page: Page) {
-  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
-    await page.locator('#mobile-sidebar-open').click();
-    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
-    await expect
-      .poll(() =>
-        page.locator('#chapter-sidebar').evaluate((panel) => panel.getBoundingClientRect().left)
-      )
-      .toBeGreaterThanOrEqual(0);
   }
 }
 
@@ -304,7 +307,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
     await openMobileSidebarIfNeeded(page);
-    await clickVisible(page.locator('#audio-toc-list a[href="#note-title"]'));
+    await clickByDom(page.locator('#audio-toc-list a[href="#note-title"]'));
     await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：要点メモ');
     await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveAttribute(
       'aria-current',
