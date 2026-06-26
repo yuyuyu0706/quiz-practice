@@ -799,7 +799,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestIngestionSpeakCall?.text)).not.toContain('flowchart LR');
     expect(String(latestIngestionSpeakCall?.text)).not.toContain('spark.readStream.format');
 
-    await page.getByRole('button', { name: 'Data Transformation and Modeling' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Data Transformation and Modeling' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Transformation and Modelingの全体像'
     );
@@ -866,7 +867,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestTransformSpeakCall?.text)).not.toContain('spark.table');
     expect(String(latestTransformSpeakCall?.text)).not.toContain('| 観点 |');
 
-    await page.getByRole('button', { name: 'Working with Lakeflow Jobs' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Working with Lakeflow Jobs' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Working with Lakeflow Jobsの全体像'
     );
@@ -924,7 +926,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestJobsSpeakCall?.text)).not.toContain('daily_sales_pipeline');
     expect(String(latestJobsSpeakCall?.text)).not.toContain('| 判断観点 |');
 
-    await page.getByRole('button', { name: 'Implementing CI/CD' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Implementing CI/CD' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText('Implementing CI/CDの全体像');
     await expect(
       page.locator('#domain-list .domain-button.is-active .domain-button__label')
@@ -994,9 +997,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestCicdSpeakCall?.text)).not.toContain('etl_pipeline');
     expect(String(latestCicdSpeakCall?.text)).not.toContain('| 観点 |');
 
-    await page
-      .getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
-      .click();
+    await openSectionSelector(page);
+    await clickByDom(
+      page.getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
+    );
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Troubleshooting, Monitoring, and Optimizationの全体像'
     );
@@ -1069,7 +1073,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestOpsSpeakCall?.text)).not.toContain('spark.sql.shuffle.partitions');
     expect(String(latestOpsSpeakCall?.text)).not.toContain('| 症状 |');
 
-    await page.getByRole('button', { name: 'Governance and Security' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Governance and Security' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
     );
