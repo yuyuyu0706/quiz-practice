@@ -14,10 +14,10 @@ async function currentStage(page: Page) {
   return page.locator('.learning-tracker__item.is-current .learning-tracker__label');
 }
 
-async function clickByDom(locator: ReturnType<Page['locator']>) {
-  await locator.evaluate((element) => {
-    (element as HTMLElement).click();
-  });
+async function clickVisible(locator: ReturnType<Page['locator']>) {
+  await locator.scrollIntoViewIfNeeded();
+  await expect(locator).toBeVisible();
+  await locator.click();
 }
 
 async function openMobileSidebarIfNeeded(page: Page) {
@@ -247,7 +247,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
-    await clickByDom(page.locator('#audio-toc-list a[href="#note-title"]'));
+    await clickVisible(page.locator('#audio-toc-list a[href="#note-title"]'));
     await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：要点メモ');
     await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveAttribute(
       'aria-current',
