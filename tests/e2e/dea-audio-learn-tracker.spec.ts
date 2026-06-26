@@ -96,6 +96,13 @@ async function expectCompactNormalWeightCards(page: Page) {
   }
 }
 
+async function openMobileSidebarIfNeeded(page: Page) {
+  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+  }
+}
+
 async function expectCurrentStatusBadgeOnly(page: Page, currentStage: string) {
   const statuses = await page.locator('.learning-tracker__item').evaluateAll((items) =>
     items.map((item) => {
@@ -140,7 +147,13 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     );
     await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
 
-    await page.getByRole('button', { name: 'Governance and Securityの全体像' }).click();
+    for (let chapterOffset = 2; chapterOffset <= 10; chapterOffset += 1) {
+      await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+      await page.locator('#mini-quiz-primary-action').click();
+      await expect(page.locator('#selected-chapter-progress')).toHaveText(
+        `Chapter ${chapterOffset} / 10`
+      );
+    }
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
     );
@@ -270,6 +283,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
+    await openMobileSidebarIfNeeded(page);
     await page.locator('#audio-toc-list a[href="#note-title"]').click();
     await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：要点メモ');
     await expect(page.locator('#audio-toc-list a[href="#note-title"]')).toHaveAttribute(

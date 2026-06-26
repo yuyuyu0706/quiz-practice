@@ -46,7 +46,15 @@ async function expectPageScrolledToTop(page: Page) {
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 }
 
+async function openMobileSidebarIfNeeded(page: Page) {
+  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+  }
+}
+
 async function openChapterSelector(page: Page) {
+  await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
     (details as HTMLDetailsElement).open = true;
   });
@@ -525,6 +533,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toHaveText(
       '▶'
     );
+    await openMobileSidebarIfNeeded(page);
     await page.getByRole('link', { name: '背景' }).click();
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);

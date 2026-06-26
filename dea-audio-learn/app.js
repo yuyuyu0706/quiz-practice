@@ -1407,6 +1407,7 @@ const selectChapterByIndex = async (chapterIndex) => {
   } finally {
     setMobileSidebarOpen(false);
     scrollToChapterStart();
+    resetLearningTracker();
   }
 };
 
