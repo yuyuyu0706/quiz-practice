@@ -989,9 +989,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestCicdSpeakCall?.text)).not.toContain('etl_pipeline');
     expect(String(latestCicdSpeakCall?.text)).not.toContain('| 観点 |');
 
-    await page
-      .getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
-      .click();
+    await clickByDom(
+      page.getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
+    );
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Troubleshooting, Monitoring, and Optimizationの全体像'
     );
