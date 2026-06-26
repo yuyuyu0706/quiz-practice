@@ -293,6 +293,19 @@
         <div id="mini-quiz-list" class="quiz-list" aria-live="polite">
           ミニクイズを読み込み中...
         </div>
+        <nav class="mini-quiz-next-actions" aria-label="ミニクイズ後の次アクション">
+          <button
+            id="mini-quiz-primary-action"
+            class="mini-quiz-next-actions__primary"
+            type="button"
+          >
+            次のチャプターへ
+          </button>
+          <div class="mini-quiz-next-actions__secondary">
+            <button type="button" data-mini-quiz-stage-target="note">要点メモを見直す</button>
+            <button type="button" data-mini-quiz-stage-target="audio">音声教材へ戻る</button>
+          </div>
+        </nav>
       </section>
     </main>
   </body>

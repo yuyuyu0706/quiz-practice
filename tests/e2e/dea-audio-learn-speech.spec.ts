@@ -46,13 +46,34 @@ async function expectPageScrolledToTop(page: Page) {
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 }
 
+async function openMobileSidebarIfNeeded(page: Page) {
+  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+    await expect
+      .poll(() =>
+        page.locator('#chapter-sidebar').evaluate((panel) => panel.getBoundingClientRect().left)
+      )
+      .toBeGreaterThanOrEqual(0);
+  }
+}
+
+async function closeMobileSidebarIfNeeded(page: Page) {
+  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
+    await page.locator('#mobile-sidebar-close').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
+  }
+}
+
 async function openChapterSelector(page: Page) {
+  await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
     (details as HTMLDetailsElement).open = true;
   });
 }
 
 async function openSectionSelector(page: Page) {
+  await openMobileSidebarIfNeeded(page);
   await page.locator('#section-selector').evaluate((details) => {
     (details as HTMLDetailsElement).open = true;
   });
@@ -191,7 +212,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await scrollNearPageBottom(page);
     await openSectionSelector(page);
-    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
@@ -382,6 +403,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         buttons.map((button) => Math.round(button.getBoundingClientRect().height))
       );
     expect(Math.max(...chapterButtonHeights)).toBeLessThanOrEqual(66);
+    await closeMobileSidebarIfNeeded(page);
     await expect(page.getByRole('heading', { name: '音声教材', exact: true })).toBeVisible();
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
@@ -525,11 +547,15 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toHaveText(
       '▶'
     );
-    await page.getByRole('link', { name: '背景' }).click();
+    await openMobileSidebarIfNeeded(page);
+    await clickByDom(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
-    await page.getByRole('link', { name: '統合基盤で扱うという発想' }).click();
+    await clickByDom(
+      page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
+    );
     await expect(page).toHaveURL(/#audio-heading-/);
+    await closeMobileSidebarIfNeeded(page);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
     await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(4);
@@ -688,7 +714,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
 
     await openSectionSelector(page);
-    await page.getByRole('button', { name: 'Data Ingestion and Loading' }).click();
+    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
@@ -773,7 +799,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestIngestionSpeakCall?.text)).not.toContain('flowchart LR');
     expect(String(latestIngestionSpeakCall?.text)).not.toContain('spark.readStream.format');
 
-    await page.getByRole('button', { name: 'Data Transformation and Modeling' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Data Transformation and Modeling' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Transformation and Modelingの全体像'
     );
@@ -840,7 +867,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestTransformSpeakCall?.text)).not.toContain('spark.table');
     expect(String(latestTransformSpeakCall?.text)).not.toContain('| 観点 |');
 
-    await page.getByRole('button', { name: 'Working with Lakeflow Jobs' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Working with Lakeflow Jobs' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Working with Lakeflow Jobsの全体像'
     );
@@ -898,7 +926,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestJobsSpeakCall?.text)).not.toContain('daily_sales_pipeline');
     expect(String(latestJobsSpeakCall?.text)).not.toContain('| 判断観点 |');
 
-    await page.getByRole('button', { name: 'Implementing CI/CD' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Implementing CI/CD' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText('Implementing CI/CDの全体像');
     await expect(
       page.locator('#domain-list .domain-button.is-active .domain-button__label')
@@ -968,9 +997,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestCicdSpeakCall?.text)).not.toContain('etl_pipeline');
     expect(String(latestCicdSpeakCall?.text)).not.toContain('| 観点 |');
 
-    await page
-      .getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
-      .click();
+    await openSectionSelector(page);
+    await clickByDom(
+      page.getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
+    );
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Troubleshooting, Monitoring, and Optimizationの全体像'
     );
@@ -1043,7 +1073,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestOpsSpeakCall?.text)).not.toContain('spark.sql.shuffle.partitions');
     expect(String(latestOpsSpeakCall?.text)).not.toContain('| 症状 |');
 
-    await page.getByRole('button', { name: 'Governance and Security' }).click();
+    await openSectionSelector(page);
+    await clickByDom(page.getByRole('button', { name: 'Governance and Security' }));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
     );
