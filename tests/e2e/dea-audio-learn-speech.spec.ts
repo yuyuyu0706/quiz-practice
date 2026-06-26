@@ -48,10 +48,23 @@ async function expectPageScrolledToTop(page: Page) {
 
 async function openMobileSidebarIfNeeded(page: Page) {
   const mobileSidebarOpen = page.locator('#mobile-sidebar-open');
-  if (await mobileSidebarOpen.isVisible()) {
-    await mobileSidebarOpen.click();
-    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+  const chapterSidebar = page.locator('#chapter-sidebar');
+
+  if (!(await mobileSidebarOpen.isVisible())) {
+    return;
   }
+
+  if ((await chapterSidebar.getAttribute('data-mobile-open')) !== 'true') {
+    await mobileSidebarOpen.click();
+  }
+
+  await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'true');
+
+  await expect
+    .poll(() =>
+      chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left)
+    )
+    .toBeGreaterThanOrEqual(0);
 }
 
 async function closeMobileSidebarIfNeeded(page: Page) {
@@ -411,6 +424,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         buttons.map((button) => Math.round(button.getBoundingClientRect().height))
       );
     expect(Math.max(...chapterButtonHeights)).toBeLessThanOrEqual(66);
+    await closeMobileSidebarIfNeeded(page);
     await expect(page.getByRole('heading', { name: '音声教材', exact: true })).toBeVisible();
     await expect(page.locator('.summary-cue')).toBeVisible();
     await expect(page.getByRole('heading', { name: '読む教材' })).toHaveCount(0);
@@ -555,10 +569,17 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toHaveText(
       '▶'
     );
-    await clickVisible(page.getByRole('link', { name: '背景' }));
+    await openMobileSidebarIfNeeded(page);
+
+    await clickVisible(
+      page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })
+    );
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
-    await clickVisible(page.getByRole('link', { name: '統合基盤で扱うという発想' }));
+
+    await clickVisible(
+      page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
+    );
     await expect(page).toHaveURL(/#audio-heading-/);
     await closeMobileSidebarIfNeeded(page);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
