@@ -26,10 +26,10 @@ async function gotoAudioLearn(page: Page) {
   );
 }
 
-async function clickByDom(locator: Locator) {
-  await locator.evaluate((element) => {
-    (element as HTMLElement).click();
-  });
+async function clickVisible(locator: Locator) {
+  await locator.scrollIntoViewIfNeeded();
+  await expect(locator).toBeVisible();
+  await locator.click();
 }
 
 async function scrollNearPageBottom(page: Page) {
@@ -47,21 +47,31 @@ async function expectPageScrolledToTop(page: Page) {
 }
 
 async function openMobileSidebarIfNeeded(page: Page) {
-  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
-    await page.locator('#mobile-sidebar-open').click();
-    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
-    await expect
-      .poll(() =>
-        page.locator('#chapter-sidebar').evaluate((panel) => panel.getBoundingClientRect().left)
-      )
-      .toBeGreaterThanOrEqual(0);
+  const mobileSidebarOpen = page.locator('#mobile-sidebar-open');
+  const chapterSidebar = page.locator('#chapter-sidebar');
+
+  if (!(await mobileSidebarOpen.isVisible())) {
+    return;
   }
+
+  if ((await chapterSidebar.getAttribute('data-mobile-open')) !== 'true') {
+    await mobileSidebarOpen.click();
+  }
+
+  await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'true');
+
+  await expect
+    .poll(() =>
+      chapterSidebar.evaluate((panel) => panel.getBoundingClientRect().left),
+    )
+    .toBeGreaterThanOrEqual(0);
 }
 
 async function closeMobileSidebarIfNeeded(page: Page) {
-  if (page.viewportSize()?.width && page.viewportSize()!.width <= 780) {
+  const chapterSidebar = page.locator('#chapter-sidebar');
+  if ((await chapterSidebar.getAttribute('data-mobile-open')) === 'true') {
     await page.locator('#mobile-sidebar-close').click();
-    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
+    await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'false');
   }
 }
 
@@ -77,6 +87,18 @@ async function openSectionSelector(page: Page) {
   await page.locator('#section-selector').evaluate((details) => {
     (details as HTMLDetailsElement).open = true;
   });
+}
+
+async function expectMobileSidebarOpenIfNeeded(page: Page) {
+  if (await page.locator('#mobile-sidebar-open').isVisible()) {
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+  }
+}
+
+async function selectDomain(page: Page, name: string) {
+  await openSectionSelector(page);
+  await expectMobileSidebarOpenIfNeeded(page);
+  await clickVisible(page.getByRole('button', { name }));
 }
 
 async function installMockSpeech(page: Page) {
@@ -211,8 +233,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#speech-toggle').click();
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await scrollNearPageBottom(page);
-    await openSectionSelector(page);
-    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
+    await selectDomain(page, 'Data Ingestion and Loading');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
@@ -532,6 +553,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.locator('#audio-toc-panel').evaluate((details) => {
       (details as HTMLDetailsElement).open = true;
     });
+    await openMobileSidebarIfNeeded(page);
     await expect(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ })).toBeVisible();
     await expect(page.locator('#audio-toc-list a')).toContainText([
       'はじめに',
@@ -547,11 +569,12 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#audio-script-markdown .audio-heading-play').first()).toHaveText(
       '▶'
     );
-    await openMobileSidebarIfNeeded(page);
-    await clickByDom(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
+
+    await clickVisible(page.locator('#audio-toc-list a').filter({ hasText: /^背景$/ }));
     await expect(page).toHaveURL(/#audio-heading-/);
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
-    await clickByDom(
+
+    await clickVisible(
       page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
     );
     await expect(page).toHaveURL(/#audio-heading-/);
@@ -713,8 +736,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '複数ユーザーが同じ時間帯にダッシュボードやSQLクエリを使う場合'
     );
 
-    await openSectionSelector(page);
-    await clickByDom(page.getByRole('button', { name: 'Data Ingestion and Loading' }));
+    await selectDomain(page, 'Data Ingestion and Loading');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Ingestion and Loadingの全体像'
     );
@@ -753,9 +775,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(autoLoaderInlineLink).toHaveCount(1);
     await expect(autoLoaderInlineLink).not.toHaveAttribute('target', '_blank');
-    await autoLoaderInlineLink.evaluate((link) => {
-      (link as HTMLAnchorElement).click();
-    });
+    await clickVisible(autoLoaderInlineLink);
     await expect(page).toHaveURL(/#keyword-auto-loader/u);
     await expect(page.locator('#note-markdown')).toContainText('Auto Loader');
     await expect(page.locator('#note-markdown')).toContainText(
@@ -784,13 +804,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
-    await clickByDom(page.locator('#tracker-speech-toggle'));
+    await clickVisible(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
-    await clickByDom(page.locator('#tracker-speech-toggle'));
+    await clickVisible(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
-    await clickByDom(page.locator('#speech-toggle'));
+    await clickVisible(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestIngestionSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -799,8 +819,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestIngestionSpeakCall?.text)).not.toContain('flowchart LR');
     expect(String(latestIngestionSpeakCall?.text)).not.toContain('spark.readStream.format');
 
-    await openSectionSelector(page);
-    await clickByDom(page.getByRole('button', { name: 'Data Transformation and Modeling' }));
+    await selectDomain(page, 'Data Transformation and Modeling');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Data Transformation and Modelingの全体像'
     );
@@ -857,7 +876,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'SoRからSoIへ、データの役割を変える'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(page.locator('#speech-toggle'));
+    await clickVisible(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestTransformSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -867,8 +886,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestTransformSpeakCall?.text)).not.toContain('spark.table');
     expect(String(latestTransformSpeakCall?.text)).not.toContain('| 観点 |');
 
-    await openSectionSelector(page);
-    await clickByDom(page.getByRole('button', { name: 'Working with Lakeflow Jobs' }));
+    await selectDomain(page, 'Working with Lakeflow Jobs');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Working with Lakeflow Jobsの全体像'
     );
@@ -916,7 +934,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#audio-toc-list')).toContainText('DAGで依存関係を明示する');
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(page.locator('#speech-toggle'));
+    await clickVisible(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestJobsSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -926,8 +944,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestJobsSpeakCall?.text)).not.toContain('daily_sales_pipeline');
     expect(String(latestJobsSpeakCall?.text)).not.toContain('| 判断観点 |');
 
-    await openSectionSelector(page);
-    await clickByDom(page.getByRole('button', { name: 'Implementing CI/CD' }));
+    await selectDomain(page, 'Implementing CI/CD');
     await expect(page.locator('#selected-chapter-title')).toHaveText('Implementing CI/CDの全体像');
     await expect(
       page.locator('#domain-list .domain-button.is-active .domain-button__label')
@@ -987,7 +1004,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'データパイプラインもソフトウェアと同じくバージョン管理する'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(page.locator('#speech-toggle'));
+    await clickVisible(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestCicdSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -997,10 +1014,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestCicdSpeakCall?.text)).not.toContain('etl_pipeline');
     expect(String(latestCicdSpeakCall?.text)).not.toContain('| 観点 |');
 
-    await openSectionSelector(page);
-    await clickByDom(
-      page.getByRole('button', { name: 'Troubleshooting, Monitoring, and Optimization' })
-    );
+    await selectDomain(page, 'Troubleshooting, Monitoring, and Optimization');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Troubleshooting, Monitoring, and Optimizationの全体像'
     );
@@ -1063,7 +1077,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Spark UIでは、ステージごとの偏りとデータ移動を見る'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(page.locator('#speech-toggle'));
+    await clickVisible(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestOpsSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -1073,8 +1087,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(latestOpsSpeakCall?.text)).not.toContain('spark.sql.shuffle.partitions');
     expect(String(latestOpsSpeakCall?.text)).not.toContain('| 症状 |');
 
-    await openSectionSelector(page);
-    await clickByDom(page.getByRole('button', { name: 'Governance and Security' }));
+    await selectDomain(page, 'Governance and Security');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'
     );
@@ -1149,7 +1162,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'Unity Catalogは、データ資産を一元的に把握し統制する土台'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await clickByDom(page.locator('#speech-toggle'));
+    await clickVisible(page.locator('#speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     const latestGovernanceSpeakCall = await page.evaluate(() => {
       const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
@@ -1325,9 +1338,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     });
 
     await gotoAudioLearn(page);
-    await clickByDom(page.locator('#speech-toggle'));
-    await clickByDom(page.locator('#speech-next'));
-    await clickByDom(page.locator('#speech-next'));
+    await clickVisible(page.locator('#speech-toggle'));
+    await clickVisible(page.locator('#speech-next'));
+    await clickVisible(page.locator('#speech-next'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-current-position')).toContainText('背景');
 
