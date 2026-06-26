@@ -36,6 +36,8 @@ const trackerSpeechStatus = document.querySelector('#tracker-speech-status');
 const trackerSpeechToggleButton = document.querySelector('#tracker-speech-toggle');
 const miniQuizList = document.querySelector('#mini-quiz-list');
 const miniQuizSummary = document.querySelector('#mini-quiz-summary');
+const miniQuizPrimaryAction = document.querySelector('#mini-quiz-primary-action');
+const miniQuizStageButtons = Array.from(document.querySelectorAll('[data-mini-quiz-stage-target]'));
 const learningTracker = document.querySelector('.learning-tracker');
 const learningTrackerCurrent = document.querySelector('#learning-tracker-current');
 const learningTrackerItems = Array.from(document.querySelectorAll('.learning-tracker__item'));
@@ -1327,6 +1329,25 @@ const updateChapterNavigation = () => {
   nextChapterButton.disabled = isLastChapter;
   previousChapterButton.setAttribute('aria-disabled', String(isFirstChapter));
   nextChapterButton.setAttribute('aria-disabled', String(isLastChapter));
+  if (miniQuizPrimaryAction) {
+    miniQuizPrimaryAction.textContent = isLastChapter ? '領域一覧へ戻る' : '次のチャプターへ';
+  }
+};
+
+const showDomainList = () => {
+  sectionSelector.open = true;
+  sectionSelector.scrollIntoView({ block: 'start', behavior: 'auto' });
+  sectionSelector.querySelector('summary')?.focus();
+};
+
+const handleMiniQuizPrimaryAction = () => {
+  const isLastChapter = selectedChapterIndex === chapters.length - 1;
+  if (isLastChapter) {
+    showDomainList();
+    return;
+  }
+
+  selectChapterByIndex(selectedChapterIndex + 1);
 };
 
 const selectChapterByIndex = async (chapterIndex) => {
@@ -1400,6 +1421,11 @@ previousChapterButton.addEventListener('click', () => {
 
 nextChapterButton.addEventListener('click', () => {
   selectChapterByIndex(selectedChapterIndex + 1);
+});
+
+miniQuizPrimaryAction?.addEventListener('click', handleMiniQuizPrimaryAction);
+miniQuizStageButtons.forEach((button) => {
+  button.addEventListener('click', () => scrollToLearningStage(button.dataset.miniQuizStageTarget));
 });
 
 speechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));

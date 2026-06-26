@@ -129,6 +129,44 @@ async function expectCurrentStatusBadgeOnly(page: Page, currentStage: string) {
 }
 
 test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
+  test('offers mini quiz next actions for normal and final chapters', async ({ page }) => {
+    await gotoAudioLearn(page);
+
+    await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+    await expect(page.locator('#mini-quiz-primary-action')).toHaveText('次のチャプターへ');
+    await page.locator('#mini-quiz-primary-action').click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'LakehouseとDelta Lakeの位置づけ'
+    );
+    await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
+
+    await page.getByRole('button', { name: 'Governance and Securityの全体像' }).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Governance and Securityの全体像'
+    );
+    await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+    await expect(page.locator('#mini-quiz-primary-action')).toHaveText('領域一覧へ戻る');
+    await page.locator('#mini-quiz-primary-action').click();
+    await expect(page.locator('#section-selector')).toHaveAttribute('open', '');
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Governance and Securityの全体像'
+    );
+  });
+
+  test('moves from mini quiz actions back to note and audio sections', async ({ page }) => {
+    await gotoAudioLearn(page);
+
+    await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+    await page.getByRole('button', { name: '要点メモを見直す' }).click();
+    await expect(await currentStage(page)).toHaveText('要点メモ');
+    await expectHeadingClearOfTracker(page, '#note-title');
+
+    await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
+    await page.getByRole('button', { name: '音声教材へ戻る' }).click();
+    await expect(await currentStage(page)).toHaveText('音声教材');
+    await expectHeadingClearOfTracker(page, '#audio-material-title');
+  });
+
   test('tracks initial state, icon navigation, reached states, and chapter reset', async ({
     page,
   }) => {
