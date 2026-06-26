@@ -807,10 +807,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
     await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
-    await clickVisible(page.locator('#tracker-speech-toggle'));
+    await clickByDom(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
-    await clickVisible(page.locator('#tracker-speech-toggle'));
+    await clickByDom(page.locator('#tracker-speech-toggle'));
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
     await clickVisible(page.locator('#speech-toggle'));
