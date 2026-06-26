@@ -54,6 +54,16 @@ async function openMobileSidebarIfNeeded(page: Page) {
   }
 }
 
+async function closeMobileSidebarIfNeeded(page: Page) {
+  const chapterSidebar = page.locator('#chapter-sidebar');
+  if ((await chapterSidebar.getAttribute('data-mobile-open')) === 'true') {
+    await page.locator('#mobile-sidebar-close').evaluate((element) => {
+      (element as HTMLElement).click();
+    });
+    await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'false');
+  }
+}
+
 async function openChapterSelector(page: Page) {
   await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
@@ -540,6 +550,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('.toc-speech-controls')).toHaveCount(0);
     await clickByDom(page.getByRole('link', { name: '統合基盤で扱うという発想' }));
     await expect(page).toHaveURL(/#audio-heading-/);
+    await closeMobileSidebarIfNeeded(page);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
     await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(4);
