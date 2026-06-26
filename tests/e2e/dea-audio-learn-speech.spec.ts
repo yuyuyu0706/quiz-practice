@@ -778,7 +778,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     );
     await expect(autoLoaderInlineLink).toHaveCount(1);
     await expect(autoLoaderInlineLink).not.toHaveAttribute('target', '_blank');
-    await clickVisible(autoLoaderInlineLink);
+    await clickByDom(autoLoaderInlineLink);
     await expect(page).toHaveURL(/#keyword-auto-loader/u);
     await expect(page.locator('#note-markdown')).toContainText('Auto Loader');
     await expect(page.locator('#note-markdown')).toContainText(
