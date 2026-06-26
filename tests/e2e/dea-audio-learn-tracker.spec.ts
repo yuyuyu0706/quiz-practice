@@ -152,7 +152,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
 
     await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
     await expect(page.locator('#mini-quiz-primary-action')).toHaveText('次のチャプターへ');
-    await page.locator('#mini-quiz-primary-action').click();
+    await clickByDom(page.locator('#mini-quiz-primary-action'));
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'LakehouseとDelta Lakeの位置づけ'
     );
@@ -160,7 +160,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
 
     for (let chapterOffset = 3; chapterOffset <= 10; chapterOffset += 1) {
       await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
-      await page.locator('#mini-quiz-primary-action').click();
+      await clickByDom(page.locator('#mini-quiz-primary-action'));
       await expect(page.locator('#selected-chapter-progress')).toHaveText(
         `Chapter ${chapterOffset} / 10`
       );
@@ -170,7 +170,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     );
     await clickByDom(page.getByRole('button', { name: 'ミニクイズへ移動' }));
     await expect(page.locator('#mini-quiz-primary-action')).toHaveText('領域一覧へ戻る');
-    await page.locator('#mini-quiz-primary-action').click();
+    await clickByDom(page.locator('#mini-quiz-primary-action'));
     await expect(page.locator('#section-selector')).toHaveAttribute('open', '');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'Governance and Securityの全体像'

@@ -555,6 +555,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       page.locator('#audio-toc-list a').filter({ hasText: '統合基盤で扱うという発想' })
     );
     await expect(page).toHaveURL(/#audio-heading-/);
+    await closeMobileSidebarIfNeeded(page);
     await expect(page.locator('#note-markdown')).toContainText('キーワード一覧');
     await expect(page.locator('#note-markdown')).toContainText('参考リンク');
     await expect(page.locator('#note-markdown a[id^="keyword-"]')).toHaveCount(4);
