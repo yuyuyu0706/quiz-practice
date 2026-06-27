@@ -312,7 +312,10 @@ body {
   border-right: 1.7px solid var(--color-primary);
   border-bottom: 1.7px solid var(--color-primary);
   transform: rotate(45deg);
-  transition: transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+  transition:
+    visibility 0s linear 300ms,
+    opacity 160ms ease 300ms,
+    transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
 }
 
 .sidebar-menu[open] .sidebar-menu__chevron {
@@ -1259,7 +1262,8 @@ body {
   visibility: hidden;
   transition:
     visibility 0s linear 100ms,
-    opacity 100ms ease 0ms;
+    opacity 100ms ease 0ms,
+    transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
   pointer-events: none;
   position: absolute;
 }
