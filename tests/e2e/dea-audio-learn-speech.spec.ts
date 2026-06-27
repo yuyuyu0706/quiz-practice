@@ -2335,7 +2335,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     ).resolves.toBe(true);
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(beforeWindowY);
 
-    await clickByDom(page.locator('#audio-toc-list a[href="#mini-quiz-title"]'));
+    await clickVisible(page.locator('#audio-toc-list a[href="#mini-quiz-title"]'));
     await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：ミニクイズ');
     await expect(page.locator('#audio-toc-list a[href="#mini-quiz-title"]')).toHaveAttribute(
       'aria-current',
