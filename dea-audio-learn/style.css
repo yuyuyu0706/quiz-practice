@@ -1094,6 +1094,27 @@ body {
   will-change: transform;
 }
 
+@media (min-width: 781px) {
+  .chapter-panel {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .chapter-panel__toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: -1rem -1rem 0.75rem;
+    padding: 1rem 1rem 0;
+    background: var(--color-surface);
+  }
+
+  .layout[data-sidebar-state='collapsed'] .chapter-panel {
+    overflow: hidden;
+  }
+}
+
 .layout[data-sidebar-state='collapsed'] {
   grid-template-columns: 84px minmax(0, 1fr);
 }

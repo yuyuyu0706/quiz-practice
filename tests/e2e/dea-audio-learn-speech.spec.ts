@@ -2291,3 +2291,89 @@ test.describe('[DEA][Data] Audio Learn quizzes', () => {
     }
   });
 });
+
+test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
+  test('keeps the desktop left pane independently scrollable and lets lower toc links navigate', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 500 });
+    await gotoAudioLearn(page);
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('position', 'sticky');
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'auto');
+
+    const beforeWindowY = await page.evaluate(() => window.scrollY);
+    await page.locator('#chapter-sidebar').evaluate((panel) => {
+      panel.scrollTop = panel.scrollHeight;
+    });
+    await expect
+      .poll(() => page.locator('#chapter-sidebar').evaluate((panel) => panel.scrollTop))
+      .toBeGreaterThan(0);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(beforeWindowY);
+
+    await clickByDom(page.locator('#audio-toc-list a[href="#mini-quiz-title"]'));
+    await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：ミニクイズ');
+    await expect(page.locator('#audio-toc-list a[href="#mini-quiz-title"]')).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  });
+
+  test('updates aria-current from body scroll and keeps speech heading priority while playing', async ({
+    page,
+  }) => {
+    await installMockSpeech(page);
+    await page.setViewportSize({ width: 1024, height: 720 });
+    await gotoAudioLearn(page);
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    const secondHeading = page
+      .locator('#audio-script-markdown h2, #audio-script-markdown h3')
+      .nth(1);
+    const secondHeadingText = await secondHeading.evaluate((heading) =>
+      (heading as HTMLElement).dataset.speechTitle?.trim()
+    );
+    const secondHeadingId = await secondHeading.getAttribute('id');
+    await secondHeading.evaluate((heading) => heading.scrollIntoView());
+
+    await expect(page.locator(`#audio-toc-list a[href="#${secondHeadingId}"]`)).toHaveAttribute(
+      'aria-current',
+      'location'
+    );
+    await expect(page.locator('#sidebar-toc-current')).toHaveText(`現在位置：${secondHeadingText}`);
+
+    await page.locator('#speech-toggle').click();
+    const firstCurrent = page.locator('#audio-toc-list .audio-toc__item.is-current a');
+    await expect(firstCurrent).toHaveAttribute('href', /#audio-heading-/);
+    await expect(firstCurrent).not.toHaveAttribute('href', `#${secondHeadingId}`);
+
+    await page.locator('#speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await expect(firstCurrent).not.toHaveAttribute('href', `#${secondHeadingId}`);
+  });
+
+  test('preserves collapsed desktop icons and mobile drawer scrolling behavior', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 500 });
+    await gotoAudioLearn(page);
+    await page.locator('#sidebar-toggle').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
+    await expect(
+      page.locator('.layout[data-sidebar-state="collapsed"] .sidebar-menu__icon')
+    ).toHaveCount(3);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('position', 'fixed');
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'auto');
+  });
+});
