@@ -1094,6 +1094,47 @@ body {
   will-change: transform;
 }
 
+@media (min-width: 781px) {
+  .chapter-panel {
+    display: flex;
+    flex-direction: column;
+    max-height: var(--desktop-sidebar-available-height, calc(100vh - 2rem));
+    overflow: hidden;
+  }
+
+  .chapter-panel__toolbar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    min-height: 32px;
+    box-sizing: border-box;
+    margin: 0 0 0.75rem;
+    padding: 0 var(--desktop-sidebar-scrollbar-gutter, 0px) 0.25rem 0;
+    background: var(--color-surface);
+  }
+
+  .chapter-panel__scroll-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .layout[data-sidebar-state='collapsed'] .chapter-panel,
+  .layout[data-sidebar-state='collapsed'] .chapter-panel__scroll-area {
+    overflow: hidden;
+  }
+
+  .layout[data-sidebar-state='collapsed'] .chapter-panel__scroll-area {
+    scrollbar-gutter: auto;
+  }
+}
+
 .layout[data-sidebar-state='collapsed'] {
   grid-template-columns: 84px minmax(0, 1fr);
 }
@@ -1104,6 +1145,7 @@ body {
 
 .layout[data-sidebar-state='collapsed'] .chapter-panel__toolbar {
   justify-content: center;
+  padding-right: 0;
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-toggle {

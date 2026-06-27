@@ -89,75 +89,77 @@
             閉じる
           </button>
         </div>
-        <details id="section-selector" class="sidebar-menu sidebar-menu--section">
-          <summary
-            id="section-list-title"
-            class="sidebar-menu__summary"
-            aria-label="セクション一覧"
-          >
-            <span class="sidebar-menu__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />
-                <path d="m5 11 7 3.7 7-3.7" />
-                <path d="m5 15 7 3.7 7-3.7" />
-              </svg>
-            </span>
-            <span class="sidebar-menu__text">
-              <span class="sidebar-menu__label">セクション</span>
-              <span id="sidebar-section-current" class="sidebar-menu__value">読み込み中...</span>
-            </span>
-            <span class="sidebar-menu__chevron" aria-hidden="true"></span>
-          </summary>
-          <div class="chapter-domain-section">
-            <div id="domain-list" class="domain-list" aria-live="polite">読み込み中...</div>
-          </div>
-        </details>
+        <div class="chapter-panel__scroll-area">
+          <details id="section-selector" class="sidebar-menu sidebar-menu--section">
+            <summary
+              id="section-list-title"
+              class="sidebar-menu__summary"
+              aria-label="セクション一覧"
+            >
+              <span class="sidebar-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />
+                  <path d="m5 11 7 3.7 7-3.7" />
+                  <path d="m5 15 7 3.7 7-3.7" />
+                </svg>
+              </span>
+              <span class="sidebar-menu__text">
+                <span class="sidebar-menu__label">セクション</span>
+                <span id="sidebar-section-current" class="sidebar-menu__value">読み込み中...</span>
+              </span>
+              <span class="sidebar-menu__chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="chapter-domain-section">
+              <div id="domain-list" class="domain-list" aria-live="polite">読み込み中...</div>
+            </div>
+          </details>
 
-        <details id="chapter-selector" class="sidebar-menu chapter-selector" open>
-          <summary
-            id="chapter-list-title"
-            class="sidebar-menu__summary"
-            aria-label="チャプター一覧"
-          >
-            <span class="sidebar-menu__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <circle cx="5.5" cy="6.5" r="1.2" />
-                <circle cx="5.5" cy="12" r="1.2" />
-                <circle cx="5.5" cy="17.5" r="1.2" />
-                <path d="M10 6.5h9" />
-                <path d="M10 12h9" />
-                <path d="M10 17.5h9" />
-              </svg>
-            </span>
-            <span class="sidebar-menu__text">
-              <span class="sidebar-menu__label">チャプター</span>
-              <span id="sidebar-chapter-current" class="sidebar-menu__value">読み込み中...</span>
-            </span>
-            <span class="sidebar-menu__chevron" aria-hidden="true"></span>
-          </summary>
-          <div class="chapter-domain-section">
-            <div id="chapter-list" class="chapter-list" aria-live="polite">読み込み中...</div>
-          </div>
-        </details>
+          <details id="chapter-selector" class="sidebar-menu chapter-selector" open>
+            <summary
+              id="chapter-list-title"
+              class="sidebar-menu__summary"
+              aria-label="チャプター一覧"
+            >
+              <span class="sidebar-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="5.5" cy="6.5" r="1.2" />
+                  <circle cx="5.5" cy="12" r="1.2" />
+                  <circle cx="5.5" cy="17.5" r="1.2" />
+                  <path d="M10 6.5h9" />
+                  <path d="M10 12h9" />
+                  <path d="M10 17.5h9" />
+                </svg>
+              </span>
+              <span class="sidebar-menu__text">
+                <span class="sidebar-menu__label">チャプター</span>
+                <span id="sidebar-chapter-current" class="sidebar-menu__value">読み込み中...</span>
+              </span>
+              <span class="sidebar-menu__chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="chapter-domain-section">
+              <div id="chapter-list" class="chapter-list" aria-live="polite">読み込み中...</div>
+            </div>
+          </details>
 
-        <details id="audio-toc-panel" class="sidebar-menu audio-toc-panel">
-          <summary id="audio-toc-title" class="sidebar-menu__summary" aria-label="目次">
-            <span class="sidebar-menu__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <circle cx="12" cy="12" r="8.5" />
-                <path d="m14.8 9.2-1.7 4-4 1.6 1.7-3.9 4-1.7Z" />
-              </svg>
-            </span>
-            <span class="sidebar-menu__text">
-              <span class="sidebar-menu__label">目次</span>
-              <span id="sidebar-toc-current" class="sidebar-menu__value">現在位置：音声教材</span>
-            </span>
-            <span class="sidebar-menu__chevron" aria-hidden="true"></span>
-          </summary>
-          <nav class="audio-toc" aria-labelledby="audio-toc-title">
-            <ol id="audio-toc-list" class="audio-toc__list"></ol>
-          </nav>
-        </details>
+          <details id="audio-toc-panel" class="sidebar-menu audio-toc-panel">
+            <summary id="audio-toc-title" class="sidebar-menu__summary" aria-label="目次">
+              <span class="sidebar-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="12" cy="12" r="8.5" />
+                  <path d="m14.8 9.2-1.7 4-4 1.6 1.7-3.9 4-1.7Z" />
+                </svg>
+              </span>
+              <span class="sidebar-menu__text">
+                <span class="sidebar-menu__label">目次</span>
+                <span id="sidebar-toc-current" class="sidebar-menu__value">現在位置：音声教材</span>
+              </span>
+              <span class="sidebar-menu__chevron" aria-hidden="true"></span>
+            </summary>
+            <nav class="audio-toc" aria-labelledby="audio-toc-title">
+              <ol id="audio-toc-list" class="audio-toc__list"></ol>
+            </nav>
+          </details>
+        </div>
       </aside>
 
       <nav class="panel learning-tracker" aria-labelledby="learning-tracker-title">

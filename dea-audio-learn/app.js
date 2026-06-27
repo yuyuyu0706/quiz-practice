@@ -1,5 +1,6 @@
 const appLayout = document.querySelector('#app-layout');
 const chapterSidebar = document.querySelector('#chapter-sidebar');
+const chapterSidebarScrollArea = document.querySelector('.chapter-panel__scroll-area');
 const sidebarToggleButton = document.querySelector('#sidebar-toggle');
 const mobileSidebarOpenButton = document.querySelector('#mobile-sidebar-open');
 const mobileSidebarCloseButton = document.querySelector('#mobile-sidebar-close');
@@ -56,6 +57,8 @@ let isMobileSidebarOpen = false;
 let highestReachedLearningStageIndex = 0;
 let learningStageObserver = null;
 let learningStageRafId = null;
+let audioHeadingScrollRafId = null;
+let manualAudioTocTargetId = null;
 const learningStages = [
   { key: 'audio', label: '音声教材', sectionId: 'audio-material-section' },
   { key: 'note', label: '要点メモ', sectionId: 'note-section' },
@@ -102,9 +105,36 @@ const setMobileSidebarOpen = (isOpen) => {
   document.body.classList.toggle('has-mobile-sidebar-open', isOpen);
 };
 
+const updateDesktopSidebarMetrics = () => {
+  if (!chapterSidebar) return;
+  if (!isDesktopViewport()) {
+    chapterSidebar.style.removeProperty('--desktop-sidebar-available-height');
+    chapterSidebar.style.removeProperty('--desktop-sidebar-scrollbar-gutter');
+    return;
+  }
+
+  const { top } = chapterSidebar.getBoundingClientRect();
+  const safetyGap = 0;
+  const availableHeight = Math.max(0, window.innerHeight - top - safetyGap);
+  chapterSidebar.style.setProperty(
+    '--desktop-sidebar-available-height',
+    `${Math.floor(availableHeight)}px`
+  );
+
+  const gutter = chapterSidebarScrollArea
+    ? Math.max(0, chapterSidebarScrollArea.offsetWidth - chapterSidebarScrollArea.clientWidth)
+    : 0;
+  chapterSidebar.style.setProperty('--desktop-sidebar-scrollbar-gutter', `${gutter}px`);
+};
+
+const queueDesktopSidebarMetricsUpdate = () => {
+  window.requestAnimationFrame(updateDesktopSidebarMetrics);
+};
+
 const setupResponsiveSidebar = () => {
   setSidebarState(sidebarState);
   setMobileSidebarOpen(false);
+  queueDesktopSidebarMetricsUpdate();
   sidebarToggleButton?.addEventListener('click', () => {
     setSidebarState(sidebarState === 'expanded' ? 'collapsed' : 'expanded');
   });
@@ -116,6 +146,7 @@ const setupResponsiveSidebar = () => {
   });
   window.addEventListener('resize', () => {
     if (isDesktopViewport()) setMobileSidebarOpen(false);
+    queueDesktopSidebarMetricsUpdate();
   });
 };
 
@@ -144,10 +175,6 @@ const updateLearningTrackerUI = () => {
   const currentStage =
     learningStages.find((stage) => stage.key === currentLearningStage) ?? learningStages[0];
   learningTrackerCurrent.textContent = `現在：${currentStage.label}`;
-  if (sidebarTocCurrent) {
-    sidebarTocCurrent.textContent = `現在位置：${currentStage.label}`;
-  }
-
   learningTrackerItems.forEach((item) => {
     const stageKey = item.dataset.stage;
     const stageIndex = getLearningStageIndex(stageKey);
@@ -227,6 +254,7 @@ const setupLearningStageObserver = () => {
   window.addEventListener('resize', () => {
     updateLearningTrackerScrollOffset();
     queueLearningStageRefresh();
+    queueAudioHeadingScrollRefresh();
   });
 };
 
@@ -525,10 +553,79 @@ const rebuildSpeechChunksFromSections = () => {
   currentChunkIndex = Math.min(currentChunkIndex, Math.max(speechChunks.length - 1, 0));
 };
 
+const speechHeadingPriorityStates = ['starting', 'uncertain', 'speaking', 'paused'];
+
 const getActiveSpeechHeadingId = () =>
-  ['starting', 'uncertain', 'speaking', 'paused', 'ended'].includes(speechState)
+  speechHeadingPriorityStates.includes(speechState)
     ? speechChunks[currentChunkIndex]?.headingId
     : null;
+
+const getScrollActiveHeadingId = () => {
+  const headings = [
+    ...Array.from(audioScriptMarkdown.querySelectorAll('h2[id], h3[id]')),
+    ...['note-title', 'mini-quiz-title'].map((id) => document.getElementById(id)).filter(Boolean),
+  ];
+  if (headings.length === 0) return null;
+
+  const referenceY = Math.min(window.innerHeight * 0.35, 220);
+  let activeHeading = headings[0];
+  for (const heading of headings) {
+    if (heading.getBoundingClientRect().top <= referenceY) {
+      activeHeading = heading;
+    } else {
+      break;
+    }
+  }
+  return activeHeading.id;
+};
+
+const getManualAudioTocTargetId = () => {
+  if (!manualAudioTocTargetId) return null;
+  const target = document.getElementById(manualAudioTocTargetId);
+  if (!target) {
+    manualAudioTocTargetId = null;
+    return null;
+  }
+
+  const rect = target.getBoundingClientRect();
+  if (rect.bottom < 0 || rect.top > window.innerHeight) {
+    manualAudioTocTargetId = null;
+    return null;
+  }
+  return manualAudioTocTargetId;
+};
+
+const getCurrentAudioHeadingId = () =>
+  getActiveSpeechHeadingId() ?? getManualAudioTocTargetId() ?? getScrollActiveHeadingId();
+
+const syncSidebarTocCurrentLabel = (link) => {
+  if (!sidebarTocCurrent) return;
+  const label = link?.textContent?.trim() || '音声教材';
+  sidebarTocCurrent.textContent = `現在位置：${label}`;
+};
+
+const keepCurrentTocItemVisible = (item) => {
+  if (
+    !item ||
+    !chapterSidebarScrollArea ||
+    !audioTocPanel?.open ||
+    !isDesktopViewport() ||
+    sidebarState !== 'expanded'
+  ) {
+    return;
+  }
+
+  const scrollAreaRect = chapterSidebarScrollArea.getBoundingClientRect();
+  const itemRect = item.getBoundingClientRect();
+  const topLimit = scrollAreaRect.top + 8;
+  const bottomLimit = scrollAreaRect.bottom - 8;
+
+  if (itemRect.top < topLimit) {
+    chapterSidebarScrollArea.scrollTop -= topLimit - itemRect.top;
+  } else if (itemRect.bottom > bottomLimit) {
+    chapterSidebarScrollArea.scrollTop += itemRect.bottom - bottomLimit;
+  }
+};
 
 const updateActiveHeadingPlayButtons = () => {
   const activeHeadingId = getActiveSpeechHeadingId();
@@ -540,19 +637,33 @@ const updateActiveHeadingPlayButtons = () => {
 };
 
 const updateActiveAudioTocItem = () => {
-  const activeHeadingId = getActiveSpeechHeadingId();
+  const activeHeadingId = getCurrentAudioHeadingId();
+  let activeLink = null;
+  let activeItem = null;
 
   audioTocList.querySelectorAll('a[href^="#"]').forEach((link) => {
     const isCurrent = activeHeadingId ? link.getAttribute('href') === `#${activeHeadingId}` : false;
     link.parentElement?.classList.toggle('is-current', isCurrent);
     if (isCurrent) {
       link.setAttribute('aria-current', 'location');
+      activeLink = link;
+      activeItem = link.parentElement;
     } else {
       link.removeAttribute('aria-current');
     }
   });
 
+  syncSidebarTocCurrentLabel(activeLink);
+  keepCurrentTocItemVisible(activeItem);
   updateActiveHeadingPlayButtons();
+};
+
+const queueAudioHeadingScrollRefresh = () => {
+  if (audioHeadingScrollRafId !== null) return;
+  audioHeadingScrollRafId = window.requestAnimationFrame(() => {
+    audioHeadingScrollRafId = null;
+    if (!getActiveSpeechHeadingId()) updateActiveAudioTocItem();
+  });
 };
 
 const updateSpeechProgressUI = () => {
@@ -977,15 +1088,19 @@ const addExternalLinkAttributes = (root) => {
 };
 
 const setActiveAudioTocLink = (href) => {
+  manualAudioTocTargetId = href.startsWith('#') ? href.slice(1) : null;
+  let activeLink = null;
   audioTocList.querySelectorAll('a[href^="#"]').forEach((link) => {
     const isCurrent = link.getAttribute('href') === href;
     link.parentElement?.classList.toggle('is-current', isCurrent);
     if (isCurrent) {
       link.setAttribute('aria-current', 'location');
+      activeLink = link;
     } else {
       link.removeAttribute('aria-current');
     }
   });
+  syncSidebarTocCurrentLabel(activeLink);
 };
 
 const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
@@ -1061,7 +1176,6 @@ const buildAudioTableOfContents = () => {
   });
 
   addHeadingPlayButtons();
-  updateActiveAudioTocItem();
 
   appendAudioTocLink('#note-title', '要点メモ', 'audio-toc__item audio-toc__item--page-section');
   appendAudioTocLink(
@@ -1069,6 +1183,7 @@ const buildAudioTableOfContents = () => {
     'ミニクイズ',
     'audio-toc__item audio-toc__item--page-section'
   );
+  updateActiveAudioTocItem();
 };
 
 const shuffleEntries = (entries) =>
@@ -1433,6 +1548,8 @@ speechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentCh
 speechToggleButton.addEventListener('click', handleSpeechToggle);
 trackerSpeechToggleButton.addEventListener('click', handleSpeechToggle);
 speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
+window.addEventListener('scroll', queueAudioHeadingScrollRefresh, { passive: true });
+audioTocPanel?.addEventListener('toggle', updateActiveAudioTocItem);
 learningTrackerButtons.forEach((button) => {
   button.addEventListener('click', () => scrollToLearningStage(button.dataset.stageTarget));
 });

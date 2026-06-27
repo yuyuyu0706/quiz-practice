@@ -298,7 +298,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('#sidebar-chapter-current')).toHaveText(
       'Databricks Intelligence Platformの全体像'
     );
-    await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：音声教材');
+    await expect(page.locator('#sidebar-toc-current')).toHaveText('現在位置：はじめに');
     await expect(page.locator('.sidebar-menu__icon svg')).toHaveCount(3);
 
     await openMobileSidebarIfNeeded(page);
