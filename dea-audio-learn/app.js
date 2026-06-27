@@ -167,10 +167,6 @@ const updateLearningTrackerUI = () => {
   const currentStage =
     learningStages.find((stage) => stage.key === currentLearningStage) ?? learningStages[0];
   learningTrackerCurrent.textContent = `現在：${currentStage.label}`;
-  if (sidebarTocCurrent) {
-    sidebarTocCurrent.textContent = `現在位置：${currentStage.label}`;
-  }
-
   learningTrackerItems.forEach((item) => {
     const stageKey = item.dataset.stage;
     const stageIndex = getLearningStageIndex(stageKey);
