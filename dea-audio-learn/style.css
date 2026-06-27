@@ -205,7 +205,6 @@ body {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.65rem;
   align-items: center;
-  min-height: 3.65rem;
   box-sizing: border-box;
   padding: 0.7rem 0.75rem;
   cursor: pointer;
@@ -1119,6 +1118,45 @@ body {
     background: var(--color-surface);
   }
 
+  .sidebar-menu__summary {
+    --sidebar-menu-summary-block-size: 3.65rem;
+    --sidebar-menu-icon-expanded-left: 0.75rem;
+    --sidebar-menu-icon-collapsed-left: 0.5rem;
+    --sidebar-menu-text-left: calc(var(--sidebar-menu-icon-expanded-left) + 2.25rem + 0.65rem);
+    block-size: var(--sidebar-menu-summary-block-size);
+  }
+
+  .sidebar-menu__icon,
+  .sidebar-menu__text,
+  .sidebar-menu__chevron {
+    position: absolute;
+    top: 50%;
+  }
+
+  .sidebar-menu__icon {
+    left: var(--sidebar-menu-icon-expanded-left);
+    transform: translateY(-50%) scale(1);
+    transition:
+      left var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+      opacity var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+      transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+  }
+
+  .sidebar-menu__text {
+    right: 2rem;
+    left: var(--sidebar-menu-text-left);
+    transform: translateY(-50%);
+  }
+
+  .sidebar-menu__chevron {
+    right: 0.75rem;
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .sidebar-menu[open] .sidebar-menu__chevron {
+    transform: translateY(-50%) rotate(225deg);
+  }
+
   .chapter-panel__scroll-area {
     flex: 1 1 auto;
     min-height: 0;
@@ -1203,13 +1241,12 @@ body {
   padding: 0;
 }
 
-.layout[data-sidebar-state='collapsed'] .sidebar-menu__summary {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-}
-
-.layout[data-sidebar-state='collapsed'] .sidebar-menu__icon {
-  opacity: 0.92;
-  transform: translateX(11px) scale(0.98);
+@media (min-width: 781px) {
+  .layout[data-sidebar-state='collapsed'] .sidebar-menu__icon {
+    left: var(--sidebar-menu-icon-collapsed-left);
+    opacity: 0.92;
+    transform: translateY(-50%) scale(0.98);
+  }
 }
 
 .layout[data-sidebar-state='collapsed'] .sidebar-menu__text,

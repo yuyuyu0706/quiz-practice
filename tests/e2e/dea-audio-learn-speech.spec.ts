@@ -2407,46 +2407,55 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     const captureAnimationFrames = async () =>
       page.locator('#chapter-sidebar').evaluate(
         (panel) =>
-          new Promise<{ selector: string; x: number; y: number }[][]>((resolve) => {
-            const selectors = [
-              '#section-list-title .sidebar-menu__icon',
-              '#chapter-list-title .sidebar-menu__icon',
-              '#audio-toc-title .sidebar-menu__icon',
-            ];
-            const frames: { selector: string; x: number; y: number }[][] = [];
-            const sample = () => {
-              frames.push(
-                selectors.map((selector) => {
-                  const rect = panel.querySelector(selector)?.getBoundingClientRect();
-                  if (!rect) throw new Error(`Missing sidebar icon for ${selector}`);
-                  return {
-                    selector,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2,
-                  };
-                })
-              );
+          new Promise<{ elapsed: number; icons: { selector: string; x: number; y: number }[] }[]>(
+            (resolve) => {
+              const selectors = [
+                '#section-list-title .sidebar-menu__icon',
+                '#chapter-list-title .sidebar-menu__icon',
+                '#audio-toc-title .sidebar-menu__icon',
+              ];
+              const frames: {
+                elapsed: number;
+                icons: { selector: string; x: number; y: number }[];
+              }[] = [];
+              const startedAt = performance.now();
+              const sample = () => {
+                const elapsed = performance.now() - startedAt;
+                frames.push({
+                  elapsed,
+                  icons: selectors.map((selector) => {
+                    const rect = panel.querySelector(selector)?.getBoundingClientRect();
+                    if (!rect) throw new Error(`Missing sidebar icon for ${selector}`);
+                    return {
+                      selector,
+                      x: rect.left + rect.width / 2,
+                      y: rect.top + rect.height / 2,
+                    };
+                  }),
+                });
 
-              if (frames.length >= 12) {
-                resolve(frames);
-                return;
-              }
+                if (elapsed >= 950) {
+                  resolve(frames);
+                  return;
+                }
+                window.requestAnimationFrame(sample);
+              };
               window.requestAnimationFrame(sample);
-            };
-            window.requestAnimationFrame(sample);
-          })
+            }
+          )
       );
 
     const assertFramesStayBetweenEndpoints = (
-      frames: { selector: string; x: number; y: number }[][],
+      frames: { elapsed: number; icons: { selector: string; x: number; y: number }[] }[],
       start: { selector: string; x: number; y: number }[],
       end: { selector: string; x: number; y: number }[]
     ) => {
       const tolerance = 2;
-      expect(frames.length).toBeGreaterThanOrEqual(6);
+      expect(frames.length).toBeGreaterThanOrEqual(20);
+      expect(frames.at(-1)?.elapsed).toBeGreaterThanOrEqual(900);
 
       for (const frame of frames) {
-        frame.forEach((iconFrame, index) => {
+        frame.icons.forEach((iconFrame, index) => {
           const minX = Math.min(start[index].x, end[index].x) - tolerance;
           const maxX = Math.max(start[index].x, end[index].x) + tolerance;
           const minY = Math.min(start[index].y, end[index].y) - tolerance;
@@ -2460,6 +2469,19 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       }
     };
 
+    const assertCollapseFramesMoveHorizontallyForward = (
+      frames: { elapsed: number; icons: { selector: string; x: number; y: number }[] }[]
+    ) => {
+      const tolerance = 1.25;
+      for (let frameIndex = 1; frameIndex < frames.length; frameIndex += 1) {
+        frames[frameIndex].icons.forEach((iconFrame, iconIndex) => {
+          expect(iconFrame.x).toBeLessThanOrEqual(
+            frames[frameIndex - 1].icons[iconIndex].x + tolerance
+          );
+        });
+      }
+    };
+
     const expandedCenters = await captureIconCenters();
     await page.locator('#sidebar-toggle').click();
     const collapseFrames = await captureAnimationFrames();
@@ -2467,6 +2489,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await page.waitForTimeout(950);
     const collapsedCenters = await captureIconCenters();
     assertFramesStayBetweenEndpoints(collapseFrames, expandedCenters, collapsedCenters);
+    assertCollapseFramesMoveHorizontallyForward(collapseFrames);
 
     const collapsedSidebarState = await page.locator('#chapter-sidebar').evaluate((panel) => {
       const toggle = panel.querySelector('.sidebar-toggle')?.getBoundingClientRect();
@@ -2491,6 +2514,18 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     reExpandedCenters.forEach((center, index) => {
       expect(Math.abs(center.x - expandedCenters[index].x)).toBeLessThanOrEqual(1);
       expect(Math.abs(center.y - expandedCenters[index].y)).toBeLessThanOrEqual(1);
+    });
+
+    const expandedMenuChrome = await page.locator('#chapter-sidebar').evaluate((panel) =>
+      [...panel.querySelectorAll('.sidebar-menu__text, .sidebar-menu__chevron')].map((element) => {
+        const style = window.getComputedStyle(element);
+        return { opacity: style.opacity, pointerEvents: style.pointerEvents };
+      })
+    );
+    expect(expandedMenuChrome).toHaveLength(6);
+    expandedMenuChrome.forEach((state) => {
+      expect(Number(state.opacity)).toBeGreaterThan(0.95);
+      expect(state.pointerEvents).not.toBe('none');
     });
   });
 
