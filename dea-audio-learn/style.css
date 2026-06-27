@@ -1134,6 +1134,10 @@ body {
     scrollbar-gutter: auto;
   }
 
+  .layout[data-sidebar-state='collapsed'] #chapter-sidebar {
+    z-index: 3;
+  }
+
   .layout[data-sidebar-state='collapsed'] .sidebar-menu {
     overflow: visible;
     position: relative;

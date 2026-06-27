@@ -2401,21 +2401,59 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(toolbarLayout?.toggleRightDelta).toBeLessThanOrEqual(2);
 
     await page.locator('#sidebar-toggle').click();
-    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
-    await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'hidden');
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'visible');
+    await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'visible');
     await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('scrollbar-gutter', 'auto');
-    const collapsedCenters = await page.locator('#chapter-sidebar').evaluate((panel) => {
+    const collapsedSidebarState = await page.locator('#chapter-sidebar').evaluate((panel) => {
+      const tracker = document.querySelector('.learning-tracker');
       const toggle = panel.querySelector('.sidebar-toggle')?.getBoundingClientRect();
       const icon = panel.querySelector('.sidebar-menu__icon')?.getBoundingClientRect();
-      return toggle && icon
-        ? Math.abs(toggle.left + toggle.width / 2 - (icon.left + icon.width / 2))
+      return toggle && icon && tracker
+        ? {
+            centerDelta: Math.abs(toggle.left + toggle.width / 2 - (icon.left + icon.width / 2)),
+            sidebarZIndex: Number.parseInt(window.getComputedStyle(panel).zIndex, 10),
+            trackerZIndex: Number.parseInt(window.getComputedStyle(tracker).zIndex, 10),
+          }
         : null;
     });
-    expect(collapsedCenters).not.toBeNull();
-    expect(collapsedCenters).toBeLessThanOrEqual(1);
-    await expect(
-      page.locator('.layout[data-sidebar-state="collapsed"] .sidebar-menu__icon')
-    ).toHaveCount(3);
+    expect(collapsedSidebarState).not.toBeNull();
+    expect(collapsedSidebarState?.centerDelta).toBeLessThanOrEqual(1);
+    expect(collapsedSidebarState?.sidebarZIndex).toBeGreaterThan(
+      collapsedSidebarState?.trackerZIndex ?? Number.POSITIVE_INFINITY
+    );
+    const collapsedMenuHints = await page
+      .locator('.layout[data-sidebar-state="collapsed"] .sidebar-menu__summary')
+      .evaluateAll((summaries) =>
+        summaries.map((summary) => {
+          const style = window.getComputedStyle(summary, '::after');
+          return {
+            content: style.content.replace(/^"|"$/g, ''),
+            pointerEvents: style.pointerEvents,
+            zIndex: Number.parseInt(style.zIndex, 10),
+          };
+        })
+      );
+    expect(collapsedMenuHints).toEqual([
+      { content: 'セクション', pointerEvents: 'none', zIndex: 20 },
+      { content: 'チャプター', pointerEvents: 'none', zIndex: 20 },
+      { content: '目次', pointerEvents: 'none', zIndex: 20 },
+    ]);
+    await page.locator('#section-list-title').hover();
+    await expect
+      .poll(() =>
+        page
+          .locator('#section-list-title')
+          .evaluate((summary) => window.getComputedStyle(summary, '::after').opacity)
+      )
+      .toBe('1');
+    await page.locator('#chapter-list-title').focus();
+    await expect
+      .poll(() =>
+        page
+          .locator('#chapter-list-title')
+          .evaluate((summary) => window.getComputedStyle(summary, '::after').opacity)
+      )
+      .toBe('1');
 
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoAudioLearn(page);
