@@ -2304,6 +2304,14 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
 
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('position', 'sticky');
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'auto');
+    await expect
+      .poll(() =>
+        page.locator('#chapter-sidebar').evaluate((panel) => {
+          const rect = panel.getBoundingClientRect();
+          return Math.ceil(rect.bottom - window.innerHeight);
+        })
+      )
+      .toBeLessThanOrEqual(0);
 
     const beforeWindowY = await page.evaluate(() => window.scrollY);
     await page.locator('#chapter-sidebar').evaluate((panel) => {
@@ -2363,6 +2371,13 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
   }) => {
     await page.setViewportSize({ width: 1024, height: 500 });
     await gotoAudioLearn(page);
+    const toolbarGap = await page.locator('#chapter-sidebar').evaluate((panel) => {
+      const toolbar = panel.querySelector('.chapter-panel__toolbar')?.getBoundingClientRect();
+      const section = panel.querySelector('#section-selector')?.getBoundingClientRect();
+      return toolbar && section ? section.top - toolbar.bottom : 0;
+    });
+    expect(toolbarGap).toBeGreaterThanOrEqual(8);
+
     await page.locator('#sidebar-toggle').click();
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
     await expect(

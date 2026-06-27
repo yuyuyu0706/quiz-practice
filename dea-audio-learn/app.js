@@ -103,9 +103,30 @@ const setMobileSidebarOpen = (isOpen) => {
   document.body.classList.toggle('has-mobile-sidebar-open', isOpen);
 };
 
+const updateDesktopSidebarAvailableHeight = () => {
+  if (!chapterSidebar) return;
+  if (!isDesktopViewport()) {
+    chapterSidebar.style.removeProperty('--desktop-sidebar-available-height');
+    return;
+  }
+
+  const { top } = chapterSidebar.getBoundingClientRect();
+  const safetyGap = 0;
+  const availableHeight = Math.max(0, window.innerHeight - top - safetyGap);
+  chapterSidebar.style.setProperty(
+    '--desktop-sidebar-available-height',
+    `${Math.floor(availableHeight)}px`
+  );
+};
+
+const queueDesktopSidebarAvailableHeightUpdate = () => {
+  window.requestAnimationFrame(updateDesktopSidebarAvailableHeight);
+};
+
 const setupResponsiveSidebar = () => {
   setSidebarState(sidebarState);
   setMobileSidebarOpen(false);
+  queueDesktopSidebarAvailableHeightUpdate();
   sidebarToggleButton?.addEventListener('click', () => {
     setSidebarState(sidebarState === 'expanded' ? 'collapsed' : 'expanded');
   });
@@ -117,6 +138,7 @@ const setupResponsiveSidebar = () => {
   });
   window.addEventListener('resize', () => {
     if (isDesktopViewport()) setMobileSidebarOpen(false);
+    queueDesktopSidebarAvailableHeightUpdate();
   });
 };
 
