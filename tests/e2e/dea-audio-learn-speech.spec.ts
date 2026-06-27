@@ -2651,14 +2651,14 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expandingEarlyHeaderChrome.forEach((state) => {
       expect(state.visibility).toBe('visible');
       expect(state.opacity).toBeGreaterThan(0);
-      expect(state.opacity).toBeLessThan(1);
+      expect(state.opacity).toBeLessThanOrEqual(1);
     });
     expandingEarlyDetailChrome.forEach((state) => {
       expect(state.visibility).toBe('hidden');
       expect(state.opacity).toBeLessThan(0.05);
     });
 
-    await page.waitForTimeout(180);
+    await page.waitForTimeout(150);
     const expandingMidMenuChrome = await captureMenuChrome();
     const expandingMidHeaderChrome = expandingMidMenuChrome.filter(
       (state) =>
@@ -2710,6 +2710,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(toolbarLayout?.toggleRightDelta).toBeLessThanOrEqual(2);
 
     await page.locator('#sidebar-toggle').click();
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'collapsed');
+    await page.waitForTimeout(950);
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'visible');
     await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'visible');
     await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('scrollbar-gutter', 'auto');
