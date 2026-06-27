@@ -2502,7 +2502,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
         : [];
     });
     expect(collapsedSidebarState).toHaveLength(3);
-    collapsedSidebarState.forEach((centerDelta) => expect(centerDelta).toBeLessThanOrEqual(1));
+    collapsedSidebarState.forEach((centerDelta) => expect(centerDelta).toBeLessThanOrEqual(0.5));
 
     await page.locator('#sidebar-toggle').click();
     const expandFrames = await captureAnimationFrames();
