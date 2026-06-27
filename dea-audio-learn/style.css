@@ -1108,7 +1108,10 @@ body {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
+    justify-content: flex-start;
+    width: 100%;
     min-height: 32px;
+    box-sizing: border-box;
     margin: 0 0 0.75rem;
     padding: 0 0 0.25rem;
     background: var(--color-surface);
@@ -1125,6 +1128,10 @@ body {
   .layout[data-sidebar-state='collapsed'] .chapter-panel,
   .layout[data-sidebar-state='collapsed'] .chapter-panel__scroll-area {
     overflow: hidden;
+  }
+
+  .layout[data-sidebar-state='collapsed'] .chapter-panel__scroll-area {
+    scrollbar-gutter: auto;
   }
 }
 

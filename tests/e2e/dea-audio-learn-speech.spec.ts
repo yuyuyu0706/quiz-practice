@@ -2384,16 +2384,37 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
   }) => {
     await page.setViewportSize({ width: 1024, height: 500 });
     await gotoAudioLearn(page);
-    const toolbarGap = await page.locator('#chapter-sidebar').evaluate((panel) => {
+    const toolbarLayout = await page.locator('#chapter-sidebar').evaluate((panel) => {
       const toolbar = panel.querySelector('.chapter-panel__toolbar')?.getBoundingClientRect();
+      const toggle = panel.querySelector('.sidebar-toggle')?.getBoundingClientRect();
+      const scrollArea = panel
+        .querySelector('.chapter-panel__scroll-area')
+        ?.getBoundingClientRect();
       const section = panel.querySelector('#section-selector')?.getBoundingClientRect();
-      return toolbar && section ? section.top - toolbar.bottom : 0;
+      return toolbar && toggle && scrollArea && section
+        ? {
+            gap: section.top - toolbar.bottom,
+            toggleLeftDelta: Math.abs(toggle.left - scrollArea.left),
+          }
+        : null;
     });
-    expect(toolbarGap).toBeGreaterThanOrEqual(8);
+    expect(toolbarLayout).not.toBeNull();
+    expect(toolbarLayout?.gap).toBeGreaterThanOrEqual(8);
+    expect(toolbarLayout?.toggleLeftDelta).toBeLessThanOrEqual(1);
 
     await page.locator('#sidebar-toggle').click();
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
     await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'hidden');
+    await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('scrollbar-gutter', 'auto');
+    const collapsedCenters = await page.locator('#chapter-sidebar').evaluate((panel) => {
+      const toggle = panel.querySelector('.sidebar-toggle')?.getBoundingClientRect();
+      const icon = panel.querySelector('.sidebar-menu__icon')?.getBoundingClientRect();
+      return toggle && icon
+        ? Math.abs(toggle.left + toggle.width / 2 - (icon.left + icon.width / 2))
+        : null;
+    });
+    expect(collapsedCenters).not.toBeNull();
+    expect(collapsedCenters).toBeLessThanOrEqual(1);
     await expect(
       page.locator('.layout[data-sidebar-state="collapsed"] .sidebar-menu__icon')
     ).toHaveCount(3);
