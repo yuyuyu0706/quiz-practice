@@ -58,6 +58,7 @@ let highestReachedLearningStageIndex = 0;
 let learningStageObserver = null;
 let learningStageRafId = null;
 let audioHeadingScrollRafId = null;
+let manualAudioTocTargetId = null;
 const learningStages = [
   { key: 'audio', label: '音声教材', sectionId: 'audio-material-section' },
   { key: 'note', label: '要点メモ', sectionId: 'note-section' },
@@ -578,7 +579,24 @@ const getScrollActiveHeadingId = () => {
   return activeHeading.id;
 };
 
-const getCurrentAudioHeadingId = () => getActiveSpeechHeadingId() ?? getScrollActiveHeadingId();
+const getManualAudioTocTargetId = () => {
+  if (!manualAudioTocTargetId) return null;
+  const target = document.getElementById(manualAudioTocTargetId);
+  if (!target) {
+    manualAudioTocTargetId = null;
+    return null;
+  }
+
+  const rect = target.getBoundingClientRect();
+  if (rect.bottom < 0 || rect.top > window.innerHeight) {
+    manualAudioTocTargetId = null;
+    return null;
+  }
+  return manualAudioTocTargetId;
+};
+
+const getCurrentAudioHeadingId = () =>
+  getActiveSpeechHeadingId() ?? getManualAudioTocTargetId() ?? getScrollActiveHeadingId();
 
 const syncSidebarTocCurrentLabel = (link) => {
   if (!sidebarTocCurrent) return;
@@ -1070,6 +1088,7 @@ const addExternalLinkAttributes = (root) => {
 };
 
 const setActiveAudioTocLink = (href) => {
+  manualAudioTocTargetId = href.startsWith('#') ? href.slice(1) : null;
   let activeLink = null;
   audioTocList.querySelectorAll('a[href^="#"]').forEach((link) => {
     const isCurrent = link.getAttribute('href') === href;
