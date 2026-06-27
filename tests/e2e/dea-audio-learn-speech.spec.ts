@@ -2379,6 +2379,153 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await expect(firstCurrent).not.toHaveAttribute('href', `#${secondHeadingId}`);
   });
 
+  test('animates desktop sidebar menu icons without overshooting their direct path', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 720 });
+    await gotoAudioLearn(page);
+
+    const captureIconCenters = async () =>
+      page.locator('#chapter-sidebar').evaluate(() => {
+        const selectors = [
+          '#section-list-title .sidebar-menu__icon',
+          '#chapter-list-title .sidebar-menu__icon',
+          '#audio-toc-title .sidebar-menu__icon',
+        ];
+
+        return selectors.map((selector) => {
+          const rect = document.querySelector(selector)?.getBoundingClientRect();
+          if (!rect) throw new Error(`Missing sidebar icon for ${selector}`);
+          return {
+            selector,
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+          };
+        });
+      });
+
+    const captureAnimationFrames = async () =>
+      page.locator('#chapter-sidebar').evaluate(
+        (panel) =>
+          new Promise<{ elapsed: number; icons: { selector: string; x: number; y: number }[] }[]>(
+            (resolve) => {
+              const selectors = [
+                '#section-list-title .sidebar-menu__icon',
+                '#chapter-list-title .sidebar-menu__icon',
+                '#audio-toc-title .sidebar-menu__icon',
+              ];
+              const frames: {
+                elapsed: number;
+                icons: { selector: string; x: number; y: number }[];
+              }[] = [];
+              const startedAt = performance.now();
+              const sample = () => {
+                const elapsed = performance.now() - startedAt;
+                frames.push({
+                  elapsed,
+                  icons: selectors.map((selector) => {
+                    const rect = panel.querySelector(selector)?.getBoundingClientRect();
+                    if (!rect) throw new Error(`Missing sidebar icon for ${selector}`);
+                    return {
+                      selector,
+                      x: rect.left + rect.width / 2,
+                      y: rect.top + rect.height / 2,
+                    };
+                  }),
+                });
+
+                if (elapsed >= 950) {
+                  resolve(frames);
+                  return;
+                }
+                window.requestAnimationFrame(sample);
+              };
+              window.requestAnimationFrame(sample);
+            }
+          )
+      );
+
+    const assertFramesKeepIconXFixed = (
+      frames: { elapsed: number; icons: { selector: string; x: number; y: number }[] }[],
+      initial: { selector: string; x: number; y: number }[]
+    ) => {
+      const tolerance = 0.5;
+      expect(frames.length).toBeGreaterThanOrEqual(20);
+      expect(frames.at(-1)?.elapsed).toBeGreaterThanOrEqual(900);
+
+      for (const frame of frames) {
+        frame.icons.forEach((iconFrame, index) => {
+          expect(iconFrame.selector).toBe(initial[index].selector);
+          expect(Math.abs(iconFrame.x - initial[index].x)).toBeLessThanOrEqual(tolerance);
+        });
+      }
+    };
+
+    const assertFramesStayVerticallyBetweenEndpoints = (
+      frames: { elapsed: number; icons: { selector: string; x: number; y: number }[] }[],
+      start: { selector: string; x: number; y: number }[],
+      end: { selector: string; x: number; y: number }[]
+    ) => {
+      const tolerance = 2;
+
+      for (const frame of frames) {
+        frame.icons.forEach((iconFrame, index) => {
+          const minY = Math.min(start[index].y, end[index].y) - tolerance;
+          const maxY = Math.max(start[index].y, end[index].y) + tolerance;
+          expect(iconFrame.y).toBeGreaterThanOrEqual(minY);
+          expect(iconFrame.y).toBeLessThanOrEqual(maxY);
+        });
+      }
+    };
+
+    const expandedCenters = await captureIconCenters();
+    await page.locator('#sidebar-toggle').click();
+    const collapseFrames = await captureAnimationFrames();
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'collapsed');
+    await page.waitForTimeout(950);
+    const collapsedCenters = await captureIconCenters();
+    assertFramesKeepIconXFixed(collapseFrames, expandedCenters);
+    assertFramesStayVerticallyBetweenEndpoints(collapseFrames, expandedCenters, collapsedCenters);
+
+    const collapsedSidebarState = await page.locator('#chapter-sidebar').evaluate((panel) => {
+      const toggle = panel.querySelector('.sidebar-toggle')?.getBoundingClientRect();
+      const icons = [...panel.querySelectorAll('.sidebar-menu__icon')].map((icon) => {
+        const rect = icon.getBoundingClientRect();
+        return rect.left + rect.width / 2;
+      });
+      return toggle
+        ? icons.map((iconCenter) => Math.abs(toggle.left + toggle.width / 2 - iconCenter))
+        : [];
+    });
+    expect(collapsedSidebarState).toHaveLength(3);
+    collapsedSidebarState.forEach((centerDelta) => expect(centerDelta).toBeLessThanOrEqual(0.5));
+
+    await page.locator('#sidebar-toggle').click();
+    const expandFrames = await captureAnimationFrames();
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
+    await page.waitForTimeout(950);
+    const reExpandedCenters = await captureIconCenters();
+    assertFramesKeepIconXFixed(expandFrames, collapsedCenters);
+    assertFramesStayVerticallyBetweenEndpoints(expandFrames, collapsedCenters, reExpandedCenters);
+
+    reExpandedCenters.forEach((center, index) => {
+      expect(Math.abs(center.x - expandedCenters[index].x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(center.y - expandedCenters[index].y)).toBeLessThanOrEqual(1);
+    });
+
+    const expandedMenuChrome = await page.locator('#chapter-sidebar').evaluate((panel) =>
+      [...panel.querySelectorAll('.sidebar-menu__text, .sidebar-menu__chevron')].map((element) => {
+        const style = window.getComputedStyle(element);
+        return { opacity: style.opacity, pointerEvents: style.pointerEvents };
+      })
+    );
+    expect(expandedMenuChrome).toHaveLength(6);
+    expandedMenuChrome.forEach((state) => {
+      expect(Number(state.opacity)).toBeGreaterThan(0.95);
+      expect(state.pointerEvents).not.toBe('none');
+    });
+  });
+
   test('preserves collapsed desktop icons and mobile drawer scrolling behavior', async ({
     page,
   }) => {
