@@ -221,7 +221,14 @@ body {
 }
 
 .sidebar-menu__text,
-.sidebar-menu__chevron,
+.sidebar-menu__chevron {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    visibility 0s linear 300ms,
+    opacity 160ms ease 300ms;
+}
+
 .sidebar-menu .chapter-domain-section,
 .sidebar-menu .audio-toc {
   opacity: 1;
@@ -1251,8 +1258,8 @@ body {
   opacity: 0;
   visibility: hidden;
   transition:
-    visibility 0s linear 120ms,
-    opacity 120ms ease 0ms;
+    visibility 0s linear 100ms,
+    opacity 100ms ease 0ms;
   pointer-events: none;
   position: absolute;
 }

@@ -2590,7 +2590,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       );
 
     await page.locator('#sidebar-toggle').click();
-    await page.waitForTimeout(180);
+    await page.waitForTimeout(130);
     const collapsingMenuChrome = await captureMenuChrome();
     expect(collapsingMenuChrome).toHaveLength(9);
     collapsingMenuChrome.forEach((state) => {
@@ -2598,7 +2598,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       expect(state.visibility).toBe('hidden');
       expect(state.pointerEvents).toBe('none');
     });
-    await page.waitForTimeout(160);
+    await page.waitForTimeout(190);
     const collapsedMenuChrome = await captureMenuChrome();
     collapsedMenuChrome
       .filter(
@@ -2636,18 +2636,46 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       .toBe('1');
 
     await page.locator('#sidebar-toggle').click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(320);
     const expandingEarlyMenuChrome = await captureMenuChrome();
-    expandingEarlyMenuChrome.forEach((state) => {
+    const expandingEarlyHeaderChrome = expandingEarlyMenuChrome.filter(
+      (state) =>
+        state.selector.includes('sidebar-menu__text') ||
+        state.selector.includes('sidebar-menu__chevron')
+    );
+    const expandingEarlyDetailChrome = expandingEarlyMenuChrome.filter(
+      (state) =>
+        state.selector.includes('chapter-domain-section') || state.selector.includes('audio-toc')
+    );
+    expect(expandingEarlyHeaderChrome).toHaveLength(6);
+    expandingEarlyHeaderChrome.forEach((state) => {
+      expect(state.visibility).toBe('visible');
+      expect(state.opacity).toBeGreaterThan(0);
+      expect(state.opacity).toBeLessThan(1);
+    });
+    expandingEarlyDetailChrome.forEach((state) => {
       expect(state.visibility).toBe('hidden');
       expect(state.opacity).toBeLessThan(0.05);
     });
 
-    await page.waitForTimeout(520);
-    const expandingLateMenuChrome = await captureMenuChrome();
-    expandingLateMenuChrome.forEach((state) => {
+    await page.waitForTimeout(180);
+    const expandingMidMenuChrome = await captureMenuChrome();
+    const expandingMidHeaderChrome = expandingMidMenuChrome.filter(
+      (state) =>
+        state.selector.includes('sidebar-menu__text') ||
+        state.selector.includes('sidebar-menu__chevron')
+    );
+    const expandingMidDetailChrome = expandingMidMenuChrome.filter(
+      (state) =>
+        state.selector.includes('chapter-domain-section') || state.selector.includes('audio-toc')
+    );
+    expandingMidHeaderChrome.forEach((state) => {
       expect(state.visibility).toBe('visible');
       expect(state.opacity).toBeGreaterThan(0.95);
+    });
+    expandingMidDetailChrome.forEach((state) => {
+      expect(state.visibility).toBe('hidden');
+      expect(state.opacity).toBeLessThan(0.05);
     });
 
     await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
