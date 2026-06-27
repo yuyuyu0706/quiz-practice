@@ -2447,6 +2447,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       )
       .toBe('1');
     await page.locator('#chapter-list-title').focus();
+    await expect(page.locator('#chapter-list-title')).toBeFocused();
     await expect
       .poll(() =>
         page
