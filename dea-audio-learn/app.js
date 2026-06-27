@@ -1,5 +1,6 @@
 const appLayout = document.querySelector('#app-layout');
 const chapterSidebar = document.querySelector('#chapter-sidebar');
+const chapterSidebarScrollArea = document.querySelector('.chapter-panel__scroll-area');
 const sidebarToggleButton = document.querySelector('#sidebar-toggle');
 const mobileSidebarOpenButton = document.querySelector('#mobile-sidebar-open');
 const mobileSidebarCloseButton = document.querySelector('#mobile-sidebar-close');
@@ -577,20 +578,25 @@ const syncSidebarTocCurrentLabel = (link) => {
 };
 
 const keepCurrentTocItemVisible = (item) => {
-  if (!item || !audioTocPanel?.open || !isDesktopViewport() || sidebarState !== 'expanded') return;
+  if (
+    !item ||
+    !chapterSidebarScrollArea ||
+    !audioTocPanel?.open ||
+    !isDesktopViewport() ||
+    sidebarState !== 'expanded'
+  ) {
+    return;
+  }
 
-  const panelRect = chapterSidebar.getBoundingClientRect();
+  const scrollAreaRect = chapterSidebarScrollArea.getBoundingClientRect();
   const itemRect = item.getBoundingClientRect();
-  const toolbarBottom =
-    chapterSidebar.querySelector('.chapter-panel__toolbar')?.getBoundingClientRect().bottom ??
-    panelRect.top;
-  const topLimit = Math.max(panelRect.top, toolbarBottom) + 8;
-  const bottomLimit = panelRect.bottom - 8;
+  const topLimit = scrollAreaRect.top + 8;
+  const bottomLimit = scrollAreaRect.bottom - 8;
 
   if (itemRect.top < topLimit) {
-    chapterSidebar.scrollTop -= topLimit - itemRect.top;
+    chapterSidebarScrollArea.scrollTop -= topLimit - itemRect.top;
   } else if (itemRect.bottom > bottomLimit) {
-    chapterSidebar.scrollTop += itemRect.bottom - bottomLimit;
+    chapterSidebarScrollArea.scrollTop += itemRect.bottom - bottomLimit;
   }
 };
 

@@ -2303,7 +2303,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     });
 
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('position', 'sticky');
-    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'auto');
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
+    await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'auto');
     await expect
       .poll(() =>
         page.locator('#chapter-sidebar').evaluate((panel) => {
@@ -2314,12 +2315,24 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       .toBeLessThanOrEqual(0);
 
     const beforeWindowY = await page.evaluate(() => window.scrollY);
-    await page.locator('#chapter-sidebar').evaluate((panel) => {
-      panel.scrollTop = panel.scrollHeight;
+    await page.locator('.chapter-panel__scroll-area').evaluate((scrollArea) => {
+      scrollArea.scrollTop = scrollArea.scrollHeight;
     });
     await expect
-      .poll(() => page.locator('#chapter-sidebar').evaluate((panel) => panel.scrollTop))
+      .poll(() =>
+        page.locator('.chapter-panel__scroll-area').evaluate((scrollArea) => scrollArea.scrollTop)
+      )
       .toBeGreaterThan(0);
+    await expect(
+      page.locator('.chapter-panel__toolbar').evaluate((toolbar) => {
+        const toolbarRect = toolbar.getBoundingClientRect();
+        const elementBelowToolbar = document.elementFromPoint(
+          toolbarRect.left + toolbarRect.width / 2,
+          toolbarRect.top + toolbarRect.height / 2
+        );
+        return elementBelowToolbar?.closest('.chapter-panel__toolbar') !== null;
+      })
+    ).resolves.toBe(true);
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(beforeWindowY);
 
     await clickByDom(page.locator('#audio-toc-list a[href="#mini-quiz-title"]'));
@@ -2380,6 +2393,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
 
     await page.locator('#sidebar-toggle').click();
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
+    await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'hidden');
     await expect(
       page.locator('.layout[data-sidebar-state="collapsed"] .sidebar-menu__icon')
     ).toHaveCount(3);

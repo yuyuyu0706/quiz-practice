@@ -1096,16 +1096,17 @@ body {
 
 @media (min-width: 781px) {
   .chapter-panel {
+    display: flex;
+    flex-direction: column;
     max-height: var(--desktop-sidebar-available-height, calc(100vh - 2rem));
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow: hidden;
   }
 
   .chapter-panel__toolbar {
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 2;
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     min-height: 32px;
     margin: 0 0 0.75rem;
@@ -1113,7 +1114,16 @@ body {
     background: var(--color-surface);
   }
 
-  .layout[data-sidebar-state='collapsed'] .chapter-panel {
+  .chapter-panel__scroll-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .layout[data-sidebar-state='collapsed'] .chapter-panel,
+  .layout[data-sidebar-state='collapsed'] .chapter-panel__scroll-area {
     overflow: hidden;
   }
 }
