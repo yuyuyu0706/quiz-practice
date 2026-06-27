@@ -2445,39 +2445,35 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
           )
       );
 
-    const assertFramesStayBetweenEndpoints = (
+    const assertFramesKeepIconXFixed = (
       frames: { elapsed: number; icons: { selector: string; x: number; y: number }[] }[],
-      start: { selector: string; x: number; y: number }[],
-      end: { selector: string; x: number; y: number }[]
+      initial: { selector: string; x: number; y: number }[]
     ) => {
-      const tolerance = 2;
+      const tolerance = 0.5;
       expect(frames.length).toBeGreaterThanOrEqual(20);
       expect(frames.at(-1)?.elapsed).toBeGreaterThanOrEqual(900);
 
       for (const frame of frames) {
         frame.icons.forEach((iconFrame, index) => {
-          const minX = Math.min(start[index].x, end[index].x) - tolerance;
-          const maxX = Math.max(start[index].x, end[index].x) + tolerance;
-          const minY = Math.min(start[index].y, end[index].y) - tolerance;
-          const maxY = Math.max(start[index].y, end[index].y) + tolerance;
-          expect(iconFrame.selector).toBe(start[index].selector);
-          expect(iconFrame.x).toBeGreaterThanOrEqual(minX);
-          expect(iconFrame.x).toBeLessThanOrEqual(maxX);
-          expect(iconFrame.y).toBeGreaterThanOrEqual(minY);
-          expect(iconFrame.y).toBeLessThanOrEqual(maxY);
+          expect(iconFrame.selector).toBe(initial[index].selector);
+          expect(Math.abs(iconFrame.x - initial[index].x)).toBeLessThanOrEqual(tolerance);
         });
       }
     };
 
-    const assertCollapseFramesMoveHorizontallyForward = (
-      frames: { elapsed: number; icons: { selector: string; x: number; y: number }[] }[]
+    const assertFramesStayVerticallyBetweenEndpoints = (
+      frames: { elapsed: number; icons: { selector: string; x: number; y: number }[] }[],
+      start: { selector: string; x: number; y: number }[],
+      end: { selector: string; x: number; y: number }[]
     ) => {
-      const tolerance = 1.25;
-      for (let frameIndex = 1; frameIndex < frames.length; frameIndex += 1) {
-        frames[frameIndex].icons.forEach((iconFrame, iconIndex) => {
-          expect(iconFrame.x).toBeLessThanOrEqual(
-            frames[frameIndex - 1].icons[iconIndex].x + tolerance
-          );
+      const tolerance = 2;
+
+      for (const frame of frames) {
+        frame.icons.forEach((iconFrame, index) => {
+          const minY = Math.min(start[index].y, end[index].y) - tolerance;
+          const maxY = Math.max(start[index].y, end[index].y) + tolerance;
+          expect(iconFrame.y).toBeGreaterThanOrEqual(minY);
+          expect(iconFrame.y).toBeLessThanOrEqual(maxY);
         });
       }
     };
@@ -2488,8 +2484,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'collapsed');
     await page.waitForTimeout(950);
     const collapsedCenters = await captureIconCenters();
-    assertFramesStayBetweenEndpoints(collapseFrames, expandedCenters, collapsedCenters);
-    assertCollapseFramesMoveHorizontallyForward(collapseFrames);
+    assertFramesKeepIconXFixed(collapseFrames, expandedCenters);
+    assertFramesStayVerticallyBetweenEndpoints(collapseFrames, expandedCenters, collapsedCenters);
 
     const collapsedSidebarState = await page.locator('#chapter-sidebar').evaluate((panel) => {
       const toggle = panel.querySelector('.sidebar-toggle')?.getBoundingClientRect();
@@ -2509,7 +2505,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
     await page.waitForTimeout(950);
     const reExpandedCenters = await captureIconCenters();
-    assertFramesStayBetweenEndpoints(expandFrames, collapsedCenters, reExpandedCenters);
+    assertFramesKeepIconXFixed(expandFrames, collapsedCenters);
+    assertFramesStayVerticallyBetweenEndpoints(expandFrames, collapsedCenters, reExpandedCenters);
 
     reExpandedCenters.forEach((center, index) => {
       expect(Math.abs(center.x - expandedCenters[index].x)).toBeLessThanOrEqual(1);

@@ -1120,9 +1120,8 @@ body {
 
   .sidebar-menu__summary {
     --sidebar-menu-summary-block-size: 3.65rem;
-    --sidebar-menu-icon-expanded-left: 0.75rem;
-    --sidebar-menu-icon-collapsed-left: 0.4375rem;
-    --sidebar-menu-text-left: calc(var(--sidebar-menu-icon-expanded-left) + 2.25rem + 0.65rem);
+    --sidebar-menu-icon-left: 0.375rem;
+    --sidebar-menu-text-left: calc(var(--sidebar-menu-icon-left) + 2.25rem + 0.65rem);
     block-size: var(--sidebar-menu-summary-block-size);
   }
 
@@ -1134,10 +1133,9 @@ body {
   }
 
   .sidebar-menu__icon {
-    left: var(--sidebar-menu-icon-expanded-left);
+    left: var(--sidebar-menu-icon-left);
     transform: translateY(-50%) scale(1);
     transition:
-      left var(--sidebar-transition-duration) var(--sidebar-transition-easing),
       opacity var(--sidebar-transition-duration) var(--sidebar-transition-easing),
       transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
   }
@@ -1243,7 +1241,6 @@ body {
 
 @media (min-width: 781px) {
   .layout[data-sidebar-state='collapsed'] .sidebar-menu__icon {
-    left: var(--sidebar-menu-icon-collapsed-left);
     opacity: 0.92;
     transform: translateY(-50%) scale(0.98);
   }
