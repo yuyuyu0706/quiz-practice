@@ -104,10 +104,11 @@ const setMobileSidebarOpen = (isOpen) => {
   document.body.classList.toggle('has-mobile-sidebar-open', isOpen);
 };
 
-const updateDesktopSidebarAvailableHeight = () => {
+const updateDesktopSidebarMetrics = () => {
   if (!chapterSidebar) return;
   if (!isDesktopViewport()) {
     chapterSidebar.style.removeProperty('--desktop-sidebar-available-height');
+    chapterSidebar.style.removeProperty('--desktop-sidebar-scrollbar-gutter');
     return;
   }
 
@@ -118,16 +119,21 @@ const updateDesktopSidebarAvailableHeight = () => {
     '--desktop-sidebar-available-height',
     `${Math.floor(availableHeight)}px`
   );
+
+  const gutter = chapterSidebarScrollArea
+    ? Math.max(0, chapterSidebarScrollArea.offsetWidth - chapterSidebarScrollArea.clientWidth)
+    : 0;
+  chapterSidebar.style.setProperty('--desktop-sidebar-scrollbar-gutter', `${gutter}px`);
 };
 
-const queueDesktopSidebarAvailableHeightUpdate = () => {
-  window.requestAnimationFrame(updateDesktopSidebarAvailableHeight);
+const queueDesktopSidebarMetricsUpdate = () => {
+  window.requestAnimationFrame(updateDesktopSidebarMetrics);
 };
 
 const setupResponsiveSidebar = () => {
   setSidebarState(sidebarState);
   setMobileSidebarOpen(false);
-  queueDesktopSidebarAvailableHeightUpdate();
+  queueDesktopSidebarMetricsUpdate();
   sidebarToggleButton?.addEventListener('click', () => {
     setSidebarState(sidebarState === 'expanded' ? 'collapsed' : 'expanded');
   });
@@ -139,7 +145,7 @@ const setupResponsiveSidebar = () => {
   });
   window.addEventListener('resize', () => {
     if (isDesktopViewport()) setMobileSidebarOpen(false);
-    queueDesktopSidebarAvailableHeightUpdate();
+    queueDesktopSidebarMetricsUpdate();
   });
 };
 

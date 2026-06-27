@@ -2387,20 +2387,18 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     const toolbarLayout = await page.locator('#chapter-sidebar').evaluate((panel) => {
       const toolbar = panel.querySelector('.chapter-panel__toolbar')?.getBoundingClientRect();
       const toggle = panel.querySelector('.sidebar-toggle')?.getBoundingClientRect();
-      const scrollArea = panel
-        .querySelector('.chapter-panel__scroll-area')
-        ?.getBoundingClientRect();
+      const firstMenu = panel.querySelector('.sidebar-menu')?.getBoundingClientRect();
       const section = panel.querySelector('#section-selector')?.getBoundingClientRect();
-      return toolbar && toggle && scrollArea && section
+      return toolbar && toggle && firstMenu && section
         ? {
             gap: section.top - toolbar.bottom,
-            toggleLeftDelta: Math.abs(toggle.left - scrollArea.left),
+            toggleRightDelta: Math.abs(toggle.right - firstMenu.right),
           }
         : null;
     });
     expect(toolbarLayout).not.toBeNull();
     expect(toolbarLayout?.gap).toBeGreaterThanOrEqual(8);
-    expect(toolbarLayout?.toggleLeftDelta).toBeLessThanOrEqual(1);
+    expect(toolbarLayout?.toggleRightDelta).toBeLessThanOrEqual(2);
 
     await page.locator('#sidebar-toggle').click();
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
