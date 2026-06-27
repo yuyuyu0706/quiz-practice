@@ -540,7 +540,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       () => window.matchMedia('(max-width: 780px)').matches
     );
     if (isMobileViewport) {
-      await expect(page.locator('#audio-toc-panel')).not.toHaveAttribute('open', '');
+      await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     }
     await page.locator('#audio-toc-panel').evaluate((details) => {
       (details as HTMLDetailsElement).open = false;

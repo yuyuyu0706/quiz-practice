@@ -287,11 +287,11 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await gotoAudioLearn(page);
 
     await expect(page.locator('#section-selector')).not.toHaveAttribute('open', '');
-    await expect(page.locator('#chapter-selector')).toHaveAttribute('open', '');
-    await expect(page.locator('#audio-toc-panel')).not.toHaveAttribute('open', '');
+    await expect(page.locator('#chapter-selector')).not.toHaveAttribute('open', '');
+    await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#section-list-title')).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('#chapter-list-title')).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#chapter-list-title')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
     await expect(page.locator('#sidebar-section-current')).toHaveText(
       'Databricks Intelligence Platform'
     );
@@ -302,8 +302,6 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await expect(page.locator('.sidebar-menu__icon svg')).toHaveCount(3);
 
     await openMobileSidebarIfNeeded(page);
-    await page.locator('#audio-toc-title').focus();
-    await page.keyboard.press('Enter');
     await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#audio-toc-title')).toHaveAttribute('aria-expanded', 'true');
     await openMobileSidebarIfNeeded(page);
@@ -318,12 +316,14 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await page.keyboard.press('Space');
     await expect(page.locator('#section-selector')).toHaveAttribute('open', '');
     await expect(page.locator('#section-list-title')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
 
     await page
       .locator('#domain-list .domain-button')
       .filter({ hasText: 'Data Ingestion and Loading' })
       .click();
     await expect(page.locator('#sidebar-section-current')).toHaveText('Data Ingestion and Loading');
+    await expect(page.locator('#audio-toc-panel')).toHaveAttribute('open', '');
   });
 
   test('keeps existing quiz feedback behavior working', async ({ page }) => {

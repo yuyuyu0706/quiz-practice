@@ -1052,10 +1052,10 @@ const setupSidebarMenus = () => {
   });
 };
 
-const syncChapterSelectorState = () => {
+const syncInitialSidebarMenuState = () => {
   if (sectionSelector) sectionSelector.open = false;
-  chapterSelector.open = true;
-  audioTocPanel.open = false;
+  if (chapterSelector) chapterSelector.open = false;
+  if (audioTocPanel) audioTocPanel.open = true;
   sidebarMenus.forEach(syncSidebarMenuExpandedState);
 };
 
@@ -1590,7 +1590,7 @@ if (
 const init = async () => {
   setupResponsiveSidebar();
   setupSidebarMenus();
-  syncChapterSelectorState();
+  syncInitialSidebarMenuState();
   setupLearningStageObserver();
 
   try {
