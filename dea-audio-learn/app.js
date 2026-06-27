@@ -560,7 +560,10 @@ const getActiveSpeechHeadingId = () =>
     : null;
 
 const getScrollActiveHeadingId = () => {
-  const headings = Array.from(audioScriptMarkdown.querySelectorAll('h2[id], h3[id]'));
+  const headings = [
+    ...Array.from(audioScriptMarkdown.querySelectorAll('h2[id], h3[id]')),
+    ...['note-title', 'mini-quiz-title'].map((id) => document.getElementById(id)).filter(Boolean),
+  ];
   if (headings.length === 0) return null;
 
   const referenceY = Math.min(window.innerHeight * 0.35, 220);
