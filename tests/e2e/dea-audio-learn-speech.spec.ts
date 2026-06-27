@@ -2526,6 +2526,179 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     });
   });
 
+  test('hides desktop sidebar menu chrome before resizing and restores it late on expand', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 720 });
+    await gotoAudioLearn(page);
+
+    const captureMenuChrome = async () =>
+      page.locator('#chapter-sidebar').evaluate((panel) => {
+        const selectors = [
+          '.sidebar-menu__text',
+          '.sidebar-menu__chevron',
+          '.sidebar-menu .chapter-domain-section',
+          '.sidebar-menu .audio-toc',
+        ];
+
+        return selectors.flatMap((selector) =>
+          [...panel.querySelectorAll<HTMLElement>(selector)].map((element) => {
+            const style = window.getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return {
+              selector,
+              opacity: Number(style.opacity),
+              visibility: style.visibility,
+              pointerEvents: style.pointerEvents,
+              maxHeight: style.maxHeight,
+              height: rect.height,
+              scrollHeight: element.scrollHeight,
+              whiteSpace: style.whiteSpace,
+              overflowX: style.overflowX,
+              textOverflow: style.textOverflow,
+              transitionDelay: style.transitionDelay,
+              transitionDuration: style.transitionDuration,
+            };
+          })
+        );
+      });
+
+    const captureIconVisibility = async () =>
+      page.locator('#chapter-sidebar').evaluate((panel) =>
+        [...panel.querySelectorAll<HTMLElement>('.sidebar-menu__icon')].map((icon) => {
+          const style = window.getComputedStyle(icon);
+          const rect = icon.getBoundingClientRect();
+          return {
+            opacity: Number(style.opacity),
+            visibility: style.visibility,
+            width: rect.width,
+            height: rect.height,
+          };
+        })
+      );
+
+    const captureTextWrapping = async () =>
+      page.locator('#chapter-sidebar').evaluate((panel) =>
+        [...panel.querySelectorAll<HTMLElement>('.sidebar-menu__text')].map((element) => {
+          const style = window.getComputedStyle(element);
+          return {
+            whiteSpace: style.whiteSpace,
+            overflowX: style.overflowX,
+            textOverflow: style.textOverflow,
+            clientHeight: element.clientHeight,
+            scrollHeight: element.scrollHeight,
+          };
+        })
+      );
+
+    const expandedTransitionChrome = await captureMenuChrome();
+    const expandedHeaderTransitions = expandedTransitionChrome.filter(
+      (state) =>
+        state.selector.includes('sidebar-menu__text') ||
+        state.selector.includes('sidebar-menu__chevron')
+    );
+    const expandedDetailTransitions = expandedTransitionChrome.filter(
+      (state) =>
+        state.selector.includes('chapter-domain-section') || state.selector.includes('audio-toc')
+    );
+    expandedHeaderTransitions.forEach((state) => {
+      expect(state.transitionDelay).toContain('0.3s');
+    });
+    expandedDetailTransitions.forEach((state) => {
+      expect(state.transitionDelay).toContain('0.52s');
+    });
+
+    await page.locator('#sidebar-toggle').click();
+    await page.waitForTimeout(220);
+    const collapsingMenuChrome = await captureMenuChrome();
+    expect(collapsingMenuChrome).toHaveLength(9);
+    collapsingMenuChrome.forEach((state) => {
+      expect(state.opacity).toBeLessThan(0.05);
+      expect(state.visibility).toBe('hidden');
+      expect(state.pointerEvents).toBe('none');
+    });
+    await page.waitForTimeout(190);
+    const collapsedMenuChrome = await captureMenuChrome();
+    collapsedMenuChrome
+      .filter(
+        (state) =>
+          state.selector.includes('chapter-domain-section') || state.selector.includes('audio-toc')
+      )
+      .forEach((state) => {
+        expect(Number.parseFloat(state.maxHeight)).toBeLessThanOrEqual(1);
+        expect(state.height).toBeLessThanOrEqual(1);
+      });
+
+    const collapsingIcons = await captureIconVisibility();
+    expect(collapsingIcons).toHaveLength(3);
+    collapsingIcons.forEach((icon) => {
+      expect(icon.opacity).toBeGreaterThan(0.5);
+      expect(icon.visibility).toBe('visible');
+      expect(icon.width).toBeGreaterThan(0);
+      expect(icon.height).toBeGreaterThan(0);
+    });
+    const collapsingTextWrapping = await captureTextWrapping();
+    collapsingTextWrapping.forEach((state) => {
+      expect(state.whiteSpace).toBe('nowrap');
+      expect(state.textOverflow).toBe('ellipsis');
+      expect(state.scrollHeight).toBeLessThanOrEqual(state.clientHeight + 1);
+    });
+
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'collapsed');
+    await page.locator('#section-list-title').hover();
+    await expect
+      .poll(() =>
+        page
+          .locator('#section-list-title')
+          .evaluate((summary) => window.getComputedStyle(summary, '::after').opacity)
+      )
+      .toBe('1');
+
+    await page.locator('#sidebar-toggle').click();
+    await page.waitForTimeout(320);
+    const expandingEarlyMenuChrome = await captureMenuChrome();
+    const expandingEarlyHeaderChrome = expandingEarlyMenuChrome.filter(
+      (state) =>
+        state.selector.includes('sidebar-menu__text') ||
+        state.selector.includes('sidebar-menu__chevron')
+    );
+    const expandingEarlyDetailChrome = expandingEarlyMenuChrome.filter(
+      (state) =>
+        state.selector.includes('chapter-domain-section') || state.selector.includes('audio-toc')
+    );
+    expect(expandingEarlyHeaderChrome).toHaveLength(6);
+    expandingEarlyHeaderChrome.forEach((state) => {
+      expect(state.visibility).toBe('visible');
+      expect(state.opacity).toBeGreaterThan(0);
+      expect(state.opacity).toBeLessThanOrEqual(1);
+    });
+    expandingEarlyDetailChrome.forEach((state) => {
+      expect(state.visibility).toBe('hidden');
+      expect(state.opacity).toBeLessThan(0.05);
+    });
+
+    await page.waitForTimeout(120);
+    const expandingMidMenuChrome = await captureMenuChrome();
+    const expandingMidHeaderChrome = expandingMidMenuChrome.filter(
+      (state) =>
+        state.selector.includes('sidebar-menu__text') ||
+        state.selector.includes('sidebar-menu__chevron')
+    );
+    expandingMidHeaderChrome.forEach((state) => {
+      expect(state.visibility).toBe('visible');
+      expect(state.opacity).toBeGreaterThan(0.95);
+    });
+
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
+    await page.waitForTimeout(650);
+    const expandedMenuChrome = await captureMenuChrome();
+    expandedMenuChrome.forEach((state) => {
+      expect(state.visibility).toBe('visible');
+      expect(state.opacity).toBeGreaterThan(0.95);
+      expect(state.pointerEvents).not.toBe('none');
+    });
+  });
+
   test('preserves collapsed desktop icons and mobile drawer scrolling behavior', async ({
     page,
   }) => {
@@ -2548,6 +2721,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(toolbarLayout?.toggleRightDelta).toBeLessThanOrEqual(2);
 
     await page.locator('#sidebar-toggle').click();
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'collapsed');
+    await page.waitForTimeout(950);
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'visible');
     await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'visible');
     await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('scrollbar-gutter', 'auto');
