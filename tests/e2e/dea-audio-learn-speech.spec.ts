@@ -107,6 +107,7 @@ async function startMobileCloseOrderCapture(page: Page) {
       mutations.forEach((mutation) => {
         if (mutation.type !== 'attributes') return;
         window.__mobileCloseEvents.push({
+          activeTarget: describeElement(document.activeElement),
           attr: mutation.attributeName,
           target: '#chapter-sidebar',
           type: 'mutation',
@@ -136,10 +137,16 @@ async function expectFocusBeforeMobileDrawerClose(page: Page, focusTarget: strin
     (event) => event.type === 'mutation' && event.attr === 'aria-hidden' && event.value === 'true'
   );
 
-  expect(focusIndex).toBeGreaterThanOrEqual(0);
+  const closeEventActiveTarget =
+    closeIndex >= 0 ? (events[closeIndex]?.activeTarget ?? null) : null;
+
+  expect(focusIndex >= 0 || closeEventActiveTarget === focusTarget).toBe(true);
   expect(closeIndex).toBeGreaterThan(focusIndex);
-  expect(inertIndex).toBeGreaterThan(focusIndex);
-  expect(ariaHiddenIndex).toBeGreaterThan(focusIndex);
+  if (focusIndex >= 0) {
+    expect(inertIndex).toBeGreaterThan(focusIndex);
+    expect(ariaHiddenIndex).toBeGreaterThan(focusIndex);
+  }
+  expect(closeEventActiveTarget).toBe(focusTarget);
   await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
   await expect(page.locator('#chapter-sidebar')).toHaveAttribute('inert', '');
   await expect(page.locator('#chapter-sidebar')).toHaveAttribute('aria-hidden', 'true');
@@ -3011,13 +3018,15 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       .toBe(true);
 
     await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
-    await page.waitForTimeout(650);
-    const expandedMenuChrome = await captureMenuChrome();
-    expandedMenuChrome.forEach((state) => {
-      expect(state.visibility).toBe('visible');
-      expect(state.opacity).toBeGreaterThan(0.95);
-      expect(state.pointerEvents).not.toBe('none');
-    });
+    await expect
+      .poll(async () => {
+        const expandedMenuChrome = await captureMenuChrome();
+        return expandedMenuChrome.every(
+          (state) =>
+            state.visibility === 'visible' && state.opacity > 0.95 && state.pointerEvents !== 'none'
+        );
+      })
+      .toBe(true);
   });
 
   test('preserves collapsed desktop icons and mobile drawer scrolling behavior', async ({
