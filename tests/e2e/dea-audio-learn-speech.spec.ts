@@ -3074,6 +3074,74 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await expect(openButton).toBeFocused();
   });
 
+  test('keeps the closed mobile drawer out of keyboard tab order', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+
+    const sidebar = page.locator('#chapter-sidebar');
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    await expect(sidebar).toHaveAttribute('inert', '');
+
+    await page.locator('#mobile-sidebar-open').focus();
+    for (let tabCount = 0; tabCount < 18; tabCount += 1) {
+      await page.keyboard.press('Tab');
+      await expect
+        .poll(() =>
+          page.locator('#chapter-sidebar').evaluate((panel) => {
+            const activeElement = document.activeElement;
+            return activeElement instanceof HTMLElement && panel.contains(activeElement)
+              ? activeElement.id || activeElement.className || activeElement.tagName
+              : null;
+          })
+        )
+        .toBeNull();
+    }
+  });
+
+  test('clears mobile-only drawer attributes and keeps desktop sidebar controls usable', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+
+    const sidebar = page.locator('#chapter-sidebar');
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(sidebar).toHaveAttribute('role', 'dialog');
+    await expect(sidebar).toHaveAttribute('aria-modal', 'true');
+
+    await page.setViewportSize({ width: 1024, height: 700 });
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    await expect(sidebar).not.toHaveAttribute('inert', '');
+    await expect(sidebar).not.toHaveAttribute('aria-hidden', /.+/);
+    await expect(sidebar).not.toHaveAttribute('role', 'dialog');
+    await expect(sidebar).not.toHaveAttribute('aria-modal', 'true');
+
+    await page.locator('#sidebar-toggle').focus();
+    await expect(page.locator('#sidebar-toggle')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'collapsed');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
+
+    await page.locator('#section-list-title').focus();
+    await expect(page.locator('#section-list-title')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#section-selector')).toHaveAttribute('open', '');
+    await expect(page.locator('.domain-button').first()).toBeVisible();
+    await page.locator('.domain-button').first().focus();
+    await expect(page.locator('.domain-button').first()).toBeFocused();
+
+    await page.locator('#chapter-list-title').focus();
+    await expect(page.locator('#chapter-list-title')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#chapter-selector')).toHaveAttribute('open', '');
+    await expect(page.locator('.chapter-button').nth(1)).toBeVisible();
+    await page.locator('.chapter-button').nth(1).click();
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'LakehouseとDelta Lakeの位置づけ'
+    );
+  });
+
   test('returns focus to main content after mobile drawer selections', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoAudioLearn(page);
