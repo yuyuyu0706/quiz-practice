@@ -189,6 +189,58 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(boxes?.titleTop).toBeGreaterThanOrEqual(boxes?.progressBottom ?? 0);
     expect(boxes?.titleHeight).toBeGreaterThan(20);
   });
+
+  test('shows compact mobile stage navigation and jumps to the current stage', async ({ page }) => {
+    await installMockSpeech(page);
+    await page.setViewportSize({ width: 320, height: 720 });
+    await gotoAudioLearn(page);
+
+    await expect(page.locator('.learning-tracker')).toBeHidden();
+    await expect(page.getByRole('button', { name: '☰ 教材ナビ' })).toBeVisible();
+    const stagePin = page.locator('#mobile-stage-pin');
+    const mobileSpeechToggle = page.locator('#mobile-speech-toggle');
+    await expect(stagePin).toBeVisible();
+    await expect(stagePin).toHaveText(/音声/);
+    await expect(stagePin).toHaveAttribute(
+      'aria-label',
+      '現在の学習段階：音声教材。音声教材へ移動'
+    );
+    await expect(mobileSpeechToggle).toBeVisible();
+    await expect(mobileSpeechToggle).toHaveText('再生');
+
+    const navBoxes = await page.locator('.mobile-learning-nav > button').evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, width: rect.width };
+      })
+    );
+    expect(navBoxes).toHaveLength(3);
+    expect(navBoxes[0].right).toBeLessThanOrEqual(navBoxes[1].left + 1);
+    expect(navBoxes[1].right).toBeLessThanOrEqual(navBoxes[2].left + 1);
+    expect(navBoxes[2].right).toBeLessThanOrEqual(320);
+
+    await page.locator('#note-section').scrollIntoViewIfNeeded();
+    await expect(stagePin).toHaveText(/要点/);
+    await expect(stagePin).toHaveAttribute(
+      'aria-label',
+      '現在の学習段階：要点メモ。要点メモへ移動'
+    );
+    await stagePin.click();
+    await expect(page.locator('#note-title')).toBeInViewport();
+
+    await page.locator('#mini-quiz-section').scrollIntoViewIfNeeded();
+    await expect(stagePin).toHaveText(/クイズ/);
+    await stagePin.click();
+    await expect(page.locator('#mini-quiz-title')).toBeInViewport();
+
+    await mobileSpeechToggle.click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(mobileSpeechToggle).toHaveText('一時停止');
+    await mobileSpeechToggle.click();
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await expect(mobileSpeechToggle).toHaveText('再開');
+  });
+
   test('resets page position and speech state for every chapter switching route', async ({
     page,
   }) => {

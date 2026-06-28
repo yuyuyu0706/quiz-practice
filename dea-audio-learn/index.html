@@ -19,15 +19,35 @@
       </div>
     </header>
 
-    <button
-      id="mobile-sidebar-open"
-      class="mobile-sidebar-open"
-      type="button"
-      aria-controls="chapter-sidebar"
-      aria-expanded="false"
-    >
-      ☰ 教材ナビ
-    </button>
+    <div class="mobile-learning-nav" aria-label="モバイル学習ナビゲーション">
+      <button
+        id="mobile-sidebar-open"
+        class="mobile-sidebar-open"
+        type="button"
+        aria-controls="chapter-sidebar"
+        aria-expanded="false"
+      >
+        ☰ 教材ナビ
+      </button>
+      <button
+        id="mobile-stage-pin"
+        class="mobile-stage-pin"
+        type="button"
+        data-stage-target="audio"
+        aria-label="現在の学習段階：音声教材。音声教材へ移動"
+      >
+        <span class="mobile-stage-pin__icon" aria-hidden="true">●</span>
+        <span id="mobile-stage-pin-label" class="mobile-stage-pin__label">音声</span>
+      </button>
+      <button
+        id="mobile-speech-toggle"
+        class="mobile-speech-toggle"
+        type="button"
+        aria-label="再生"
+      >
+        再生
+      </button>
+    </div>
     <div id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop" hidden></div>
 
     <main id="app-layout" class="layout" aria-live="polite" data-sidebar-state="expanded">
