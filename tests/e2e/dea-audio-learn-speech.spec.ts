@@ -78,6 +78,13 @@ async function closeMobileSidebarIfNeeded(page: Page) {
   }
 }
 
+function skipMobileChromeProject(projectName: string) {
+  test.skip(
+    projectName === 'mobile-chrome',
+    'Desktop speech controls are hidden on mobile viewports.'
+  );
+}
+
 async function openChapterSelector(page: Page) {
   await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
@@ -216,6 +223,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('.speech-controls')).toBeHidden();
     await expect(page.locator('.speech-progress')).toBeHidden();
 
+    await page.setViewportSize({ width: 390, height: 720 });
+    await expect(page.locator('.speech-controls')).toBeHidden();
+    await expect(page.locator('.speech-progress')).toBeHidden();
+
+    await page.setViewportSize({ width: 320, height: 720 });
     const navMetrics = await page.locator('.mobile-learning-nav').evaluate((nav) => {
       const items = Array.from(nav.children).map((child) => {
         const element = child as HTMLElement;
@@ -287,6 +299,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await gotoAudioLearn(page);
 
     await expect(page.locator('.mobile-learning-nav')).toBeHidden();
+    await expect(page.locator('.speech-controls')).toBeVisible();
+    await expect(page.locator('.speech-progress')).toBeVisible();
+    await expect(page.locator('#speech-rate')).toBeVisible();
+    await expect(page.locator('#speech-previous')).toBeVisible();
+    await expect(page.locator('#speech-next')).toBeVisible();
     await expect(page.locator('.learning-tracker')).toBeVisible();
     await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
     await expect(page.locator('.learning-tracker__item')).toHaveCount(3);
@@ -302,7 +319,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('resets page position and speech state for every chapter switching route', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await installMockSpeech(page);
     await gotoAudioLearn(page);
 
@@ -365,7 +383,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('restores center-pane heading play buttons and keeps them working after chapter changes', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await installMockSpeech(page);
     await gotoAudioLearn(page);
 
@@ -430,7 +449,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(nextChapterSpeakCall?.text)).toContain('データレイクだけでは困ること');
   });
 
-  test('uses one button to play, pause, resume, and resets on chapter change', async ({ page }) => {
+  test('uses one button to play, pause, resume, and resets on chapter change', async ({
+    page,
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       class MockSpeechSynthesisUtterance {
@@ -1308,7 +1330,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('shows a clear unavailable message when no speech voices are available', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       class MockSpeechSynthesisUtterance {
         text: string;
@@ -1345,7 +1368,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('keeps synthesis-failed visible in the UI and returns the button to play', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       const mockVoice = {
         name: 'Mock Japanese Voice',
@@ -1397,7 +1421,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('plays long speech text as sequential chunks and ends after the last chunk', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const spokenUtterances: Array<SpeechSynthesisUtterance> = [];
@@ -1527,7 +1552,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(speakCalls.every((call) => !String(call.text).includes('|'))).toBe(true);
   });
 
-  test('resets speech UI when Chrome does not dispatch a start event', async ({ page }) => {
+  test('resets speech UI when Chrome does not dispatch a start event', async ({
+    page,
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const mockVoice = {
@@ -1581,7 +1609,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       .toEqual([{ type: 'cancel' }]);
   });
 
-  test('shows retry guidance when watchdog sees speech synthesis is active', async ({ page }) => {
+  test('shows retry guidance when watchdog sees speech synthesis is active', async ({
+    page,
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const mockVoice = {
@@ -1646,7 +1677,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       .toEqual([{ type: 'cancel' }, { type: 'speak' }, { type: 'cancel' }, { type: 'speak' }]);
   });
 
-  test('does not surface interrupted errors from app queue reset', async ({ page }) => {
+  test('does not surface interrupted errors from app queue reset', async ({ page }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const mockVoice = {
@@ -1708,7 +1740,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-message')).toBeHidden();
   });
 
-  test('disables speech UI when Web Speech API is unavailable', async ({ page }) => {
+  test('disables speech UI when Web Speech API is unavailable', async ({ page }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       Object.defineProperty(window, 'SpeechSynthesisUtterance', {
         configurable: true,
