@@ -171,7 +171,7 @@ const getStickyBlockHeight = (element) => {
 const updateLearningTrackerScrollOffset = () => {
   const stickyBlockHeight = isDesktopViewport()
     ? getStickyBlockHeight(learningTracker)
-    : getStickyBlockHeight(mobileLearningNav) + getStickyBlockHeight(learningTracker);
+    : getStickyBlockHeight(mobileLearningNav);
   const safetyGap = isDesktopViewport() ? 16 : 12;
   const offset = Math.ceil(stickyBlockHeight + safetyGap);
   document.documentElement.style.setProperty('--learning-tracker-scroll-offset', `${offset}px`);

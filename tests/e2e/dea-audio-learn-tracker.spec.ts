@@ -49,21 +49,32 @@ async function expectTrackerSpeechInitialState(page: Page) {
   await expect(page.locator('#tracker-speech-toggle')).toHaveText(/^(再生|利用不可)$/);
 }
 
-async function expectHeadingClearOfTracker(page: Page, headingSelector: string) {
+async function expectHeadingClearOfStickyControls(page: Page, headingSelector: string) {
   await expect(page.locator(headingSelector)).toBeInViewport();
   const geometry = await page.evaluate((selector) => {
     const heading = document.querySelector(selector)?.getBoundingClientRect();
     const tracker = document.querySelector('.learning-tracker')?.getBoundingClientRect();
-    return heading && tracker
+    const mobileNav = document.querySelector('.mobile-learning-nav')?.getBoundingClientRect();
+    const trackerVisible = tracker
+      ? window.getComputedStyle(document.querySelector('.learning-tracker')!).display !== 'none'
+      : false;
+    const mobileNavVisible = mobileNav
+      ? window.getComputedStyle(document.querySelector('.mobile-learning-nav')!).display !== 'none'
+      : false;
+    const stickyBottom = Math.max(
+      trackerVisible ? (tracker?.bottom ?? 0) : 0,
+      mobileNavVisible ? (mobileNav?.bottom ?? 0) : 0
+    );
+    return heading
       ? {
           headingTop: heading.top,
           headingBottom: heading.bottom,
-          trackerBottom: tracker.bottom,
+          stickyBottom,
         }
       : null;
   }, headingSelector);
   expect(geometry).not.toBeNull();
-  expect(geometry?.headingBottom).toBeGreaterThan(geometry?.trackerBottom ?? 0);
+  expect(geometry?.headingBottom).toBeGreaterThan(geometry?.stickyBottom ?? 0);
 }
 
 async function expectStatusBesideJumpIcon(page: Page, stage: string) {
@@ -158,6 +169,12 @@ async function expectCurrentStatusBadgeOnly(page: Page, currentStage: string) {
 }
 
 test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(
+      testInfo.project.name === 'mobile-chrome',
+      'Desktop learning tracker controls are intentionally hidden on mobile.'
+    );
+  });
   test('offers mini quiz next actions for normal and final chapters', async ({ page }) => {
     await gotoAudioLearn(page);
 
@@ -194,12 +211,12 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
     await page.getByRole('button', { name: '要点メモを見直す' }).click();
     await expect(await currentStage(page)).toHaveText('要点メモ');
-    await expectHeadingClearOfTracker(page, '#note-title');
+    await expectHeadingClearOfStickyControls(page, '#note-title');
 
     await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
     await page.getByRole('button', { name: '音声教材へ戻る' }).click();
     await expect(await currentStage(page)).toHaveText('音声教材');
-    await expectHeadingClearOfTracker(page, '#audio-material-title');
+    await expectHeadingClearOfStickyControls(page, '#audio-material-title');
   });
 
   test('tracks initial state, icon navigation, reached states, and chapter reset', async ({
@@ -232,7 +249,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
       '到達済み'
     );
     await expectCurrentStatusBadgeOnly(page, 'note');
-    await expectHeadingClearOfTracker(page, '#note-title');
+    await expectHeadingClearOfStickyControls(page, '#note-title');
 
     await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
     await expect(await currentStage(page)).toHaveText('ミニクイズ');
@@ -240,7 +257,7 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
       '到達済み'
     );
     await expectCurrentStatusBadgeOnly(page, 'quiz');
-    await expectHeadingClearOfTracker(page, '#mini-quiz-title');
+    await expectHeadingClearOfStickyControls(page, '#mini-quiz-title');
 
     await page.locator('#next-chapter').click();
     await expect(page.locator('#selected-chapter-title')).toHaveText(
@@ -268,17 +285,19 @@ test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
     await gotoAudioLearn(page);
     await expect(page.locator('.learning-tracker')).toHaveCSS('position', 'sticky');
     await page.getByRole('button', { name: '要点メモへ移動' }).click();
-    await expectHeadingClearOfTracker(page, '#note-title');
+    await expectHeadingClearOfStickyControls(page, '#note-title');
     await page.getByRole('button', { name: '音声教材へ移動' }).click();
-    await expectHeadingClearOfTracker(page, '#audio-material-title');
+    await expectHeadingClearOfStickyControls(page, '#audio-material-title');
 
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoAudioLearn(page);
-    await expect(page.locator('.learning-tracker')).toHaveCSS('position', 'sticky');
-    await expectStatusBesideJumpIcon(page, 'quiz');
-    await expectCompactNormalWeightCards(page);
-    await page.getByRole('button', { name: 'ミニクイズへ移動' }).click();
-    await expectHeadingClearOfTracker(page, '#mini-quiz-title');
+    await expect(page.locator('.learning-tracker')).toBeHidden();
+    await expect(page.locator('[data-stage-target="quiz"]')).toBeHidden();
+    await page.locator('[data-mini-quiz-stage-target="audio"]').scrollIntoViewIfNeeded();
+    await page.locator('[data-mini-quiz-stage-target="audio"]').click();
+    await page.locator('[data-mini-quiz-stage-target="note"]').scrollIntoViewIfNeeded();
+    await page.locator('[data-mini-quiz-stage-target="note"]').click();
+    await expectHeadingClearOfStickyControls(page, '#note-title');
   });
 
   test('renders three keyboard-operable sidebar navigation menus with current values', async ({
