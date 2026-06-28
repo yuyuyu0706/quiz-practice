@@ -189,6 +189,96 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(boxes?.titleTop).toBeGreaterThanOrEqual(boxes?.progressBottom ?? 0);
     expect(boxes?.titleHeight).toBeGreaterThan(20);
   });
+
+  test('shows compact mobile controls without stage pin and keeps speech toggle synced', async ({
+    page,
+  }) => {
+    await installMockSpeech(page);
+    await page.setViewportSize({ width: 320, height: 720 });
+    await gotoAudioLearn(page);
+
+    await expect(page.locator('.learning-tracker')).toBeVisible();
+    await expect(page.locator('#mobile-stage-pin')).toHaveCount(0);
+    await expect(page.locator('#mobile-stage-pin-label')).toHaveCount(0);
+
+    const mobileNavButton = page.getByRole('button', { name: '☰ 教材ナビ' });
+    const mobileSpeechToggle = page.locator('#mobile-speech-toggle');
+    await expect(mobileNavButton).toBeVisible();
+    await expect(mobileSpeechToggle).toBeVisible();
+    await expect(mobileSpeechToggle).toHaveText('再生');
+
+    const navMetrics = await page.locator('.mobile-learning-nav').evaluate((nav) => {
+      const buttons = Array.from(nav.querySelectorAll('button')).map((button) => {
+        const element = button as HTMLElement;
+        const rect = element.getBoundingClientRect();
+        const styles = window.getComputedStyle(element);
+        return {
+          text: element.textContent?.trim(),
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          scrollWidth: element.scrollWidth,
+          flexGrow: styles.flexGrow,
+          flexShrink: styles.flexShrink,
+          flexBasis: styles.flexBasis,
+          cssWidth: styles.width,
+          minHeight: styles.minHeight,
+          fontSize: styles.fontSize,
+          lineHeight: styles.lineHeight,
+          whiteSpace: styles.whiteSpace,
+        };
+      });
+      return {
+        viewportWidth: window.innerWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        buttons,
+      };
+    });
+
+    expect(navMetrics.buttons).toHaveLength(2);
+    expect(navMetrics.buttons[0].text).toBe('☰ 教材ナビ');
+    expect(navMetrics.buttons[1].text).toBe('再生');
+    expect(navMetrics.buttons[0].flexGrow).toBe('0');
+    expect(navMetrics.buttons[1].flexGrow).toBe('0');
+    expect(navMetrics.buttons[0].flexBasis).toBe('auto');
+    expect(navMetrics.buttons[1].flexBasis).toBe('auto');
+    expect(navMetrics.buttons[0].minHeight).toBe('30px');
+    expect(navMetrics.buttons[1].minHeight).toBe('30px');
+    expect(navMetrics.buttons[0].lineHeight).toBe(navMetrics.buttons[0].fontSize);
+    expect(navMetrics.buttons[1].lineHeight).toBe(navMetrics.buttons[1].fontSize);
+    expect(navMetrics.buttons[0].whiteSpace).toBe('nowrap');
+    expect(navMetrics.buttons[1].whiteSpace).toBe('nowrap');
+    expect(navMetrics.buttons[0].right).toBeLessThanOrEqual(navMetrics.buttons[1].left + 1);
+    expect(navMetrics.buttons[1].right).toBeLessThanOrEqual(navMetrics.viewportWidth);
+    expect(navMetrics.documentWidth).toBe(navMetrics.viewportWidth);
+
+    await mobileSpeechToggle.click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(mobileSpeechToggle).toHaveText('一時停止');
+    await mobileSpeechToggle.click();
+    await expect(page.locator('#speech-status')).toHaveText('一時停止中');
+    await expect(mobileSpeechToggle).toHaveText('再開');
+  });
+
+  test('keeps desktop learning tracker controls available', async ({ page }) => {
+    await installMockSpeech(page);
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await gotoAudioLearn(page);
+
+    await expect(page.locator('.mobile-learning-nav')).toBeHidden();
+    await expect(page.locator('.learning-tracker')).toBeVisible();
+    await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
+    await expect(page.locator('.learning-tracker__item')).toHaveCount(3);
+    await expect(page.locator('[data-stage-target="note"]')).toBeVisible();
+    await page.locator('[data-stage-target="note"]').click();
+    await expect(page.locator('#learning-tracker-current')).toHaveText('現在：要点メモ');
+    await expect(page.locator('#note-title')).toBeInViewport();
+
+    await page.locator('#tracker-speech-toggle').click();
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    await expect(page.locator('#tracker-speech-toggle')).toHaveText('一時停止');
+  });
+
   test('resets page position and speech state for every chapter switching route', async ({
     page,
   }) => {

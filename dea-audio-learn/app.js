@@ -5,6 +5,8 @@ const sidebarToggleButton = document.querySelector('#sidebar-toggle');
 const mobileSidebarOpenButton = document.querySelector('#mobile-sidebar-open');
 const mobileSidebarCloseButton = document.querySelector('#mobile-sidebar-close');
 const mobileSidebarBackdrop = document.querySelector('#mobile-sidebar-backdrop');
+const mobileLearningNav = document.querySelector('.mobile-learning-nav');
+const mobileSpeechToggleButton = document.querySelector('#mobile-speech-toggle');
 const domainList = document.querySelector('#domain-list');
 const chapterList = document.querySelector('#chapter-list');
 const sectionSelector = document.querySelector('#section-selector');
@@ -158,12 +160,20 @@ const scrollToChapterStart = () => {
   });
 };
 
-const updateLearningTrackerScrollOffset = () => {
-  const trackerRect = learningTracker.getBoundingClientRect();
-  const computedStyle = window.getComputedStyle(learningTracker);
+const getStickyBlockHeight = (element) => {
+  if (!element) return 0;
+  const rect = element.getBoundingClientRect();
+  const computedStyle = window.getComputedStyle(element);
   const stickyTop = Number.parseFloat(computedStyle.top) || 0;
-  const safetyGap = 16;
-  const offset = Math.ceil(trackerRect.height + stickyTop + safetyGap);
+  return rect.height + stickyTop;
+};
+
+const updateLearningTrackerScrollOffset = () => {
+  const stickyBlockHeight = isDesktopViewport()
+    ? getStickyBlockHeight(learningTracker)
+    : getStickyBlockHeight(mobileLearningNav) + getStickyBlockHeight(learningTracker);
+  const safetyGap = isDesktopViewport() ? 16 : 12;
+  const offset = Math.ceil(stickyBlockHeight + safetyGap);
   document.documentElement.style.setProperty('--learning-tracker-scroll-offset', `${offset}px`);
   return offset;
 };
@@ -697,9 +707,14 @@ const updateSpeechUI = () => {
   speechToggleButton.textContent = speechButtonLabels[speechState];
   trackerSpeechToggleButton.textContent = trackerSpeechButtonLabels[speechState];
   trackerSpeechToggleButton.setAttribute('aria-label', trackerSpeechButtonLabels[speechState]);
+  if (mobileSpeechToggleButton) {
+    mobileSpeechToggleButton.textContent = trackerSpeechButtonLabels[speechState];
+    mobileSpeechToggleButton.setAttribute('aria-label', trackerSpeechButtonLabels[speechState]);
+  }
   const isToggleDisabled = unavailable || speechState === 'starting' || !currentAudioScriptText;
   speechToggleButton.disabled = isToggleDisabled;
   trackerSpeechToggleButton.disabled = isToggleDisabled;
+  if (mobileSpeechToggleButton) mobileSpeechToggleButton.disabled = isToggleDisabled;
   speechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
   trackerSpeechStatus.textContent = speechStatusLabels[speechState];
@@ -1547,6 +1562,7 @@ miniQuizStageButtons.forEach((button) => {
 speechPreviousButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex - 1));
 speechToggleButton.addEventListener('click', handleSpeechToggle);
 trackerSpeechToggleButton.addEventListener('click', handleSpeechToggle);
+mobileSpeechToggleButton?.addEventListener('click', handleSpeechToggle);
 speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 window.addEventListener('scroll', queueAudioHeadingScrollRefresh, { passive: true });
 audioTocPanel?.addEventListener('toggle', updateActiveAudioTocItem);
