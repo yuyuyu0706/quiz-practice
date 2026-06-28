@@ -226,7 +226,7 @@ body {
   visibility: visible;
   transition:
     visibility 0s linear 300ms,
-    opacity 160ms ease 300ms;
+    opacity 1ms ease 300ms;
 }
 
 .sidebar-menu .chapter-domain-section,
@@ -314,7 +314,7 @@ body {
   transform: rotate(45deg);
   transition:
     visibility 0s linear 300ms,
-    opacity 160ms ease 300ms,
+    opacity 1ms ease 300ms,
     transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
 }
 
