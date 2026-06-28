@@ -169,6 +169,12 @@ async function expectCurrentStatusBadgeOnly(page: Page, currentStage: string) {
 }
 
 test.describe('[DEA][UI] Audio Learn / Learning tracker', () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(
+      testInfo.project.name === 'mobile-chrome',
+      'Desktop learning tracker controls are intentionally hidden on mobile.'
+    );
+  });
   test('offers mini quiz next actions for normal and final chapters', async ({ page }) => {
     await gotoAudioLearn(page);
 

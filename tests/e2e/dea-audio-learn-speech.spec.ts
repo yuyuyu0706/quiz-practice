@@ -899,11 +899,14 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       'クラウドストレージ上のファイルをBronzeへ取り込む'
     );
     await expect(page.locator('#speech-toggle')).toHaveText('再生');
-    await expect(page.locator('#tracker-speech-toggle')).toHaveText('再生');
-    await clickByDom(page.locator('#tracker-speech-toggle'));
+    const syncedSpeechToggle = (await page.locator('#mobile-speech-toggle').isVisible())
+      ? page.locator('#mobile-speech-toggle')
+      : page.locator('#tracker-speech-toggle');
+    await expect(syncedSpeechToggle).toHaveText('再生');
+    await clickByDom(syncedSpeechToggle);
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
     await expect(page.locator('#speech-toggle')).toHaveText('一時停止');
-    await clickByDom(page.locator('#tracker-speech-toggle'));
+    await clickByDom(syncedSpeechToggle);
     await expect(page.locator('#speech-status')).toHaveText('一時停止中');
     await expect(page.locator('#speech-toggle')).toHaveText('再開');
     await clickVisible(page.locator('#speech-toggle'));
@@ -2702,7 +2705,9 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     });
 
     await page.locator('#sidebar-toggle').click();
-    await page.waitForTimeout(220);
+    await expect
+      .poll(async () => (await captureMenuChrome()).map((state) => state.opacity))
+      .toEqual(Array(9).fill(0));
     const collapsingMenuChrome = await captureMenuChrome();
     expect(collapsingMenuChrome).toHaveLength(9);
     collapsingMenuChrome.forEach((state) => {
