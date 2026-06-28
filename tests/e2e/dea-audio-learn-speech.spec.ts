@@ -206,19 +206,27 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     const mobileNavButton = page.getByRole('button', { name: '☰ 教材ナビ' });
     const mobileSpeechToggle = page.locator('#mobile-speech-toggle');
+    const mobileSpeechRate = page.locator('#mobile-speech-rate');
     await expect(mobileNavButton).toBeVisible();
     await expect(mobileSpeechToggle).toBeVisible();
     await expect(mobileSpeechToggle).toHaveText('再生');
+    await expect(mobileSpeechRate).toBeVisible();
+    await expect(mobileSpeechRate).toHaveValue('1');
+    await expect(mobileSpeechRate.locator('option')).toHaveText(['0.8x', '1.0x', '1.2x']);
+    await expect(page.locator('.speech-controls')).toBeHidden();
+    await expect(page.locator('.speech-progress')).toBeHidden();
 
     const navMetrics = await page.locator('.mobile-learning-nav').evaluate((nav) => {
-      const buttons = Array.from(nav.querySelectorAll('button')).map((button) => {
-        const element = button as HTMLElement;
+      const items = Array.from(nav.children).map((child) => {
+        const element = child as HTMLElement;
         const rect = element.getBoundingClientRect();
         const styles = window.getComputedStyle(element);
         return {
           text: element.textContent?.trim(),
           left: rect.left,
           right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
           width: rect.width,
           scrollWidth: element.scrollWidth,
           flexGrow: styles.flexGrow,
@@ -234,26 +242,33 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       return {
         viewportWidth: window.innerWidth,
         documentWidth: document.documentElement.scrollWidth,
-        buttons,
+        navHeight: nav.getBoundingClientRect().height,
+        items,
       };
     });
 
-    expect(navMetrics.buttons).toHaveLength(2);
-    expect(navMetrics.buttons[0].text).toBe('☰ 教材ナビ');
-    expect(navMetrics.buttons[1].text).toBe('再生');
-    expect(navMetrics.buttons[0].flexGrow).toBe('0');
-    expect(navMetrics.buttons[1].flexGrow).toBe('0');
-    expect(navMetrics.buttons[0].flexBasis).toBe('auto');
-    expect(navMetrics.buttons[1].flexBasis).toBe('auto');
-    expect(navMetrics.buttons[0].minHeight).toBe('30px');
-    expect(navMetrics.buttons[1].minHeight).toBe('30px');
-    expect(navMetrics.buttons[0].lineHeight).toBe(navMetrics.buttons[0].fontSize);
-    expect(navMetrics.buttons[1].lineHeight).toBe(navMetrics.buttons[1].fontSize);
-    expect(navMetrics.buttons[0].whiteSpace).toBe('nowrap');
-    expect(navMetrics.buttons[1].whiteSpace).toBe('nowrap');
-    expect(navMetrics.buttons[0].right).toBeLessThanOrEqual(navMetrics.buttons[1].left + 1);
-    expect(navMetrics.buttons[1].right).toBeLessThanOrEqual(navMetrics.viewportWidth);
+    expect(navMetrics.items).toHaveLength(3);
+    expect(navMetrics.items[0].text).toBe('☰ 教材ナビ');
+    expect(navMetrics.items[1].text).toBe('再生');
+    expect(navMetrics.items[2].text).toBe('速度0.8x1.0x1.2x');
+    for (const item of navMetrics.items) {
+      expect(item.flexGrow).toBe('0');
+      expect(item.flexBasis).toBe('auto');
+      expect(item.minHeight).toBe('30px');
+      expect(item.lineHeight).toBe(item.fontSize);
+      expect(item.whiteSpace).toBe('nowrap');
+      expect(item.top).toBe(navMetrics.items[0].top);
+      expect(item.bottom).toBeLessThanOrEqual(navMetrics.items[0].bottom + 1);
+    }
+    expect(navMetrics.items[0].right).toBeLessThanOrEqual(navMetrics.items[1].left + 1);
+    expect(navMetrics.items[1].right).toBeLessThanOrEqual(navMetrics.items[2].left + 1);
+    expect(navMetrics.items[2].right).toBeLessThanOrEqual(navMetrics.viewportWidth);
     expect(navMetrics.documentWidth).toBe(navMetrics.viewportWidth);
+
+    await mobileSpeechRate.selectOption('1.2');
+    await expect(page.locator('#speech-rate')).toHaveValue('1.2');
+    await page.locator('#speech-rate').selectOption('0.8');
+    await expect(mobileSpeechRate).toHaveValue('0.8');
 
     await mobileSpeechToggle.click();
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
