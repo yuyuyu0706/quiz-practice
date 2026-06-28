@@ -1035,7 +1035,6 @@ body {
 .mobile-learning-nav,
 .mobile-sidebar-open,
 .mobile-sidebar-close,
-.mobile-stage-pin,
 .mobile-speech-toggle {
   display: none;
 }
@@ -1302,10 +1301,11 @@ body {
     position: sticky;
     top: 0;
     z-index: 8;
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) auto minmax(3.7rem, 0.8fr);
+    display: flex;
+    flex-wrap: nowrap;
     gap: 0.35rem;
     align-items: center;
+    justify-content: flex-start;
     margin: 0;
     padding: 0.45rem max(0.5rem, env(safe-area-inset-right)) 0.45rem
       max(0.5rem, env(safe-area-inset-left));
@@ -1315,10 +1315,10 @@ body {
   }
 
   .mobile-sidebar-open,
-  .mobile-stage-pin,
   .mobile-speech-toggle {
     display: inline-flex;
-    min-width: 0;
+    flex: 0 0 auto;
+    width: auto;
     min-height: 40px;
     align-items: center;
     justify-content: center;
@@ -1334,23 +1334,6 @@ body {
     border: 1px solid var(--color-primary);
     color: #ffffff;
     background: var(--color-primary);
-  }
-
-  .mobile-stage-pin {
-    gap: 0.22rem;
-    border: 1px solid #cdd5ff;
-    color: var(--color-primary);
-    background: var(--color-primary-soft);
-  }
-
-  .mobile-stage-pin__icon {
-    font-size: 0.58rem;
-    line-height: 1;
-  }
-
-  .mobile-stage-pin__label {
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .mobile-speech-toggle {

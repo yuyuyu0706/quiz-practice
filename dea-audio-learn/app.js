@@ -6,8 +6,6 @@ const mobileSidebarOpenButton = document.querySelector('#mobile-sidebar-open');
 const mobileSidebarCloseButton = document.querySelector('#mobile-sidebar-close');
 const mobileSidebarBackdrop = document.querySelector('#mobile-sidebar-backdrop');
 const mobileLearningNav = document.querySelector('.mobile-learning-nav');
-const mobileStagePinButton = document.querySelector('#mobile-stage-pin');
-const mobileStagePinLabel = document.querySelector('#mobile-stage-pin-label');
 const mobileSpeechToggleButton = document.querySelector('#mobile-speech-toggle');
 const domainList = document.querySelector('#domain-list');
 const chapterList = document.querySelector('#chapter-list');
@@ -64,9 +62,9 @@ let learningStageRafId = null;
 let audioHeadingScrollRafId = null;
 let manualAudioTocTargetId = null;
 const learningStages = [
-  { key: 'audio', label: '音声教材', shortLabel: '音声', sectionId: 'audio-material-section' },
-  { key: 'note', label: '要点メモ', shortLabel: '要点', sectionId: 'note-section' },
-  { key: 'quiz', label: 'ミニクイズ', shortLabel: 'クイズ', sectionId: 'mini-quiz-section' },
+  { key: 'audio', label: '音声教材', sectionId: 'audio-material-section' },
+  { key: 'note', label: '要点メモ', sectionId: 'note-section' },
+  { key: 'quiz', label: 'ミニクイズ', sectionId: 'mini-quiz-section' },
 ];
 let currentAudioScriptText = '';
 let speechSections = [];
@@ -180,15 +178,6 @@ const updateLearningTrackerUI = () => {
   const currentStage =
     learningStages.find((stage) => stage.key === currentLearningStage) ?? learningStages[0];
   learningTrackerCurrent.textContent = `現在：${currentStage.label}`;
-  if (mobileStagePinButton && mobileStagePinLabel) {
-    mobileStagePinButton.dataset.stageTarget = currentStage.key;
-    mobileStagePinLabel.textContent = currentStage.shortLabel;
-    mobileStagePinButton.setAttribute(
-      'aria-label',
-      `現在の学習段階：${currentStage.label}。${currentStage.label}へ移動`
-    );
-  }
-
   learningTrackerItems.forEach((item) => {
     const stageKey = item.dataset.stage;
     const stageIndex = getLearningStageIndex(stageKey);
