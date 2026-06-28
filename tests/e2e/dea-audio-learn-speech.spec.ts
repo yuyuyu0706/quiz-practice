@@ -197,10 +197,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.setViewportSize({ width: 320, height: 720 });
     await gotoAudioLearn(page);
 
-    await expect(page.locator('.learning-tracker')).toBeHidden();
+    await expect(page.locator('.learning-tracker')).toBeVisible();
     await expect(page.locator('#mobile-stage-pin')).toHaveCount(0);
     await expect(page.locator('#mobile-stage-pin-label')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /音声|要点|クイズ/ })).toHaveCount(0);
 
     const mobileNavButton = page.getByRole('button', { name: '☰ 教材ナビ' });
     const mobileSpeechToggle = page.locator('#mobile-speech-toggle');

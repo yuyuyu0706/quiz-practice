@@ -160,13 +160,20 @@ const scrollToChapterStart = () => {
   });
 };
 
+const getStickyBlockHeight = (element) => {
+  if (!element) return 0;
+  const rect = element.getBoundingClientRect();
+  const computedStyle = window.getComputedStyle(element);
+  const stickyTop = Number.parseFloat(computedStyle.top) || 0;
+  return rect.height + stickyTop;
+};
+
 const updateLearningTrackerScrollOffset = () => {
-  const offsetSource = isDesktopViewport() ? learningTracker : mobileLearningNav;
-  const sourceRect = offsetSource?.getBoundingClientRect() ?? { height: 0 };
-  const computedStyle = offsetSource ? window.getComputedStyle(offsetSource) : null;
-  const stickyTop = computedStyle ? Number.parseFloat(computedStyle.top) || 0 : 0;
+  const stickyBlockHeight = isDesktopViewport()
+    ? getStickyBlockHeight(learningTracker)
+    : getStickyBlockHeight(mobileLearningNav) + getStickyBlockHeight(learningTracker);
   const safetyGap = isDesktopViewport() ? 16 : 12;
-  const offset = Math.ceil(sourceRect.height + stickyTop + safetyGap);
+  const offset = Math.ceil(stickyBlockHeight + safetyGap);
   document.documentElement.style.setProperty('--learning-tracker-scroll-offset', `${offset}px`);
   return offset;
 };
