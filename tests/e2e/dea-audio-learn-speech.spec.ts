@@ -197,7 +197,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await page.setViewportSize({ width: 320, height: 720 });
     await gotoAudioLearn(page);
 
-    await expect(page.locator('.learning-tracker')).toBeVisible();
+    await expect(page.locator('.learning-tracker')).toBeHidden();
+    await expect(page.locator('[data-stage-target]')).toHaveCount(3);
+    await expect(page.locator('[data-stage-target="note"]')).toBeHidden();
+    await expect(page.locator('#tracker-speech-toggle')).toBeHidden();
     await expect(page.locator('#mobile-stage-pin')).toHaveCount(0);
     await expect(page.locator('#mobile-stage-pin-label')).toHaveCount(0);
 
