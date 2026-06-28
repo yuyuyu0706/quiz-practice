@@ -2921,17 +2921,25 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       expect(state.opacity).toBeLessThan(0.05);
     });
 
-    await page.waitForTimeout(120);
-    const expandingMidMenuChrome = await captureMenuChrome();
-    const expandingMidHeaderChrome = expandingMidMenuChrome.filter(
-      (state) =>
-        state.selector.includes('sidebar-menu__text') ||
-        state.selector.includes('sidebar-menu__chevron')
-    );
-    expandingMidHeaderChrome.forEach((state) => {
-      expect(state.visibility).toBe('visible');
-      expect(state.opacity).toBeGreaterThan(0.95);
-    });
+    await expect
+      .poll(async () => {
+        const expandingMidMenuChrome = await captureMenuChrome();
+        const expandingMidHeaderChrome = expandingMidMenuChrome.filter(
+          (state) =>
+            state.selector.includes('sidebar-menu__text') ||
+            state.selector.includes('sidebar-menu__chevron')
+        );
+        return expandingMidHeaderChrome.map((state) => ({
+          opacity: state.opacity,
+          visibility: state.visibility,
+        }));
+      })
+      .toEqual(
+        Array.from({ length: 6 }, () => ({
+          opacity: expect.toBeGreaterThan(0.95),
+          visibility: 'visible',
+        }))
+      );
 
     await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
     await page.waitForTimeout(650);
@@ -3064,7 +3072,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await expect(openButton).toBeFocused();
 
     await openButton.click();
-    await page.locator('#mobile-sidebar-backdrop').click({ position: { x: 1, y: 1 } });
+    await page.mouse.click(385, 100);
     await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
     await expect(openButton).toBeFocused();
   });
@@ -3077,7 +3085,7 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await page.locator('#section-selector').evaluate((details) => {
       (details as HTMLDetailsElement).open = true;
     });
-    await clickByDom(page.locator('.domain-button').nth(1));
+    await clickByDom(page.locator('.domain-button').first());
     await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
     await expect(page.locator('#selected-chapter-title')).toBeFocused();
     await expectPageScrolledToTop(page);
