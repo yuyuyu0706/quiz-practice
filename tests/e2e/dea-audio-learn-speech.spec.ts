@@ -99,6 +99,61 @@ async function openSectionSelector(page: Page) {
   });
 }
 
+async function expectMobileAudioContentWithinViewport(page: Page) {
+  const layout = await page.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const documentScrollWidth = document.documentElement.scrollWidth;
+    const selectors = [
+      '#selected-chapter-title',
+      '#audio-script-markdown',
+      '#audio-script-markdown h2',
+      '#audio-script-markdown h3',
+      '#audio-script-markdown p',
+      '#audio-script-markdown li',
+      '#audio-script-markdown a',
+      '#audio-script-markdown code:not(pre code)',
+    ];
+
+    const overflowingElements = selectors.flatMap((selector) =>
+      Array.from(document.querySelectorAll(selector))
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+          return { selector, left: rect.left, right: rect.right, text };
+        })
+        .filter((rect) => rect.right > viewportWidth + 1 || rect.left < -1)
+    );
+
+    const headingWithButtonOverlap = Array.from(
+      document.querySelectorAll('#audio-script-markdown h2, #audio-script-markdown h3')
+    ).some((heading) => {
+      const text = heading.querySelector('.audio-heading-text')?.getBoundingClientRect();
+      const button = heading.querySelector('.audio-heading-play')?.getBoundingClientRect();
+      return Boolean(text && button && text.right > button.left - 1);
+    });
+
+    const codeBlocks = Array.from(document.querySelectorAll('#audio-script-markdown pre')).map(
+      (pre) => ({
+        clientWidth: pre.clientWidth,
+        scrollWidth: pre.scrollWidth,
+      })
+    );
+
+    return {
+      viewportWidth,
+      documentScrollWidth,
+      overflowingElements,
+      headingWithButtonOverlap,
+      hasScrollableCodeBlock: codeBlocks.some((block) => block.scrollWidth > block.clientWidth),
+    };
+  });
+
+  expect(layout.documentScrollWidth).toBeLessThanOrEqual(layout.viewportWidth + 1);
+  expect(layout.overflowingElements).toEqual([]);
+  expect(layout.headingWithButtonOverlap).toBe(false);
+  expect(layout.hasScrollableCodeBlock).toBe(true);
+}
+
 async function expectMobileSidebarOpenIfNeeded(page: Page) {
   if (await page.locator('#mobile-sidebar-open').isVisible()) {
     await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
@@ -195,6 +250,31 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(boxes).not.toBeNull();
     expect(boxes?.titleTop).toBeGreaterThanOrEqual(boxes?.progressBottom ?? 0);
     expect(boxes?.titleHeight).toBeGreaterThan(20);
+  });
+
+  test('wraps long mobile chapter titles and audio markdown without page overflow', async ({
+    page,
+  }) => {
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await gotoAudioLearn(page);
+
+      for (const domainName of [
+        'Data Ingestion and Loading',
+        'Data Transformation and Modeling',
+        'Troubleshooting, Monitoring, and Optimization',
+      ]) {
+        await selectDomain(page, domainName);
+        await expect(page.locator('#selected-chapter-title')).toContainText(
+          `${domainName}の全体像`
+        );
+        await expect(page.locator('#audio-script-markdown')).toContainText(domainName);
+        await expect(
+          page.locator('#audio-script-markdown .audio-heading-play').first()
+        ).toBeVisible();
+        await expectMobileAudioContentWithinViewport(page);
+      }
+    }
   });
 
   test('shows compact mobile controls without stage pin and keeps speech toggle synced', async ({
