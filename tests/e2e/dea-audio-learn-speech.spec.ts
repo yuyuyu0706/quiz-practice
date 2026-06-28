@@ -3029,4 +3029,74 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('position', 'fixed');
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'auto');
   });
+
+  test('traps focus in the mobile drawer and restores focus after close actions', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+
+    const openButton = page.locator('#mobile-sidebar-open');
+    const closeButton = page.locator('#mobile-sidebar-close');
+    const sidebar = page.locator('#chapter-sidebar');
+
+    await expect(sidebar).toHaveAttribute('inert', '');
+    await openButton.click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'true');
+    await expect(closeButton).toBeFocused();
+    await expect(sidebar).toHaveAttribute('role', 'dialog');
+    await expect(sidebar).toHaveAttribute('aria-modal', 'true');
+
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.locator('#audio-toc-list a[href="#mini-quiz-title"]')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(closeButton).toBeFocused();
+
+    await closeButton.click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    await expect(openButton).toBeFocused();
+    await expect(sidebar).toHaveAttribute('inert', '');
+
+    await openButton.click();
+    await expect(closeButton).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    await expect(openButton).toBeFocused();
+
+    await openButton.click();
+    await page.locator('#mobile-sidebar-backdrop').click({ position: { x: 1, y: 1 } });
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    await expect(openButton).toBeFocused();
+  });
+
+  test('returns focus to main content after mobile drawer selections', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+
+    await page.locator('#mobile-sidebar-open').click();
+    await page.locator('#section-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await clickByDom(page.locator('.domain-button').nth(1));
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
+    await expect(page.locator('#selected-chapter-title')).toBeFocused();
+    await expectPageScrolledToTop(page);
+
+    await page.locator('#mobile-sidebar-open').click();
+    await page.locator('#chapter-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await clickByDom(page.locator('.chapter-button').nth(1));
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
+    await expect(page.locator('#selected-chapter-title')).toBeFocused();
+    await expectPageScrolledToTop(page);
+
+    await page.locator('#mobile-sidebar-open').click();
+    const tocTarget = page.locator('#audio-toc-list a[href^="#audio-heading-"]').nth(1);
+    const targetHref = await tocTarget.getAttribute('href');
+    expect(targetHref).not.toBeNull();
+    await clickByDom(tocTarget);
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
+    await expect(page.locator(targetHref ?? '#audio-material-title')).toBeFocused();
+  });
 });
