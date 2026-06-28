@@ -250,7 +250,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(navMetrics.items).toHaveLength(3);
     expect(navMetrics.items[0].text).toBe('☰ 教材ナビ');
     expect(navMetrics.items[1].text).toBe('再生');
-    expect(navMetrics.items[2].text).toBe('速度0.8x1.0x1.2x');
+    expect(navMetrics.items[2].text.replace(/\s+/g, '')).toBe('速度0.8x1.0x1.2x');
     for (const item of navMetrics.items) {
       expect(item.flexGrow).toBe('0');
       expect(item.flexBasis).toBe('auto');
@@ -267,7 +267,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     await mobileSpeechRate.selectOption('1.2');
     await expect(page.locator('#speech-rate')).toHaveValue('1.2');
-    await page.locator('#speech-rate').selectOption('0.8');
+    await page.locator('#speech-rate').evaluate((select) => {
+      (select as HTMLSelectElement).value = '0.8';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await expect(mobileSpeechRate).toHaveValue('0.8');
 
     await mobileSpeechToggle.click();

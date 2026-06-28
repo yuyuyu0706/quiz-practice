@@ -1521,11 +1521,6 @@ body {
     padding: 0.5rem 0.5rem 0.5rem 0.65rem;
   }
 
-  .speech-controls,
-  .speech-progress {
-    display: none;
-  }
-
   .chapter-context-line {
     align-items: flex-start;
     flex-direction: column;
@@ -1592,6 +1587,13 @@ body {
 
   .audio-toc__item--h3 {
     margin-left: 0.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .speech-controls,
+  .speech-progress {
+    display: none;
   }
 }
 
