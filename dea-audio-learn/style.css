@@ -728,6 +728,10 @@ body {
   gap: 0.55rem;
 }
 
+.audio-heading-text {
+  min-width: 0;
+}
+
 .audio-heading-play {
   flex: 0 0 auto;
   border: 1px solid var(--color-primary);
@@ -1384,9 +1388,45 @@ body {
     overflow: hidden;
   }
 
+  body {
+    overflow-x: clip;
+  }
+
   .layout[data-sidebar-state='collapsed'],
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .layout,
+  .meta-card,
+  .markdown-card,
+  .note-card,
+  .quiz-card,
+  .audio-card,
+  .markdown-body,
+  .audio-card--primary .markdown-body,
+  #audio-script-markdown {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  #selected-chapter-title,
+  #audio-script-markdown :is(h2, h3, p, li, a, code, strong, em),
+  #audio-script-markdown .audio-heading-text {
+    overflow-wrap: anywhere;
+  }
+
+  #audio-script-markdown :is(h2, h3) {
+    align-items: flex-start;
+  }
+
+  #audio-script-markdown :is(h2, h3) .audio-heading-play {
+    margin-top: 0.1rem;
+  }
+
+  #audio-script-markdown pre,
+  #audio-script-markdown pre code {
+    overflow-wrap: normal;
   }
 
   .chapter-panel,

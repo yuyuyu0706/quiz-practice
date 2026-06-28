@@ -1163,7 +1163,13 @@ const addHeadingPlayButtons = () => {
       event.preventDefault();
       handleHeadingPlay(heading.id);
     });
-    heading.append(button);
+
+    const textWrapper = document.createElement('span');
+    textWrapper.className = 'audio-heading-text';
+    while (heading.firstChild) {
+      textWrapper.append(heading.firstChild);
+    }
+    heading.append(textWrapper, button);
   });
 };
 
