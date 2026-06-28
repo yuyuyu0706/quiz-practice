@@ -125,12 +125,13 @@ const focusElementWithoutTabStop = (element, options = {}) => {
   }
 };
 
-const focusMobileSidebarTrigger = () => {
-  if (!isDesktopViewport() && mobileSidebarOpenButton) mobileSidebarOpenButton.focus();
-};
-
-const focusSelectedChapterTitle = () => {
-  focusElementWithoutTabStop(selectedTitle, { preventScroll: true });
+const focusElementBeforeMobileSidebarClose = (element, options = { preventScroll: true }) => {
+  if (!element) return;
+  if (element.matches?.(focusableSidebarSelector)) {
+    element.focus(options);
+    return;
+  }
+  focusElementWithoutTabStop(element, options);
 };
 
 const getVisibleFocusableSidebarElements = () => {
@@ -165,9 +166,17 @@ const syncMobileSidebarAccessibility = () => {
   }
 };
 
-const closeMobileSidebar = ({ restoreFocus = true } = {}) => {
+const closeMobileSidebar = ({
+  beforeFocus = null,
+  focusTarget = null,
+  focusTargetResolver = null,
+  restoreFocus = true,
+} = {}) => {
+  beforeFocus?.();
+  const resolvedFocusTarget =
+    focusTargetResolver?.() ?? focusTarget ?? (restoreFocus ? mobileSidebarOpenButton : null);
+  focusElementBeforeMobileSidebarClose(resolvedFocusTarget);
   setMobileSidebarOpen(false);
-  if (restoreFocus) focusMobileSidebarTrigger();
 };
 
 const handleMobileSidebarKeydown = (event) => {
@@ -1240,9 +1249,11 @@ const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
     if (!isMobileSidebarOpen || isDesktopViewport()) return;
     event.preventDefault();
     const target = document.getElementById(href.slice(1));
-    closeMobileSidebar({ restoreFocus: false });
-    target?.scrollIntoView({ block: 'start', behavior: 'auto' });
-    focusElementWithoutTabStop(target, { preventScroll: true });
+    closeMobileSidebar({
+      beforeFocus: () => target?.scrollIntoView({ block: 'start', behavior: 'auto' }),
+      focusTarget: target,
+      restoreFocus: false,
+    });
   });
   item.append(link);
   audioTocList.append(item);
@@ -1667,9 +1678,16 @@ const selectChapterByIndex = async (chapterIndex) => {
   } finally {
     const shouldFocusTitle = shouldFocusChapterTitleAfterSelection && !isDesktopViewport();
     shouldFocusChapterTitleAfterSelection = false;
-    setMobileSidebarOpen(false);
-    scrollToChapterStart();
-    if (shouldFocusTitle) focusSelectedChapterTitle();
+    if (shouldFocusTitle) {
+      closeMobileSidebar({
+        beforeFocus: scrollToChapterStart,
+        focusTarget: selectedTitle,
+        restoreFocus: false,
+      });
+    } else {
+      setMobileSidebarOpen(false);
+      scrollToChapterStart();
+    }
     resetLearningTracker();
   }
 };

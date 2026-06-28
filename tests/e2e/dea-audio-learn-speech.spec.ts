@@ -15,6 +15,7 @@ const appSource = readFileSync(new URL('../../dea-audio-learn/app.js', import.me
 declare global {
   interface Window {
     __speechCalls: Array<Record<string, unknown>>;
+    __mobileCloseEvents: Array<Record<string, string | null>>;
   }
 }
 
@@ -76,6 +77,77 @@ async function closeMobileSidebarIfNeeded(page: Page) {
     await page.locator('#mobile-sidebar-close').click();
     await expect(chapterSidebar).toHaveAttribute('data-mobile-open', 'false');
   }
+}
+
+async function startMobileCloseOrderCapture(page: Page) {
+  await page.evaluate(() => {
+    window.__mobileCloseEvents = [];
+    const sidebar = document.querySelector('#chapter-sidebar');
+    const describeElement = (element: Element | null) => {
+      if (!element) return null;
+      if (element.id) return `#${element.id}`;
+      const href = element.getAttribute('href');
+      if (href) return `${element.tagName.toLowerCase()}[href="${href}"]`;
+      return element.tagName.toLowerCase();
+    };
+
+    document.addEventListener(
+      'focusin',
+      (event) => {
+        window.__mobileCloseEvents.push({
+          target: describeElement(event.target instanceof Element ? event.target : null),
+          type: 'focusin',
+        });
+      },
+      { capture: true }
+    );
+
+    if (!sidebar) return;
+    new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type !== 'attributes') return;
+        window.__mobileCloseEvents.push({
+          attr: mutation.attributeName,
+          target: '#chapter-sidebar',
+          type: 'mutation',
+          value: sidebar.getAttribute(mutation.attributeName ?? ''),
+        });
+      });
+    }).observe(sidebar, {
+      attributeFilter: ['aria-hidden', 'data-mobile-open', 'inert'],
+      attributes: true,
+    });
+  });
+}
+
+async function expectFocusBeforeMobileDrawerClose(page: Page, focusTarget: string) {
+  const events = await page.evaluate(() => window.__mobileCloseEvents);
+  const focusIndex = events.findIndex(
+    (event) => event.type === 'focusin' && event.target === focusTarget
+  );
+  const closeIndex = events.findIndex(
+    (event) =>
+      event.type === 'mutation' && event.attr === 'data-mobile-open' && event.value === 'false'
+  );
+  const inertIndex = events.findIndex(
+    (event) => event.type === 'mutation' && event.attr === 'inert'
+  );
+  const ariaHiddenIndex = events.findIndex(
+    (event) => event.type === 'mutation' && event.attr === 'aria-hidden' && event.value === 'true'
+  );
+
+  expect(focusIndex).toBeGreaterThanOrEqual(0);
+  expect(closeIndex).toBeGreaterThan(focusIndex);
+  expect(inertIndex).toBeGreaterThan(focusIndex);
+  expect(ariaHiddenIndex).toBeGreaterThan(focusIndex);
+  await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'false');
+  await expect(page.locator('#chapter-sidebar')).toHaveAttribute('inert', '');
+  await expect(page.locator('#chapter-sidebar')).toHaveAttribute('aria-hidden', 'true');
+  await expect
+    .poll(() =>
+      page.locator('#chapter-sidebar').evaluate((panel) => panel.contains(document.activeElement))
+    )
+    .toBe(false);
 }
 
 function skipMobileChromeProject(projectName: string) {
@@ -3072,6 +3144,55 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await page.mouse.click(385, 100);
     await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
     await expect(openButton).toBeFocused();
+  });
+
+  test('focuses the return target before applying closed mobile drawer state', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await startMobileCloseOrderCapture(page);
+    await page.locator('#mobile-sidebar-close').click();
+    await expectFocusBeforeMobileDrawerClose(page, '#mobile-sidebar-open');
+
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await startMobileCloseOrderCapture(page);
+    await page.keyboard.press('Escape');
+    await expectFocusBeforeMobileDrawerClose(page, '#mobile-sidebar-open');
+
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await startMobileCloseOrderCapture(page);
+    await page.mouse.click(385, 100);
+    await expectFocusBeforeMobileDrawerClose(page, '#mobile-sidebar-open');
+
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await page.locator('#section-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await startMobileCloseOrderCapture(page);
+    await clickByDom(page.locator('.domain-button').first());
+    await expectFocusBeforeMobileDrawerClose(page, '#selected-chapter-title');
+
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await page.locator('#chapter-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await startMobileCloseOrderCapture(page);
+    await clickByDom(page.locator('.chapter-button').nth(1));
+    await expectFocusBeforeMobileDrawerClose(page, '#selected-chapter-title');
+
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    const tocTarget = page.locator('#audio-toc-list a[href^="#audio-heading-"]').nth(1);
+    const targetHref = await tocTarget.getAttribute('href');
+    expect(targetHref).not.toBeNull();
+    await startMobileCloseOrderCapture(page);
+    await clickByDom(tocTarget);
+    await expectFocusBeforeMobileDrawerClose(page, targetHref ?? '#audio-material-title');
   });
 
   test('keeps the closed mobile drawer out of keyboard tab order', async ({ page }) => {
