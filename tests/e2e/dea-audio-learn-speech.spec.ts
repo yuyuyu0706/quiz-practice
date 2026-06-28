@@ -2929,17 +2929,14 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
             state.selector.includes('sidebar-menu__text') ||
             state.selector.includes('sidebar-menu__chevron')
         );
-        return expandingMidHeaderChrome.map((state) => ({
-          opacity: state.opacity,
-          visibility: state.visibility,
-        }));
+        return (
+          expandingMidHeaderChrome.length === 6 &&
+          expandingMidHeaderChrome.every(
+            (state) => state.visibility === 'visible' && state.opacity > 0.95
+          )
+        );
       })
-      .toEqual(
-        Array.from({ length: 6 }, () => ({
-          opacity: expect.toBeGreaterThan(0.95),
-          visibility: 'visible',
-        }))
-      );
+      .toBe(true);
 
     await expect(page.locator('#app-layout')).toHaveAttribute('data-sidebar-state', 'expanded');
     await page.waitForTimeout(650);
