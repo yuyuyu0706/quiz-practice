@@ -1315,7 +1315,8 @@ body {
   }
 
   .mobile-sidebar-open,
-  .mobile-speech-toggle {
+  .mobile-speech-toggle,
+  .mobile-speech-rate {
     display: inline-flex;
     flex: 0 0 auto;
     width: auto;
@@ -1342,7 +1343,30 @@ body {
     background: var(--color-primary);
   }
 
-  .mobile-speech-toggle:disabled {
+  .mobile-speech-rate {
+    gap: 0.22rem;
+    border: 1px solid #cdd5ff;
+    color: var(--color-text);
+    background: #ffffff;
+  }
+
+  .mobile-speech-rate span {
+    flex: 0 0 auto;
+  }
+
+  .mobile-speech-rate select {
+    max-width: 4.2rem;
+    height: 24px;
+    padding-block: 0;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    font: inherit;
+    line-height: 24px;
+  }
+
+  .mobile-speech-toggle:disabled,
+  .mobile-speech-rate:has(select:disabled) {
     border-color: #ccd3e0;
     color: var(--color-muted);
     background: #f1f5f9;
@@ -1497,13 +1521,9 @@ body {
     padding: 0.5rem 0.5rem 0.5rem 0.65rem;
   }
 
-  .speech-controls {
-    align-items: flex-start;
-  }
-
-  .speech-rate {
-    align-items: stretch;
-    flex-direction: column;
+  .speech-controls,
+  .speech-progress {
+    display: none;
   }
 
   .chapter-context-line {

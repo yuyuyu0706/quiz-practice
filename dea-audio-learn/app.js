@@ -7,6 +7,7 @@ const mobileSidebarCloseButton = document.querySelector('#mobile-sidebar-close')
 const mobileSidebarBackdrop = document.querySelector('#mobile-sidebar-backdrop');
 const mobileLearningNav = document.querySelector('.mobile-learning-nav');
 const mobileSpeechToggleButton = document.querySelector('#mobile-speech-toggle');
+const mobileSpeechRateSelect = document.querySelector('#mobile-speech-rate');
 const domainList = document.querySelector('#domain-list');
 const chapterList = document.querySelector('#chapter-list');
 const sectionSelector = document.querySelector('#section-selector');
@@ -716,6 +717,7 @@ const updateSpeechUI = () => {
   trackerSpeechToggleButton.disabled = isToggleDisabled;
   if (mobileSpeechToggleButton) mobileSpeechToggleButton.disabled = isToggleDisabled;
   speechRateSelect.disabled = unavailable;
+  if (mobileSpeechRateSelect) mobileSpeechRateSelect.disabled = unavailable;
   speechStatus.textContent = speechStatusLabels[speechState];
   trackerSpeechStatus.textContent = speechStatusLabels[speechState];
   updateSpeechProgressUI();
@@ -1569,7 +1571,16 @@ audioTocPanel?.addEventListener('toggle', updateActiveAudioTocItem);
 learningTrackerButtons.forEach((button) => {
   button.addEventListener('click', () => scrollToLearningStage(button.dataset.stageTarget));
 });
-speechRateSelect.addEventListener('change', () => {
+const syncSpeechRateSelects = (sourceSelect) => {
+  const nextRate = sourceSelect.value;
+  [speechRateSelect, mobileSpeechRateSelect].filter(Boolean).forEach((select) => {
+    if (select !== sourceSelect) select.value = nextRate;
+  });
+};
+
+const handleSpeechRateChange = (event) => {
+  const sourceSelect = event.currentTarget;
+  syncSpeechRateSelects(sourceSelect);
   const previousSpeechState = speechState;
   const newRate = Number(speechRateSelect.value);
   logSpeech('speech rate changed', {
@@ -1586,7 +1597,10 @@ speechRateSelect.addEventListener('change', () => {
         : 'next utterance',
   });
   restartCurrentChunkForRateChange(previousSpeechState);
-});
+};
+
+speechRateSelect.addEventListener('change', handleSpeechRateChange);
+mobileSpeechRateSelect?.addEventListener('change', handleSpeechRateChange);
 
 if (
   'speechSynthesis' in window &&

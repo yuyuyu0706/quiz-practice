@@ -78,6 +78,13 @@ async function closeMobileSidebarIfNeeded(page: Page) {
   }
 }
 
+function skipMobileChromeProject(projectName: string) {
+  test.skip(
+    projectName === 'mobile-chrome',
+    'Desktop speech controls are hidden on mobile viewports.'
+  );
+}
+
 async function openChapterSelector(page: Page) {
   await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
@@ -206,19 +213,32 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
     const mobileNavButton = page.getByRole('button', { name: '☰ 教材ナビ' });
     const mobileSpeechToggle = page.locator('#mobile-speech-toggle');
+    const mobileSpeechRate = page.locator('#mobile-speech-rate');
     await expect(mobileNavButton).toBeVisible();
     await expect(mobileSpeechToggle).toBeVisible();
     await expect(mobileSpeechToggle).toHaveText('再生');
+    await expect(mobileSpeechRate).toBeVisible();
+    await expect(mobileSpeechRate).toHaveValue('1');
+    await expect(mobileSpeechRate.locator('option')).toHaveText(['0.8x', '1.0x', '1.2x']);
+    await expect(page.locator('.speech-controls')).toBeHidden();
+    await expect(page.locator('.speech-progress')).toBeHidden();
 
+    await page.setViewportSize({ width: 390, height: 720 });
+    await expect(page.locator('.speech-controls')).toBeHidden();
+    await expect(page.locator('.speech-progress')).toBeHidden();
+
+    await page.setViewportSize({ width: 320, height: 720 });
     const navMetrics = await page.locator('.mobile-learning-nav').evaluate((nav) => {
-      const buttons = Array.from(nav.querySelectorAll('button')).map((button) => {
-        const element = button as HTMLElement;
+      const items = Array.from(nav.children).map((child) => {
+        const element = child as HTMLElement;
         const rect = element.getBoundingClientRect();
         const styles = window.getComputedStyle(element);
         return {
           text: element.textContent?.trim(),
           left: rect.left,
           right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
           width: rect.width,
           scrollWidth: element.scrollWidth,
           flexGrow: styles.flexGrow,
@@ -234,26 +254,36 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       return {
         viewportWidth: window.innerWidth,
         documentWidth: document.documentElement.scrollWidth,
-        buttons,
+        navHeight: nav.getBoundingClientRect().height,
+        items,
       };
     });
 
-    expect(navMetrics.buttons).toHaveLength(2);
-    expect(navMetrics.buttons[0].text).toBe('☰ 教材ナビ');
-    expect(navMetrics.buttons[1].text).toBe('再生');
-    expect(navMetrics.buttons[0].flexGrow).toBe('0');
-    expect(navMetrics.buttons[1].flexGrow).toBe('0');
-    expect(navMetrics.buttons[0].flexBasis).toBe('auto');
-    expect(navMetrics.buttons[1].flexBasis).toBe('auto');
-    expect(navMetrics.buttons[0].minHeight).toBe('30px');
-    expect(navMetrics.buttons[1].minHeight).toBe('30px');
-    expect(navMetrics.buttons[0].lineHeight).toBe(navMetrics.buttons[0].fontSize);
-    expect(navMetrics.buttons[1].lineHeight).toBe(navMetrics.buttons[1].fontSize);
-    expect(navMetrics.buttons[0].whiteSpace).toBe('nowrap');
-    expect(navMetrics.buttons[1].whiteSpace).toBe('nowrap');
-    expect(navMetrics.buttons[0].right).toBeLessThanOrEqual(navMetrics.buttons[1].left + 1);
-    expect(navMetrics.buttons[1].right).toBeLessThanOrEqual(navMetrics.viewportWidth);
+    expect(navMetrics.items).toHaveLength(3);
+    expect(navMetrics.items[0].text).toBe('☰ 教材ナビ');
+    expect(navMetrics.items[1].text).toBe('再生');
+    expect(navMetrics.items[2].text.replace(/\s+/g, '')).toBe('速度0.8x1.0x1.2x');
+    for (const item of navMetrics.items) {
+      expect(item.flexGrow).toBe('0');
+      expect(item.flexBasis).toBe('auto');
+      expect(item.minHeight).toBe('30px');
+      expect(item.lineHeight).toBe(item.fontSize);
+      expect(item.whiteSpace).toBe('nowrap');
+      expect(item.top).toBe(navMetrics.items[0].top);
+      expect(item.bottom).toBeLessThanOrEqual(navMetrics.items[0].bottom + 1);
+    }
+    expect(navMetrics.items[0].right).toBeLessThanOrEqual(navMetrics.items[1].left + 1);
+    expect(navMetrics.items[1].right).toBeLessThanOrEqual(navMetrics.items[2].left + 1);
+    expect(navMetrics.items[2].right).toBeLessThanOrEqual(navMetrics.viewportWidth);
     expect(navMetrics.documentWidth).toBe(navMetrics.viewportWidth);
+
+    await mobileSpeechRate.selectOption('1.2');
+    await expect(page.locator('#speech-rate')).toHaveValue('1.2');
+    await page.locator('#speech-rate').evaluate((select) => {
+      (select as HTMLSelectElement).value = '0.8';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await expect(mobileSpeechRate).toHaveValue('0.8');
 
     await mobileSpeechToggle.click();
     await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
@@ -269,6 +299,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await gotoAudioLearn(page);
 
     await expect(page.locator('.mobile-learning-nav')).toBeHidden();
+    await expect(page.locator('.speech-controls')).toBeVisible();
+    await expect(page.locator('.speech-progress')).toBeVisible();
+    await expect(page.locator('#speech-rate')).toBeVisible();
+    await expect(page.locator('#speech-previous')).toBeVisible();
+    await expect(page.locator('#speech-next')).toBeVisible();
     await expect(page.locator('.learning-tracker')).toBeVisible();
     await expect(page.locator('#learning-tracker-current')).toHaveText('現在：音声教材');
     await expect(page.locator('.learning-tracker__item')).toHaveCount(3);
@@ -284,7 +319,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('resets page position and speech state for every chapter switching route', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await installMockSpeech(page);
     await gotoAudioLearn(page);
 
@@ -347,7 +383,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('restores center-pane heading play buttons and keeps them working after chapter changes', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await installMockSpeech(page);
     await gotoAudioLearn(page);
 
@@ -412,7 +449,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(String(nextChapterSpeakCall?.text)).toContain('データレイクだけでは困ること');
   });
 
-  test('uses one button to play, pause, resume, and resets on chapter change', async ({ page }) => {
+  test('uses one button to play, pause, resume, and resets on chapter change', async ({
+    page,
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       class MockSpeechSynthesisUtterance {
@@ -1290,7 +1330,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('shows a clear unavailable message when no speech voices are available', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       class MockSpeechSynthesisUtterance {
         text: string;
@@ -1327,7 +1368,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('keeps synthesis-failed visible in the UI and returns the button to play', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       const mockVoice = {
         name: 'Mock Japanese Voice',
@@ -1379,7 +1421,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
   test('plays long speech text as sequential chunks and ends after the last chunk', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const spokenUtterances: Array<SpeechSynthesisUtterance> = [];
@@ -1509,7 +1552,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(speakCalls.every((call) => !String(call.text).includes('|'))).toBe(true);
   });
 
-  test('resets speech UI when Chrome does not dispatch a start event', async ({ page }) => {
+  test('resets speech UI when Chrome does not dispatch a start event', async ({
+    page,
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const mockVoice = {
@@ -1563,7 +1609,10 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       .toEqual([{ type: 'cancel' }]);
   });
 
-  test('shows retry guidance when watchdog sees speech synthesis is active', async ({ page }) => {
+  test('shows retry guidance when watchdog sees speech synthesis is active', async ({
+    page,
+  }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const mockVoice = {
@@ -1628,7 +1677,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       .toEqual([{ type: 'cancel' }, { type: 'speak' }, { type: 'cancel' }, { type: 'speak' }]);
   });
 
-  test('does not surface interrupted errors from app queue reset', async ({ page }) => {
+  test('does not surface interrupted errors from app queue reset', async ({ page }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       window.__speechCalls = [];
       const mockVoice = {
@@ -1690,7 +1740,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(page.locator('#speech-message')).toBeHidden();
   });
 
-  test('disables speech UI when Web Speech API is unavailable', async ({ page }) => {
+  test('disables speech UI when Web Speech API is unavailable', async ({ page }, testInfo) => {
+    skipMobileChromeProject(testInfo.project.name);
     await page.addInitScript(() => {
       Object.defineProperty(window, 'SpeechSynthesisUtterance', {
         configurable: true,
