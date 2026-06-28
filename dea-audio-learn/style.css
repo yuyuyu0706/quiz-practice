@@ -1500,10 +1500,13 @@ body {
     order: 6;
   }
 
-  .chapter-overview-actions,
-  .chapter-nav {
+  .chapter-overview-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .meta-card .chapter-nav {
+    display: none;
   }
 
   .chapter-pills {
