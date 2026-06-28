@@ -1319,10 +1319,10 @@ body {
     display: inline-flex;
     flex: 0 0 auto;
     width: auto;
-    min-height: 40px;
+    min-height: 30px;
     align-items: center;
     justify-content: center;
-    padding: 0.42rem 0.52rem;
+    padding: 0.3rem 0.52rem;
     border-radius: 999px;
     font-size: clamp(0.76rem, 3.4vw, 0.88rem);
     font-weight: 700;

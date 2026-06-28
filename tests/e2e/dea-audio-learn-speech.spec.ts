@@ -223,6 +223,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           flexShrink: styles.flexShrink,
           flexBasis: styles.flexBasis,
           cssWidth: styles.width,
+          minHeight: styles.minHeight,
           whiteSpace: styles.whiteSpace,
         };
       });
@@ -240,6 +241,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(navMetrics.buttons[1].flexGrow).toBe('0');
     expect(navMetrics.buttons[0].flexBasis).toBe('auto');
     expect(navMetrics.buttons[1].flexBasis).toBe('auto');
+    expect(navMetrics.buttons[0].minHeight).toBe('30px');
+    expect(navMetrics.buttons[1].minHeight).toBe('30px');
     expect(navMetrics.buttons[0].whiteSpace).toBe('nowrap');
     expect(navMetrics.buttons[1].whiteSpace).toBe('nowrap');
     expect(navMetrics.buttons[0].right).toBeLessThanOrEqual(navMetrics.buttons[1].left + 1);
