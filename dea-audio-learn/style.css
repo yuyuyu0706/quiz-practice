@@ -1491,13 +1491,20 @@ body {
   }
 
   .sidebar-menu__summary {
-    min-height: 40px;
+    min-height: 48px;
+    padding-block: 0.38rem;
   }
 
   .audio-toc a {
     display: inline-flex;
     align-items: center;
-    min-height: 40px;
+    min-height: 36px;
+    padding: 0 0.25rem;
+    line-height: 1.25;
+  }
+
+  .audio-toc__item.is-current a {
+    padding: 0 0.32rem;
   }
 
   .mobile-sidebar-close {
@@ -1659,15 +1666,26 @@ body {
   }
 
   .audio-toc {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
   }
 
   .audio-toc__list {
-    gap: 0.25rem;
+    gap: 0;
   }
 
   .audio-toc__item--h3 {
     margin-left: 0.5rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
+  .audio-toc a {
+    min-height: 32px;
+    padding-block: 0;
+  }
+
+  .audio-toc__item.is-current a {
+    padding-block: 0;
   }
 }
 

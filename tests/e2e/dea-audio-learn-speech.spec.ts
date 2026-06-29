@@ -3285,6 +3285,59 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     );
   });
 
+  test('keeps mobile audio toc dense while preserving key tap targets in portrait drawers', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    const densityMetrics = await page.locator('#chapter-sidebar').evaluate((panel) => {
+      const tocLinks = [...panel.querySelectorAll<HTMLElement>('#audio-toc-list a')];
+      const tocList = panel.querySelector<HTMLElement>('#audio-toc-list');
+      const navButton = document.querySelector<HTMLElement>('#mobile-sidebar-open');
+      const speechToggle = document.querySelector<HTMLElement>('#mobile-speech-toggle');
+      const speechRate = document.querySelector<HTMLElement>('.mobile-speech-rate');
+      const closeButton = panel.querySelector<HTMLElement>('#mobile-sidebar-close');
+      const summary = panel.querySelector<HTMLElement>('.sidebar-menu__summary');
+      const domainButton = panel.querySelector<HTMLElement>('.domain-button');
+      const visibleBottom = window.innerHeight;
+      return {
+        navHeight: navButton?.getBoundingClientRect().height ?? 0,
+        speechToggleHeight: speechToggle?.getBoundingClientRect().height ?? 0,
+        speechRateHeight: speechRate?.getBoundingClientRect().height ?? 0,
+        closeHeight: closeButton?.getBoundingClientRect().height ?? 0,
+        summaryHeight: summary?.getBoundingClientRect().height ?? 0,
+        domainHeight: domainButton?.getBoundingClientRect().height ?? 0,
+        tocListGap: tocList ? window.getComputedStyle(tocList).gap : '',
+        tocLinkHeights: tocLinks.map((link) => link.getBoundingClientRect().height),
+        visibleTocLinkCount: tocLinks.filter((link) => {
+          const rect = link.getBoundingClientRect();
+          return rect.top >= 0 && rect.bottom <= visibleBottom;
+        }).length,
+      };
+    });
+
+    expect(densityMetrics.navHeight).toBeGreaterThanOrEqual(44);
+    expect(densityMetrics.speechToggleHeight).toBeGreaterThanOrEqual(44);
+    expect(densityMetrics.speechRateHeight).toBeGreaterThanOrEqual(44);
+    expect(densityMetrics.closeHeight).toBeGreaterThanOrEqual(44);
+    expect(densityMetrics.summaryHeight).toBeGreaterThanOrEqual(48);
+    expect(densityMetrics.summaryHeight).toBeLessThanOrEqual(56);
+    expect(densityMetrics.domainHeight).toBeGreaterThanOrEqual(40);
+    expect(densityMetrics.tocListGap).toBe('0px');
+    expect(densityMetrics.tocLinkHeights.length).toBeGreaterThan(0);
+    densityMetrics.tocLinkHeights.forEach((height) => {
+      expect(height).toBeGreaterThanOrEqual(36);
+      expect(height).toBeLessThanOrEqual(40);
+    });
+    expect(densityMetrics.visibleTocLinkCount).toBeGreaterThanOrEqual(6);
+  });
+
   test('uses the mobile drawer and minimum tap targets on low-height landscape touch viewports', async ({
     page,
   }) => {
@@ -3364,9 +3417,11 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(drawerMetrics.scrollTop).toBeGreaterThan(0);
     expect(drawerMetrics.canReachEnd).toBe(true);
     expect(drawerMetrics.closeHeight).toBeGreaterThanOrEqual(44);
-    expect(drawerMetrics.summaryHeight).toBeGreaterThanOrEqual(40);
+    expect(drawerMetrics.summaryHeight).toBeGreaterThanOrEqual(48);
+    expect(drawerMetrics.summaryHeight).toBeLessThanOrEqual(56);
     expect(drawerMetrics.domainHeight).toBeGreaterThanOrEqual(40);
-    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(40);
+    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(32);
+    expect(drawerMetrics.tocLinkHeight).toBeLessThanOrEqual(36);
   });
 
   test('returns focus to main content after mobile drawer selections', async ({ page }) => {
