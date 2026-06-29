@@ -3285,6 +3285,90 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     );
   });
 
+  test('uses the mobile drawer and minimum tap targets on low-height landscape touch viewports', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await gotoAudioLearn(page);
+
+    const mobileNav = page.locator('.mobile-learning-nav');
+    const sidebar = page.locator('#chapter-sidebar');
+    await expect(mobileNav).toBeVisible();
+    await expect(page.locator('.learning-tracker')).toBeHidden();
+    await expect(sidebar).toHaveAttribute('inert', '');
+    await expect(page.locator('#mobile-sidebar-open')).toHaveAttribute('aria-expanded', 'false');
+
+    const tapTargetMetrics = await page.evaluate(() => {
+      const selectors = [
+        '#mobile-sidebar-open',
+        '#mobile-speech-toggle',
+        '.mobile-speech-rate',
+        '#mobile-speech-rate',
+      ];
+      return selectors.map((selector) => {
+        const rect = document.querySelector(selector)?.getBoundingClientRect();
+        return { selector, height: rect?.height ?? 0 };
+      });
+    });
+    tapTargetMetrics.forEach(({ selector, height }) => {
+      expect
+        .soft(height, `${selector} should keep at least a 40px tap area`)
+        .toBeGreaterThanOrEqual(40);
+    });
+    expect(
+      tapTargetMetrics.find(({ selector }) => selector === '#mobile-sidebar-open')?.height
+    ).toBeGreaterThanOrEqual(44);
+
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'true');
+    await expect(sidebar).toHaveAttribute('role', 'dialog');
+    await expect(page.locator('#mobile-sidebar-close')).toBeFocused();
+
+    await page.locator('#section-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await page.locator('#chapter-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    const drawerMetrics = await sidebar.evaluate((panel) => {
+      const scrollArea = panel.querySelector<HTMLElement>('.chapter-panel__scroll-area');
+      const closeButton = panel.querySelector<HTMLElement>('#mobile-sidebar-close');
+      const summary = panel.querySelector<HTMLElement>('.sidebar-menu__summary');
+      const domainButton = panel.querySelector<HTMLElement>('.domain-button');
+      const tocLink = panel.querySelector<HTMLElement>(
+        '#audio-toc-list a[href="#mini-quiz-title"]'
+      );
+      scrollArea?.scrollTo(0, scrollArea.scrollHeight);
+      return {
+        panelBottomDelta: Math.ceil(panel.getBoundingClientRect().bottom - window.innerHeight),
+        panelOverflowY: window.getComputedStyle(panel).overflowY,
+        scrollAreaOverflowY: scrollArea ? window.getComputedStyle(scrollArea).overflowY : '',
+        scrollTop: scrollArea?.scrollTop ?? 0,
+        canReachEnd: scrollArea
+          ? scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 2
+          : false,
+        closeHeight: closeButton?.getBoundingClientRect().height ?? 0,
+        summaryHeight: summary?.getBoundingClientRect().height ?? 0,
+        domainHeight: domainButton?.getBoundingClientRect().height ?? 0,
+        tocLinkHeight: tocLink?.getBoundingClientRect().height ?? 0,
+      };
+    });
+
+    expect(drawerMetrics.panelBottomDelta).toBeLessThanOrEqual(0);
+    expect(drawerMetrics.panelOverflowY).toBe('hidden');
+    expect(drawerMetrics.scrollAreaOverflowY).toBe('auto');
+    expect(drawerMetrics.scrollTop).toBeGreaterThan(0);
+    expect(drawerMetrics.canReachEnd).toBe(true);
+    expect(drawerMetrics.closeHeight).toBeGreaterThanOrEqual(44);
+    expect(drawerMetrics.summaryHeight).toBeGreaterThanOrEqual(40);
+    expect(drawerMetrics.domainHeight).toBeGreaterThanOrEqual(40);
+    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(40);
+  });
+
   test('returns focus to main content after mobile drawer selections', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoAudioLearn(page);

@@ -27,6 +27,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg);
 }
 
@@ -39,7 +40,7 @@ body {
 .hero__inner {
   width: min(1080px, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 1rem 0 0.75rem;
+  padding: 1rem max(0px, env(safe-area-inset-right)) 0.75rem max(0px, env(safe-area-inset-left));
 }
 
 .hero h1 {
@@ -1111,7 +1112,10 @@ body {
   will-change: transform;
 }
 
-@media (min-width: 781px) {
+@media (min-width: 781px) and (min-height: 481px),
+  (min-width: 781px) and (orientation: portrait),
+  (min-width: 781px) and (pointer: fine),
+  (min-width: 781px) and (pointer: none) {
   .chapter-panel {
     display: flex;
     flex-direction: column;
@@ -1255,7 +1259,10 @@ body {
   padding: 0;
 }
 
-@media (min-width: 781px) {
+@media (min-width: 781px) and (min-height: 481px),
+  (min-width: 781px) and (orientation: portrait),
+  (min-width: 781px) and (pointer: fine),
+  (min-width: 781px) and (pointer: none) {
   .layout[data-sidebar-state='collapsed'] .sidebar-menu__icon {
     opacity: 0.92;
     transform: translateY(-50%) scale(0.98);
@@ -1291,9 +1298,10 @@ body {
   pointer-events: none;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 780px), (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .hero__inner {
-    padding: 1rem 0 0.85rem;
+    padding: calc(1rem + env(safe-area-inset-top)) max(0px, env(safe-area-inset-right)) 0.85rem
+      max(0px, env(safe-area-inset-left));
   }
 
   .layout {
@@ -1311,8 +1319,8 @@ body {
     align-items: center;
     justify-content: flex-start;
     margin: 0;
-    padding: 0.45rem max(0.5rem, env(safe-area-inset-right)) 0.45rem
-      max(0.5rem, env(safe-area-inset-left));
+    padding: calc(0.35rem + env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right))
+      0.35rem max(0.5rem, env(safe-area-inset-left));
     border-bottom: 1px solid #cdd5ff;
     background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 6px 18px rgba(16, 24, 40, 0.1);
@@ -1324,7 +1332,7 @@ body {
     display: inline-flex;
     flex: 0 0 auto;
     width: auto;
-    min-height: 30px;
+    min-height: 44px;
     align-items: center;
     justify-content: center;
     padding: 0 0.52rem;
@@ -1360,7 +1368,7 @@ body {
 
   .mobile-speech-rate select {
     max-width: 4.2rem;
-    height: 24px;
+    min-height: 40px;
     padding-block: 0;
     border: 0;
     color: inherit;
@@ -1421,6 +1429,8 @@ body {
   }
 
   #audio-script-markdown :is(h2, h3) .audio-heading-play {
+    width: 2.5rem;
+    height: 2.5rem;
     margin-top: 0.1rem;
   }
 
@@ -1448,12 +1458,16 @@ body {
     top: 0;
     bottom: 0;
     left: -100vw;
+    max-height: 100dvh;
     z-index: 30;
     width: min(22rem, calc(100vw - 2.5rem));
     max-width: 92vw;
-    overflow-y: auto;
+    overflow: hidden;
     order: 2;
-    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    padding: calc(1rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+      calc(1rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
     border-radius: 0 16px 16px 0;
     transition-property: left, width, padding;
   }
@@ -1464,12 +1478,31 @@ body {
 
   .chapter-panel__toolbar,
   .layout[data-sidebar-state='collapsed'] .chapter-panel__toolbar {
+    flex: 0 0 auto;
     justify-content: flex-end;
+  }
+
+  .chapter-panel__scroll-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar-menu__summary {
+    min-height: 40px;
+  }
+
+  .audio-toc a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
   }
 
   .mobile-sidebar-close {
     display: inline-flex;
-    min-height: 34px;
+    min-height: 44px;
     align-items: center;
     padding: 0.35rem 0.65rem;
     border: 1px solid var(--color-border);
@@ -1513,7 +1546,7 @@ body {
   .layout[data-sidebar-state='collapsed'] .sidebar-menu .chapter-domain-section,
   .layout[data-sidebar-state='collapsed'] .sidebar-menu .audio-toc {
     margin-top: 0.55rem;
-    max-height: 70vh;
+    max-height: none;
     opacity: 1;
     visibility: visible;
     padding-bottom: 0.65rem;
@@ -1560,7 +1593,7 @@ body {
 
   .domain-button,
   .chapter-button {
-    min-height: 38px;
+    min-height: 40px;
     padding: 0.5rem 0.5rem 0.5rem 0.65rem;
   }
 
@@ -1810,7 +1843,7 @@ body {
   font-weight: 400;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 780px), (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .quiz-card {
     grid-column: 1;
   }
