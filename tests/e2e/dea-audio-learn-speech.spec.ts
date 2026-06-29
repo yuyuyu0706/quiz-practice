@@ -376,6 +376,58 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     }
   });
 
+  test('identifies learning content tables code and mermaid sources with stable data attributes', async ({
+    page,
+  }) => {
+    await installMockSpeech(page);
+    await gotoAudioLearn(page);
+
+    await selectDomain(page, 'Data Ingestion and Loading');
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'Data Ingestion and Loadingの全体像'
+    );
+    await expect(
+      page.locator('#audio-script-markdown table[data-learning-content-kind="table"]')
+    ).toHaveCount(1);
+    await expect(
+      page.locator(
+        '#audio-script-markdown pre[data-learning-content-kind="code"][data-code-language="python"] > code.language-python[data-learning-content-kind="code"][data-code-language="python"]'
+      )
+    ).toContainText('spark.readStream.format');
+    await expect(
+      page.locator(
+        '#audio-script-markdown pre[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"] > code.language-mermaid[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"]'
+      )
+    ).toContainText('flowchart LR');
+    await expect(
+      page.locator('#audio-script-markdown [data-learning-content-kind="mermaid"]')
+    ).toHaveCount(0);
+
+    await clickVisible(page.locator('#speech-toggle'));
+    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
+    const latestIngestionSpeakCall = await page.evaluate(() => {
+      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
+      return speakCalls[speakCalls.length - 1];
+    });
+    expect(String(latestIngestionSpeakCall?.text)).not.toContain('flowchart LR');
+    expect(String(latestIngestionSpeakCall?.text)).not.toContain('spark.readStream.format');
+    expect(String(latestIngestionSpeakCall?.text)).not.toContain('| 判断軸 |');
+
+    await openSectionSelector(page);
+    await clickVisible(page.getByRole('button', { name: /LakehouseとDelta Lakeの位置づけ/u }));
+    await expect(page.locator('#selected-chapter-title')).toHaveText(
+      'LakehouseとDelta Lakeの位置づけ'
+    );
+    await expect(
+      page.locator('#audio-script-markdown table[data-learning-content-kind="table"]')
+    ).toHaveCount(1);
+    await expect(
+      page.locator(
+        '#audio-script-markdown pre[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"] > code.language-mermaid[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"]'
+      )
+    ).toContainText('ReliableTable');
+  });
+
   test('shows compact mobile controls without stage pin and keeps speech toggle synced', async ({
     page,
   }) => {
