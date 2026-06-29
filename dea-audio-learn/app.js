@@ -62,6 +62,7 @@ let learningStageObserver = null;
 let learningStageRafId = null;
 let audioHeadingScrollRafId = null;
 let manualAudioTocTargetId = null;
+let shouldFocusChapterTitleAfterSelection = false;
 const learningStages = [
   { key: 'audio', label: '音声教材', sectionId: 'audio-material-section' },
   { key: 'note', label: '要点メモ', sectionId: 'note-section' },
@@ -100,12 +101,125 @@ const setSidebarState = (nextState) => {
   });
 };
 
+const focusableSidebarSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'summary',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+const focusElementWithoutTabStop = (element, options = {}) => {
+  if (!element) return;
+  const previousTabIndex = element.getAttribute('tabindex');
+  element.setAttribute('tabindex', '-1');
+  element.focus(options);
+  if (previousTabIndex === null) {
+    element.addEventListener('blur', () => element.removeAttribute('tabindex'), { once: true });
+  } else {
+    element.addEventListener('blur', () => element.setAttribute('tabindex', previousTabIndex), {
+      once: true,
+    });
+  }
+};
+
+const focusElementBeforeMobileSidebarClose = (element, options = { preventScroll: true }) => {
+  if (!element) return;
+  if (element.matches?.(focusableSidebarSelector)) {
+    element.focus(options);
+    return;
+  }
+  focusElementWithoutTabStop(element, options);
+};
+
+const getVisibleFocusableSidebarElements = () => {
+  if (!chapterSidebar) return [];
+  return Array.from(chapterSidebar.querySelectorAll(focusableSidebarSelector)).filter((element) => {
+    if (element.disabled || element.getAttribute('aria-hidden') === 'true') return false;
+    const rects = element.getClientRects();
+    return rects.length > 0 && window.getComputedStyle(element).visibility !== 'hidden';
+  });
+};
+
+const syncMobileSidebarAccessibility = () => {
+  if (!chapterSidebar) return;
+  const isMobile = !isDesktopViewport();
+  if (!isMobile) {
+    chapterSidebar.removeAttribute('inert');
+    chapterSidebar.removeAttribute('aria-hidden');
+    chapterSidebar.removeAttribute('aria-modal');
+    chapterSidebar.removeAttribute('role');
+    return;
+  }
+
+  chapterSidebar.setAttribute('aria-hidden', String(!isMobileSidebarOpen));
+  if (isMobileSidebarOpen) {
+    chapterSidebar.removeAttribute('inert');
+    chapterSidebar.setAttribute('role', 'dialog');
+    chapterSidebar.setAttribute('aria-modal', 'true');
+  } else {
+    chapterSidebar.setAttribute('inert', '');
+    chapterSidebar.removeAttribute('aria-modal');
+    chapterSidebar.removeAttribute('role');
+  }
+};
+
+const closeMobileSidebar = ({
+  beforeFocus = null,
+  focusTarget = null,
+  focusTargetResolver = null,
+  restoreFocus = true,
+} = {}) => {
+  beforeFocus?.();
+  const resolvedFocusTarget =
+    focusTargetResolver?.() ?? focusTarget ?? (restoreFocus ? mobileSidebarOpenButton : null);
+  focusElementBeforeMobileSidebarClose(resolvedFocusTarget);
+  setMobileSidebarOpen(false);
+};
+
+const handleMobileSidebarKeydown = (event) => {
+  if (!isMobileSidebarOpen || isDesktopViewport()) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeMobileSidebar({ restoreFocus: true });
+    return;
+  }
+  if (event.key !== 'Tab') return;
+
+  const focusableElements = getVisibleFocusableSidebarElements();
+  if (focusableElements.length === 0) {
+    event.preventDefault();
+    mobileSidebarCloseButton?.focus();
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements.at(-1);
+  const activeElement = document.activeElement;
+  if (event.shiftKey && activeElement === firstElement) {
+    event.preventDefault();
+    lastElement.focus();
+  } else if (!event.shiftKey && activeElement === lastElement) {
+    event.preventDefault();
+    firstElement.focus();
+  } else if (!chapterSidebar?.contains(activeElement)) {
+    event.preventDefault();
+    firstElement.focus();
+  }
+};
+
 const setMobileSidebarOpen = (isOpen) => {
   isMobileSidebarOpen = isOpen;
   chapterSidebar?.setAttribute('data-mobile-open', String(isOpen));
   mobileSidebarOpenButton?.setAttribute('aria-expanded', String(isOpen));
   if (mobileSidebarBackdrop) mobileSidebarBackdrop.hidden = !isOpen;
   document.body.classList.toggle('has-mobile-sidebar-open', isOpen);
+  syncMobileSidebarAccessibility();
+  if (isOpen && !isDesktopViewport()) {
+    window.requestAnimationFrame(() => mobileSidebarCloseButton?.focus());
+  }
 };
 
 const updateDesktopSidebarMetrics = () => {
@@ -142,13 +256,16 @@ const setupResponsiveSidebar = () => {
     setSidebarState(sidebarState === 'expanded' ? 'collapsed' : 'expanded');
   });
   mobileSidebarOpenButton?.addEventListener('click', () => setMobileSidebarOpen(true));
-  mobileSidebarCloseButton?.addEventListener('click', () => setMobileSidebarOpen(false));
-  mobileSidebarBackdrop?.addEventListener('click', () => setMobileSidebarOpen(false));
-  window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && isMobileSidebarOpen) setMobileSidebarOpen(false);
-  });
+  mobileSidebarCloseButton?.addEventListener('click', () =>
+    closeMobileSidebar({ restoreFocus: true })
+  );
+  mobileSidebarBackdrop?.addEventListener('click', () =>
+    closeMobileSidebar({ restoreFocus: true })
+  );
+  window.addEventListener('keydown', handleMobileSidebarKeydown);
   window.addEventListener('resize', () => {
     if (isDesktopViewport()) setMobileSidebarOpen(false);
+    else syncMobileSidebarAccessibility();
     queueDesktopSidebarMetricsUpdate();
   });
 };
@@ -1127,7 +1244,17 @@ const appendAudioTocLink = (href, text, className = 'audio-toc__item') => {
   const link = document.createElement('a');
   link.href = href;
   link.textContent = text;
-  link.addEventListener('click', () => setActiveAudioTocLink(href));
+  link.addEventListener('click', (event) => {
+    setActiveAudioTocLink(href);
+    if (!isMobileSidebarOpen || isDesktopViewport()) return;
+    event.preventDefault();
+    const target = document.getElementById(href.slice(1));
+    closeMobileSidebar({
+      beforeFocus: () => target?.scrollIntoView({ block: 'start', behavior: 'auto' }),
+      focusTarget: target,
+      restoreFocus: false,
+    });
+  });
   item.append(link);
   audioTocList.append(item);
 };
@@ -1401,7 +1528,10 @@ const renderDomainList = () => {
     label.textContent = domain;
 
     button.append(marker, label);
-    button.addEventListener('click', () => selectDomain(domain));
+    button.addEventListener('click', () => {
+      shouldFocusChapterTitleAfterSelection = isMobileSidebarOpen && !isDesktopViewport();
+      selectDomain(domain);
+    });
     domainList.append(button);
   });
 };
@@ -1424,7 +1554,10 @@ const renderChapterList = (domain = selectedDomainName) => {
       <span>Chapter ${chapter.chapterNo}</span>
       <strong>${chapter.title}</strong>
     `;
-    button.addEventListener('click', () => selectChapterById(chapter.id));
+    button.addEventListener('click', () => {
+      shouldFocusChapterTitleAfterSelection = isMobileSidebarOpen && !isDesktopViewport();
+      selectChapterById(chapter.id);
+    });
     chapterList.append(button);
   });
 };
@@ -1543,8 +1676,18 @@ const selectChapterByIndex = async (chapterIndex) => {
       noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
     }
   } finally {
-    setMobileSidebarOpen(false);
-    scrollToChapterStart();
+    const shouldFocusTitle = shouldFocusChapterTitleAfterSelection && !isDesktopViewport();
+    shouldFocusChapterTitleAfterSelection = false;
+    if (shouldFocusTitle) {
+      closeMobileSidebar({
+        beforeFocus: scrollToChapterStart,
+        focusTarget: selectedTitle,
+        restoreFocus: false,
+      });
+    } else {
+      setMobileSidebarOpen(false);
+      scrollToChapterStart();
+    }
     resetLearningTracker();
   }
 };
