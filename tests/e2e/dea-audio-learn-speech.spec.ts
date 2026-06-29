@@ -122,6 +122,19 @@ async function startMobileCloseOrderCapture(page: Page) {
 }
 
 async function expectFocusBeforeMobileDrawerClose(page: Page, focusTarget: string) {
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.__mobileCloseEvents.some(
+          (event) =>
+            event.type === 'mutation' &&
+            event.attr === 'data-mobile-open' &&
+            event.value === 'false'
+        )
+      )
+    )
+    .toBe(true);
+
   const events = await page.evaluate(() => window.__mobileCloseEvents);
   const focusIndex = events.findIndex(
     (event) => event.type === 'focusin' && event.target === focusTarget
