@@ -177,6 +177,13 @@ function skipMobileChromeProject(projectName: string) {
   );
 }
 
+function skipNonMobileChromeProject(projectName: string) {
+  test.skip(
+    projectName !== 'mobile-chrome',
+    'Low-height landscape drawer behavior requires a touch-capable mobile project.'
+  );
+}
+
 async function openChapterSelector(page: Page) {
   await openMobileSidebarIfNeeded(page);
   await page.locator('#chapter-selector').evaluate((details) => {
@@ -453,7 +460,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     for (const item of navMetrics.items) {
       expect(item.flexGrow).toBe('0');
       expect(item.flexBasis).toBe('auto');
-      expect(item.minHeight).toBe('30px');
+      expect(item.minHeight).toBe('36px');
       expect(item.lineHeight).toBe(item.fontSize);
       expect(item.whiteSpace).toBe('nowrap');
       expect(item.top).toBe(navMetrics.items[0].top);
@@ -3126,7 +3133,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await page.locator('#mobile-sidebar-open').click();
     await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
     await expect(page.locator('#chapter-sidebar')).toHaveCSS('position', 'fixed');
-    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'auto');
+    await expect(page.locator('#chapter-sidebar')).toHaveCSS('overflow-y', 'hidden');
+    await expect(page.locator('.chapter-panel__scroll-area')).toHaveCSS('overflow-y', 'auto');
   });
 
   test('traps focus in the mobile drawer and restores focus after close actions', async ({
@@ -3283,6 +3291,297 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     await expect(page.locator('#selected-chapter-title')).toHaveText(
       'LakehouseとDelta Lakeの位置づけ'
     );
+  });
+
+  test('keeps mobile audio toc dense while preserving key tap targets in portrait drawers', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAudioLearn(page);
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(page.locator('#chapter-sidebar')).toHaveAttribute('data-mobile-open', 'true');
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    const densityMetrics = await page.locator('#chapter-sidebar').evaluate((panel) => {
+      const tocLinks = [...panel.querySelectorAll<HTMLElement>('#audio-toc-list a')];
+      const tocList = panel.querySelector<HTMLElement>('#audio-toc-list');
+      const navButton = document.querySelector<HTMLElement>('#mobile-sidebar-open');
+      const speechToggle = document.querySelector<HTMLElement>('#mobile-speech-toggle');
+      const speechRate = document.querySelector<HTMLElement>('.mobile-speech-rate');
+      const closeButton = panel.querySelector<HTMLElement>('#mobile-sidebar-close');
+      const summary = panel.querySelector<HTMLElement>('.sidebar-menu__summary');
+      const firstMenuLabel = panel.querySelector<HTMLElement>('.sidebar-menu__label');
+      const firstMenuValue = panel.querySelector<HTMLElement>('.sidebar-menu__value');
+      const domainList = panel.querySelector<HTMLElement>('.domain-list');
+      const chapterList = panel.querySelector<HTMLElement>('.chapter-list');
+      const domainButtons = [...panel.querySelectorAll<HTMLElement>('.domain-button')];
+      const chapterButtons = [...panel.querySelectorAll<HTMLElement>('.chapter-button')];
+      const domainButton = panel.querySelector<HTMLElement>('.domain-button');
+      const chapterButton = panel.querySelector<HTMLElement>('.chapter-button');
+      const chapterTitle = chapterButton?.querySelector<HTMLElement>('strong');
+      const chapterNo = chapterButton?.querySelector<HTMLElement>('span');
+      const visibleBottom = window.innerHeight;
+      return {
+        navHeight: navButton?.getBoundingClientRect().height ?? 0,
+        speechToggleHeight: speechToggle?.getBoundingClientRect().height ?? 0,
+        speechRateHeight: speechRate?.getBoundingClientRect().height ?? 0,
+        closeHeight: closeButton?.getBoundingClientRect().height ?? 0,
+        closeHitSlopTop: closeButton ? window.getComputedStyle(closeButton, '::before').top : '',
+        closeHitSlopBottom: closeButton
+          ? window.getComputedStyle(closeButton, '::before').bottom
+          : '',
+        summaryHeight: summary?.getBoundingClientRect().height ?? 0,
+        labelFontSize: firstMenuLabel ? window.getComputedStyle(firstMenuLabel).fontSize : '',
+        valueFontSize: firstMenuValue ? window.getComputedStyle(firstMenuValue).fontSize : '',
+        valueMarginTop: firstMenuValue ? window.getComputedStyle(firstMenuValue).marginTop : '',
+        domainHeight: domainButton?.getBoundingClientRect().height ?? 0,
+        chapterHeight: chapterButton?.getBoundingClientRect().height ?? 0,
+        activeDomainHeight:
+          panel.querySelector<HTMLElement>('.domain-button.is-active')?.getBoundingClientRect()
+            .height ?? 0,
+        activeChapterHeight:
+          panel.querySelector<HTMLElement>('.chapter-button.is-active')?.getBoundingClientRect()
+            .height ?? 0,
+        domainListGap: domainList ? window.getComputedStyle(domainList).gap : '',
+        chapterListGap: chapterList ? window.getComputedStyle(chapterList).gap : '',
+        domainLineHeight: domainButton ? window.getComputedStyle(domainButton).lineHeight : '',
+        chapterLineHeight: chapterButton ? window.getComputedStyle(chapterButton).lineHeight : '',
+        chapterTitleMarginTop: chapterTitle ? window.getComputedStyle(chapterTitle).marginTop : '',
+        chapterTitleMarginBottom: chapterTitle
+          ? window.getComputedStyle(chapterTitle).marginBottom
+          : '',
+        chapterNoMarginTop: chapterNo ? window.getComputedStyle(chapterNo).marginTop : '',
+        chapterNoMarginBottom: chapterNo ? window.getComputedStyle(chapterNo).marginBottom : '',
+        visibleDomainCount: domainButtons.filter((button) => {
+          const rect = button.getBoundingClientRect();
+          return rect.top >= 0 && rect.bottom <= visibleBottom;
+        }).length,
+        visibleChapterCount: chapterButtons.filter((button) => {
+          const rect = button.getBoundingClientRect();
+          return rect.top >= 0 && rect.bottom <= visibleBottom;
+        }).length,
+        tocListGap: tocList ? window.getComputedStyle(tocList).gap : '',
+        tocLinkHeights: tocLinks.map((link) => link.getBoundingClientRect().height),
+        visibleTocLinkCount: tocLinks.filter((link) => {
+          const rect = link.getBoundingClientRect();
+          return rect.top >= 0 && rect.bottom <= visibleBottom;
+        }).length,
+      };
+    });
+
+    expect(densityMetrics.navHeight).toBeGreaterThanOrEqual(34);
+    expect(densityMetrics.navHeight).toBeLessThanOrEqual(38);
+    expect(densityMetrics.speechToggleHeight).toBeGreaterThanOrEqual(34);
+    expect(densityMetrics.speechToggleHeight).toBeLessThanOrEqual(38);
+    expect(densityMetrics.speechRateHeight).toBeGreaterThanOrEqual(34);
+    expect(densityMetrics.speechRateHeight).toBeLessThanOrEqual(38);
+    expect(densityMetrics.closeHeight).toBeGreaterThanOrEqual(32);
+    expect(densityMetrics.closeHeight).toBeLessThanOrEqual(36);
+    expect(densityMetrics.closeHitSlopTop).toBe('-5px');
+    expect(densityMetrics.closeHitSlopBottom).toBe('-5px');
+    expect(densityMetrics.summaryHeight).toBeGreaterThanOrEqual(42);
+    expect(densityMetrics.summaryHeight).toBeLessThanOrEqual(48);
+    expect(densityMetrics.labelFontSize).toBe('13px');
+    expect(densityMetrics.valueFontSize).toBe('11.5px');
+    expect(densityMetrics.valueMarginTop).toBe('3px');
+    expect(densityMetrics.domainListGap).toBe('1px');
+    expect(densityMetrics.chapterListGap).toBe('1px');
+    expect(densityMetrics.domainHeight).toBeGreaterThanOrEqual(30);
+    expect(densityMetrics.domainHeight).toBeLessThanOrEqual(36);
+    expect(densityMetrics.chapterHeight).toBeGreaterThanOrEqual(30);
+    expect(densityMetrics.activeDomainHeight).toBeGreaterThanOrEqual(34);
+    expect(densityMetrics.activeDomainHeight).toBeLessThanOrEqual(38);
+    expect(densityMetrics.activeChapterHeight).toBeGreaterThanOrEqual(34);
+    expect(Number.parseFloat(densityMetrics.domainLineHeight)).toBeGreaterThanOrEqual(14);
+    expect(Number.parseFloat(densityMetrics.domainLineHeight)).toBeLessThanOrEqual(18);
+    expect(Number.parseFloat(densityMetrics.chapterLineHeight)).toBeGreaterThanOrEqual(14);
+    expect(Number.parseFloat(densityMetrics.chapterLineHeight)).toBeLessThanOrEqual(18);
+    expect(densityMetrics.chapterTitleMarginTop).toBe('0px');
+    expect(densityMetrics.chapterTitleMarginBottom).toBe('0px');
+    expect(densityMetrics.chapterNoMarginTop).toBe('0px');
+    expect(densityMetrics.chapterNoMarginBottom).toBe('0px');
+    expect(densityMetrics.visibleDomainCount).toBeGreaterThanOrEqual(7);
+    expect(densityMetrics.visibleChapterCount).toBeGreaterThanOrEqual(4);
+    expect(densityMetrics.tocListGap).toBe('0px');
+    expect(densityMetrics.tocLinkHeights.length).toBeGreaterThan(0);
+    densityMetrics.tocLinkHeights.forEach((height) => {
+      expect(height).toBeGreaterThanOrEqual(25);
+      expect(height).toBeLessThanOrEqual(29);
+    });
+    expect(densityMetrics.visibleTocLinkCount).toBeGreaterThanOrEqual(11);
+  });
+
+  test('uses the mobile drawer and minimum tap targets on low-height landscape touch viewports', async ({
+    page,
+  }, testInfo) => {
+    skipNonMobileChromeProject(testInfo.project.name);
+    await page.setViewportSize({ width: 844, height: 390 });
+    await gotoAudioLearn(page);
+
+    const mobileNav = page.locator('.mobile-learning-nav');
+    const sidebar = page.locator('#chapter-sidebar');
+    await expect(mobileNav).toBeVisible();
+    await expect(page.locator('.learning-tracker')).toBeHidden();
+    await expect(sidebar).toHaveAttribute('inert', '');
+    await expect(page.locator('#mobile-sidebar-open')).toHaveAttribute('aria-expanded', 'false');
+
+    const tapTargetMetrics = await page.evaluate(() => {
+      const selectors = [
+        '#mobile-sidebar-open',
+        '#mobile-speech-toggle',
+        '.mobile-speech-rate',
+        '#mobile-speech-rate',
+      ];
+      return selectors.map((selector) => {
+        const rect = document.querySelector(selector)?.getBoundingClientRect();
+        return { selector, height: rect?.height ?? 0 };
+      });
+    });
+    tapTargetMetrics.forEach(({ selector, height }) => {
+      expect
+        .soft(height, `${selector} should keep a compact 34px visual area`)
+        .toBeGreaterThanOrEqual(34);
+      expect
+        .soft(height, `${selector} should not look vertically oversized`)
+        .toBeLessThanOrEqual(38);
+    });
+    expect(
+      tapTargetMetrics.find(({ selector }) => selector === '#mobile-sidebar-open')?.height
+    ).toBeGreaterThanOrEqual(34);
+
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'true');
+    await expect(sidebar).toHaveAttribute('role', 'dialog');
+    await expect(page.locator('#mobile-sidebar-close')).toBeFocused();
+
+    await page.locator('#section-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await page.locator('#chapter-selector').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    const drawerMetrics = await sidebar.evaluate((panel) => {
+      const scrollArea = panel.querySelector<HTMLElement>('.chapter-panel__scroll-area');
+      const closeButton = panel.querySelector<HTMLElement>('#mobile-sidebar-close');
+      const summary = panel.querySelector<HTMLElement>('.sidebar-menu__summary');
+      const firstMenuLabel = panel.querySelector<HTMLElement>('.sidebar-menu__label');
+      const firstMenuValue = panel.querySelector<HTMLElement>('.sidebar-menu__value');
+      const domainList = panel.querySelector<HTMLElement>('.domain-list');
+      const chapterList = panel.querySelector<HTMLElement>('.chapter-list');
+      const domainButton = panel.querySelector<HTMLElement>('.domain-button');
+      const chapterButton = panel.querySelector<HTMLElement>('.chapter-button');
+      const tocLink = panel.querySelector<HTMLElement>(
+        '#audio-toc-list a[href="#mini-quiz-title"]'
+      );
+      scrollArea?.scrollTo(0, scrollArea.scrollHeight);
+      return {
+        panelBottomDelta: Math.ceil(panel.getBoundingClientRect().bottom - window.innerHeight),
+        panelOverflowY: window.getComputedStyle(panel).overflowY,
+        scrollAreaOverflowY: scrollArea ? window.getComputedStyle(scrollArea).overflowY : '',
+        scrollTop: scrollArea?.scrollTop ?? 0,
+        canReachEnd: scrollArea
+          ? scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 2
+          : false,
+        closeHeight: closeButton?.getBoundingClientRect().height ?? 0,
+        closeHitSlopTop: closeButton ? window.getComputedStyle(closeButton, '::before').top : '',
+        closeHitSlopBottom: closeButton
+          ? window.getComputedStyle(closeButton, '::before').bottom
+          : '',
+        summaryHeight: summary?.getBoundingClientRect().height ?? 0,
+        labelFontSize: firstMenuLabel ? window.getComputedStyle(firstMenuLabel).fontSize : '',
+        valueFontSize: firstMenuValue ? window.getComputedStyle(firstMenuValue).fontSize : '',
+        valueMarginTop: firstMenuValue ? window.getComputedStyle(firstMenuValue).marginTop : '',
+        domainHeight: domainButton?.getBoundingClientRect().height ?? 0,
+        chapterHeight: chapterButton?.getBoundingClientRect().height ?? 0,
+        domainListGap: domainList ? window.getComputedStyle(domainList).gap : '',
+        chapterListGap: chapterList ? window.getComputedStyle(chapterList).gap : '',
+        tocLinkHeight: tocLink?.getBoundingClientRect().height ?? 0,
+      };
+    });
+
+    expect(drawerMetrics.panelBottomDelta).toBeLessThanOrEqual(0);
+    expect(drawerMetrics.panelOverflowY).toBe('hidden');
+    expect(drawerMetrics.scrollAreaOverflowY).toBe('auto');
+    expect(drawerMetrics.scrollTop).toBeGreaterThan(0);
+    expect(drawerMetrics.canReachEnd).toBe(true);
+    expect(drawerMetrics.closeHeight).toBeGreaterThanOrEqual(32);
+    expect(drawerMetrics.closeHeight).toBeLessThanOrEqual(36);
+    expect(drawerMetrics.closeHitSlopTop).toBe('-5px');
+    expect(drawerMetrics.closeHitSlopBottom).toBe('-5px');
+    expect(drawerMetrics.summaryHeight).toBeGreaterThanOrEqual(42);
+    expect(drawerMetrics.summaryHeight).toBeLessThanOrEqual(48);
+    expect(drawerMetrics.domainListGap).toBe('1px');
+    expect(drawerMetrics.chapterListGap).toBe('1px');
+    expect(drawerMetrics.domainHeight).toBeGreaterThanOrEqual(30);
+    expect(drawerMetrics.domainHeight).toBeLessThanOrEqual(36);
+    expect(drawerMetrics.chapterHeight).toBeGreaterThanOrEqual(30);
+    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(23);
+    expect(drawerMetrics.tocLinkHeight).toBeLessThanOrEqual(27);
+  });
+
+  test('keeps the final audio toc link visible and operable at the bottom of the landscape drawer', async ({
+    page,
+  }, testInfo) => {
+    skipNonMobileChromeProject(testInfo.project.name);
+    await page.setViewportSize({ width: 844, height: 390 });
+    await gotoAudioLearn(page);
+    const sidebar = page.locator('#chapter-sidebar');
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'true');
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    const finalTocLink = page.locator('#audio-toc-list a[href="#mini-quiz-title"]');
+    const finalLinkVisibility = await sidebar.evaluate((panel) => {
+      const scrollArea = panel.querySelector<HTMLElement>('.chapter-panel__scroll-area');
+      const toc = panel.querySelector<HTMLElement>('.audio-toc');
+      const chapterDomainSection = panel.querySelector<HTMLElement>('.chapter-domain-section');
+      const finalLink = panel.querySelector<HTMLElement>(
+        '#audio-toc-list a[href="#mini-quiz-title"]'
+      );
+      if (!scrollArea || !finalLink || !toc || !chapterDomainSection) {
+        return null;
+      }
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+      const scrollAreaRect = scrollArea.getBoundingClientRect();
+      const finalLinkRect = finalLink.getBoundingClientRect();
+      const tocStyle = window.getComputedStyle(toc);
+      const sectionStyle = window.getComputedStyle(chapterDomainSection);
+      return {
+        fullyVisible:
+          finalLinkRect.top >= scrollAreaRect.top && finalLinkRect.bottom <= scrollAreaRect.bottom,
+        linkWidth: finalLinkRect.width,
+        linkHeight: finalLinkRect.height,
+        scrollTop: scrollArea.scrollTop,
+        remainingScroll: scrollArea.scrollHeight - scrollArea.clientHeight - scrollArea.scrollTop,
+        tocMaxHeight: tocStyle.maxHeight,
+        tocOverflowY: tocStyle.overflowY,
+        sectionMaxHeight: sectionStyle.maxHeight,
+        sectionOverflowY: sectionStyle.overflowY,
+      };
+    });
+
+    expect(finalLinkVisibility).not.toBeNull();
+    expect(finalLinkVisibility?.tocMaxHeight).toBe('none');
+    expect(finalLinkVisibility?.tocOverflowY).toBe('visible');
+    expect(finalLinkVisibility?.sectionMaxHeight).toBe('none');
+    expect(finalLinkVisibility?.sectionOverflowY).toBe('visible');
+    expect(finalLinkVisibility?.scrollTop).toBeGreaterThan(0);
+    expect(finalLinkVisibility?.remainingScroll).toBeLessThanOrEqual(1);
+    expect(finalLinkVisibility?.fullyVisible).toBe(true);
+    expect(finalLinkVisibility?.linkWidth).toBeGreaterThan(0);
+    expect(finalLinkVisibility?.linkHeight).toBeGreaterThan(0);
+
+    await finalTocLink.click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    await expect(page.locator('#mini-quiz-title')).toBeFocused();
   });
 
   test('returns focus to main content after mobile drawer selections', async ({ page }) => {

@@ -248,6 +248,16 @@ const queueDesktopSidebarMetricsUpdate = () => {
   window.requestAnimationFrame(updateDesktopSidebarMetrics);
 };
 
+const queueResponsiveViewportRefresh = () => {
+  window.requestAnimationFrame(() => {
+    if (isDesktopViewport()) setMobileSidebarOpen(false);
+    else syncMobileSidebarAccessibility();
+    updateLearningTrackerScrollOffset();
+    queueAudioHeadingScrollRefresh();
+    queueDesktopSidebarMetricsUpdate();
+  });
+};
+
 const setupResponsiveSidebar = () => {
   setSidebarState(sidebarState);
   setMobileSidebarOpen(false);
@@ -263,11 +273,8 @@ const setupResponsiveSidebar = () => {
     closeMobileSidebar({ restoreFocus: true })
   );
   window.addEventListener('keydown', handleMobileSidebarKeydown);
-  window.addEventListener('resize', () => {
-    if (isDesktopViewport()) setMobileSidebarOpen(false);
-    else syncMobileSidebarAccessibility();
-    queueDesktopSidebarMetricsUpdate();
-  });
+  window.addEventListener('resize', queueResponsiveViewportRefresh);
+  window.visualViewport?.addEventListener('resize', queueResponsiveViewportRefresh);
 };
 
 const scrollToChapterStart = () => {
@@ -1163,7 +1170,10 @@ const restartCurrentChunkForRateChange = (previousSpeechState) => {
 
 const sidebarMenus = [sectionSelector, chapterSelector, audioTocPanel].filter(Boolean);
 
-const isDesktopViewport = () => window.matchMedia('(min-width: 781px)').matches;
+const mobileViewportMediaQuery =
+  '(max-width: 780px), (orientation: landscape) and (max-height: 480px) and (pointer: coarse)';
+const isMobileViewport = () => window.matchMedia(mobileViewportMediaQuery).matches;
+const isDesktopViewport = () => !isMobileViewport();
 
 const syncSidebarMenuExpandedState = (menu) => {
   const summary = menu.querySelector('summary');
