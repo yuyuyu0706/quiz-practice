@@ -3326,23 +3326,26 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       };
     });
 
-    expect(densityMetrics.navHeight).toBeGreaterThanOrEqual(44);
-    expect(densityMetrics.speechToggleHeight).toBeGreaterThanOrEqual(44);
-    expect(densityMetrics.speechRateHeight).toBeGreaterThanOrEqual(44);
-    expect(densityMetrics.closeHeight).toBeGreaterThanOrEqual(34);
-    expect(densityMetrics.closeHeight).toBeLessThanOrEqual(38);
-    expect(densityMetrics.closeHitSlopTop).toBe('-4px');
-    expect(densityMetrics.closeHitSlopBottom).toBe('-4px');
-    expect(densityMetrics.summaryHeight).toBeGreaterThanOrEqual(48);
-    expect(densityMetrics.summaryHeight).toBeLessThanOrEqual(54);
+    expect(densityMetrics.navHeight).toBeGreaterThanOrEqual(34);
+    expect(densityMetrics.navHeight).toBeLessThanOrEqual(38);
+    expect(densityMetrics.speechToggleHeight).toBeGreaterThanOrEqual(34);
+    expect(densityMetrics.speechToggleHeight).toBeLessThanOrEqual(38);
+    expect(densityMetrics.speechRateHeight).toBeGreaterThanOrEqual(34);
+    expect(densityMetrics.speechRateHeight).toBeLessThanOrEqual(38);
+    expect(densityMetrics.closeHeight).toBeGreaterThanOrEqual(32);
+    expect(densityMetrics.closeHeight).toBeLessThanOrEqual(36);
+    expect(densityMetrics.closeHitSlopTop).toBe('-5px');
+    expect(densityMetrics.closeHitSlopBottom).toBe('-5px');
+    expect(densityMetrics.summaryHeight).toBeGreaterThanOrEqual(44);
+    expect(densityMetrics.summaryHeight).toBeLessThanOrEqual(50);
     expect(densityMetrics.domainHeight).toBeGreaterThanOrEqual(40);
     expect(densityMetrics.tocListGap).toBe('0px');
     expect(densityMetrics.tocLinkHeights.length).toBeGreaterThan(0);
     densityMetrics.tocLinkHeights.forEach((height) => {
-      expect(height).toBeGreaterThanOrEqual(30);
-      expect(height).toBeLessThanOrEqual(34);
+      expect(height).toBeGreaterThanOrEqual(26);
+      expect(height).toBeLessThanOrEqual(30);
     });
-    expect(densityMetrics.visibleTocLinkCount).toBeGreaterThanOrEqual(8);
+    expect(densityMetrics.visibleTocLinkCount).toBeGreaterThanOrEqual(10);
   });
 
   test('uses the mobile drawer and minimum tap targets on low-height landscape touch viewports', async ({
@@ -3372,12 +3375,15 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     });
     tapTargetMetrics.forEach(({ selector, height }) => {
       expect
-        .soft(height, `${selector} should keep at least a 40px tap area`)
-        .toBeGreaterThanOrEqual(40);
+        .soft(height, `${selector} should keep a compact 34px visual area`)
+        .toBeGreaterThanOrEqual(34);
+      expect
+        .soft(height, `${selector} should not look vertically oversized`)
+        .toBeLessThanOrEqual(38);
     });
     expect(
       tapTargetMetrics.find(({ selector }) => selector === '#mobile-sidebar-open')?.height
-    ).toBeGreaterThanOrEqual(44);
+    ).toBeGreaterThanOrEqual(34);
 
     await page.locator('#mobile-sidebar-open').click();
     await expect(sidebar).toHaveAttribute('data-mobile-open', 'true');
@@ -3427,15 +3433,15 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(drawerMetrics.scrollAreaOverflowY).toBe('auto');
     expect(drawerMetrics.scrollTop).toBeGreaterThan(0);
     expect(drawerMetrics.canReachEnd).toBe(true);
-    expect(drawerMetrics.closeHeight).toBeGreaterThanOrEqual(34);
-    expect(drawerMetrics.closeHeight).toBeLessThanOrEqual(38);
-    expect(drawerMetrics.closeHitSlopTop).toBe('-4px');
-    expect(drawerMetrics.closeHitSlopBottom).toBe('-4px');
-    expect(drawerMetrics.summaryHeight).toBeGreaterThanOrEqual(48);
-    expect(drawerMetrics.summaryHeight).toBeLessThanOrEqual(54);
+    expect(drawerMetrics.closeHeight).toBeGreaterThanOrEqual(32);
+    expect(drawerMetrics.closeHeight).toBeLessThanOrEqual(36);
+    expect(drawerMetrics.closeHitSlopTop).toBe('-5px');
+    expect(drawerMetrics.closeHitSlopBottom).toBe('-5px');
+    expect(drawerMetrics.summaryHeight).toBeGreaterThanOrEqual(44);
+    expect(drawerMetrics.summaryHeight).toBeLessThanOrEqual(50);
     expect(drawerMetrics.domainHeight).toBeGreaterThanOrEqual(40);
-    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(28);
-    expect(drawerMetrics.tocLinkHeight).toBeLessThanOrEqual(32);
+    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(24);
+    expect(drawerMetrics.tocLinkHeight).toBeLessThanOrEqual(28);
   });
 
   test('returns focus to main content after mobile drawer selections', async ({ page }) => {
