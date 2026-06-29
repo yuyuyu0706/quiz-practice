@@ -1494,6 +1494,12 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 
+  .chapter-panel .chapter-domain-section,
+  .chapter-panel .audio-toc {
+    max-height: none;
+    overflow: visible;
+  }
+
   .sidebar-menu + .sidebar-menu {
     margin-top: 0.28rem;
   }

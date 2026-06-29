@@ -3516,6 +3516,70 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(drawerMetrics.tocLinkHeight).toBeLessThanOrEqual(27);
   });
 
+  test('keeps the final audio toc link visible and operable at the bottom of the landscape drawer', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await gotoAudioLearn(page);
+    const sidebar = page.locator('#chapter-sidebar');
+    await page.locator('#mobile-sidebar-open').click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'true');
+    await page.locator('#audio-toc-panel').evaluate((details) => {
+      (details as HTMLDetailsElement).open = true;
+    });
+
+    const finalTocLink = page.locator('#audio-toc-list a[href="#mini-quiz-title"]');
+    const finalLinkVisibility = await sidebar.evaluate((panel) => {
+      const scrollArea = panel.querySelector<HTMLElement>('.chapter-panel__scroll-area');
+      const toc = panel.querySelector<HTMLElement>('.audio-toc');
+      const chapterDomainSection = panel.querySelector<HTMLElement>('.chapter-domain-section');
+      const finalLink = panel.querySelector<HTMLElement>(
+        '#audio-toc-list a[href="#mini-quiz-title"]'
+      );
+      if (!scrollArea || !finalLink || !toc || !chapterDomainSection) {
+        return null;
+      }
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+      const scrollAreaRect = scrollArea.getBoundingClientRect();
+      const finalLinkRect = finalLink.getBoundingClientRect();
+      const tocStyle = window.getComputedStyle(toc);
+      const sectionStyle = window.getComputedStyle(chapterDomainSection);
+      return {
+        fullyVisible:
+          finalLinkRect.top >= scrollAreaRect.top && finalLinkRect.bottom <= scrollAreaRect.bottom,
+        linkCenterX: finalLinkRect.left + finalLinkRect.width / 2,
+        linkCenterY: finalLinkRect.top + finalLinkRect.height / 2,
+        elementAtLinkCenter: document
+          .elementFromPoint(
+            finalLinkRect.left + finalLinkRect.width / 2,
+            finalLinkRect.top + finalLinkRect.height / 2
+          )
+          ?.closest('a')
+          ?.getAttribute('href'),
+        scrollTop: scrollArea.scrollTop,
+        remainingScroll: scrollArea.scrollHeight - scrollArea.clientHeight - scrollArea.scrollTop,
+        tocMaxHeight: tocStyle.maxHeight,
+        tocOverflowY: tocStyle.overflowY,
+        sectionMaxHeight: sectionStyle.maxHeight,
+        sectionOverflowY: sectionStyle.overflowY,
+      };
+    });
+
+    expect(finalLinkVisibility).not.toBeNull();
+    expect(finalLinkVisibility?.tocMaxHeight).toBe('none');
+    expect(finalLinkVisibility?.tocOverflowY).toBe('visible');
+    expect(finalLinkVisibility?.sectionMaxHeight).toBe('none');
+    expect(finalLinkVisibility?.sectionOverflowY).toBe('visible');
+    expect(finalLinkVisibility?.scrollTop).toBeGreaterThan(0);
+    expect(finalLinkVisibility?.remainingScroll).toBeLessThanOrEqual(1);
+    expect(finalLinkVisibility?.fullyVisible).toBe(true);
+    expect(finalLinkVisibility?.elementAtLinkCenter).toBe('#mini-quiz-title');
+
+    await finalTocLink.click();
+    await expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    await expect(page.locator('#mini-quiz-title')).toBeFocused();
+  });
+
   test('returns focus to main content after mobile drawer selections', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoAudioLearn(page);
