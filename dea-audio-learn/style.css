@@ -1516,27 +1516,27 @@ body {
   }
 
   .sidebar-menu__label {
-    font-size: 0.78rem;
+    font-size: 13px;
     line-height: 1.12;
   }
 
   .sidebar-menu__value {
-    margin-top: 0;
-    font-size: 0.72rem;
+    margin-top: 3px;
+    font-size: 11.5px;
     line-height: 1.12;
   }
 
   .audio-toc a {
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
-    padding: 0 0.16rem;
-    line-height: 1.16;
+    min-height: 27px;
+    padding: 0 0.14rem;
+    line-height: 1.15;
   }
 
   .audio-toc__item.is-current a {
-    min-height: 26px;
-    padding: 0 0.22rem;
+    min-height: 25px;
+    padding: 0 0.2rem;
     line-height: 1.15;
   }
 
@@ -1744,7 +1744,11 @@ body {
   }
 
   .audio-toc {
-    margin-top: 0.05rem;
+    margin-top: 0;
+  }
+
+  .audio-toc__item {
+    margin-block: 0;
   }
 
   .audio-toc__list {
@@ -1758,13 +1762,13 @@ body {
 
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .audio-toc a {
-    min-height: 26px;
+    min-height: 25px;
     padding-block: 0;
     line-height: 1.15;
   }
 
   .audio-toc__item.is-current a {
-    min-height: 24px;
+    min-height: 23px;
     padding-block: 0;
   }
 }

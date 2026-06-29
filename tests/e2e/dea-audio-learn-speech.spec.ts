@@ -3304,6 +3304,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       const speechRate = document.querySelector<HTMLElement>('.mobile-speech-rate');
       const closeButton = panel.querySelector<HTMLElement>('#mobile-sidebar-close');
       const summary = panel.querySelector<HTMLElement>('.sidebar-menu__summary');
+      const firstMenuLabel = panel.querySelector<HTMLElement>('.sidebar-menu__label');
+      const firstMenuValue = panel.querySelector<HTMLElement>('.sidebar-menu__value');
       const domainList = panel.querySelector<HTMLElement>('.domain-list');
       const chapterList = panel.querySelector<HTMLElement>('.chapter-list');
       const domainButtons = [...panel.querySelectorAll<HTMLElement>('.domain-button')];
@@ -3323,6 +3325,9 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
           ? window.getComputedStyle(closeButton, '::before').bottom
           : '',
         summaryHeight: summary?.getBoundingClientRect().height ?? 0,
+        labelFontSize: firstMenuLabel ? window.getComputedStyle(firstMenuLabel).fontSize : '',
+        valueFontSize: firstMenuValue ? window.getComputedStyle(firstMenuValue).fontSize : '',
+        valueMarginTop: firstMenuValue ? window.getComputedStyle(firstMenuValue).marginTop : '',
         domainHeight: domainButton?.getBoundingClientRect().height ?? 0,
         chapterHeight: chapterButton?.getBoundingClientRect().height ?? 0,
         activeDomainHeight:
@@ -3370,6 +3375,9 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(densityMetrics.closeHitSlopBottom).toBe('-5px');
     expect(densityMetrics.summaryHeight).toBeGreaterThanOrEqual(44);
     expect(densityMetrics.summaryHeight).toBeLessThanOrEqual(48);
+    expect(densityMetrics.labelFontSize).toBe('13px');
+    expect(densityMetrics.valueFontSize).toBe('11.5px');
+    expect(densityMetrics.valueMarginTop).toBe('3px');
     expect(densityMetrics.domainListGap).toBe('1px');
     expect(densityMetrics.chapterListGap).toBe('1px');
     expect(densityMetrics.domainHeight).toBeGreaterThanOrEqual(30);
@@ -3391,10 +3399,10 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(densityMetrics.tocListGap).toBe('0px');
     expect(densityMetrics.tocLinkHeights.length).toBeGreaterThan(0);
     densityMetrics.tocLinkHeights.forEach((height) => {
-      expect(height).toBeGreaterThanOrEqual(26);
-      expect(height).toBeLessThanOrEqual(30);
+      expect(height).toBeGreaterThanOrEqual(25);
+      expect(height).toBeLessThanOrEqual(29);
     });
-    expect(densityMetrics.visibleTocLinkCount).toBeGreaterThanOrEqual(10);
+    expect(densityMetrics.visibleTocLinkCount).toBeGreaterThanOrEqual(11);
   });
 
   test('uses the mobile drawer and minimum tap targets on low-height landscape touch viewports', async ({
@@ -3453,6 +3461,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
       const scrollArea = panel.querySelector<HTMLElement>('.chapter-panel__scroll-area');
       const closeButton = panel.querySelector<HTMLElement>('#mobile-sidebar-close');
       const summary = panel.querySelector<HTMLElement>('.sidebar-menu__summary');
+      const firstMenuLabel = panel.querySelector<HTMLElement>('.sidebar-menu__label');
+      const firstMenuValue = panel.querySelector<HTMLElement>('.sidebar-menu__value');
       const domainList = panel.querySelector<HTMLElement>('.domain-list');
       const chapterList = panel.querySelector<HTMLElement>('.chapter-list');
       const domainButton = panel.querySelector<HTMLElement>('.domain-button');
@@ -3475,6 +3485,9 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
           ? window.getComputedStyle(closeButton, '::before').bottom
           : '',
         summaryHeight: summary?.getBoundingClientRect().height ?? 0,
+        labelFontSize: firstMenuLabel ? window.getComputedStyle(firstMenuLabel).fontSize : '',
+        valueFontSize: firstMenuValue ? window.getComputedStyle(firstMenuValue).fontSize : '',
+        valueMarginTop: firstMenuValue ? window.getComputedStyle(firstMenuValue).marginTop : '',
         domainHeight: domainButton?.getBoundingClientRect().height ?? 0,
         chapterHeight: chapterButton?.getBoundingClientRect().height ?? 0,
         domainListGap: domainList ? window.getComputedStyle(domainList).gap : '',
@@ -3499,8 +3512,8 @@ test.describe('[DEA][UI] Audio Learn / Issue 138 sidebar toc tracking', () => {
     expect(drawerMetrics.domainHeight).toBeGreaterThanOrEqual(30);
     expect(drawerMetrics.domainHeight).toBeLessThanOrEqual(36);
     expect(drawerMetrics.chapterHeight).toBeGreaterThanOrEqual(30);
-    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(24);
-    expect(drawerMetrics.tocLinkHeight).toBeLessThanOrEqual(28);
+    expect(drawerMetrics.tocLinkHeight).toBeGreaterThanOrEqual(23);
+    expect(drawerMetrics.tocLinkHeight).toBeLessThanOrEqual(27);
   });
 
   test('returns focus to main content after mobile drawer selections', async ({ page }) => {
