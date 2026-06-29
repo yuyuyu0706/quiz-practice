@@ -1466,8 +1466,8 @@ body {
     order: 2;
     display: flex;
     flex-direction: column;
-    padding: calc(1rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
-      calc(1rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    padding: calc(0.5rem + env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right))
+      calc(0.75rem + env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
     border-radius: 0 16px 16px 0;
     transition-property: left, width, padding;
   }
@@ -1480,6 +1480,9 @@ body {
   .layout[data-sidebar-state='collapsed'] .chapter-panel__toolbar {
     flex: 0 0 auto;
     justify-content: flex-end;
+    min-height: 36px;
+    margin-bottom: 0.35rem;
+    padding-bottom: 0;
   }
 
   .chapter-panel__scroll-area {
@@ -1490,33 +1493,45 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 
+  .sidebar-menu + .sidebar-menu {
+    margin-top: 0.4rem;
+  }
+
   .sidebar-menu__summary {
     min-height: 48px;
-    padding-block: 0.38rem;
+    padding-block: 0.28rem;
   }
 
   .audio-toc a {
     display: inline-flex;
     align-items: center;
-    min-height: 36px;
-    padding: 0 0.25rem;
-    line-height: 1.25;
+    min-height: 32px;
+    padding: 0 0.2rem;
+    line-height: 1.22;
   }
 
   .audio-toc__item.is-current a {
-    padding: 0 0.32rem;
+    padding: 0 0.28rem;
   }
 
   .mobile-sidebar-close {
+    position: relative;
     display: inline-flex;
-    min-height: 44px;
+    min-height: 0;
+    height: 36px;
     align-items: center;
-    padding: 0.35rem 0.65rem;
+    padding: 0.2rem 0.65rem;
     border: 1px solid var(--color-border);
     border-radius: 999px;
     color: var(--color-primary);
     background: #ffffff;
     font-weight: 700;
+  }
+
+  .mobile-sidebar-close::before {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
   }
 
   .sidebar-toggle {
@@ -1666,7 +1681,7 @@ body {
   }
 
   .audio-toc {
-    margin-top: 0.25rem;
+    margin-top: 0.15rem;
   }
 
   .audio-toc__list {
@@ -1680,8 +1695,9 @@ body {
 
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .audio-toc a {
-    min-height: 32px;
+    min-height: 30px;
     padding-block: 0;
+    line-height: 1.2;
   }
 
   .audio-toc__item.is-current a {
