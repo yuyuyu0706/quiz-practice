@@ -1110,11 +1110,10 @@ body {
 
 .markdown-body table[data-learning-content-kind='table'] {
   width: max-content;
-  min-width: min(42rem, 100%);
+  min-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   color: var(--color-text);
-  font-size: 0.92rem;
   line-height: 1.6;
 }
 
@@ -1572,8 +1571,7 @@ body {
   }
 
   .markdown-body table[data-learning-content-kind='table'] {
-    min-width: 38rem;
-    font-size: 0.82rem;
+    min-width: max(100%, 38rem);
   }
 
   .markdown-body table[data-learning-content-kind='table'] th,

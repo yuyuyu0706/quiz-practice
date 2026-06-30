@@ -535,9 +535,20 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         setup: async () => {
           await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
         },
+        viewport: { width: 1280, height: 720 },
+        expectedLastHeader: 'Lakehouse',
+        expectedLastCell: '中核のテーブル管理を支える',
+        expectScrollable: null,
+        expectTableReachesCardRight: true,
+      },
+      {
+        title: 'LakehouseとDelta Lakeの位置づけ',
+        setup: async () => {},
         viewport: { width: 390, height: 844 },
         expectedLastHeader: 'Lakehouse',
         expectedLastCell: '中核のテーブル管理を支える',
+        expectScrollable: true,
+        expectTableReachesCardRight: false,
       },
       {
         title: 'Data Ingestion and Loadingの全体像',
@@ -547,6 +558,17 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         viewport: { width: 320, height: 844 },
         expectedLastHeader: '代表的な考え方',
         expectedLastCell: 'Unity Catalog governed tablesへの着地',
+        expectScrollable: true,
+        expectTableReachesCardRight: false,
+      },
+      {
+        title: 'Data Ingestion and Loadingの全体像',
+        setup: async () => {},
+        viewport: { width: 844, height: 390 },
+        expectedLastHeader: '代表的な考え方',
+        expectedLastCell: 'Unity Catalog governed tablesへの着地',
+        expectScrollable: true,
+        expectTableReachesCardRight: false,
       },
     ];
 
@@ -571,16 +593,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         tableCase.expectedLastCell
       );
 
-      const metrics = await scrollContainer.evaluate((container) => {
-        container.scrollLeft = container.scrollWidth;
+      const initialMetrics = await scrollContainer.evaluate((container) => {
         const table = container.querySelector('table');
-        const lastHeader = table?.querySelector('thead th:last-child');
-        const lastCell = table?.querySelector('tbody tr:last-child td:last-child');
         const containerRect = container.getBoundingClientRect();
-        const lastHeaderRect = lastHeader?.getBoundingClientRect();
-        const lastCellRect = lastCell?.getBoundingClientRect();
+        const tableRect = table?.getBoundingClientRect();
         const styles = window.getComputedStyle(container);
         const tableStyles = table ? window.getComputedStyle(table) : null;
+        const containerInnerRight = containerRect.left + container.clientWidth;
 
         return {
           documentWidth: document.documentElement.scrollWidth,
@@ -590,10 +609,41 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           overflowX: styles.overflowX,
           overscrollBehaviorX: styles.overscrollBehaviorX,
           tableDisplay: tableStyles?.display,
+          tableMinWidth: tableStyles?.minWidth,
+          tableRightGap: tableRect ? containerInnerRight - tableRect.right : Number.NaN,
+          isScrollable: container.scrollWidth > container.clientWidth,
+        };
+      });
+
+      expect(initialMetrics.documentWidth).toBeLessThanOrEqual(initialMetrics.viewportWidth + 1);
+      expect(initialMetrics.containerLeft).toBeGreaterThanOrEqual(-1);
+      expect(initialMetrics.containerRight).toBeLessThanOrEqual(initialMetrics.viewportWidth + 1);
+      expect(initialMetrics.overflowX).toBe('auto');
+      expect(initialMetrics.overscrollBehaviorX).toBe('contain');
+      expect(initialMetrics.tableDisplay).toBe('table');
+      if (tableCase.expectScrollable !== null) {
+        expect(initialMetrics.isScrollable).toBe(tableCase.expectScrollable);
+      }
+
+      if (tableCase.expectTableReachesCardRight) {
+        expect(initialMetrics.tableRightGap).toBeLessThanOrEqual(1);
+      }
+
+      const scrolledMetrics = await scrollContainer.evaluate((container) => {
+        container.scrollLeft = container.scrollWidth;
+        const table = container.querySelector('table');
+        const lastHeader = table?.querySelector('thead th:last-child');
+        const lastCell = table?.querySelector('tbody tr:last-child td:last-child');
+        const containerRect = container.getBoundingClientRect();
+        const lastHeaderRect = lastHeader?.getBoundingClientRect();
+        const lastCellRect = lastCell?.getBoundingClientRect();
+
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: document.documentElement.clientWidth,
           headerDisplay: lastHeader ? window.getComputedStyle(lastHeader).display : '',
           scrollLeft: container.scrollLeft,
           maxScrollLeft: container.scrollWidth - container.clientWidth,
-          isScrollable: container.scrollWidth > container.clientWidth,
           lastHeaderVisible:
             !!lastHeaderRect &&
             lastHeaderRect.left >= containerRect.left - 1 &&
@@ -605,17 +655,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         };
       });
 
-      expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
-      expect(metrics.containerLeft).toBeGreaterThanOrEqual(-1);
-      expect(metrics.containerRight).toBeLessThanOrEqual(metrics.viewportWidth + 1);
-      expect(metrics.overflowX).toBe('auto');
-      expect(metrics.overscrollBehaviorX).toBe('contain');
-      expect(metrics.tableDisplay).toBe('table');
-      expect(metrics.headerDisplay).toBe('table-cell');
-      expect(metrics.isScrollable).toBe(true);
-      expect(metrics.scrollLeft).toBe(metrics.maxScrollLeft);
-      expect(metrics.lastHeaderVisible).toBe(true);
-      expect(metrics.lastCellVisible).toBe(true);
+      expect(scrolledMetrics.documentWidth).toBeLessThanOrEqual(scrolledMetrics.viewportWidth + 1);
+      expect(scrolledMetrics.headerDisplay).toBe('table-cell');
+      expect(scrolledMetrics.scrollLeft).toBe(scrolledMetrics.maxScrollLeft);
+      expect(scrolledMetrics.lastHeaderVisible).toBe(true);
+      expect(scrolledMetrics.lastCellVisible).toBe(true);
     }
 
     await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
