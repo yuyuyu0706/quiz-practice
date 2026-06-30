@@ -524,6 +524,73 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(pythonHeadingSpeech).not.toContain('spark.readStream.format');
   });
 
+  test('renders regular code as labeled scrollable cards without page overflow', async ({
+    page,
+  }) => {
+    await gotoAudioLearn(page);
+    await selectDomain(page, 'Data Ingestion and Loading');
+
+    for (const viewport of [
+      { width: 1280, height: 720 },
+      { width: 390, height: 844 },
+      { width: 320, height: 844 },
+      { width: 844, height: 390 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await expect(page.locator('#selected-chapter-title')).toHaveText(
+        'Data Ingestion and Loadingの全体像'
+      );
+
+      const metrics = await page
+        .locator('#audio-script-markdown pre[data-learning-content-kind="code"]')
+        .first()
+        .evaluate((pre) => {
+          pre.scrollLeft = pre.scrollWidth;
+          const code = pre.querySelector('code');
+          const rect = pre.getBoundingClientRect();
+          const styles = window.getComputedStyle(pre);
+          const labelStyles = window.getComputedStyle(pre, '::before');
+
+          return {
+            documentWidth: document.documentElement.scrollWidth,
+            viewportWidth: document.documentElement.clientWidth,
+            cardRight: rect.right,
+            cardLeft: rect.left,
+            cardOverflowX: styles.overflowX,
+            cardWhiteSpace: styles.whiteSpace,
+            codeWhiteSpace: code ? window.getComputedStyle(code).whiteSpace : '',
+            label: labelStyles.content.replace(/^"|"$/g, ''),
+            scrollLeft: pre.scrollLeft,
+            maxScrollLeft: pre.scrollWidth - pre.clientWidth,
+            isScrollable: pre.scrollWidth > pre.clientWidth,
+          };
+        });
+
+      expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+      expect(metrics.cardLeft).toBeGreaterThanOrEqual(-1);
+      expect(metrics.cardRight).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+      expect(metrics.cardOverflowX).toBe('auto');
+      expect(metrics.cardWhiteSpace).toBe('pre');
+      expect(metrics.codeWhiteSpace).toBe('pre');
+      expect(metrics.label).toBe('python');
+
+      if (viewport.width === 320) {
+        expect(metrics.isScrollable).toBe(true);
+        expect(metrics.scrollLeft).toBe(metrics.maxScrollLeft);
+      }
+    }
+
+    const fallbackLabel = await page.evaluate(() => {
+      const fallbackPre = document.createElement('pre');
+      fallbackPre.dataset.learningContentKind = 'code';
+      fallbackPre.textContent = 'SELECT 1';
+      document.querySelector('#audio-script-markdown')?.append(fallbackPre);
+      return window.getComputedStyle(fallbackPre, '::before').content.replace(/^"|"$/g, '');
+    });
+
+    expect(fallbackLabel).toBe('code');
+  });
+
   test('shows compact mobile controls without stage pin and keeps speech toggle synced', async ({
     page,
   }) => {
