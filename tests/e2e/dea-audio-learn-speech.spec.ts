@@ -319,6 +319,22 @@ async function installMockSpeech(page: Page) {
   });
 }
 
+async function speakFromAudioHeading(page: Page, headingTitle: string) {
+  await page.evaluate(() => {
+    window.__speechCalls = [];
+  });
+  await page
+    .getByRole('button', { name: `「${headingTitle}」から再生` })
+    .evaluate((button) => (button as HTMLButtonElement).click());
+  await expect
+    .poll(() => page.evaluate(() => window.__speechCalls.filter((call) => call.type === 'speak')))
+    .toHaveLength(1);
+  const [speakCall] = await page.evaluate(() =>
+    window.__speechCalls.filter((call) => call.type === 'speak')
+  );
+  return String(speakCall?.text ?? '');
+}
+
 test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   test('shows chapter overview progress on mobile without overlapping the title', async ({
     page,
@@ -416,18 +432,31 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       page.locator('#audio-script-markdown [data-learning-content-kind="mermaid"]')
     ).toHaveCount(0);
 
-    const syncedSpeechToggle = (await page.locator('#mobile-speech-toggle').isVisible())
-      ? page.locator('#mobile-speech-toggle')
-      : page.locator('#tracker-speech-toggle');
-    await clickVisible(syncedSpeechToggle);
-    await expect(page.locator('#speech-status')).toHaveText('読み上げ中');
-    const latestIngestionSpeakCall = await page.evaluate(() => {
-      const speakCalls = window.__speechCalls.filter((call) => call.type === 'speak');
-      return speakCalls[speakCalls.length - 1];
-    });
-    expect(String(latestIngestionSpeakCall?.text)).not.toContain('flowchart LR');
-    expect(String(latestIngestionSpeakCall?.text)).not.toContain('spark.readStream.format');
-    expect(String(latestIngestionSpeakCall?.text)).not.toContain('| 判断軸 |');
+    const comparisonHeadingSpeech = await speakFromAudioHeading(
+      page,
+      '取り込み方式は、データの性質と運用要件から選ぶ'
+    );
+    expect(comparisonHeadingSpeech).toContain('どの取り込み機能が常に最適というわけではありません');
+    expect(comparisonHeadingSpeech).not.toContain('| 判断軸 |');
+    expect(comparisonHeadingSpeech).not.toContain('判断軸');
+
+    const mermaidHeadingSpeech = await speakFromAudioHeading(
+      page,
+      'クラウドストレージ上のファイルをBronzeへ取り込む'
+    );
+    expect(mermaidHeadingSpeech).toContain(
+      '以下は、landing領域からBronze、Silver、Goldへ進む基本的な流れです。'
+    );
+    expect(mermaidHeadingSpeech).not.toContain('flowchart LR');
+
+    const pythonHeadingSpeech = await speakFromAudioHeading(
+      page,
+      'Auto Loaderで継続取り込みする例'
+    );
+    expect(pythonHeadingSpeech).toContain(
+      '以下は、JSONファイルを読み込み、Bronzeテーブルへ書き込む概念例です。'
+    );
+    expect(pythonHeadingSpeech).not.toContain('spark.readStream.format');
   });
 
   test('shows compact mobile controls without stage pin and keeps speech toggle synced', async ({
