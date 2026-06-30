@@ -524,6 +524,112 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(pythonHeadingSpeech).not.toContain('spark.readStream.format');
   });
 
+  test('renders markdown tables as accessible scrollable cards without page overflow', async ({
+    page,
+  }) => {
+    await gotoAudioLearn(page);
+
+    const tableCases = [
+      {
+        title: 'LakehouseとDelta Lakeの位置づけ',
+        setup: async () => {
+          await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+        },
+        viewport: { width: 390, height: 844 },
+        expectedLastHeader: 'Lakehouse',
+        expectedLastCell: '中核のテーブル管理を支える',
+      },
+      {
+        title: 'Data Ingestion and Loadingの全体像',
+        setup: async () => {
+          await selectDomain(page, 'Data Ingestion and Loading');
+        },
+        viewport: { width: 320, height: 844 },
+        expectedLastHeader: '代表的な考え方',
+        expectedLastCell: 'Unity Catalog governed tablesへの着地',
+      },
+    ];
+
+    for (const tableCase of tableCases) {
+      await tableCase.setup();
+      await page.setViewportSize(tableCase.viewport);
+      await expect(page.locator('#selected-chapter-title')).toHaveText(tableCase.title);
+
+      const scrollContainer = page.locator(
+        '#audio-script-markdown .learning-table-scroll:has(> table[data-learning-content-kind="table"])'
+      );
+      await expect(scrollContainer).toHaveCount(1);
+      await expect(scrollContainer).toHaveAttribute(
+        'aria-label',
+        /横スクロールして全列を確認できる教材表/
+      );
+      await expect(scrollContainer).toHaveAttribute('tabindex', '0');
+      await expect(scrollContainer.locator('table > thead th').last()).toHaveText(
+        tableCase.expectedLastHeader
+      );
+      await expect(scrollContainer.locator('table > tbody td').last()).toHaveText(
+        tableCase.expectedLastCell
+      );
+
+      const metrics = await scrollContainer.evaluate((container) => {
+        container.scrollLeft = container.scrollWidth;
+        const table = container.querySelector('table');
+        const lastHeader = table?.querySelector('thead th:last-child');
+        const lastCell = table?.querySelector('tbody tr:last-child td:last-child');
+        const containerRect = container.getBoundingClientRect();
+        const lastHeaderRect = lastHeader?.getBoundingClientRect();
+        const lastCellRect = lastCell?.getBoundingClientRect();
+        const styles = window.getComputedStyle(container);
+        const tableStyles = table ? window.getComputedStyle(table) : null;
+
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: document.documentElement.clientWidth,
+          containerLeft: containerRect.left,
+          containerRight: containerRect.right,
+          overflowX: styles.overflowX,
+          overscrollBehaviorX: styles.overscrollBehaviorX,
+          tableDisplay: tableStyles?.display,
+          headerDisplay: lastHeader ? window.getComputedStyle(lastHeader).display : '',
+          scrollLeft: container.scrollLeft,
+          maxScrollLeft: container.scrollWidth - container.clientWidth,
+          isScrollable: container.scrollWidth > container.clientWidth,
+          lastHeaderVisible:
+            !!lastHeaderRect &&
+            lastHeaderRect.left >= containerRect.left - 1 &&
+            lastHeaderRect.right <= containerRect.right + 1,
+          lastCellVisible:
+            !!lastCellRect &&
+            lastCellRect.left >= containerRect.left - 1 &&
+            lastCellRect.right <= containerRect.right + 1,
+        };
+      });
+
+      expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+      expect(metrics.containerLeft).toBeGreaterThanOrEqual(-1);
+      expect(metrics.containerRight).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+      expect(metrics.overflowX).toBe('auto');
+      expect(metrics.overscrollBehaviorX).toBe('contain');
+      expect(metrics.tableDisplay).toBe('table');
+      expect(metrics.headerDisplay).toBe('table-cell');
+      expect(metrics.isScrollable).toBe(true);
+      expect(metrics.scrollLeft).toBe(metrics.maxScrollLeft);
+      expect(metrics.lastHeaderVisible).toBe(true);
+      expect(metrics.lastCellVisible).toBe(true);
+    }
+
+    await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+    await page.locator('#previous-chapter').evaluate((button) => (button as HTMLElement).click());
+    await expect(
+      page.locator(
+        '#audio-script-markdown .learning-table-scroll > table[data-learning-content-kind="table"]'
+      )
+    ).toHaveCount(1);
+    await expect(
+      page.locator('#audio-script-markdown .learning-table-scroll .learning-table-scroll')
+    ).toHaveCount(0);
+  });
+
   test('renders regular code as labeled scrollable cards without page overflow', async ({
     page,
   }) => {

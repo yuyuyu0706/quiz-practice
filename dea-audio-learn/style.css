@@ -1091,6 +1091,64 @@ body {
   white-space: pre;
 }
 
+.learning-table-scroll {
+  max-width: 100%;
+  min-width: 0;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.learning-table-scroll:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 3px;
+}
+
+.markdown-body table[data-learning-content-kind='table'] {
+  width: max-content;
+  min-width: min(42rem, 100%);
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.markdown-body table[data-learning-content-kind='table'] th,
+.markdown-body table[data-learning-content-kind='table'] td {
+  min-width: 10rem;
+  max-width: 18rem;
+  padding: 0.72rem 0.85rem;
+  border-right: 1px solid #d7deea;
+  border-bottom: 1px solid #d7deea;
+  text-align: left;
+  vertical-align: top;
+  white-space: normal;
+}
+
+.markdown-body table[data-learning-content-kind='table'] th:last-child,
+.markdown-body table[data-learning-content-kind='table'] td:last-child {
+  border-right: 0;
+}
+
+.markdown-body table[data-learning-content-kind='table'] tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.markdown-body table[data-learning-content-kind='table'] thead th {
+  color: var(--color-primary-strong);
+  background: #f5f7ff;
+  font-weight: 700;
+}
+
+.markdown-body table[data-learning-content-kind='table'] tbody tr:nth-child(even) td {
+  background: #fbfcff;
+}
+
 .mobile-learning-nav,
 .mobile-sidebar-open,
 .mobile-sidebar-close,
@@ -1507,6 +1565,21 @@ body {
     min-height: 1.2rem;
     padding: 0.1rem 0.38rem;
     font-size: 0.62rem;
+  }
+
+  .learning-table-scroll {
+    margin: 1rem 0;
+  }
+
+  .markdown-body table[data-learning-content-kind='table'] {
+    min-width: 38rem;
+    font-size: 0.82rem;
+  }
+
+  .markdown-body table[data-learning-content-kind='table'] th,
+  .markdown-body table[data-learning-content-kind='table'] td {
+    min-width: 9rem;
+    padding: 0.58rem 0.65rem;
   }
 
   .chapter-panel,
