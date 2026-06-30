@@ -1231,6 +1231,30 @@ const addExternalLinkAttributes = (root) => {
   });
 };
 
+const getCodeLanguage = (code) => {
+  const languageClass = Array.from(code.classList).find((className) =>
+    className.startsWith('language-')
+  );
+  return languageClass?.replace(/^language-/u, '').trim() || '';
+};
+
+const annotateLearningContentBlocks = (root) => {
+  root.querySelectorAll('table').forEach((table) => {
+    table.dataset.learningContentKind = 'table';
+  });
+
+  root.querySelectorAll('pre > code').forEach((code) => {
+    const language = getCodeLanguage(code);
+    const contentKind = language === 'mermaid' ? 'mermaid-source' : 'code';
+    code.dataset.learningContentKind = contentKind;
+    code.parentElement.dataset.learningContentKind = contentKind;
+    if (language) {
+      code.dataset.codeLanguage = language;
+      code.parentElement.dataset.codeLanguage = language;
+    }
+  });
+};
+
 const setActiveAudioTocLink = (href) => {
   manualAudioTocTargetId = href.startsWith('#') ? href.slice(1) : null;
   let activeLink = null;
@@ -1662,6 +1686,7 @@ const selectChapterByIndex = async (chapterIndex) => {
     try {
       const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
       audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
+      annotateLearningContentBlocks(audioScriptMarkdown);
       buildAudioTableOfContents();
       speechSections = buildSpeechSectionsFromRenderedMarkdown();
       rebuildSpeechChunksFromSections();
@@ -1682,6 +1707,7 @@ const selectChapterByIndex = async (chapterIndex) => {
       const note = removeNoteTitle(await fetchText(chapter.notePath));
       noteMarkdown.innerHTML = renderMarkdown(note);
       addExternalLinkAttributes(noteMarkdown);
+      annotateLearningContentBlocks(noteMarkdown);
     } catch (error) {
       noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
     }
