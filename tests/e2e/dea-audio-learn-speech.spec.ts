@@ -79,6 +79,40 @@ async function closeMobileSidebarIfNeeded(page: Page) {
   }
 }
 
+async function getKeywordItemPosition(page: Page, keywordHash: string) {
+  return page.evaluate((hash) => {
+    const anchor = document.querySelector(`#note-markdown a[id="${hash.slice(1)}"]`);
+    const target = anchor?.closest('li') ?? anchor;
+    const offset = Number.parseFloat(
+      window
+        .getComputedStyle(document.documentElement)
+        .getPropertyValue('--learning-tracker-scroll-offset')
+    );
+    const rect = target?.getBoundingClientRect();
+    return rect
+      ? {
+          bottom: rect.bottom,
+          offset,
+          top: rect.top,
+          viewportHeight: window.innerHeight,
+        }
+      : null;
+  }, keywordHash);
+}
+
+async function expectKeywordItemBelowStickyOffset(page: Page, keywordHash: string) {
+  await expect
+    .poll(async () => {
+      const position = await getKeywordItemPosition(page, keywordHash);
+      if (!position) return false;
+      return (
+        position.top >= Math.floor(position.offset) - 1 &&
+        position.bottom <= position.viewportHeight
+      );
+    })
+    .toBe(true);
+}
+
 async function startMobileCloseOrderCapture(page: Page) {
   await page.evaluate(() => {
     window.__mobileCloseEvents = [];
@@ -336,6 +370,37 @@ async function speakFromAudioHeading(page: Page, headingTitle: string) {
 }
 
 test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
+  test('scrolls keyword links below sticky controls and preserves URL hash/history', async ({
+    page,
+  }) => {
+    await gotoAudioLearn(page);
+
+    await clickByDom(page.locator('#audio-script-markdown a[href="#keyword-lakehouse"]').first());
+    await expect(page).toHaveURL(/#keyword-lakehouse/u);
+    await expectKeywordItemBelowStickyOffset(page, '#keyword-lakehouse');
+
+    await clickByDom(page.locator('#audio-script-markdown a[href="#keyword-delta-lake"]').first());
+    await expect(page).toHaveURL(/#keyword-delta-lake/u);
+    await expectKeywordItemBelowStickyOffset(page, '#keyword-delta-lake');
+
+    await page.goBack();
+    await expect(page).toHaveURL(/#keyword-lakehouse/u);
+    await expectKeywordItemBelowStickyOffset(page, '#keyword-lakehouse');
+  });
+
+  test('keeps keyword direct links visible below mobile sticky controls', async ({ page }) => {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 320, height: 844 },
+      { width: 844, height: 390 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/dea-audio-learn/#keyword-lakehouse');
+      await expect(page.getByRole('heading', { name: 'DEA Audio Learn' })).toBeVisible();
+      await expect(page.locator('#note-markdown')).toContainText('Lakehouse');
+      await expectKeywordItemBelowStickyOffset(page, '#keyword-lakehouse');
+    }
+  });
   test('shows chapter overview progress on mobile without overlapping the title', async ({
     page,
   }) => {
