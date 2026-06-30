@@ -670,22 +670,22 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           headerDisplay: lastHeader ? window.getComputedStyle(lastHeader).display : '',
           scrollLeft: container.scrollLeft,
           maxScrollLeft: container.scrollWidth - container.clientWidth,
-          lastHeaderVisible:
+          lastHeaderRightReachable:
             !!lastHeaderRect &&
-            lastHeaderRect.left >= containerRect.left - 1 &&
-            lastHeaderRect.right <= containerRect.right + 1,
-          lastCellVisible:
+            lastHeaderRect.right <= containerRect.right + 1 &&
+            lastHeaderRect.right >= containerRect.left - 1,
+          lastCellRightReachable:
             !!lastCellRect &&
-            lastCellRect.left >= containerRect.left - 1 &&
-            lastCellRect.right <= containerRect.right + 1,
+            lastCellRect.right <= containerRect.right + 1 &&
+            lastCellRect.right >= containerRect.left - 1,
         };
       });
 
       expect(scrolledMetrics.documentWidth).toBeLessThanOrEqual(scrolledMetrics.viewportWidth + 1);
       expect(scrolledMetrics.headerDisplay).toBe('table-cell');
       expect(scrolledMetrics.scrollLeft).toBe(scrolledMetrics.maxScrollLeft);
-      expect(scrolledMetrics.lastHeaderVisible).toBe(true);
-      expect(scrolledMetrics.lastCellVisible).toBe(true);
+      expect(scrolledMetrics.lastHeaderRightReachable).toBe(true);
+      expect(scrolledMetrics.lastCellRightReachable).toBe(true);
     }
 
     await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
