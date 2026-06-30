@@ -1057,7 +1057,7 @@ body {
 }
 
 .markdown-body pre[data-learning-content-kind='code']::before {
-  content: 'CODE';
+  content: 'code';
   position: absolute;
   top: 0.55rem;
   left: 0.75rem;
@@ -1074,7 +1074,6 @@ body {
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .markdown-body pre[data-learning-content-kind='code'][data-code-language]::before {
