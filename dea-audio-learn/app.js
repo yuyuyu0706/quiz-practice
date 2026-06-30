@@ -408,6 +408,51 @@ const scrollToLearningStage = (stageKey) => {
   });
 };
 
+const isKeywordHash = (hash) => /^#keyword-[A-Za-z0-9_-]+$/u.test(hash);
+
+const getKeywordAnchor = (hash = window.location.hash) => {
+  if (!isKeywordHash(hash)) return null;
+  const keywordId = window.CSS?.escape
+    ? CSS.escape(decodeURIComponent(hash.slice(1)))
+    : decodeURIComponent(hash.slice(1));
+  return noteMarkdown.querySelector(`a[id="${keywordId}"]`);
+};
+
+const getKeywordScrollTarget = (anchor) => {
+  if (!anchor) return null;
+  return anchor.closest('li') ?? anchor.closest('p, section, article, div') ?? anchor;
+};
+
+const scrollToKeywordHash = (hash = window.location.hash) => {
+  const target = getKeywordScrollTarget(getKeywordAnchor(hash));
+  if (!target) return false;
+  const scrollOffset = updateLearningTrackerScrollOffset();
+  const targetTop = window.scrollY + target.getBoundingClientRect().top - scrollOffset;
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    left: 0,
+    behavior: 'auto',
+  });
+  return true;
+};
+
+const queueKeywordHashScroll = (hash = window.location.hash) => {
+  if (!isKeywordHash(hash)) return;
+  window.requestAnimationFrame(() => scrollToKeywordHash(hash));
+};
+
+const handleKeywordAnchorClick = (event) => {
+  const link = event.target.closest?.('a[href^="#keyword-"]');
+  if (!link || !audioScriptMarkdown.contains(link)) return;
+  const hash = link.getAttribute('href');
+  if (!hash || !isKeywordHash(hash)) return;
+  event.preventDefault();
+  if (!scrollToKeywordHash(hash)) return;
+  if (window.location.hash !== hash) {
+    window.history.pushState(null, '', hash);
+  }
+};
+
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
 const logSpeech = (message, detail) => {
@@ -1708,6 +1753,7 @@ const selectChapterByIndex = async (chapterIndex) => {
       noteMarkdown.innerHTML = renderMarkdown(note);
       addExternalLinkAttributes(noteMarkdown);
       annotateLearningContentBlocks(noteMarkdown);
+      queueKeywordHashScroll();
     } catch (error) {
       noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
     }
@@ -1725,6 +1771,7 @@ const selectChapterByIndex = async (chapterIndex) => {
       scrollToChapterStart();
     }
     resetLearningTracker();
+    queueKeywordHashScroll();
   }
 };
 
@@ -1752,6 +1799,9 @@ trackerSpeechToggleButton.addEventListener('click', handleSpeechToggle);
 mobileSpeechToggleButton?.addEventListener('click', handleSpeechToggle);
 speechNextButton.addEventListener('click', () => jumpToSpeechChunk(currentChunkIndex + 1));
 window.addEventListener('scroll', queueAudioHeadingScrollRefresh, { passive: true });
+window.addEventListener('hashchange', () => queueKeywordHashScroll());
+window.addEventListener('popstate', () => queueKeywordHashScroll());
+audioScriptMarkdown.addEventListener('click', handleKeywordAnchorClick);
 audioTocPanel?.addEventListener('toggle', updateActiveAudioTocItem);
 learningTrackerButtons.forEach((button) => {
   button.addEventListener('click', () => scrollToLearningStage(button.dataset.stageTarget));

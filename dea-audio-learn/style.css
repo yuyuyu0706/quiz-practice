@@ -718,6 +718,7 @@ body {
 }
 
 #audio-script-markdown :is(h2, h3)[id],
+#note-markdown a[id^='keyword-'],
 #note-title,
 #mini-quiz-title {
   scroll-margin-top: calc(var(--learning-tracker-scroll-offset) - 0.3rem);
