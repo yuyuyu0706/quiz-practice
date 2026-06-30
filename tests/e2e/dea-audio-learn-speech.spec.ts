@@ -540,6 +540,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         expectedLastCell: '中核のテーブル管理を支える',
         expectScrollable: null,
         expectTableReachesCardRight: true,
+        expectCompactTableText: true,
       },
       {
         title: 'LakehouseとDelta Lakeの位置づけ',
@@ -549,6 +550,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         expectedLastCell: '中核のテーブル管理を支える',
         expectScrollable: true,
         expectTableReachesCardRight: false,
+        expectCompactTableText: false,
       },
       {
         title: 'Data Ingestion and Loadingの全体像',
@@ -560,6 +562,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         expectedLastCell: 'Unity Catalog governed tablesへの着地',
         expectScrollable: true,
         expectTableReachesCardRight: false,
+        expectCompactTableText: false,
       },
       {
         title: 'Data Ingestion and Loadingの全体像',
@@ -569,6 +572,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         expectedLastCell: 'Unity Catalog governed tablesへの着地',
         expectScrollable: true,
         expectTableReachesCardRight: false,
+        expectCompactTableText: false,
       },
     ];
 
@@ -599,6 +603,11 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         const tableRect = table?.getBoundingClientRect();
         const styles = window.getComputedStyle(container);
         const tableStyles = table ? window.getComputedStyle(table) : null;
+        const header = table?.querySelector('thead th');
+        const cell = table?.querySelector('tbody td');
+        const headerStyles = header ? window.getComputedStyle(header) : null;
+        const cellStyles = cell ? window.getComputedStyle(cell) : null;
+        const bodyStyles = window.getComputedStyle(document.body);
         const containerInnerRight = containerRect.left + container.clientWidth;
 
         return {
@@ -609,6 +618,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
           overflowX: styles.overflowX,
           overscrollBehaviorX: styles.overscrollBehaviorX,
           tableDisplay: tableStyles?.display,
+          tableFontSize: tableStyles?.fontSize,
+          tableLineHeight: tableStyles?.lineHeight,
+          headerFontSize: headerStyles?.fontSize,
+          headerLineHeight: headerStyles?.lineHeight,
+          cellFontSize: cellStyles?.fontSize,
+          cellLineHeight: cellStyles?.lineHeight,
+          bodyFontSize: bodyStyles.fontSize,
           tableMinWidth: tableStyles?.minWidth,
           tableRightGap: tableRect ? containerInnerRight - tableRect.right : Number.NaN,
           isScrollable: container.scrollWidth > container.clientWidth,
@@ -627,6 +643,16 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
 
       if (tableCase.expectTableReachesCardRight) {
         expect(initialMetrics.tableRightGap).toBeLessThanOrEqual(1);
+      }
+
+      if (tableCase.expectCompactTableText) {
+        expect(Number.parseFloat(initialMetrics.tableFontSize)).toBeLessThan(
+          Number.parseFloat(initialMetrics.bodyFontSize)
+        );
+        expect(initialMetrics.tableFontSize).toBe(initialMetrics.headerFontSize);
+        expect(initialMetrics.tableFontSize).toBe(initialMetrics.cellFontSize);
+        expect(initialMetrics.tableLineHeight).toBe(initialMetrics.headerLineHeight);
+        expect(initialMetrics.tableLineHeight).toBe(initialMetrics.cellLineHeight);
       }
 
       const scrolledMetrics = await scrollContainer.evaluate((container) => {

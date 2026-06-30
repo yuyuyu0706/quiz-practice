@@ -1148,6 +1148,22 @@ body {
   background: #fbfcff;
 }
 
+@media (min-width: 781px) and (min-height: 481px),
+  (min-width: 781px) and (orientation: portrait),
+  (min-width: 781px) and (pointer: fine),
+  (min-width: 781px) and (pointer: none) {
+  .markdown-body table[data-learning-content-kind='table'] {
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .markdown-body table[data-learning-content-kind='table'] th,
+  .markdown-body table[data-learning-content-kind='table'] td {
+    font-size: inherit;
+    line-height: inherit;
+  }
+}
+
 .mobile-learning-nav,
 .mobile-sidebar-open,
 .mobile-sidebar-close,
