@@ -489,7 +489,14 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '#audio-script-markdown figure.learning-mermaid[data-learning-content-kind="mermaid"]'
     );
     await expect(mermaidFigure).toHaveCount(1);
-    await expect(mermaidFigure).toHaveAttribute('data-mermaid-state', /^(rendered|failed)$/);
+    await expect(mermaidFigure).toHaveAttribute('data-mermaid-state', 'rendered');
+    const mermaidSvg = mermaidFigure.locator('.learning-mermaid__scroll svg');
+    await expect(mermaidSvg).toHaveCount(1);
+    await expect(mermaidSvg).not.toHaveAttribute('aria-hidden', 'true');
+    await expect(mermaidSvg.locator('title')).toContainText('LakehouseとDelta Lakeの関係');
+    await expect(mermaidSvg.locator('desc')).toContainText(
+      'データレイクとデータウェアハウスの課題をLakehouseが受け止め'
+    );
 
     await selectDomain(page, 'Data Ingestion and Loading');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
@@ -504,7 +511,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       )
     ).toContainText('spark.readStream.format');
     await expect(mermaidFigure).toHaveCount(1);
-    await expect(mermaidFigure).toHaveAttribute('data-mermaid-state', /^(rendered|failed)$/);
+    await expect(mermaidFigure).toHaveAttribute('data-mermaid-state', 'rendered');
+    await expect(mermaidFigure.locator('.learning-mermaid__scroll svg')).toHaveCount(1);
     await expect(page.locator('#audio-script-markdown .learning-mermaid__scroll')).toHaveAttribute(
       'tabindex',
       '0'
@@ -535,6 +543,29 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '以下は、JSONファイルを読み込み、Bronzeテーブルへ書き込む概念例です。'
     );
     expect(pythonHeadingSpeech).not.toContain('spark.readStream.format');
+  });
+
+  test('ignores stale chapter loads during rapid chapter switching', async ({ page }) => {
+    await installMockMermaid(page);
+    const delayedAudioScript = readFileSync(
+      new URL('../../dea-audio-learn/audio-scripts/dea-dip-002.md', import.meta.url),
+      'utf8'
+    );
+    await page.route('**/dea-audio-learn/audio-scripts/dea-dip-002.md', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      await route.fulfill({ contentType: 'text/markdown', body: delayedAudioScript });
+    });
+
+    await gotoAudioLearn(page);
+    await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+    await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+
+    await expect(page.locator('#selected-chapter-title')).toHaveText(chapters[2].title);
+    await expect(page.locator('#audio-script-markdown')).toContainText('ワークロードに応じて選ぶ');
+    await page.waitForTimeout(700);
+    await expect(page.locator('#selected-chapter-title')).toHaveText(chapters[2].title);
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('ReliableTable');
+    await expect(page.locator('#audio-script-markdown')).toContainText('ワークロードに応じて選ぶ');
   });
 
   test('falls back to open Mermaid source when rendering fails', async ({ page }) => {

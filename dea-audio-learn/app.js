@@ -458,6 +458,7 @@ const mermaidFallbackMessage =
   '図解を表示できませんでした。本文の前後説明と、以下の図解ソースをご確認ください。';
 let mermaidRenderGeneration = 0;
 let mermaidInitialized = false;
+let chapterSelectionGeneration = 0;
 
 const getMermaidApi = () => window.mermaid;
 
@@ -531,7 +532,6 @@ const renderMermaidDiagrams = async (root) => {
       const { svg } = await getMermaidApi().render(id, parts.source);
       if (generation !== mermaidRenderGeneration || !parts.figure.isConnected) return;
       parts.canvas.innerHTML = svg;
-      parts.canvas.querySelector('svg')?.setAttribute('aria-hidden', 'true');
       parts.figure.dataset.mermaidState = 'rendered';
     } catch (error) {
       if (generation !== mermaidRenderGeneration || !parts.figure.isConnected) return;
@@ -1811,6 +1811,8 @@ const handleMiniQuizPrimaryAction = () => {
 };
 
 const selectChapterByIndex = async (chapterIndex) => {
+  const selectionGeneration = (chapterSelectionGeneration += 1);
+  const isCurrentSelection = () => selectionGeneration === chapterSelectionGeneration;
   const chapter = chapters[chapterIndex];
   if (!chapter) {
     return;
@@ -1839,10 +1841,13 @@ const selectChapterByIndex = async (chapterIndex) => {
 
   try {
     try {
-      const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
+      const audioScriptText = await fetchText(chapter.audioScriptPath);
+      if (!isCurrentSelection()) return;
+      const audioScript = removeAudioScriptTitle(audioScriptText);
       audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
       annotateLearningContentBlocks(audioScriptMarkdown);
       await renderMermaidDiagrams(audioScriptMarkdown);
+      if (!isCurrentSelection()) return;
       buildAudioTableOfContents();
       speechSections = buildSpeechSectionsFromRenderedMarkdown();
       rebuildSpeechChunksFromSections();
@@ -1856,20 +1861,26 @@ const selectChapterByIndex = async (chapterIndex) => {
       });
       refreshSpeechVoices('audio-script-loaded');
     } catch (error) {
+      if (!isCurrentSelection()) return;
       audioScriptMarkdown.textContent = error.message;
     }
 
     try {
-      const note = removeNoteTitle(await fetchText(chapter.notePath));
+      const noteText = await fetchText(chapter.notePath);
+      if (!isCurrentSelection()) return;
+      const note = removeNoteTitle(noteText);
       noteMarkdown.innerHTML = renderMarkdown(note);
       addExternalLinkAttributes(noteMarkdown);
       annotateLearningContentBlocks(noteMarkdown);
       await renderMermaidDiagrams(noteMarkdown);
+      if (!isCurrentSelection()) return;
       queueKeywordHashScroll();
     } catch (error) {
+      if (!isCurrentSelection()) return;
       noteMarkdown.textContent = '要点メモの読み込みに失敗しました';
     }
   } finally {
+    if (!isCurrentSelection()) return;
     const shouldFocusTitle = shouldFocusChapterTitleAfterSelection && !isDesktopViewport();
     shouldFocusChapterTitleAfterSelection = false;
     if (shouldFocusTitle) {
