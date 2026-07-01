@@ -16,6 +16,10 @@ declare global {
   interface Window {
     __speechCalls: Array<Record<string, unknown>>;
     __mobileCloseEvents: Array<Record<string, string | null>>;
+    mermaid: {
+      initialize: (config: unknown) => void;
+      render: (id: string, source: string) => Promise<{ svg: string }>;
+    };
   }
 }
 
@@ -249,6 +253,7 @@ async function expectMobileAudioContentWithinViewport(page: Page) {
 
     const overflowingElements = selectors.flatMap((selector) =>
       Array.from(document.querySelectorAll(selector))
+        .filter((element) => !element.closest('.learning-mermaid__scroll'))
         .map((element) => {
           const rect = element.getBoundingClientRect();
           const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
@@ -297,6 +302,27 @@ async function selectDomain(page: Page, name: string) {
   await openSectionSelector(page);
   await expectMobileSidebarOpenIfNeeded(page);
   await clickVisible(page.getByRole('button', { name }));
+}
+
+async function installMockMermaid(page: Page, options: { fail?: boolean } = {}) {
+  const mockMermaidScript = options.fail
+    ? `window.mermaid={initialize(){},render(){return Promise.reject(new Error('mock mermaid render failure'));}};`
+    : `window.mermaid={initialize(){},render(id,source){const title=(source.match(/accTitle:\s*([^\n]+)/u)?.[1]||'教材図解').trim();const descr=(source.match(/accDescr:\s*([^\n]+)/u)?.[1]||'教材図解の説明').trim();return Promise.resolve({svg:'<svg id="'+id+'" role="img" aria-labelledby="'+id+'-title '+id+'-desc" viewBox="0 0 900 240" width="900" height="240"><title id="'+id+'-title">'+title+'</title><desc id="'+id+'-desc">'+descr+'</desc><g><text x="20" y="40">Cloud Storage landing area</text><text x="420" y="40">ReliableTable</text></g></svg>'});}};`;
+
+  await page.addInitScript((script) => {
+    window.eval(script);
+    Object.defineProperty(window, 'mermaid', {
+      configurable: false,
+      writable: false,
+      value: window.mermaid,
+    });
+  }, mockMermaidScript);
+  await page.route(/.*mermaid.*\.js.*/u, async (route) => {
+    await route.fulfill({
+      contentType: 'application/javascript',
+      body: '// Mermaid is mocked by addInitScript.',
+    });
+  });
 }
 
 async function installMockSpeech(page: Page) {
@@ -461,6 +487,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     page,
   }) => {
     await installMockSpeech(page);
+    await installMockMermaid(page);
     await gotoAudioLearn(page);
 
     await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
@@ -470,11 +497,18 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     await expect(
       page.locator('#audio-script-markdown table[data-learning-content-kind="table"]')
     ).toHaveCount(1);
-    await expect(
-      page.locator(
-        '#audio-script-markdown pre[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"] > code.language-mermaid[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"]'
-      )
-    ).toContainText('ReliableTable');
+    const mermaidFigure = page.locator(
+      '#audio-script-markdown figure.learning-mermaid[data-learning-content-kind="mermaid"]'
+    );
+    await expect(mermaidFigure).toHaveCount(1);
+    await expect(mermaidFigure).toHaveAttribute('data-mermaid-state', 'rendered');
+    const mermaidSvg = mermaidFigure.locator('.learning-mermaid__scroll svg');
+    await expect(mermaidSvg).toHaveCount(1);
+    await expect(mermaidSvg).not.toHaveAttribute('aria-hidden', 'true');
+    await expect(mermaidSvg.locator('title')).toContainText('LakehouseとDelta Lakeの関係');
+    await expect(mermaidSvg.locator('desc')).toContainText(
+      'データレイクとデータウェアハウスの課題をLakehouseが受け止め'
+    );
 
     await selectDomain(page, 'Data Ingestion and Loading');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
@@ -488,14 +522,13 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         '#audio-script-markdown pre[data-learning-content-kind="code"][data-code-language="python"] > code.language-python[data-learning-content-kind="code"][data-code-language="python"]'
       )
     ).toContainText('spark.readStream.format');
-    await expect(
-      page.locator(
-        '#audio-script-markdown pre[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"] > code.language-mermaid[data-learning-content-kind="mermaid-source"][data-code-language="mermaid"]'
-      )
-    ).toContainText('flowchart LR');
-    await expect(
-      page.locator('#audio-script-markdown [data-learning-content-kind="mermaid"]')
-    ).toHaveCount(0);
+    await expect(mermaidFigure).toHaveCount(1);
+    await expect(mermaidFigure).toHaveAttribute('data-mermaid-state', 'rendered');
+    await expect(mermaidFigure.locator('.learning-mermaid__scroll svg')).toHaveCount(1);
+    await expect(page.locator('#audio-script-markdown .learning-mermaid__scroll')).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
 
     const comparisonHeadingSpeech = await speakFromAudioHeading(
       page,
@@ -522,6 +555,45 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       '以下は、JSONファイルを読み込み、Bronzeテーブルへ書き込む概念例です。'
     );
     expect(pythonHeadingSpeech).not.toContain('spark.readStream.format');
+  });
+
+  test('ignores stale chapter loads during rapid chapter switching', async ({ page }) => {
+    await installMockMermaid(page);
+    const delayedAudioScript = readFileSync(
+      new URL('../../dea-audio-learn/audio-scripts/dea-dip-002.md', import.meta.url),
+      'utf8'
+    );
+    await page.route('**/dea-audio-learn/audio-scripts/dea-dip-002.md', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      await route.fulfill({ contentType: 'text/markdown', body: delayedAudioScript });
+    });
+
+    await gotoAudioLearn(page);
+    await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+    await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+
+    await expect(page.locator('#selected-chapter-title')).toHaveText(chapters[2].title);
+    await expect(page.locator('#audio-script-markdown')).toContainText('ワークロードに応じて選ぶ');
+    await page.waitForTimeout(700);
+    await expect(page.locator('#selected-chapter-title')).toHaveText(chapters[2].title);
+    await expect(page.locator('#audio-script-markdown')).not.toContainText('ReliableTable');
+    await expect(page.locator('#audio-script-markdown')).toContainText('ワークロードに応じて選ぶ');
+  });
+
+  test('falls back to open Mermaid source when rendering fails', async ({ page }) => {
+    await installMockMermaid(page, { fail: true });
+    await gotoAudioLearn(page);
+    await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+
+    const figure = page.locator(
+      '#audio-script-markdown figure.learning-mermaid[data-learning-content-kind="mermaid"]'
+    );
+    await expect(figure).toHaveAttribute('data-mermaid-state', 'failed');
+    await expect(figure.locator('.learning-mermaid__fallback')).toContainText(
+      '図解を表示できませんでした。本文の前後説明と、以下の図解ソースをご確認ください。'
+    );
+    await expect(figure.locator('details.learning-mermaid__source')).toHaveAttribute('open', '');
+    await expect(page.locator('#next-chapter')).toBeEnabled();
   });
 
   test('renders markdown tables as accessible scrollable cards without page overflow', async ({
@@ -2349,7 +2421,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   });
 });
 
-test.describe('[DEA][Data] Audio Learn quizzes', () => {
+test.describe('[DEA][DATA] Audio Learn quizzes', () => {
   test('uses the lightweight Audio Learn quiz schema', () => {
     expect(chapters).toHaveLength(10);
     expect(new Set(chapters.map((chapter: { domain: string }) => chapter.domain))).toEqual(
