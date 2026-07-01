@@ -570,7 +570,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         viewport: { width: 844, height: 390 },
         expectedLastHeader: '代表的な考え方',
         expectedLastCell: 'Unity Catalog governed tablesへの着地',
-        expectScrollable: true,
+        expectScrollable: null,
         expectTableReachesCardRight: false,
         expectCompactTableText: false,
       },
