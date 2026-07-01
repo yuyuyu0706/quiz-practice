@@ -488,9 +488,9 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     const renderedMermaidFigure = page.locator(
       '#audio-script-markdown figure.learning-mermaid[data-learning-content-kind="mermaid"][data-mermaid-state="rendered"]'
     );
-    await expect(renderedMermaidFigure.locator('details.learning-mermaid__source')).toContainText(
-      'ReliableTable'
-    );
+    await expect(renderedMermaidFigure).toHaveCount(1);
+    await expect(renderedMermaidFigure.locator('.learning-mermaid__scroll svg')).toHaveCount(1);
+    await expect(page.locator('#audio-script-markdown')).toContainText('ReliableTable');
 
     await selectDomain(page, 'Data Ingestion and Loading');
     await expect(page.locator('#selected-chapter-title')).toHaveText(
@@ -504,10 +504,8 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
         '#audio-script-markdown pre[data-learning-content-kind="code"][data-code-language="python"] > code.language-python[data-learning-content-kind="code"][data-code-language="python"]'
       )
     ).toContainText('spark.readStream.format');
-    await expect(renderedMermaidFigure.locator('details.learning-mermaid__source')).toContainText(
-      'flowchart LR'
-    );
     await expect(renderedMermaidFigure).toHaveCount(1);
+    await expect(renderedMermaidFigure.locator('.learning-mermaid__scroll svg')).toHaveCount(1);
     await expect(page.locator('#audio-script-markdown .learning-mermaid__scroll')).toHaveAttribute(
       'tabindex',
       '0'
