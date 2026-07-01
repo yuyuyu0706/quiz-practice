@@ -1283,10 +1283,27 @@ const getCodeLanguage = (code) => {
   return languageClass?.replace(/^language-/u, '').trim() || '';
 };
 
+const wrapLearningContentTables = (root) => {
+  root.querySelectorAll('table[data-learning-content-kind="table"]').forEach((table, index) => {
+    if (table.parentElement?.classList.contains('learning-table-scroll')) return;
+
+    const scrollContainer = document.createElement('div');
+    scrollContainer.className = 'learning-table-scroll';
+    scrollContainer.tabIndex = 0;
+    scrollContainer.setAttribute(
+      'aria-label',
+      `横スクロールして全列を確認できる教材表 ${index + 1}`
+    );
+    table.parentNode?.insertBefore(scrollContainer, table);
+    scrollContainer.append(table);
+  });
+};
+
 const annotateLearningContentBlocks = (root) => {
   root.querySelectorAll('table').forEach((table) => {
     table.dataset.learningContentKind = 'table';
   });
+  wrapLearningContentTables(root);
 
   root.querySelectorAll('pre > code').forEach((code) => {
     const language = getCodeLanguage(code);

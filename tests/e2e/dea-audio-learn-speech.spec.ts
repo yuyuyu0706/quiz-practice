@@ -524,6 +524,182 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
     expect(pythonHeadingSpeech).not.toContain('spark.readStream.format');
   });
 
+  test('renders markdown tables as accessible scrollable cards without page overflow', async ({
+    page,
+  }) => {
+    await gotoAudioLearn(page);
+
+    const tableCases = [
+      {
+        title: 'LakehouseとDelta Lakeの位置づけ',
+        setup: async () => {
+          await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+        },
+        viewport: { width: 1280, height: 720 },
+        expectedLastHeader: 'Lakehouse',
+        expectedLastCell: '中核のテーブル管理を支える',
+        expectScrollable: null,
+        expectTableReachesCardRight: true,
+        expectCompactTableText: true,
+      },
+      {
+        title: 'LakehouseとDelta Lakeの位置づけ',
+        setup: async () => {},
+        viewport: { width: 390, height: 844 },
+        expectedLastHeader: 'Lakehouse',
+        expectedLastCell: '中核のテーブル管理を支える',
+        expectScrollable: true,
+        expectTableReachesCardRight: false,
+        expectCompactTableText: false,
+      },
+      {
+        title: 'Data Ingestion and Loadingの全体像',
+        setup: async () => {
+          await selectDomain(page, 'Data Ingestion and Loading');
+        },
+        viewport: { width: 320, height: 844 },
+        expectedLastHeader: '代表的な考え方',
+        expectedLastCell: 'Unity Catalog governed tablesへの着地',
+        expectScrollable: true,
+        expectTableReachesCardRight: false,
+        expectCompactTableText: false,
+      },
+      {
+        title: 'Data Ingestion and Loadingの全体像',
+        setup: async () => {},
+        viewport: { width: 844, height: 390 },
+        expectedLastHeader: '代表的な考え方',
+        expectedLastCell: 'Unity Catalog governed tablesへの着地',
+        expectScrollable: null,
+        expectTableReachesCardRight: false,
+        expectCompactTableText: false,
+      },
+    ];
+
+    for (const tableCase of tableCases) {
+      await tableCase.setup();
+      await page.setViewportSize(tableCase.viewport);
+      await expect(page.locator('#selected-chapter-title')).toHaveText(tableCase.title);
+
+      const scrollContainer = page.locator(
+        '#audio-script-markdown .learning-table-scroll:has(> table[data-learning-content-kind="table"])'
+      );
+      await expect(scrollContainer).toHaveCount(1);
+      await expect(scrollContainer).toHaveAttribute(
+        'aria-label',
+        /横スクロールして全列を確認できる教材表/
+      );
+      await expect(scrollContainer).toHaveAttribute('tabindex', '0');
+      await expect(scrollContainer.locator('table > thead th').last()).toHaveText(
+        tableCase.expectedLastHeader
+      );
+      await expect(scrollContainer.locator('table > tbody td').last()).toHaveText(
+        tableCase.expectedLastCell
+      );
+
+      const initialMetrics = await scrollContainer.evaluate((container) => {
+        const table = container.querySelector('table');
+        const containerRect = container.getBoundingClientRect();
+        const tableRect = table?.getBoundingClientRect();
+        const styles = window.getComputedStyle(container);
+        const tableStyles = table ? window.getComputedStyle(table) : null;
+        const header = table?.querySelector('thead th');
+        const cell = table?.querySelector('tbody td');
+        const headerStyles = header ? window.getComputedStyle(header) : null;
+        const cellStyles = cell ? window.getComputedStyle(cell) : null;
+        const bodyStyles = window.getComputedStyle(document.body);
+        const containerInnerRight = containerRect.left + container.clientWidth;
+
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: document.documentElement.clientWidth,
+          containerLeft: containerRect.left,
+          containerRight: containerRect.right,
+          overflowX: styles.overflowX,
+          overscrollBehaviorX: styles.overscrollBehaviorX,
+          tableDisplay: tableStyles?.display,
+          tableFontSize: tableStyles?.fontSize,
+          tableLineHeight: tableStyles?.lineHeight,
+          headerFontSize: headerStyles?.fontSize,
+          headerLineHeight: headerStyles?.lineHeight,
+          cellFontSize: cellStyles?.fontSize,
+          cellLineHeight: cellStyles?.lineHeight,
+          bodyFontSize: bodyStyles.fontSize,
+          tableMinWidth: tableStyles?.minWidth,
+          tableRightGap: tableRect ? containerInnerRight - tableRect.right : Number.NaN,
+          isScrollable: container.scrollWidth > container.clientWidth,
+        };
+      });
+
+      expect(initialMetrics.documentWidth).toBeLessThanOrEqual(initialMetrics.viewportWidth + 1);
+      expect(initialMetrics.containerLeft).toBeGreaterThanOrEqual(-1);
+      expect(initialMetrics.containerRight).toBeLessThanOrEqual(initialMetrics.viewportWidth + 1);
+      expect(initialMetrics.overflowX).toBe('auto');
+      expect(initialMetrics.overscrollBehaviorX).toBe('contain');
+      expect(initialMetrics.tableDisplay).toBe('table');
+      if (tableCase.expectScrollable !== null) {
+        expect(initialMetrics.isScrollable).toBe(tableCase.expectScrollable);
+      }
+
+      if (tableCase.expectTableReachesCardRight) {
+        expect(initialMetrics.tableRightGap).toBeLessThanOrEqual(1);
+      }
+
+      if (tableCase.expectCompactTableText) {
+        expect(Number.parseFloat(initialMetrics.tableFontSize)).toBeLessThan(
+          Number.parseFloat(initialMetrics.bodyFontSize)
+        );
+        expect(initialMetrics.tableFontSize).toBe(initialMetrics.headerFontSize);
+        expect(initialMetrics.tableFontSize).toBe(initialMetrics.cellFontSize);
+        expect(initialMetrics.tableLineHeight).toBe(initialMetrics.headerLineHeight);
+        expect(initialMetrics.tableLineHeight).toBe(initialMetrics.cellLineHeight);
+      }
+
+      const scrolledMetrics = await scrollContainer.evaluate((container) => {
+        container.scrollLeft = container.scrollWidth;
+        const table = container.querySelector('table');
+        const lastHeader = table?.querySelector('thead th:last-child');
+        const lastCell = table?.querySelector('tbody tr:last-child td:last-child');
+        const containerRect = container.getBoundingClientRect();
+        const lastHeaderRect = lastHeader?.getBoundingClientRect();
+        const lastCellRect = lastCell?.getBoundingClientRect();
+
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: document.documentElement.clientWidth,
+          headerDisplay: lastHeader ? window.getComputedStyle(lastHeader).display : '',
+          scrollLeft: container.scrollLeft,
+          maxScrollLeft: container.scrollWidth - container.clientWidth,
+          lastHeaderRightReachable:
+            !!lastHeaderRect &&
+            lastHeaderRect.right <= containerRect.right + 1 &&
+            lastHeaderRect.right >= containerRect.left - 1,
+          lastCellRightReachable:
+            !!lastCellRect &&
+            lastCellRect.right <= containerRect.right + 1 &&
+            lastCellRect.right >= containerRect.left - 1,
+        };
+      });
+
+      expect(scrolledMetrics.documentWidth).toBeLessThanOrEqual(scrolledMetrics.viewportWidth + 1);
+      expect(scrolledMetrics.headerDisplay).toBe('table-cell');
+      expect(scrolledMetrics.scrollLeft).toBe(scrolledMetrics.maxScrollLeft);
+      expect(scrolledMetrics.lastHeaderRightReachable).toBe(true);
+      expect(scrolledMetrics.lastCellRightReachable).toBe(true);
+    }
+
+    await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+    await page.locator('#previous-chapter').evaluate((button) => (button as HTMLElement).click());
+    await expect(
+      page.locator(
+        '#audio-script-markdown .learning-table-scroll > table[data-learning-content-kind="table"]'
+      )
+    ).toHaveCount(1);
+    await expect(
+      page.locator('#audio-script-markdown .learning-table-scroll .learning-table-scroll')
+    ).toHaveCount(0);
+  });
+
   test('renders regular code as labeled scrollable cards without page overflow', async ({
     page,
   }) => {
