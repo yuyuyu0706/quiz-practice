@@ -453,6 +453,93 @@ const handleKeywordAnchorClick = (event) => {
   }
 };
 
+const mermaidLogPrefix = '[DEA Audio Learn][Mermaid]';
+const mermaidFallbackMessage =
+  '図解を表示できませんでした。本文の前後説明と、以下の図解ソースをご確認ください。';
+let mermaidRenderGeneration = 0;
+let mermaidInitialized = false;
+
+const getMermaidApi = () => window.mermaid;
+
+const isSupportedMermaidSource = (source) => /^\s*(?:---[\s\S]*?---\s*)?flowchart\s+/u.test(source);
+
+const initializeMermaid = () => {
+  const mermaid = getMermaidApi();
+  if (!mermaid || mermaidInitialized) return Boolean(mermaid);
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'strict',
+    flowchart: { htmlLabels: false },
+  });
+  mermaidInitialized = true;
+  return true;
+};
+
+const buildMermaidFigure = (pre, index) => {
+  const source = pre.textContent ?? '';
+  const figure = document.createElement('figure');
+  figure.className = 'learning-mermaid';
+  figure.dataset.learningContentKind = 'mermaid';
+  figure.dataset.mermaidState = 'pending';
+
+  const canvas = document.createElement('div');
+  canvas.className = 'learning-mermaid__scroll';
+  canvas.tabIndex = 0;
+  canvas.setAttribute('role', 'group');
+  canvas.setAttribute('aria-label', `横スクロールして全体を確認できる教材図解 ${index + 1}`);
+
+  const fallback = document.createElement('p');
+  fallback.className = 'learning-mermaid__fallback';
+  fallback.textContent = mermaidFallbackMessage;
+  fallback.hidden = true;
+
+  const details = document.createElement('details');
+  details.className = 'learning-mermaid__source';
+  const summary = document.createElement('summary');
+  summary.textContent = '図解ソースを確認する';
+  const codeBlock = pre.cloneNode(true);
+  details.append(summary, codeBlock);
+  figure.append(canvas, fallback, details);
+  pre.replaceWith(figure);
+  return { figure, canvas, fallback, details, source };
+};
+
+const markMermaidFailed = (parts, error) => {
+  parts.figure.dataset.mermaidState = 'failed';
+  parts.fallback.hidden = false;
+  parts.details.open = true;
+  parts.canvas.replaceChildren();
+  if (error) console.error(`${mermaidLogPrefix} render failed`, error);
+};
+
+const renderMermaidDiagrams = async (root) => {
+  const generation = ++mermaidRenderGeneration;
+  const blocks = Array.from(
+    root.querySelectorAll('pre[data-learning-content-kind="mermaid-source"]')
+  );
+  for (const [index, pre] of blocks.entries()) {
+    const parts = buildMermaidFigure(pre, index);
+    if (!isSupportedMermaidSource(parts.source) || !initializeMermaid()) {
+      markMermaidFailed(
+        parts,
+        new Error('Unsupported Mermaid source or Mermaid library unavailable')
+      );
+      continue;
+    }
+    try {
+      const id = `learning-mermaid-${Date.now()}-${generation}-${index}`;
+      const { svg } = await getMermaidApi().render(id, parts.source);
+      if (generation !== mermaidRenderGeneration || !parts.figure.isConnected) return;
+      parts.canvas.innerHTML = svg;
+      parts.canvas.querySelector('svg')?.setAttribute('aria-hidden', 'true');
+      parts.figure.dataset.mermaidState = 'rendered';
+    } catch (error) {
+      if (generation !== mermaidRenderGeneration || !parts.figure.isConnected) return;
+      markMermaidFailed(parts, error);
+    }
+  }
+};
+
 const speechLogPrefix = '[DEA Audio Learn][Speech]';
 
 const logSpeech = (message, detail) => {
@@ -697,10 +784,16 @@ const buildSpeechSectionsFromRenderedMarkdown = () => {
       const parts = [];
       let node = heading.nextElementSibling;
       while (node && !['H2', 'H3'].includes(node.tagName)) {
-        if (!node.matches('pre, table')) {
+        if (
+          !node.matches(
+            'pre, table, figure.learning-mermaid, [data-learning-content-kind="mermaid"]'
+          )
+        ) {
           const clone = node.cloneNode(true);
           clone
-            .querySelectorAll?.('pre, table, code.language-mermaid')
+            .querySelectorAll?.(
+              'pre, table, figure.learning-mermaid, [data-learning-content-kind="mermaid"], code.language-mermaid'
+            )
             .forEach((excluded) => excluded.remove());
           const text = clone.textContent?.trim();
           if (text) parts.push(text);
@@ -1749,6 +1842,7 @@ const selectChapterByIndex = async (chapterIndex) => {
       const audioScript = removeAudioScriptTitle(await fetchText(chapter.audioScriptPath));
       audioScriptMarkdown.innerHTML = renderMarkdown(audioScript);
       annotateLearningContentBlocks(audioScriptMarkdown);
+      await renderMermaidDiagrams(audioScriptMarkdown);
       buildAudioTableOfContents();
       speechSections = buildSpeechSectionsFromRenderedMarkdown();
       rebuildSpeechChunksFromSections();
@@ -1770,6 +1864,7 @@ const selectChapterByIndex = async (chapterIndex) => {
       noteMarkdown.innerHTML = renderMarkdown(note);
       addExternalLinkAttributes(noteMarkdown);
       annotateLearningContentBlocks(noteMarkdown);
+      await renderMermaidDiagrams(noteMarkdown);
       queueKeywordHashScroll();
     } catch (error) {
       noteMarkdown.textContent = '要点メモの読み込みに失敗しました';

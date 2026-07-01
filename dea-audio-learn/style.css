@@ -2127,3 +2127,78 @@ body {
     width: 100%;
   }
 }
+
+.learning-mermaid {
+  max-width: 100%;
+  min-width: 0;
+  margin: 1.35rem 0;
+  padding: 0.85rem;
+  border: 1px solid #d7deea;
+  border-radius: 14px;
+  background: #f8fafc;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.learning-mermaid__scroll {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.learning-mermaid__scroll:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 3px;
+}
+
+.learning-mermaid__scroll svg {
+  display: block;
+  width: max-content;
+  min-width: 42rem;
+  max-width: none;
+  height: auto;
+  margin: 0 auto;
+}
+
+.learning-mermaid__fallback {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  color: #7c2d12;
+  background: #fff7ed;
+  font-weight: 700;
+}
+
+.learning-mermaid__source {
+  margin-top: 0.75rem;
+}
+
+.learning-mermaid__source summary {
+  cursor: pointer;
+  color: var(--color-primary-strong);
+  font-weight: 700;
+}
+
+.learning-mermaid__source pre[data-learning-content-kind='mermaid-source'] {
+  overflow-x: auto;
+  white-space: pre;
+}
+
+@media (max-width: 480px) {
+  .learning-mermaid {
+    padding: 0.65rem;
+  }
+
+  .learning-mermaid__scroll {
+    padding: 0.55rem;
+  }
+
+  .learning-mermaid__scroll svg {
+    min-width: 36rem;
+  }
+}
