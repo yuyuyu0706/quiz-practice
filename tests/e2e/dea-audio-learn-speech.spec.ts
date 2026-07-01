@@ -305,11 +305,23 @@ async function selectDomain(page: Page, name: string) {
 }
 
 async function installMockMermaid(page: Page, options: { fail?: boolean } = {}) {
-  await page.route('**/mermaid*.js', async (route) => {
-    const body = options.fail
-      ? `window.mermaid={initialize(){},render(){return Promise.reject(new Error('mock mermaid render failure'));}};`
-      : `window.mermaid={initialize(){},render(id,source){const title=(source.match(/accTitle:\s*([^\n]+)/u)?.[1]||'教材図解').trim();const descr=(source.match(/accDescr:\s*([^\n]+)/u)?.[1]||'教材図解の説明').trim();return Promise.resolve({svg:'<svg id="'+id+'" role="img" aria-labelledby="'+id+'-title '+id+'-desc" viewBox="0 0 900 240" width="900" height="240"><title id="'+id+'-title">'+title+'</title><desc id="'+id+'-desc">'+descr+'</desc><g><text x="20" y="40">Cloud Storage landing area</text><text x="420" y="40">ReliableTable</text></g></svg>'});}};`;
-    await route.fulfill({ contentType: 'application/javascript', body });
+  const mockMermaidScript = options.fail
+    ? `window.mermaid={initialize(){},render(){return Promise.reject(new Error('mock mermaid render failure'));}};`
+    : `window.mermaid={initialize(){},render(id,source){const title=(source.match(/accTitle:\s*([^\n]+)/u)?.[1]||'教材図解').trim();const descr=(source.match(/accDescr:\s*([^\n]+)/u)?.[1]||'教材図解の説明').trim();return Promise.resolve({svg:'<svg id="'+id+'" role="img" aria-labelledby="'+id+'-title '+id+'-desc" viewBox="0 0 900 240" width="900" height="240"><title id="'+id+'-title">'+title+'</title><desc id="'+id+'-desc">'+descr+'</desc><g><text x="20" y="40">Cloud Storage landing area</text><text x="420" y="40">ReliableTable</text></g></svg>'});}};`;
+
+  await page.addInitScript((script) => {
+    window.eval(script);
+    Object.defineProperty(window, 'mermaid', {
+      configurable: false,
+      writable: false,
+      value: window.mermaid,
+    });
+  }, mockMermaidScript);
+  await page.route(/.*mermaid.*\.js.*/u, async (route) => {
+    await route.fulfill({
+      contentType: 'application/javascript',
+      body: '// Mermaid is mocked by addInitScript.',
+    });
   });
 }
 
