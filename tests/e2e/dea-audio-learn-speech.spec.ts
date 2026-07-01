@@ -253,6 +253,7 @@ async function expectMobileAudioContentWithinViewport(page: Page) {
 
     const overflowingElements = selectors.flatMap((selector) =>
       Array.from(document.querySelectorAll(selector))
+        .filter((element) => !element.closest('.learning-mermaid__scroll'))
         .map((element) => {
           const rect = element.getBoundingClientRect();
           const text = (element.textContent || '').replace(/\s+/g, ' ').trim();
@@ -304,21 +305,12 @@ async function selectDomain(page: Page, name: string) {
 }
 
 async function installMockMermaid(page: Page, options: { fail?: boolean } = {}) {
-  await page.addInitScript(({ fail }) => {
-    window.mermaid = {
-      initialize: () => undefined,
-      render: async (id: string, source: string) => {
-        if (fail) throw new Error('mock mermaid render failure');
-        const titleMatch = source.match(/accTitle:\s*([^\n]+)/u);
-        const descrMatch = source.match(/accDescr:\s*([^\n]+)/u);
-        const title = titleMatch?.[1]?.trim() || '教材図解';
-        const descr = descrMatch?.[1]?.trim() || '教材図解の説明';
-        return {
-          svg: `<svg id="${id}" role="img" aria-labelledby="${id}-title ${id}-desc" viewBox="0 0 900 240" width="900" height="240"><title id="${id}-title">${title}</title><desc id="${id}-desc">${descr}</desc><g><text x="20" y="40">Cloud Storage landing area</text><text x="420" y="40">ReliableTable</text></g></svg>`,
-        };
-      },
-    };
-  }, options);
+  await page.route('**/mermaid@11.4.1/dist/mermaid.min.js', async (route) => {
+    const body = options.fail
+      ? `window.mermaid={initialize(){},render(){return Promise.reject(new Error('mock mermaid render failure'));}};`
+      : `window.mermaid={initialize(){},render(id,source){const title=(source.match(/accTitle:\s*([^\n]+)/u)?.[1]||'教材図解').trim();const descr=(source.match(/accDescr:\s*([^\n]+)/u)?.[1]||'教材図解の説明').trim();return Promise.resolve({svg:'<svg id="'+id+'" role="img" aria-labelledby="'+id+'-title '+id+'-desc" viewBox="0 0 900 240" width="900" height="240"><title id="'+id+'-title">'+title+'</title><desc id="'+id+'-desc">'+descr+'</desc><g><text x="20" y="40">Cloud Storage landing area</text><text x="420" y="40">ReliableTable</text></g></svg>'});}};`;
+    await route.fulfill({ contentType: 'application/javascript', body });
+  });
 }
 
 async function installMockSpeech(page: Page) {
@@ -2394,7 +2386,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   });
 });
 
-test.describe('[DEA][Data] Audio Learn quizzes', () => {
+test.describe('[DEA][DATA] Audio Learn quizzes', () => {
   test('uses the lightweight Audio Learn quiz schema', () => {
     expect(chapters).toHaveLength(10);
     expect(new Set(chapters.map((chapter: { domain: string }) => chapter.domain))).toEqual(
