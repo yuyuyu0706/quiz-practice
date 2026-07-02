@@ -585,21 +585,31 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
       new URL('../../dea-audio-learn/audio-scripts/dea-dip-002.md', import.meta.url),
       'utf8'
     );
+    let resolveDelayedAudioScriptRequest!: () => void;
+    const delayedAudioScriptRequested = new Promise<void>((resolve) => {
+      resolveDelayedAudioScriptRequest = resolve;
+    });
     await page.route('**/dea-audio-learn/audio-scripts/dea-dip-002.md', async (route) => {
+      resolveDelayedAudioScriptRequest();
       await new Promise((resolve) => setTimeout(resolve, 400));
       await route.fulfill({ contentType: 'text/markdown', body: delayedAudioScript });
     });
 
     await gotoAudioLearn(page);
     await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
+    await delayedAudioScriptRequested;
     await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
 
     await expect(page.locator('#selected-chapter-title')).toHaveText(chapters[2].title);
     await expect(page.locator('#audio-script-markdown')).toContainText('ワークロードに応じて選ぶ');
     await page.waitForTimeout(700);
     await expect(page.locator('#selected-chapter-title')).toHaveText(chapters[2].title);
-    await expect(page.locator('#audio-script-markdown')).not.toContainText('ReliableTable');
     await expect(page.locator('#audio-script-markdown')).toContainText('ワークロードに応じて選ぶ');
+    const currentMermaidSource = page.locator(
+      '#audio-script-markdown figure.learning-mermaid .learning-mermaid__source pre[data-learning-content-kind="mermaid-source"]'
+    );
+    await expect(currentMermaidSource).toContainText('Workload');
+    await expect(currentMermaidSource).not.toContainText('ReliableTable');
   });
 
   test('falls back to open Mermaid source when rendering fails', async ({ page }) => {
