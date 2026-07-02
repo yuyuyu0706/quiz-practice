@@ -20,6 +20,10 @@ declare global {
       initialize: (config: unknown) => void;
       render: (id: string, source: string) => Promise<{ svg: string }>;
     };
+    __deaAudioLearnMermaid: {
+      initialize: (config: unknown) => void;
+      render: (id: string, source: string) => Promise<{ svg: string }>;
+    };
   }
 }
 
@@ -311,7 +315,7 @@ async function installMockMermaid(page: Page, options: { fail?: boolean } = {}) 
 
   await page.addInitScript((script) => {
     window.eval(script);
-    Object.defineProperty(window, 'mermaid', {
+    Object.defineProperty(window, '__deaAudioLearnMermaid', {
       configurable: false,
       writable: false,
       value: window.mermaid,
