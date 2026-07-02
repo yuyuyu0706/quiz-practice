@@ -16,7 +16,7 @@
    - SQL 例: <code>```sql</code>
    - YAML 例: <code>```yaml</code>
    - Mermaid 例: <code>```mermaid</code>
-4. Mermaid は本Issueの範囲では図へ変換せず、Mermaid ソースとして掲載します。
+4. Mermaid は `flowchart` を正式対応図式とし、`accTitle` と `accDescr` で図解の目的・関係性を説明します。
 5. Mermaid が描画されない環境でも、前後の説明文だけで要点が分かるようにします。
 6. コード内の長い行は、UI都合で不自然に改行せず、設定値やメソッドチェーンのまとまりが分かる形を保ちます。
 7. 表・コード・Mermaid ソースは読み上げ対象に含めない前提で、重要な結論は本文にも書きます。
@@ -26,14 +26,15 @@
 
 Markdown 描画後、教材本文と要点メモの表現には次の `data-*` 属性が付与されます。後続の可読性改善や E2E は、この属性を安定した識別子として利用します。
 
-| 表現               | 対象DOM               | 属性                                                                          |
-| ------------------ | --------------------- | ----------------------------------------------------------------------------- |
-| Markdown 表        | `table`               | `data-learning-content-kind="table"`                                          |
-| 通常コード         | `pre` と `pre > code` | `data-learning-content-kind="code"`                                           |
-| 言語指定付きコード | `pre` と `pre > code` | `data-code-language="python"` など                                            |
-| Mermaid ソース     | `pre` と `pre > code` | `data-learning-content-kind="mermaid-source"`、`data-code-language="mermaid"` |
+| 表現               | 対象DOM               | 属性                                                                                    |
+| ------------------ | --------------------- | --------------------------------------------------------------------------------------- |
+| Markdown 表        | `table`               | `data-learning-content-kind="table"`                                                    |
+| 通常コード         | `pre` と `pre > code` | `data-learning-content-kind="code"`                                                     |
+| 言語指定付きコード | `pre` と `pre > code` | `data-code-language="python"` など                                                      |
+| Mermaid ソース     | `pre` と `pre > code` | `data-learning-content-kind="mermaid-source"`、`data-code-language="mermaid"`           |
+| Mermaid 図解       | `figure`              | `data-learning-content-kind="mermaid"`、`data-mermaid-state="rendered"` または `failed` |
 
-既存の `language-*` クラスは維持します。表示スタイル、横スクロール、コピー操作、Mermaid の SVG 描画はこの契約には含めません。
+既存の `language-*` クラスは維持します。Mermaid 図解は図解専用コンテナ内だけで横スクロールし、元のソースは折りたたみ領域に保持します。
 
 ## 推奨パターン
 
@@ -76,6 +77,8 @@ Mermaid の前後には、図がなくても関係性を理解できる説明を
 
 ```mermaid
 flowchart LR
+  accTitle: LandingからBronzeまでの流れ
+  accDescr: landing領域からBronzeへ取り込む基本的な関係を示します。
   A[Landing] --> B[Bronze]
 ```
 
