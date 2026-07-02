@@ -304,31 +304,36 @@ async function selectDomain(page: Page, name: string) {
   await clickVisible(page.getByRole('button', { name }));
 }
 
+function attachPageDiagnostics(page: Page) {
+  page.on('console', (message) => {
+    console.log(`[browser:${message.type()}] ${message.text()}`);
+  });
+  page.on('pageerror', (error) => {
+    console.error(`[pageerror] ${error.message}`);
+  });
+}
+
 async function installMockMermaid(page: Page, options: { fail?: boolean } = {}) {
-  const mockMermaidScript = options.fail
-    ? String.raw`
-window.mermaid = {
-  initialize() {},
-  render() {
-    return Promise.reject(new Error('mock mermaid render failure'));
-  },
-};
-`
-    : String.raw`
-window.mermaid = {
-  initialize() {},
-  render(id, source) {
-    const title = (source.match(/accTitle:\s*([^\n]+)/u)?.[1] || '教材図解').trim();
-    const descr = (source.match(/accDescr:\s*([^\n]+)/u)?.[1] || '教材図解の説明').trim();
-    return Promise.resolve({
-      svg: '<svg id="' + id + '" role="img" aria-labelledby="' + id + '-title ' + id + '-desc" viewBox="0 0 900 240" width="900" height="240"><title id="' + id + '-title">' + title + '</title><desc id="' + id + '-desc">' + descr + '</desc><g><text x="20" y="40">Cloud Storage landing area</text><text x="420" y="40">ReliableTable</text></g></svg>',
+  await page.addInitScript(({ fail }) => {
+    Object.defineProperty(window, 'mermaid', {
+      configurable: true,
+      writable: true,
+      value: {
+        initialize: () => undefined,
+        render: async (id: string, source: string) => {
+          if (fail) throw new Error('mock mermaid render failure');
+          const title = (source.match(/accTitle:\s*([^\n]+)/u)?.[1] || '教材図解').trim();
+          const descr = (source.match(/accDescr:\s*([^\n]+)/u)?.[1] || '教材図解の説明').trim();
+          return {
+            svg: `<svg id="${id}" role="img" aria-labelledby="${id}-title ${id}-desc" viewBox="0 0 900 240" width="900" height="240"><title id="${id}-title">${title}</title><desc id="${id}-desc">${descr}</desc><g><text x="20" y="40">Cloud Storage landing area</text><text x="420" y="40">ReliableTable</text></g></svg>`,
+          };
+        },
+      },
     });
-  },
-};
-`;
+  }, options);
 
   await page.route('**/mermaid@11.4.1/dist/mermaid.min.js', async (route) => {
-    await route.fulfill({ contentType: 'application/javascript', body: mockMermaidScript });
+    await route.fulfill({ contentType: 'application/javascript', body: '' });
   });
 }
 
@@ -493,6 +498,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   test('identifies learning content tables code and mermaid sources with stable data attributes', async ({
     page,
   }) => {
+    attachPageDiagnostics(page);
     await installMockSpeech(page);
     await installMockMermaid(page);
     await gotoAudioLearn(page);
@@ -573,6 +579,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   });
 
   test('ignores stale chapter loads during rapid chapter switching', async ({ page }) => {
+    attachPageDiagnostics(page);
     await installMockMermaid(page);
     const delayedAudioScript = readFileSync(
       new URL('../../dea-audio-learn/audio-scripts/dea-dip-002.md', import.meta.url),
@@ -596,6 +603,7 @@ test.describe('[DEA][UI] Audio Learn / Speech controls', () => {
   });
 
   test('falls back to open Mermaid source when rendering fails', async ({ page }) => {
+    attachPageDiagnostics(page);
     await installMockMermaid(page, { fail: true });
     await gotoAudioLearn(page);
     await page.locator('#next-chapter').evaluate((button) => (button as HTMLElement).click());
