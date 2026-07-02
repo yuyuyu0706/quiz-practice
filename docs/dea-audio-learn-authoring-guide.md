@@ -76,9 +76,6 @@ Mermaid の前後には、図がなくても関係性を理解できる説明を
 次の図は、landing領域からBronze、Silver、Goldへ進む基本的な流れです。
 
 ```mermaid
----
-title: LandingからBronzeまでの流れ
----
 flowchart LR
   accTitle: LandingからBronzeまでの流れ
   accDescr: landing領域からBronzeへ取り込む基本的な関係を示します。
