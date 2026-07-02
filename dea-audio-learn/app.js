@@ -460,7 +460,7 @@ let mermaidRenderGeneration = 0;
 let mermaidInitialized = false;
 let chapterSelectionGeneration = 0;
 
-const getMermaidApi = () => window.__deaAudioLearnMermaid ?? window.mermaid;
+const getMermaidApi = () => window.mermaid;
 
 const isSupportedMermaidSource = (source) => /^\s*(?:---[\s\S]*?---\s*)?flowchart\s+/u.test(source);
 
