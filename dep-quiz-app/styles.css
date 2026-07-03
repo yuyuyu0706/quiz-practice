@@ -773,6 +773,12 @@ button.primary:hover:not(:disabled) {
     width: 100%;
   }
 
+  .wrong-reason-clear {
+    width: auto;
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+
   .quiz-head {
     flex-wrap: wrap;
     row-gap: 4px;
