@@ -40,32 +40,44 @@ test('baseProgress includes wrong reason tag defaults', () => {
   });
 });
 
-test('WRONG_REASON_TAGS exposes six stable IDs and labels', () => {
+test('WRONG_REASON_TAGS exposes seven stable IDs and labels', () => {
   assert.deepEqual(WRONG_REASON_TAGS, [
-    { id: 'concept-understanding', label: '概念・仕様の理解不足' },
-    { id: 'term-confusion', label: '用語・機能の混同' },
-    { id: 'condition-overlook', label: '問題文・条件の読み落とし' },
-    { id: 'choice-comparison', label: '選択肢の比較・消去不足' },
-    { id: 'calculation-procedure', label: '計算・手順ミス' },
-    { id: 'careless-time', label: 'ケアレスミス・時間不足' },
+    { id: 'concept-behavior-gap', label: '概念・挙動がイメージできない' },
+    { id: 'term-feature-meaning-confusion', label: '用語・機能の意味を混同した' },
+    { id: 'spec-memory-error', label: '仕様の覚え違い' },
+    { id: 'code-understanding-gap', label: '実装コードが理解できない' },
+    { id: 'question-reading-overlook', label: '問題文の読み落とし' },
+    { id: 'choice-difference-unclear', label: '選択肢の違いが分からず迷った' },
+    { id: 'careless-mistake', label: 'ケアレスミス' },
   ]);
 });
 
 test('normalizeWrongReasonTags removes invalid values and orders by registry', () => {
   assert.deepEqual(
     normalizeWrongReasonTags([
-      'careless-time',
+      'careless-mistake',
       ' unknown ',
       '',
-      ' term-confusion ',
-      'careless-time',
+      ' term-feature-meaning-confusion ',
+      'careless-mistake',
       123,
       null,
-      'concept-understanding',
+      'concept-behavior-gap',
     ]),
-    ['concept-understanding', 'term-confusion', 'careless-time']
+    ['concept-behavior-gap', 'term-feature-meaning-confusion', 'careless-mistake']
   );
-  assert.deepEqual(normalizeWrongReasonTags('careless-time'), []);
+  assert.deepEqual(
+    normalizeWrongReasonTags([
+      'concept-understanding',
+      'term-confusion',
+      'condition-overlook',
+      'choice-comparison',
+      'calculation-procedure',
+      'careless-time',
+    ]),
+    []
+  );
+  assert.deepEqual(normalizeWrongReasonTags('careless-mistake'), []);
   assert.deepEqual(normalizeWrongReasonTags(null), []);
 });
 
@@ -79,7 +91,12 @@ test('normalizeProgressEntry is backward compatible and sanitizes wrong reason f
       bookmark: true,
       noteText: 'memo',
       noteUpdatedAt: '2026-07-01T00:01:00.000Z',
-      wrongReasonTags: ['choice-comparison', 'bad', 'term-confusion', 'choice-comparison'],
+      wrongReasonTags: [
+        'choice-difference-unclear',
+        'bad',
+        'term-feature-meaning-confusion',
+        'choice-difference-unclear',
+      ],
       wrongReasonUpdatedAt: '2026-07-01T00:02:00.000Z',
     }),
     {
@@ -91,7 +108,7 @@ test('normalizeProgressEntry is backward compatible and sanitizes wrong reason f
       noteText: 'memo',
       noteUpdatedAt: '2026-07-01T00:01:00.000Z',
       note: 'memo',
-      wrongReasonTags: ['term-confusion', 'choice-comparison'],
+      wrongReasonTags: ['term-feature-meaning-confusion', 'choice-difference-unclear'],
       wrongReasonUpdatedAt: '2026-07-01T00:02:00.000Z',
     }
   );
@@ -117,14 +134,14 @@ test('normalizeProgressEntry keeps note and noteText aligned for current and leg
 
 test('getQuestionWrongReasonTags safely reads missing and malformed entries', () => {
   const progress = {
-    Q001: { wrongReasonTags: ['careless-time', 'term-confusion'] },
-    Q002: { wrongReasonTags: 'careless-time' },
+    Q001: { wrongReasonTags: ['careless-mistake', 'term-feature-meaning-confusion'] },
+    Q002: { wrongReasonTags: 'careless-mistake' },
     Q003: { wrongReasonTags: ['unknown'] },
   };
 
   assert.deepEqual(getQuestionWrongReasonTags(progress, 'Q001'), [
-    'term-confusion',
-    'careless-time',
+    'term-feature-meaning-confusion',
+    'careless-mistake',
   ]);
   assert.deepEqual(getQuestionWrongReasonTags(progress, 'Q002'), []);
   assert.deepEqual(getQuestionWrongReasonTags(progress, 'Q003'), []);
@@ -144,11 +161,17 @@ test('saveWrongReasonTags preserves existing progress and does not mutate input'
     },
   };
 
-  const saved = saveWrongReasonTags(progress, 'Q001', ['careless-time', 'term-confusion']);
+  const saved = saveWrongReasonTags(progress, 'Q001', [
+    'careless-mistake',
+    'term-feature-meaning-confusion',
+  ]);
 
   assert.notEqual(saved, progress);
   assert.equal(progress.Q001.wrongReasonTags, undefined);
-  assert.deepEqual(saved.Q001.wrongReasonTags, ['term-confusion', 'careless-time']);
+  assert.deepEqual(saved.Q001.wrongReasonTags, [
+    'term-feature-meaning-confusion',
+    'careless-mistake',
+  ]);
   assertIsoDate(saved.Q001.wrongReasonUpdatedAt);
   assert.equal(saved.Q001.seenCount, 5);
   assert.equal(saved.Q001.bookmark, true);
@@ -160,7 +183,7 @@ test('clearWrongReasonTags removes all tags and clears timestamp without mutatin
     Q001: {
       ...baseProgress(),
       bookmark: true,
-      wrongReasonTags: ['careless-time'],
+      wrongReasonTags: ['careless-mistake'],
       wrongReasonUpdatedAt: '2026-07-01T00:00:00.000Z',
     },
   };
@@ -168,7 +191,7 @@ test('clearWrongReasonTags removes all tags and clears timestamp without mutatin
   const cleared = clearWrongReasonTags(progress, 'Q001');
 
   assert.notEqual(cleared, progress);
-  assert.deepEqual(progress.Q001.wrongReasonTags, ['careless-time']);
+  assert.deepEqual(progress.Q001.wrongReasonTags, ['careless-mistake']);
   assert.deepEqual(cleared.Q001.wrongReasonTags, []);
   assert.equal(cleared.Q001.wrongReasonUpdatedAt, null);
   assert.equal(cleared.Q001.bookmark, true);

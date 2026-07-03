@@ -1,12 +1,13 @@
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 
 export const WRONG_REASON_TAGS = Object.freeze([
-  Object.freeze({ id: 'concept-understanding', label: '概念・仕様の理解不足' }),
-  Object.freeze({ id: 'term-confusion', label: '用語・機能の混同' }),
-  Object.freeze({ id: 'condition-overlook', label: '問題文・条件の読み落とし' }),
-  Object.freeze({ id: 'choice-comparison', label: '選択肢の比較・消去不足' }),
-  Object.freeze({ id: 'calculation-procedure', label: '計算・手順ミス' }),
-  Object.freeze({ id: 'careless-time', label: 'ケアレスミス・時間不足' }),
+  Object.freeze({ id: 'concept-behavior-gap', label: '概念・挙動がイメージできない' }),
+  Object.freeze({ id: 'term-feature-meaning-confusion', label: '用語・機能の意味を混同した' }),
+  Object.freeze({ id: 'spec-memory-error', label: '仕様の覚え違い' }),
+  Object.freeze({ id: 'code-understanding-gap', label: '実装コードが理解できない' }),
+  Object.freeze({ id: 'question-reading-overlook', label: '問題文の読み落とし' }),
+  Object.freeze({ id: 'choice-difference-unclear', label: '選択肢の違いが分からず迷った' }),
+  Object.freeze({ id: 'careless-mistake', label: 'ケアレスミス' }),
 ]);
 
 const WRONG_REASON_TAG_IDS = WRONG_REASON_TAGS.map((tag) => tag.id);
