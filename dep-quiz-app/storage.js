@@ -1,3 +1,4 @@
+import { normalizeProgress } from './notes.js';
 export const STORAGE_KEYS = {
   progress: 'depQuizProgress',
   settings: 'depQuizSettings',
@@ -13,10 +14,10 @@ const DEFAULT_SETTINGS = {
 const repairedStorageKeys = new Set();
 
 export function loadProgress() {
-  return loadJSON(STORAGE_KEYS.progress, {});
+  return normalizeProgress(loadJSON(STORAGE_KEYS.progress, {}));
 }
 export function saveProgress(progress) {
-  saveJSON(STORAGE_KEYS.progress, progress);
+  saveJSON(STORAGE_KEYS.progress, normalizeProgress(progress));
 }
 export function loadSettings() {
   return loadJSON(STORAGE_KEYS.settings, DEFAULT_SETTINGS);
