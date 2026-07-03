@@ -20,6 +20,7 @@ export function baseProgress() {
     lastAnsweredAt: null,
     bookmark: false,
     noteText: '',
+    note: '',
     noteUpdatedAt: null,
     wrongReasonTags: [],
     wrongReasonUpdatedAt: null,
@@ -44,6 +45,7 @@ export function normalizeWrongReasonTags(rawTags) {
 export function normalizeProgressEntry(entry) {
   if (!isPlainObject(entry)) return baseProgress();
 
+  const noteText = normalizeNoteText(entry);
   const wrongReasonTags = normalizeWrongReasonTags(entry.wrongReasonTags);
 
   return {
@@ -52,7 +54,8 @@ export function normalizeProgressEntry(entry) {
     wrongCount: normalizeCount(entry.wrongCount),
     lastAnsweredAt: normalizeIsoDate(entry.lastAnsweredAt),
     bookmark: typeof entry.bookmark === 'boolean' ? entry.bookmark : false,
-    noteText: normalizeNoteText(entry),
+    noteText,
+    note: noteText,
     noteUpdatedAt: normalizeIsoDate(entry.noteUpdatedAt),
     wrongReasonTags,
     wrongReasonUpdatedAt:

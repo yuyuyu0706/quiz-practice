@@ -34,6 +34,7 @@ test('baseProgress includes wrong reason tag defaults', () => {
     bookmark: false,
     noteText: '',
     noteUpdatedAt: null,
+    note: '',
     wrongReasonTags: [],
     wrongReasonUpdatedAt: null,
   });
@@ -89,6 +90,7 @@ test('normalizeProgressEntry is backward compatible and sanitizes wrong reason f
       bookmark: true,
       noteText: 'memo',
       noteUpdatedAt: '2026-07-01T00:01:00.000Z',
+      note: 'memo',
       wrongReasonTags: ['term-confusion', 'choice-comparison'],
       wrongReasonUpdatedAt: '2026-07-01T00:02:00.000Z',
     }
@@ -102,6 +104,15 @@ test('normalizeProgressEntry is backward compatible and sanitizes wrong reason f
       wrongReasonUpdatedAt: null,
     }
   );
+});
+
+test('normalizeProgressEntry keeps note and noteText aligned for current and legacy notes', () => {
+  assert.deepEqual(normalizeProgressEntry({ noteText: 'current note' }).note, 'current note');
+  assert.deepEqual(normalizeProgressEntry({ note: 'legacy note' }).noteText, 'legacy note');
+  assert.deepEqual(normalizeProgressEntry({ note: 'legacy note' }).note, 'legacy note');
+  assert.deepEqual(normalizeProgressEntry({ memo: 'legacy memo' }).noteText, 'legacy memo');
+  assert.deepEqual(normalizeProgressEntry({ memo: 'legacy memo' }).note, 'legacy memo');
+  assert.deepEqual(normalizeProgressEntry({ noteText: '' }).note, '');
 });
 
 test('getQuestionWrongReasonTags safely reads missing and malformed entries', () => {
