@@ -29,6 +29,22 @@ const caseLabels = new Map([
   ],
   ['guarantees mobile note textarea keeps multiline drafts', 'mobile-note-keyboard'],
   [
+    'guarantees wrong answer tags render only after an incorrect answer and persist selections after reload',
+    'wrong-tag-persist',
+  ],
+  [
+    'guarantees wrong answer tag changes and clear preserve note bookmark and progress data',
+    'wrong-tag-preserve',
+  ],
+  [
+    'guarantees wrong answer tag keyboard scope suppresses quiz shortcuts and choice shortcuts still work outside it',
+    'wrong-tag-keyboard',
+  ],
+  [
+    'guarantees mobile wrong answer tag chips remain tappable with a compact clear action',
+    'mobile-wrong-tags',
+  ],
+  [
     'guarantees note deletion preserves bookmarks and bookmark deletion preserves notes',
     'note-bookmark',
   ],
