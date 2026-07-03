@@ -15,6 +15,10 @@ import {
   deleteNote,
   deleteAllNotes,
   getAllNoteItems,
+  WRONG_REASON_TAGS,
+  clearWrongReasonTags,
+  getQuestionWrongReasonTags,
+  saveWrongReasonTags,
 } from './notes.js';
 import { loadQuestions } from './questions.js';
 import {
@@ -87,6 +91,10 @@ const els = {
   questionNote: document.getElementById('question-note'),
   saveNote: document.getElementById('save-note'),
   noteStatus: document.getElementById('note-status'),
+  wrongReasonPanel: document.getElementById('wrong-reason-panel'),
+  wrongReasonTags: document.getElementById('wrong-reason-tags'),
+  clearWrongReasonTags: document.getElementById('clear-wrong-reason-tags'),
+  wrongReasonStatus: document.getElementById('wrong-reason-status'),
   bookmarkBtn: document.getElementById('bookmark-btn'),
   suspendToHome: document.getElementById('suspend-to-home'),
   scoreText: document.getElementById('score-text'),
@@ -98,6 +106,7 @@ const els = {
 };
 
 let noteStatusTimer = null;
+let wrongReasonStatusTimer = null;
 
 init();
 
@@ -190,6 +199,8 @@ function attachEvents() {
     updateBookmarkLabel(current.bookmark);
   });
   els.saveNote.addEventListener('click', saveCurrentQuestionNote);
+  els.wrongReasonTags?.addEventListener('change', handleWrongReasonTagChange);
+  els.clearWrongReasonTags?.addEventListener('click', handleClearWrongReasonTags);
 
   els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
   els.resultNotesListBtn?.addEventListener('click', () => {
@@ -255,7 +266,7 @@ function closeSecondaryActions(options = {}) {
 
 function handleKeyboard(event) {
   if (!state.session || els.views.quiz.className.indexOf('active') === -1) return;
-  if (isTextEntryTarget(event.target)) return;
+  if (isQuizShortcutIsolatedTarget(event.target) || isTextEntryTarget(event.target)) return;
   const key = event.key.toUpperCase();
   const map = {
     1: 'A',
@@ -281,6 +292,10 @@ function handleKeyboard(event) {
   } else if (event.key === 'ArrowLeft') {
     moveQuestion(-1);
   }
+}
+
+function isQuizShortcutIsolatedTarget(target) {
+  return target instanceof Element && Boolean(target.closest('[data-quiz-shortcut-scope]'));
 }
 
 function isTextEntryTarget(target) {
@@ -353,6 +368,7 @@ function renderQuestion(options = {}) {
   updatePrimaryActions(question.id);
   updateExplanationActions();
   renderQuestionNote(question.id);
+  renderWrongReasonTags(question.id, chosen);
   persistSession();
   closeSecondaryActions();
   if (scrollToTop) scrollQuizIntoView();
@@ -615,6 +631,93 @@ function renderQuestionNote(questionId) {
   els.noteStatus.textContent = progress.noteUpdatedAt
     ? `最終保存: ${formatDateTime(progress.noteUpdatedAt)}`
     : '';
+}
+
+function renderWrongReasonTags(questionId, chosenLabel) {
+  const graded = Boolean(state.session?.graded?.[questionId]);
+  const question = getCurrentQuestion();
+  const choiceMap = question
+    ? getOrCreateChoiceMap(state.session, question.id, question.choices)
+    : {};
+  const correctLabel = question
+    ? getChoiceLabels(question.choices).find((label) => choiceMap[label] === question.answer)
+    : null;
+  const shouldShow = Boolean(graded && chosenLabel && correctLabel && chosenLabel !== correctLabel);
+
+  els.wrongReasonPanel?.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow || !els.wrongReasonTags) {
+    if (els.wrongReasonStatus) els.wrongReasonStatus.textContent = '';
+    return;
+  }
+
+  const selectedTags = new Set(getQuestionWrongReasonTags(state.progress, questionId));
+  els.wrongReasonTags.replaceChildren(
+    ...WRONG_REASON_TAGS.map((tag) => {
+      const label = document.createElement('label');
+      label.className = 'wrong-reason-tag';
+
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.name = 'wrong-reason-tags';
+      input.value = tag.id;
+      input.checked = selectedTags.has(tag.id);
+
+      const text = document.createElement('span');
+      text.textContent = tag.label;
+
+      label.append(input, text);
+      return label;
+    })
+  );
+  updateWrongReasonClearButton();
+}
+
+function handleWrongReasonTagChange(event) {
+  if (!(event.target instanceof HTMLInputElement) || event.target.name !== 'wrong-reason-tags')
+    return;
+  const question = getCurrentQuestion();
+  if (!question) return;
+
+  const selectedTagIds = Array.from(
+    els.wrongReasonTags.querySelectorAll('input[name="wrong-reason-tags"]:checked')
+  ).map((input) => input.value);
+  state.progress = saveWrongReasonTags(state.progress, question.id, selectedTagIds);
+  saveProgress(state.progress);
+  updateWrongReasonClearButton();
+  updateWrongReasonStatus(selectedTagIds.length ? 'タグを保存しました。' : 'タグを解除しました。');
+}
+
+function handleClearWrongReasonTags() {
+  const question = getCurrentQuestion();
+  if (!question) return;
+  state.progress = clearWrongReasonTags(state.progress, question.id);
+  saveProgress(state.progress);
+  els.wrongReasonTags
+    ?.querySelectorAll('input[name="wrong-reason-tags"]:checked')
+    .forEach((input) => {
+      input.checked = false;
+    });
+  updateWrongReasonClearButton();
+  updateWrongReasonStatus('すべて解除しました。');
+}
+
+function updateWrongReasonClearButton() {
+  if (!els.clearWrongReasonTags || !els.wrongReasonTags) return;
+  els.clearWrongReasonTags.disabled = !els.wrongReasonTags.querySelector(
+    'input[name="wrong-reason-tags"]:checked'
+  );
+}
+
+function updateWrongReasonStatus(message) {
+  if (!els.wrongReasonStatus) return;
+  els.wrongReasonStatus.textContent = message;
+  if (wrongReasonStatusTimer) window.clearTimeout(wrongReasonStatusTimer);
+  wrongReasonStatusTimer = window.setTimeout(() => {
+    const question = getCurrentQuestion();
+    if (!question) return;
+    const tags = getQuestionWrongReasonTags(state.progress, question.id);
+    els.wrongReasonStatus.textContent = tags.length ? `${tags.length}件選択中` : '';
+  }, 1800);
 }
 
 function renderNotesList() {
