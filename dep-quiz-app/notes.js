@@ -64,16 +64,6 @@ export function normalizeProgressEntry(entry) {
   };
 }
 
-export function normalizeProgress(progress) {
-  if (!isPlainObject(progress)) return {};
-
-  return Object.fromEntries(
-    Object.entries(progress)
-      .map(([questionId, entry]) => [String(questionId).trim(), normalizeProgressEntry(entry)])
-      .filter(([questionId]) => questionId.length > 0)
-  );
-}
-
 export function getQuestionNote(progress, questionId) {
   const item = isPlainObject(progress) ? (progress[questionId] ?? {}) : {};
   return item.noteText ?? item.note ?? item.memo ?? '';
@@ -84,7 +74,10 @@ export function hasNote(progress, questionId) {
 }
 
 export function saveNote(progress, questionId, rawNote) {
-  const current = normalizeProgressEntry(progress?.[questionId]);
+  const current = {
+    ...baseProgress(),
+    ...(isPlainObject(progress?.[questionId]) ? progress[questionId] : {}),
+  };
   const noteText = String(rawNote ?? '').trim();
   current.noteText = noteText;
   current.note = noteText;
@@ -100,7 +93,8 @@ export function deleteAllNotes(progress) {
   const next = { ...(isPlainObject(progress) ? progress : {}) };
   Object.entries(next).forEach(([key, value]) => {
     next[key] = {
-      ...normalizeProgressEntry(value),
+      ...baseProgress(),
+      ...(isPlainObject(value) ? value : {}),
       noteText: '',
       note: '',
       noteUpdatedAt: null,
@@ -110,11 +104,14 @@ export function deleteAllNotes(progress) {
 }
 
 export function getQuestionWrongReasonTags(progress, questionId) {
-  return normalizeProgressEntry(progress?.[questionId]).wrongReasonTags;
+  return normalizeWrongReasonTags(progress?.[questionId]?.wrongReasonTags);
 }
 
 export function saveWrongReasonTags(progress, questionId, rawTags) {
-  const current = normalizeProgressEntry(progress?.[questionId]);
+  const current = {
+    ...baseProgress(),
+    ...(isPlainObject(progress?.[questionId]) ? progress[questionId] : {}),
+  };
   const wrongReasonTags = normalizeWrongReasonTags(rawTags);
   current.wrongReasonTags = wrongReasonTags;
   current.wrongReasonUpdatedAt = wrongReasonTags.length > 0 ? new Date().toISOString() : null;

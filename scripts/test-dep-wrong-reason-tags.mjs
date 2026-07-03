@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {
   baseProgress,
   clearWrongReasonTags,
+  deleteAllNotes,
   getQuestionWrongReasonTags,
   normalizeProgressEntry,
   normalizeWrongReasonTags,
+  saveNote,
   saveWrongReasonTags,
   WRONG_REASON_TAGS,
 } from '../dep-quiz-app/notes.js';
@@ -158,6 +160,7 @@ test('saveWrongReasonTags preserves existing progress and does not mutate input'
       bookmark: true,
       noteText: 'memo',
       noteUpdatedAt: '2026-07-01T00:01:00.000Z',
+      futureField: { keep: true },
     },
   };
 
@@ -176,6 +179,28 @@ test('saveWrongReasonTags preserves existing progress and does not mutate input'
   assert.equal(saved.Q001.seenCount, 5);
   assert.equal(saved.Q001.bookmark, true);
   assert.equal(saved.Q001.noteText, 'memo');
+  assert.deepEqual(saved.Q001.futureField, { keep: true });
+});
+
+test('saveNote preserves unknown fields while syncing note aliases', () => {
+  const progress = {
+    Q001: {
+      ...baseProgress(),
+      noteText: 'before',
+      note: 'before',
+      futureField: { keep: true },
+      wrongReasonTags: ['careless-mistake'],
+    },
+  };
+
+  const saved = saveNote(progress, 'Q001', '  updated note  ');
+
+  assert.notEqual(saved, progress);
+  assert.deepEqual(saved.Q001.futureField, { keep: true });
+  assert.equal(saved.Q001.noteText, 'updated note');
+  assert.equal(saved.Q001.note, 'updated note');
+  assert.deepEqual(saved.Q001.wrongReasonTags, ['careless-mistake']);
+  assertIsoDate(saved.Q001.noteUpdatedAt);
 });
 
 test('clearWrongReasonTags removes all tags and clears timestamp without mutating input', () => {
@@ -185,6 +210,7 @@ test('clearWrongReasonTags removes all tags and clears timestamp without mutatin
       bookmark: true,
       wrongReasonTags: ['careless-mistake'],
       wrongReasonUpdatedAt: '2026-07-01T00:00:00.000Z',
+      futureField: 'keep-me',
     },
   };
 
@@ -195,4 +221,27 @@ test('clearWrongReasonTags removes all tags and clears timestamp without mutatin
   assert.deepEqual(cleared.Q001.wrongReasonTags, []);
   assert.equal(cleared.Q001.wrongReasonUpdatedAt, null);
   assert.equal(cleared.Q001.bookmark, true);
+  assert.equal(cleared.Q001.futureField, 'keep-me');
+});
+
+test('deleteAllNotes preserves unknown fields while clearing note aliases', () => {
+  const progress = {
+    Q001: {
+      ...baseProgress(),
+      noteText: 'memo',
+      note: 'memo',
+      memo: 'legacy memo',
+      futureField: ['keep-me'],
+      wrongReasonTags: ['careless-mistake'],
+    },
+  };
+
+  const cleared = deleteAllNotes(progress);
+
+  assert.notEqual(cleared, progress);
+  assert.deepEqual(cleared.Q001.futureField, ['keep-me']);
+  assert.deepEqual(cleared.Q001.wrongReasonTags, ['careless-mistake']);
+  assert.equal(cleared.Q001.noteText, '');
+  assert.equal(cleared.Q001.note, '');
+  assert.equal(cleared.Q001.noteUpdatedAt, null);
 });
