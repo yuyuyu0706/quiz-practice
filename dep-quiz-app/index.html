@@ -92,6 +92,31 @@
           </button>
         </div>
         <article id="explanation" class="explanation hidden"></article>
+        <section
+          id="wrong-reason-panel"
+          class="wrong-reason-panel hidden"
+          aria-label="誤答理由タグ"
+          data-quiz-shortcut-scope="wrong-reason-tags"
+        >
+          <fieldset id="wrong-reason-fieldset" class="wrong-reason-fieldset">
+            <legend>誤答理由タグ</legend>
+            <p class="wrong-reason-help">
+              複数選択可。主因1つ＋補助要因1〜2つを目安に選ぶと復習しやすくなります。
+            </p>
+            <div id="wrong-reason-tags" class="wrong-reason-tags"></div>
+            <div class="wrong-reason-actions">
+              <button id="clear-wrong-reason-tags" type="button" class="danger-secondary">
+                すべて解除
+              </button>
+              <span
+                id="wrong-reason-status"
+                class="wrong-reason-status"
+                role="status"
+                aria-live="polite"
+              ></span>
+            </div>
+          </fieldset>
+        </section>
         <section id="note-panel" class="note-panel hidden" aria-label="自分用メモ">
           <h3>自分用メモ</h3>
           <p class="note-help">この問題で迷った点、覚え方、あとで復習したいことを残せます。</p>

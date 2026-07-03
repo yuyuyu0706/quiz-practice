@@ -364,6 +364,80 @@ button.primary:hover:not(:disabled) {
 .explanation-actions {
   margin-top: 12px;
 }
+
+.wrong-reason-panel {
+  margin-top: 1rem;
+}
+
+.wrong-reason-fieldset {
+  margin-bottom: 0;
+  padding: 1rem;
+  background: linear-gradient(180deg, #fff, #f8fbff);
+  border-color: #c8d7e8;
+}
+
+.wrong-reason-fieldset legend {
+  font-weight: 700;
+}
+
+.wrong-reason-help {
+  margin-bottom: 0.75rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.wrong-reason-tags {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.wrong-reason-tag {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  overflow-wrap: anywhere;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.wrong-reason-tag:hover {
+  border-color: #9db9d9;
+  background: #f7fbff;
+}
+
+.wrong-reason-tag input[type='checkbox'] {
+  flex: 0 0 auto;
+  margin-top: 0.28em;
+}
+
+.wrong-reason-tag:has(input:checked) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.wrong-reason-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.wrong-reason-status {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .note-panel {
   margin-top: 1rem;
   padding: 1rem;
@@ -721,6 +795,26 @@ button.primary:hover:not(:disabled) {
     padding: 10px;
   }
 
+  .wrong-reason-fieldset {
+    padding: 0.85rem;
+  }
+
+  .wrong-reason-tags {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .wrong-reason-tag {
+    min-height: 52px;
+    padding: 12px;
+    line-height: 1.55;
+  }
+
+  .wrong-reason-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
   .explanation p,
   .explanation li {
     font-size: 0.95rem;
@@ -763,7 +857,8 @@ button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 .chips label:has(input:focus-visible),
-.choices label:has(input:focus-visible) {
+.choices label:has(input:focus-visible),
+.wrong-reason-tag:has(input:focus-visible) {
   outline: none;
   box-shadow: 0 0 0 3px var(--dep-primary-ring);
 }
