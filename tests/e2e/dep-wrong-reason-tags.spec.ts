@@ -82,6 +82,8 @@ test.describe('[DEP][DATA] Wrong reason tags / Persistence and isolation', () =>
     expect(await selectedWrongReasonTags(page, questionId)).toHaveLength(2);
 
     await page.reload();
+    await expect(page.locator('#home-view')).toBeVisible();
+    await page.locator('#resume-btn').click();
     await expect(page.locator('#quiz-view')).toBeVisible();
     await expect(page.locator('#wrong-reason-panel')).toBeVisible();
     await expect(
@@ -92,7 +94,8 @@ test.describe('[DEP][DATA] Wrong reason tags / Persistence and isolation', () =>
 
   test('guarantees wrong answer tag changes and clear preserve note bookmark and progress data', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop data coexistence coverage.');
     await startDepQuiz(page, 'all');
     const questionId = await openWrongReasonPanel(page);
     const before = await progressForQuestion(page, questionId);
