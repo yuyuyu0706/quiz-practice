@@ -73,7 +73,7 @@ test.describe('[DEP][DATA] Wrong reason tags / Persistence and isolation', () =>
     await answerCurrentQuestionAs(page, 'correct');
     await expect(page.locator('#wrong-reason-panel')).toBeHidden();
 
-    await page.getByRole('button', { name: '次へ' }).click();
+    await page.locator('#next-question').click();
     const questionId = await openWrongReasonPanel(page);
     const tags = page.locator('#wrong-reason-tags label');
     await tags.nth(0).click();
@@ -98,7 +98,7 @@ test.describe('[DEP][DATA] Wrong reason tags / Persistence and isolation', () =>
     const before = await progressForQuestion(page, questionId);
 
     await page.locator('#question-note').fill('誤答理由タグとの共存メモ');
-    await page.getByRole('button', { name: 'メモ保存' }).click();
+    await page.getByRole('button', { name: 'メモを保存' }).click();
     await page.getByRole('button', { name: 'ブックマーク☆' }).click();
     await page.locator('#wrong-reason-tags label').nth(1).click();
     await page.locator('#wrong-reason-tags label').nth(4).click();
@@ -144,7 +144,7 @@ test.describe('[DEP][DATA] Wrong reason tags / Persistence and isolation', () =>
     );
     expect(await progressForQuestion(page, questionId)).toMatchObject(progressAfterAnswer);
 
-    await page.getByRole('button', { name: '次へ' }).click();
+    await page.locator('#next-question').click();
     await page.locator('#choices-form input[value="A"]').focus();
     await page.keyboard.press('2');
     await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue('B');
