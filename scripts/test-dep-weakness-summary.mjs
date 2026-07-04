@@ -170,6 +170,75 @@ test('buildBasicWeaknessSummary aggregates overall and section counts without co
   );
 });
 
+test('buildWeaknessAnalysis safely normalizes malformed progress input without throwing', () => {
+  const questions = [question('Q1', '1'), question('Q2', '1'), question('Q3', '2')];
+
+  assert.doesNotThrow(() => buildWeaknessAnalysis(questions, 'not-progress'));
+  assert.deepEqual(buildWeaknessAnalysis(questions, 'not-progress').overall, {
+    totalQuestionCount: 3,
+    answeredQuestionCount: 0,
+    totalAttemptCount: 0,
+    correctCount: 0,
+    wrongCount: 0,
+    accuracyRate: null,
+    accuracyRateStatus: 'not-applicable',
+    taggedQuestionCount: 0,
+    analysisStatus: 'unstarted',
+    minAnsweredQuestionCount: 3,
+  });
+
+  const result = buildWeaknessAnalysis(questions, {
+    Q1: null,
+    Q2: { seenCount: -1, correctCount: -2, wrongCount: -3 },
+    Q3: { seenCount: 'two', correctCount: 'one', wrongCount: 'one' },
+  });
+
+  assert.deepEqual(
+    result.sections.map(
+      ({
+        section,
+        answeredQuestionCount,
+        totalAttemptCount,
+        correctCount,
+        wrongCount,
+        accuracyRateStatus,
+        analysisStatus,
+      }) => ({
+        section,
+        answeredQuestionCount,
+        totalAttemptCount,
+        correctCount,
+        wrongCount,
+        accuracyRateStatus,
+        analysisStatus,
+      })
+    ),
+    [
+      {
+        section: '1',
+        answeredQuestionCount: 0,
+        totalAttemptCount: 0,
+        correctCount: 0,
+        wrongCount: 0,
+        accuracyRateStatus: 'not-applicable',
+        analysisStatus: 'unstarted',
+      },
+      {
+        section: '2',
+        answeredQuestionCount: 0,
+        totalAttemptCount: 0,
+        correctCount: 0,
+        wrongCount: 0,
+        accuracyRateStatus: 'not-applicable',
+        analysisStatus: 'unstarted',
+      },
+    ]
+  );
+  assert.equal(result.overall.totalAttemptCount, 0);
+  assert.equal(result.overall.correctCount, 0);
+  assert.equal(result.overall.wrongCount, 0);
+});
+
 test('buildWeaknessAnalysis returns all seven wrong-reason tags in registry order with zero-count tags', () => {
   const result = buildWeaknessAnalysis(
     [question('Q1', '1'), question('Q2', '1'), question('Q3', '1')],
@@ -237,9 +306,108 @@ test('buildWeaknessAssessment evaluates data sufficiency with defaults, valid ov
       .minAnsweredQuestionCount,
     3
   );
+  [-1, 1.5, '3', null, {}].forEach((minAnsweredQuestionCount) => {
+    assert.equal(
+      buildWeaknessAssessment(basicSummary, { minAnsweredQuestionCount }).criteria
+        .minAnsweredQuestionCount,
+      3
+    );
+  });
 });
 
-test('buildWeaknessAnalysis selects priority section by wrong count, accuracy, attempts, then section order', () => {
+test('buildWeaknessAnalysis selects the section with the highest wrong count first', () => {
+  const questions = [
+    question('S1-A', '1'),
+    question('S1-B', '1'),
+    question('S1-C', '1'),
+    question('S2-A', '2'),
+    question('S2-B', '2'),
+    question('S2-C', '2'),
+    question('S3-A', '3'),
+    question('S3-B', '3'),
+    question('S3-C', '3'),
+    question('S4-A', '4'),
+    question('S4-B', '4'),
+    question('S4-C', '4'),
+  ];
+  const progress = {
+    'S1-A': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S1-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S1-C': progressEntry({ seenCount: 2, correctCount: 2 }),
+    'S2-A': progressEntry({ seenCount: 3, correctCount: 0, wrongCount: 3 }),
+    'S2-B': progressEntry({ seenCount: 1, correctCount: 1 }),
+    'S2-C': progressEntry({ seenCount: 1, correctCount: 1 }),
+    'S3-A': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S3-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S3-C': progressEntry({ seenCount: 1, correctCount: 1 }),
+    'S4-A': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S4-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S4-C': progressEntry({ seenCount: 1, correctCount: 1 }),
+  };
+
+  const result = buildWeaknessAnalysis(questions, progress);
+
+  assert.equal(result.priorities.section.reasonCode, 'highest-wrong-count');
+  assert.equal(result.priorities.section.item.section, '2');
+  assert.equal(result.priorities.section.item.wrongCount, 3);
+});
+
+test('buildWeaknessAnalysis breaks priority section ties by higher total attempts when wrong count and accuracy match', () => {
+  const result = buildWeaknessAnalysis(
+    [
+      question('S1-A', '1'),
+      question('S1-B', '1'),
+      question('S1-C', '1'),
+      question('S2-A', '2'),
+      question('S2-B', '2'),
+      question('S2-C', '2'),
+    ],
+    {
+      'S1-A': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+      'S1-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+      'S1-C': progressEntry({ seenCount: 2, correctCount: 2 }),
+      'S2-A': progressEntry({ seenCount: 3, correctCount: 2, wrongCount: 1 }),
+      'S2-B': progressEntry({ seenCount: 3, correctCount: 2, wrongCount: 1 }),
+      'S2-C': progressEntry({ seenCount: 3, correctCount: 2, wrongCount: 1 }),
+    }
+  );
+
+  assert.equal(result.priorities.section.reasonCode, 'highest-wrong-count');
+  assert.equal(result.priorities.section.item.section, '2');
+  assert.equal(result.priorities.section.item.wrongCount, 3);
+  assert.equal(result.priorities.section.item.accuracyRate, 2 / 3);
+  assert.equal(result.priorities.section.item.totalAttemptCount, 9);
+});
+
+test('buildWeaknessAnalysis preserves existing section order when priority section metrics are tied', () => {
+  const questions = [
+    question('S1-A', '1'),
+    question('S1-B', '1'),
+    question('S1-C', '1'),
+    question('S2-A', '2'),
+    question('S2-B', '2'),
+    question('S2-C', '2'),
+  ];
+  const progress = {
+    'S1-A': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S1-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S1-C': progressEntry({ seenCount: 2, correctCount: 2 }),
+    'S2-A': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S2-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+    'S2-C': progressEntry({ seenCount: 2, correctCount: 2 }),
+  };
+
+  const result = buildWeaknessAnalysis(questions, progress);
+
+  assert.equal(result.priorities.section.reasonCode, 'highest-wrong-count');
+  assert.equal(result.priorities.section.item.section, '1');
+  assert.deepEqual(
+    result.sections.map((section) => section.section),
+    ['1', '2']
+  );
+});
+
+test('buildWeaknessAnalysis prefers the lower accuracy rate after wrong counts tie', () => {
   const questions = [
     question('S1-A', '1'),
     question('S1-B', '1'),
@@ -268,11 +436,6 @@ test('buildWeaknessAnalysis selects priority section by wrong count, accuracy, a
     'S4-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
     'S4-C': progressEntry({ seenCount: 1, correctCount: 1 }),
   };
-
-  const result = buildWeaknessAnalysis(questions, progress);
-
-  assert.equal(result.priorities.section.reasonCode, 'highest-wrong-count');
-  assert.equal(result.priorities.section.item.section, '2');
 
   const tied = buildWeaknessAnalysis(
     questions.filter((item) => item.section !== '2'),
