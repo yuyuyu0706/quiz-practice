@@ -366,19 +366,27 @@ export function renderResult(els, result) {
   });
 }
 
-export function renderAnalysisSummary(container, overall) {
+export function renderAnalysisSummary(container, analysis) {
   if (!container) return;
 
   container.replaceChildren();
 
-  const summary = overall && typeof overall === 'object' ? overall : {};
+  const result = analysis && typeof analysis === 'object' ? analysis : {};
+  container.appendChild(
+    createSummarySection(result.overall, '学習全体サマリ', 'analysis-summary-title')
+  );
+  container.appendChild(createSectionSummaries(result.sections));
+}
+
+function createSummarySection(summarySource, titleText, titleId) {
+  const summary = summarySource && typeof summarySource === 'object' ? summarySource : {};
   const section = document.createElement('section');
   section.className = 'analysis-summary';
-  section.setAttribute('aria-labelledby', 'analysis-summary-title');
+  section.setAttribute('aria-labelledby', titleId);
 
   const title = document.createElement('h3');
-  title.id = 'analysis-summary-title';
-  title.textContent = '学習全体サマリ';
+  title.id = titleId;
+  title.textContent = titleText;
 
   const statusMessage = document.createElement('p');
   statusMessage.className = `analysis-status analysis-status--${summary.analysisStatus ?? 'unknown'}`;
@@ -386,8 +394,44 @@ export function renderAnalysisSummary(container, overall) {
 
   const metrics = document.createElement('dl');
   metrics.className = 'analysis-metrics';
+  createAnalysisMetrics(summary).forEach((metric) =>
+    metrics.appendChild(createAnalysisMetric(metric))
+  );
 
-  [
+  section.append(title, statusMessage, metrics);
+  return section;
+}
+
+function createSectionSummaries(sectionsSource) {
+  const wrapper = document.createElement('section');
+  wrapper.className = 'analysis-sections';
+  wrapper.setAttribute('aria-labelledby', 'analysis-sections-title');
+
+  const title = document.createElement('h3');
+  title.id = 'analysis-sections-title';
+  title.textContent = 'Section別サマリ';
+
+  const list = document.createElement('div');
+  list.className = 'analysis-section-list';
+
+  const sections = Array.isArray(sectionsSource) ? sectionsSource : [];
+  sections.forEach((sectionSummary, index) => {
+    const headingId = `analysis-section-${index + 1}-title`;
+    const card = createSummarySection(
+      sectionSummary,
+      getSectionSummaryTitle(sectionSummary),
+      headingId
+    );
+    card.classList.add('analysis-section-card');
+    list.appendChild(card);
+  });
+
+  wrapper.append(title, list);
+  return wrapper;
+}
+
+function createAnalysisMetrics(summary) {
+  return [
     {
       label: '回答済み問題数',
       value: `${formatSummaryCount(summary.answeredQuestionCount)} / ${formatSummaryCount(
@@ -403,10 +447,13 @@ export function renderAnalysisSummary(container, overall) {
       note: getAccuracyRateNote(summary.accuracyRateStatus),
     },
     { label: '誤答理由タグ付き問題数', value: formatSummaryCount(summary.taggedQuestionCount) },
-  ].forEach((metric) => metrics.appendChild(createAnalysisMetric(metric)));
+  ];
+}
 
-  section.append(title, statusMessage, metrics);
-  container.appendChild(section);
+function getSectionSummaryTitle(summary) {
+  const sectionNumber = formatSummaryCount(summary?.section);
+  const title = typeof summary?.sectionTitle === 'string' ? summary.sectionTitle.trim() : '';
+  return title ? `Section ${sectionNumber}：${title}` : `Section ${sectionNumber}`;
 }
 
 function createAnalysisMetric({ label, value, note }) {
@@ -453,7 +500,7 @@ function getAccuracyRateNote(status) {
 
 function getAnalysisStatusMessage(summary) {
   if (summary.analysisStatus === 'ready') {
-    return '回答履歴を基に全体の学習状況を集計しています。';
+    return '回答履歴を基に学習状況を集計しています。';
   }
 
   if (summary.analysisStatus === 'insufficient') {

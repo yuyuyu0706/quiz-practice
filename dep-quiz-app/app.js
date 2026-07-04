@@ -334,7 +334,7 @@ function isTextEntryTarget(target) {
 
 function openAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
-  renderAnalysisSummary(els.analysisContainer, state.analysis.overall);
+  renderAnalysisSummary(els.analysisContainer, state.analysis);
   showView('analysis');
 }
 

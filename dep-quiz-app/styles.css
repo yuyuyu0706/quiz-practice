@@ -1044,3 +1044,21 @@ input:focus-visible,
   border-color: #f0c36d;
   background: #fffdf6;
 }
+.analysis-sections {
+  margin-top: 24px;
+}
+.analysis-section-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.analysis-section-card {
+  margin-top: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+}
+.analysis-section-card h3 {
+  margin-top: 0;
+}
