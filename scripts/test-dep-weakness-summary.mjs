@@ -42,9 +42,9 @@ function prioritySectionFor(sectionSummaries) {
 function test(name, fn) {
   try {
     fn();
-    console.log(`ok - ${name}`);
+    console.log(`✓ ${name}`);
   } catch (error) {
-    console.error(`not ok - ${name}`);
+    console.error(`✗ ${name}`);
     throw error;
   }
 }
@@ -127,6 +127,9 @@ test('minAnsweredQuestionCountの不正値は既定値3へ戻る', () => {
 });
 
 test('progress全体が非オブジェクトでも安全な集計値になる', () => {
+  assert.doesNotThrow(() => prepareWeaknessAnalysisInput([question('1', '1')], 'invalid-progress'));
+  assert.doesNotThrow(() => buildWeaknessAnalysis([question('1', '1')], 'invalid-progress'));
+
   const analysisInput = prepareWeaknessAnalysisInput([question('1', '1')], 'invalid-progress');
   assert.deepEqual(analysisInput.questionItems[0].progress, {
     seenCount: 0,
@@ -146,6 +149,8 @@ test('progress全体が非オブジェクトでも安全な集計値になる', 
 });
 
 test('問題ごとのprogressがnullでも安全な集計値になる', () => {
+  assert.doesNotThrow(() => buildWeaknessAnalysis([question('1', '1')], { 1: null }));
+
   const analysis = buildWeaknessAnalysis([question('1', '1')], { 1: null });
 
   assert.equal(analysis.overall.answeredQuestionCount, 0);
@@ -156,14 +161,23 @@ test('問題ごとのprogressがnullでも安全な集計値になる', () => {
 });
 
 test('負数または文字列のseenCount/correctCount/wrongCountでも安全な集計値になる', () => {
-  const analysis = buildWeaknessAnalysis([question('negative', '1'), question('string', '1')], {
+  const malformedProgress = {
     negative: progress(-1, -2, -3),
-    string: progress('2', '1', '1'),
-  });
+    string: progress('seen', 'correct', 'wrong'),
+  };
 
-  assert.equal(analysis.overall.answeredQuestionCount, 1);
-  assert.equal(analysis.overall.totalAttemptCount, 2);
-  assert.equal(analysis.overall.correctCount, 1);
-  assert.equal(analysis.overall.wrongCount, 1);
-  assert.equal(analysis.overall.accuracyRate, 0.5);
+  assert.doesNotThrow(() =>
+    buildWeaknessAnalysis([question('negative', '1'), question('string', '1')], malformedProgress)
+  );
+
+  const analysis = buildWeaknessAnalysis(
+    [question('negative', '1'), question('string', '1')],
+    malformedProgress
+  );
+
+  assert.equal(analysis.overall.answeredQuestionCount, 0);
+  assert.equal(analysis.overall.totalAttemptCount, 0);
+  assert.equal(analysis.overall.correctCount, 0);
+  assert.equal(analysis.overall.wrongCount, 0);
+  assert.equal(analysis.overall.accuracyRate, null);
 });
