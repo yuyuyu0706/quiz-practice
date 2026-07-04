@@ -138,6 +138,99 @@ export function buildWeaknessAssessment(basicSummary, options) {
   };
 }
 
+export function buildWeaknessAnalysis(questions, progress, options) {
+  const analysisInput = prepareWeaknessAnalysisInput(questions, progress);
+  const basicSummary = buildBasicWeaknessSummary(analysisInput);
+  const qualitySummary = normalizeWeaknessSummaryQuality(basicSummary);
+  const assessment = buildWeaknessAssessment(qualitySummary, options);
+
+  return {
+    criteria: {
+      minAnsweredQuestionCount: assessment.criteria.minAnsweredQuestionCount,
+    },
+    overall: {
+      ...qualitySummary.overall,
+      analysisStatus: assessment.overall.analysisStatus,
+      minAnsweredQuestionCount: assessment.overall.minAnsweredQuestionCount,
+    },
+    sections: qualitySummary.sections.map((sectionSummary, index) => ({
+      ...sectionSummary,
+      analysisStatus: assessment.sections[index]?.analysisStatus ?? 'unstarted',
+      minAnsweredQuestionCount:
+        assessment.sections[index]?.minAnsweredQuestionCount ??
+        assessment.criteria.minAnsweredQuestionCount,
+    })),
+    tags: qualitySummary.tags.map((tagSummary) => ({ ...tagSummary })),
+    priorities: assessment.priorities,
+  };
+}
+
+function normalizeWeaknessSummaryQuality(basicSummary) {
+  const overallSummary = isPlainObject(basicSummary?.overall) ? basicSummary.overall : {};
+  const sectionSummaries = Array.isArray(basicSummary?.sections) ? basicSummary.sections : [];
+  const tagSummaries = Array.isArray(basicSummary?.tags) ? basicSummary.tags : [];
+
+  return {
+    overall: normalizeSummaryItemAccuracyQuality(overallSummary),
+    sections: sectionSummaries.map((sectionSummary) => ({
+      section: normalizeOptionalString(sectionSummary?.section),
+      sectionTitle: normalizeOptionalString(sectionSummary?.sectionTitle),
+      ...normalizeSummaryItemAccuracyQuality(sectionSummary),
+    })),
+    tags: tagSummaries.map((tagSummary) => ({
+      id: normalizeOptionalString(tagSummary?.id),
+      label: normalizeOptionalString(tagSummary?.label),
+      taggedQuestionCount: normalizeSummaryCount(tagSummary?.taggedQuestionCount),
+    })),
+  };
+}
+
+function normalizeSummaryItemAccuracyQuality(summaryItem) {
+  const totalQuestionCount = normalizeSummaryCount(summaryItem?.totalQuestionCount);
+  const answeredQuestionCount = normalizeSummaryCount(summaryItem?.answeredQuestionCount);
+  const totalAttemptCount = normalizeSummaryCount(summaryItem?.totalAttemptCount);
+  const correctCount = normalizeSummaryCount(summaryItem?.correctCount);
+  const wrongCount = normalizeSummaryCount(summaryItem?.wrongCount);
+  const taggedQuestionCount = normalizeSummaryCount(summaryItem?.taggedQuestionCount);
+  const { accuracyRate, accuracyRateStatus } = evaluateAccuracyRateQuality({
+    totalAttemptCount,
+    correctCount,
+    wrongCount,
+  });
+
+  return {
+    totalQuestionCount,
+    answeredQuestionCount,
+    totalAttemptCount,
+    correctCount,
+    wrongCount,
+    accuracyRate,
+    accuracyRateStatus,
+    taggedQuestionCount,
+  };
+}
+
+function evaluateAccuracyRateQuality({ totalAttemptCount, correctCount, wrongCount }) {
+  if (totalAttemptCount > 0 && correctCount + wrongCount === totalAttemptCount) {
+    return {
+      accuracyRate: correctCount / totalAttemptCount,
+      accuracyRateStatus: 'available',
+    };
+  }
+
+  if (totalAttemptCount === 0 && correctCount === 0 && wrongCount === 0) {
+    return {
+      accuracyRate: null,
+      accuracyRateStatus: 'not-applicable',
+    };
+  }
+
+  return {
+    accuracyRate: null,
+    accuracyRateStatus: 'inconsistent-counts',
+  };
+}
+
 function summarizeQuestionItems(questionItems) {
   const summary = {
     totalQuestionCount: 0,
@@ -251,6 +344,7 @@ function buildPrioritySectionItem(sectionSummary) {
     correctCount: normalizeSummaryCount(sectionSummary?.correctCount),
     wrongCount: normalizeSummaryCount(sectionSummary?.wrongCount),
     accuracyRate: normalizeAccuracyRate(sectionSummary?.accuracyRate),
+    accuracyRateStatus: normalizeAccuracyRateStatus(sectionSummary?.accuracyRateStatus),
   };
 }
 
@@ -298,6 +392,12 @@ function normalizeAccuracyRate(value) {
 function normalizeComparableAccuracyRate(value) {
   const accuracyRate = normalizeAccuracyRate(value);
   return accuracyRate === null ? Number.POSITIVE_INFINITY : accuracyRate;
+}
+
+function normalizeAccuracyRateStatus(value) {
+  return ['available', 'not-applicable', 'inconsistent-counts'].includes(value)
+    ? value
+    : 'not-applicable';
 }
 
 function normalizeSummaryCount(value) {
