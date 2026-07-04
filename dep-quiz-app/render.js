@@ -366,6 +366,105 @@ export function renderResult(els, result) {
   });
 }
 
+export function renderAnalysisSummary(container, overall) {
+  if (!container) return;
+
+  container.replaceChildren();
+
+  const summary = overall && typeof overall === 'object' ? overall : {};
+  const section = document.createElement('section');
+  section.className = 'analysis-summary';
+  section.setAttribute('aria-labelledby', 'analysis-summary-title');
+
+  const title = document.createElement('h3');
+  title.id = 'analysis-summary-title';
+  title.textContent = '学習全体サマリ';
+
+  const statusMessage = document.createElement('p');
+  statusMessage.className = `analysis-status analysis-status--${summary.analysisStatus ?? 'unknown'}`;
+  statusMessage.textContent = getAnalysisStatusMessage(summary);
+
+  const metrics = document.createElement('dl');
+  metrics.className = 'analysis-metrics';
+
+  [
+    {
+      label: '回答済み問題数',
+      value: `${formatSummaryCount(summary.answeredQuestionCount)} / ${formatSummaryCount(
+        summary.totalQuestionCount
+      )}`,
+    },
+    { label: '累計解答数', value: formatSummaryCount(summary.totalAttemptCount) },
+    { label: '正答数', value: formatSummaryCount(summary.correctCount) },
+    { label: '誤答数', value: formatSummaryCount(summary.wrongCount) },
+    {
+      label: '正答率',
+      value: formatAccuracyRate(summary),
+      note: getAccuracyRateNote(summary.accuracyRateStatus),
+    },
+    { label: '誤答理由タグ付き問題数', value: formatSummaryCount(summary.taggedQuestionCount) },
+  ].forEach((metric) => metrics.appendChild(createAnalysisMetric(metric)));
+
+  section.append(title, statusMessage, metrics);
+  container.appendChild(section);
+}
+
+function createAnalysisMetric({ label, value, note }) {
+  const item = document.createElement('div');
+  item.className = 'analysis-metric';
+
+  const term = document.createElement('dt');
+  term.className = 'analysis-metric__label';
+  term.textContent = label;
+
+  const description = document.createElement('dd');
+  description.className = 'analysis-metric__value';
+  description.textContent = value;
+
+  item.append(term, description);
+
+  if (note) {
+    const noteElement = document.createElement('dd');
+    noteElement.className = 'analysis-metric__note';
+    noteElement.textContent = note;
+    item.appendChild(noteElement);
+  }
+
+  return item;
+}
+
+function formatSummaryCount(value) {
+  return Number.isFinite(value) ? String(value) : '0';
+}
+
+function formatAccuracyRate(summary) {
+  if (summary.accuracyRateStatus !== 'available' || !Number.isFinite(summary.accuracyRate)) {
+    return '未算出';
+  }
+
+  return `${Math.round(summary.accuracyRate * 100)}%`;
+}
+
+function getAccuracyRateNote(status) {
+  if (status === 'available') return '累計解答数ベースで算出しています。';
+  if (status === 'inconsistent-counts') return '記録の不整合により率を判定できません。';
+  return 'まだ解答がないため算出していません。';
+}
+
+function getAnalysisStatusMessage(summary) {
+  if (summary.analysisStatus === 'ready') {
+    return '回答履歴を基に全体の学習状況を集計しています。';
+  }
+
+  if (summary.analysisStatus === 'insufficient') {
+    return `回答済み問題数が少ないため、傾向は参考値です。分析には${formatSummaryCount(
+      summary.minAnsweredQuestionCount
+    )}問以上の回答済み問題が目安です。`;
+  }
+
+  return '回答履歴がまだないため、まず問題に回答してください。弱点判定や正答率の表示は行いません。';
+}
+
 export function renderNotesList(els, noteItems, handlers) {
   els.notesList.replaceChildren();
   const hasItems = noteItems.length > 0;

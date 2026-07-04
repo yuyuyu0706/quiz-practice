@@ -605,6 +605,52 @@ button.primary:hover:not(:disabled) {
   min-height: 1.2em;
   margin-top: 12px;
 }
+.analysis-summary {
+  margin-top: 16px;
+}
+.analysis-status {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--dep-primary-border);
+  border-radius: 12px;
+  background: var(--dep-primary-soft);
+  color: #163923;
+}
+.analysis-status--unstarted,
+.analysis-status--insufficient {
+  background: #fffaf0;
+  border-color: #f8d99b;
+  color: #5f3b08;
+}
+.analysis-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.analysis-metric {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, var(--dep-surface-tint));
+}
+.analysis-metric__label {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.analysis-metric__value {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.analysis-metric__note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
 #wrong-list {
   padding-left: 20px;
 }
