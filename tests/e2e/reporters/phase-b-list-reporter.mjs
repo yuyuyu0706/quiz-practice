@@ -17,6 +17,18 @@ const caseLabels = new Map([
   ],
   ['guarantees DEA Plus mobile notes controls remain usable after answering', 'plus-mobile-notes'],
   ['guarantees DEP learning settings and home actions render without layout issues', 'home-layout'],
+  [
+    'guarantees empty progress shows unstarted overall and section summaries without fallback rates',
+    'analysis-empty',
+  ],
+  [
+    'guarantees mixed progress preserves section order and ready insufficient unstarted indicators',
+    'analysis-mixed',
+  ],
+  [
+    'guarantees inconsistent progress remains unmodified while analysis shows unresolved counts',
+    'analysis-storage',
+  ],
   ['guarantees mobile secondary actions open and quiz progress advances', 'mobile-actions'],
   [
     'guarantees desktop note textarea keeps multiline drafts and suppresses quiz shortcuts',
