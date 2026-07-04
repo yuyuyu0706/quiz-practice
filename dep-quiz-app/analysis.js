@@ -1,5 +1,7 @@
 import { normalizeProgressEntry, WRONG_REASON_TAGS } from './notes.js';
 
+const DEFAULT_MIN_ANSWERED_QUESTION_COUNT = 3;
+
 export function prepareWeaknessAnalysisInput(questions, progress) {
   const safeQuestions = Array.isArray(questions) ? questions : [];
   const safeProgress = isPlainObject(progress) ? progress : {};
@@ -97,6 +99,45 @@ export function buildBasicWeaknessSummary(analysisInput) {
   };
 }
 
+export function buildWeaknessAssessment(basicSummary, options) {
+  const minAnsweredQuestionCount = normalizeMinAnsweredQuestionCount(
+    options?.minAnsweredQuestionCount
+  );
+  const overallSummary = isPlainObject(basicSummary?.overall) ? basicSummary.overall : {};
+  const sectionSummaries = Array.isArray(basicSummary?.sections) ? basicSummary.sections : [];
+  const tagSummaries = Array.isArray(basicSummary?.tags) ? basicSummary.tags : [];
+
+  const sections = sectionSummaries.map((sectionSummary) => ({
+    section: normalizeOptionalString(sectionSummary?.section),
+    sectionTitle: normalizeOptionalString(sectionSummary?.sectionTitle),
+    analysisStatus: getAnalysisStatus(
+      sectionSummary?.answeredQuestionCount,
+      minAnsweredQuestionCount
+    ),
+    answeredQuestionCount: normalizeSummaryCount(sectionSummary?.answeredQuestionCount),
+    minAnsweredQuestionCount,
+  }));
+
+  return {
+    criteria: {
+      minAnsweredQuestionCount,
+    },
+    overall: {
+      analysisStatus: getAnalysisStatus(
+        overallSummary?.answeredQuestionCount,
+        minAnsweredQuestionCount
+      ),
+      answeredQuestionCount: normalizeSummaryCount(overallSummary?.answeredQuestionCount),
+      minAnsweredQuestionCount,
+    },
+    sections,
+    priorities: {
+      section: selectPrioritySection(sectionSummaries, sections),
+      tag: selectPriorityTag(tagSummaries),
+    },
+  };
+}
+
 function summarizeQuestionItems(questionItems) {
   const summary = {
     totalQuestionCount: 0,
@@ -150,6 +191,113 @@ function summarizeWrongReasonTags(questionItems) {
     label: tag.label,
     taggedQuestionCount: taggedQuestionCounts.get(tag.id),
   }));
+}
+
+function selectPrioritySection(sectionSummaries, assessedSections) {
+  const candidate = sectionSummaries
+    .map((sectionSummary, index) => ({
+      index,
+      summary: sectionSummary,
+      assessment: assessedSections[index],
+    }))
+    .filter(
+      ({ summary, assessment }) =>
+        assessment?.analysisStatus === 'ready' && normalizeSummaryCount(summary?.wrongCount) > 0
+    )
+    .sort((a, b) => comparePrioritySections(a, b))[0];
+
+  if (candidate) {
+    return {
+      item: buildPrioritySectionItem(candidate.summary),
+      reasonCode: 'highest-wrong-count',
+    };
+  }
+
+  if (assessedSections.every((section) => section.analysisStatus === 'unstarted')) {
+    return { item: null, reasonCode: 'not-started' };
+  }
+
+  if (!assessedSections.some((section) => section.analysisStatus === 'ready')) {
+    return { item: null, reasonCode: 'not-enough-data' };
+  }
+
+  return { item: null, reasonCode: 'no-wrong-answers' };
+}
+
+function comparePrioritySections(a, b) {
+  const wrongCountDiff =
+    normalizeSummaryCount(b.summary?.wrongCount) - normalizeSummaryCount(a.summary?.wrongCount);
+  if (wrongCountDiff !== 0) return wrongCountDiff;
+
+  const accuracyRateDiff =
+    normalizeComparableAccuracyRate(a.summary?.accuracyRate) -
+    normalizeComparableAccuracyRate(b.summary?.accuracyRate);
+  if (accuracyRateDiff !== 0) return accuracyRateDiff;
+
+  const totalAttemptCountDiff =
+    normalizeSummaryCount(b.summary?.totalAttemptCount) -
+    normalizeSummaryCount(a.summary?.totalAttemptCount);
+  if (totalAttemptCountDiff !== 0) return totalAttemptCountDiff;
+
+  return a.index - b.index;
+}
+
+function buildPrioritySectionItem(sectionSummary) {
+  return {
+    section: normalizeOptionalString(sectionSummary?.section),
+    sectionTitle: normalizeOptionalString(sectionSummary?.sectionTitle),
+    answeredQuestionCount: normalizeSummaryCount(sectionSummary?.answeredQuestionCount),
+    totalAttemptCount: normalizeSummaryCount(sectionSummary?.totalAttemptCount),
+    correctCount: normalizeSummaryCount(sectionSummary?.correctCount),
+    wrongCount: normalizeSummaryCount(sectionSummary?.wrongCount),
+    accuracyRate: normalizeAccuracyRate(sectionSummary?.accuracyRate),
+  };
+}
+
+function selectPriorityTag(tagSummaries) {
+  const candidate = tagSummaries
+    .map((tagSummary, index) => ({ index, tagSummary }))
+    .filter(({ tagSummary }) => normalizeSummaryCount(tagSummary?.taggedQuestionCount) > 0)
+    .sort((a, b) => {
+      const taggedQuestionCountDiff =
+        normalizeSummaryCount(b.tagSummary?.taggedQuestionCount) -
+        normalizeSummaryCount(a.tagSummary?.taggedQuestionCount);
+      if (taggedQuestionCountDiff !== 0) return taggedQuestionCountDiff;
+      return a.index - b.index;
+    })[0];
+
+  if (!candidate) {
+    return { item: null, reasonCode: 'no-tagged-questions' };
+  }
+
+  return {
+    item: {
+      id: normalizeOptionalString(candidate.tagSummary?.id),
+      label: normalizeOptionalString(candidate.tagSummary?.label),
+      taggedQuestionCount: normalizeSummaryCount(candidate.tagSummary?.taggedQuestionCount),
+    },
+    reasonCode: 'highest-tagged-question-count',
+  };
+}
+
+function getAnalysisStatus(answeredQuestionCount, minAnsweredQuestionCount) {
+  const normalizedAnsweredQuestionCount = normalizeSummaryCount(answeredQuestionCount);
+  if (normalizedAnsweredQuestionCount === 0) return 'unstarted';
+  if (normalizedAnsweredQuestionCount < minAnsweredQuestionCount) return 'insufficient';
+  return 'ready';
+}
+
+function normalizeMinAnsweredQuestionCount(value) {
+  return Number.isSafeInteger(value) && value > 0 ? value : DEFAULT_MIN_ANSWERED_QUESTION_COUNT;
+}
+
+function normalizeAccuracyRate(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function normalizeComparableAccuracyRate(value) {
+  const accuracyRate = normalizeAccuracyRate(value);
+  return accuracyRate === null ? Number.POSITIVE_INFINITY : accuracyRate;
 }
 
 function normalizeSummaryCount(value) {
