@@ -20,6 +20,7 @@ import {
   getQuestionWrongReasonTags,
   saveWrongReasonTags,
 } from './notes.js';
+import { buildWeaknessAnalysis } from './analysis.js';
 import { loadQuestions } from './questions.js';
 import {
   createQuizSession,
@@ -47,6 +48,7 @@ const state = {
   progress: loadProgress(),
   settings: loadSettings(),
   session: null,
+  analysis: null,
 };
 
 const els = {
@@ -55,6 +57,7 @@ const els = {
     quiz: document.getElementById('quiz-view'),
     result: document.getElementById('result-view'),
     notes: document.getElementById('notes-view'),
+    analysis: document.getElementById('analysis-view'),
   },
   form: document.getElementById('settings-form'),
   sectionCheckboxes: document.getElementById('section-checkboxes'),
@@ -63,6 +66,9 @@ const els = {
   discardSessionBtn: document.getElementById('discard-session-btn'),
   reviewNotesBtn: document.getElementById('review-notes-btn'),
   notesListBtn: document.getElementById('notes-list-btn'),
+  analysisBtn: document.getElementById('analysis-btn'),
+  analysisBackHome: document.getElementById('analysis-back-home'),
+  analysisContainer: document.getElementById('analysis-container'),
   notesList: document.getElementById('notes-list'),
   notesEmpty: document.getElementById('notes-empty'),
   deleteAllNotes: document.getElementById('delete-all-notes'),
@@ -156,6 +162,7 @@ function attachEvents() {
     renderNotesList();
     showView('notes');
   });
+  els.analysisBtn?.addEventListener('click', openAnalysisView);
 
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
   els.prevQuestion.addEventListener('click', () => {
@@ -212,6 +219,9 @@ function attachEvents() {
     refreshResumeUI();
   });
   els.notesBackHome?.addEventListener('click', () => {
+    showView('home');
+  });
+  els.analysisBackHome?.addEventListener('click', () => {
     showView('home');
   });
   els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
@@ -319,6 +329,11 @@ function isTextEntryTarget(target) {
     'submit',
   ]);
   return !nonTextInputTypes.has(input.type);
+}
+
+function openAnalysisView() {
+  state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
+  showView('analysis');
 }
 
 function startSession(forcedMode = null) {

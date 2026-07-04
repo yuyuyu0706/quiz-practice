@@ -45,6 +45,7 @@
           <div class="button-row">
             <button type="button" id="review-notes-btn">メモあり問題を復習</button>
             <button type="button" id="notes-list-btn">メモ一覧</button>
+            <button type="button" id="analysis-btn">弱点を分析</button>
           </div>
         </form>
         <p id="home-message" class="message"></p>
@@ -156,6 +157,17 @@
           <button id="retry-wrong" class="primary">間違いのみ復習を開始</button>
           <button id="result-notes-list-btn" type="button">メモ一覧</button>
           <button id="back-home">ホームへ</button>
+        </div>
+      </section>
+
+      <section id="analysis-view" class="card view">
+        <h2>弱点分析</h2>
+        <p class="message">
+          最新の学習状況から弱点分析を準備しました。詳細なサマリ表示は今後追加予定です。
+        </p>
+        <div id="analysis-container" aria-live="polite"></div>
+        <div class="button-row wrap">
+          <button id="analysis-back-home" type="button">ホームへ戻る</button>
         </div>
       </section>
 

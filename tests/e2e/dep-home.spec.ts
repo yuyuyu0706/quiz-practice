@@ -24,6 +24,7 @@ test.describe('[DEP][UI] Home / Learning settings', () => {
     await expect(page.getByRole('button', { name: '開始' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'メモあり問題を復習' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'メモ一覧' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '弱点を分析' })).toBeVisible();
 
     const primaryHomeButtons = page
       .locator('#home-view .button-row')
@@ -35,7 +36,7 @@ test.describe('[DEP][UI] Home / Learning settings', () => {
       .locator('#home-view .button-row')
       .nth(1)
       .locator('button:visible');
-    await expect(notesActionButtons).toHaveCount(2);
+    await expect(notesActionButtons).toHaveCount(3);
 
     const viewport = page.viewportSize();
     expect(viewport).not.toBeNull();
@@ -43,6 +44,7 @@ test.describe('[DEP][UI] Home / Learning settings', () => {
       page.getByRole('button', { name: '開始' }),
       page.getByRole('button', { name: 'メモあり問題を復習' }),
       page.getByRole('button', { name: 'メモ一覧' }),
+      page.getByRole('button', { name: '弱点を分析' }),
     ];
     for (const button of visibleButtons) {
       await expect(button).toBeVisible();
@@ -52,6 +54,11 @@ test.describe('[DEP][UI] Home / Learning settings', () => {
       expect(box!.y).toBeGreaterThanOrEqual(0);
       expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width + 1);
     }
+
+    await page.getByRole('button', { name: '弱点を分析' }).click();
+    await expect(page.locator('#analysis-view')).toBeVisible();
+    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await expect(page.locator('#home-view')).toBeVisible();
 
     await page.getByRole('button', { name: 'メモ一覧' }).click();
     await expect(page.locator('#notes-view')).toBeVisible();
