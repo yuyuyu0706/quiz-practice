@@ -451,9 +451,22 @@ function createAnalysisMetrics(summary) {
 }
 
 function getSectionSummaryTitle(summary) {
-  const sectionNumber = formatSummaryCount(summary?.section);
+  const sectionNumber = formatSectionNumber(summary?.section);
   const title = typeof summary?.sectionTitle === 'string' ? summary.sectionTitle.trim() : '';
-  return title ? `Section ${sectionNumber}：${title}` : `Section ${sectionNumber}`;
+  const sectionLabel = sectionNumber ? `Section ${sectionNumber}` : 'Section';
+  return title ? `${sectionLabel}：${title}` : sectionLabel;
+}
+
+function formatSectionNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value.trim();
 }
 
 function createAnalysisMetric({ label, value, note }) {
