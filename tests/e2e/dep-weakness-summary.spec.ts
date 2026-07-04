@@ -18,13 +18,6 @@ type ProgressEntry = {
 
 const storageKeys = ['depQuizProgress', 'depQuizSettings', 'depQuizActiveSession'] as const;
 const defaultSettings = { sections: ['1', '2', '3', '4', '5'], mode: 'normal', count: '50' };
-const activeSessionFixture = {
-  order: [],
-  idx: 0,
-  answers: [],
-  mode: 'normal',
-  count: '10',
-};
 
 async function loadQuestions(request: APIRequestContext) {
   const response = await request.get('/dep-quiz-app/questions.json');
@@ -69,21 +62,53 @@ function progressEntry(overrides: Partial<ProgressEntry> = {}): ProgressEntry {
   };
 }
 
-async function seedStorage(page: Page, progress: Record<string, ProgressEntry>) {
+function activeSessionFixture(questionId: string) {
+  return {
+    schemaVersion: 1,
+    app: 'dep-quiz-app',
+    order: [questionId],
+    currentIndex: 0,
+    answers: {},
+    choiceMap: {},
+    graded: {},
+    completedAt: null,
+    explanationOpen: false,
+    mode: 'normal',
+    startedAt: '2026-07-04T00:00:00.000Z',
+    settingsSnapshot: { ...defaultSettings, mode: 'normal' },
+  };
+}
+
+function storageSnapshot(progress: Record<string, ProgressEntry>, sessionFixture: unknown = null) {
+  return [
+    JSON.stringify(progress),
+    JSON.stringify(defaultSettings),
+    JSON.stringify(sessionFixture),
+  ];
+}
+
+async function seedStorage(
+  page: Page,
+  progress: Record<string, ProgressEntry>,
+  sessionFixture: unknown = null
+) {
+  const expectedStorage = storageSnapshot(progress, sessionFixture);
   await page.addInitScript(
-    ({ progressFixture, settingsFixture, sessionFixture, keys }) => {
+    ({ keys, expected }) => {
       localStorage.clear();
-      localStorage.setItem(keys[0], JSON.stringify(progressFixture));
-      localStorage.setItem(keys[1], JSON.stringify(settingsFixture));
-      localStorage.setItem(keys[2], JSON.stringify(sessionFixture));
+      keys.forEach((key, index) => localStorage.setItem(key, expected[index]));
     },
-    {
-      progressFixture: progress,
-      settingsFixture: defaultSettings,
-      sessionFixture: activeSessionFixture,
-      keys: storageKeys,
-    }
+    { keys: storageKeys, expected: expectedStorage }
   );
+  return expectedStorage;
+}
+
+async function expectStorageSnapshot(page: Page, expectedStorage: string[]) {
+  const actual = await page.evaluate(
+    (keys) => keys.map((key) => localStorage.getItem(key)),
+    storageKeys
+  );
+  expect(actual).toEqual(expectedStorage);
 }
 
 async function openAnalysis(page: Page) {
@@ -228,16 +253,15 @@ test.describe('[DEP][DATA] Analysis / Storage immutability', () => {
     const progress: Record<string, ProgressEntry> = {
       [inconsistentQuestion.id]: progressEntry({ seenCount: 3, correctCount: 3, wrongCount: 1 }),
     };
+    const sessionFixture = activeSessionFixture(inconsistentQuestion.id);
+    const expectedStorage = await seedStorage(page, progress, sessionFixture);
 
-    await seedStorage(page, progress);
     await gotoDepHome(page);
-    const before = await page.evaluate(
-      (keys) => keys.map((key) => localStorage.getItem(key)),
-      storageKeys
-    );
+    await expectStorageSnapshot(page, expectedStorage);
 
     await page.getByRole('button', { name: '弱点を分析' }).click();
     await expect(page.locator('#analysis-view')).toBeVisible();
+    await expectStorageSnapshot(page, expectedStorage);
 
     const overall = overallSummary(page);
     await expect(overall).toContainText('参考値');
@@ -263,10 +287,6 @@ test.describe('[DEP][DATA] Analysis / Storage immutability', () => {
 
     await page.getByRole('button', { name: 'ホームへ戻る' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
-    const after = await page.evaluate(
-      (keys) => keys.map((key) => localStorage.getItem(key)),
-      storageKeys
-    );
-    expect(after).toEqual(before);
+    await expectStorageSnapshot(page, expectedStorage);
   });
 });
