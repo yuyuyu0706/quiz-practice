@@ -41,6 +41,7 @@ import {
   renderResult,
   toggleNoteEditor,
   renderStorageRepairNotice,
+  renderAnalysisSummary,
 } from './render.js';
 
 const state = {
@@ -333,6 +334,7 @@ function isTextEntryTarget(target) {
 
 function openAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
+  renderAnalysisSummary(els.analysisContainer, state.analysis.overall);
   showView('analysis');
 }
 
