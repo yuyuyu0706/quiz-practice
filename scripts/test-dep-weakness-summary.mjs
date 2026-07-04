@@ -352,31 +352,39 @@ test('buildWeaknessAnalysis selects the section with the highest wrong count fir
   assert.equal(result.priorities.section.item.wrongCount, 3);
 });
 
-test('buildWeaknessAnalysis breaks priority section ties by higher total attempts when wrong count and accuracy match', () => {
-  const result = buildWeaknessAnalysis(
-    [
-      question('S1-A', '1'),
-      question('S1-B', '1'),
-      question('S1-C', '1'),
-      question('S2-A', '2'),
-      question('S2-B', '2'),
-      question('S2-C', '2'),
+test('buildWeaknessAssessment breaks priority section ties by higher total attempts when wrong count and accuracy match', () => {
+  const result = buildWeaknessAssessment({
+    overall: { answeredQuestionCount: 6 },
+    sections: [
+      {
+        section: '1',
+        sectionTitle: 'Section 1',
+        answeredQuestionCount: 3,
+        totalAttemptCount: 4,
+        correctCount: 2,
+        wrongCount: 2,
+        accuracyRate: 0.5,
+        accuracyRateStatus: 'available',
+      },
+      {
+        section: '2',
+        sectionTitle: 'Section 2',
+        answeredQuestionCount: 3,
+        totalAttemptCount: 8,
+        correctCount: 4,
+        wrongCount: 2,
+        accuracyRate: 0.5,
+        accuracyRateStatus: 'available',
+      },
     ],
-    {
-      'S1-A': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
-      'S1-B': progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
-      'S1-C': progressEntry({ seenCount: 2, correctCount: 2 }),
-      'S2-A': progressEntry({ seenCount: 3, correctCount: 2, wrongCount: 1 }),
-      'S2-B': progressEntry({ seenCount: 3, correctCount: 2, wrongCount: 1 }),
-      'S2-C': progressEntry({ seenCount: 3, correctCount: 2, wrongCount: 1 }),
-    }
-  );
+    tags: [],
+  });
 
   assert.equal(result.priorities.section.reasonCode, 'highest-wrong-count');
   assert.equal(result.priorities.section.item.section, '2');
-  assert.equal(result.priorities.section.item.wrongCount, 3);
-  assert.equal(result.priorities.section.item.accuracyRate, 2 / 3);
-  assert.equal(result.priorities.section.item.totalAttemptCount, 9);
+  assert.equal(result.priorities.section.item.wrongCount, 2);
+  assert.equal(result.priorities.section.item.accuracyRate, 0.5);
+  assert.equal(result.priorities.section.item.totalAttemptCount, 8);
 });
 
 test('buildWeaknessAnalysis preserves existing section order when priority section metrics are tied', () => {
