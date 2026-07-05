@@ -376,6 +376,57 @@ export function renderAnalysisSummary(container, analysis) {
     createSummarySection(result.overall, '学習全体サマリ', 'analysis-summary-title')
   );
   container.appendChild(createSectionSummaries(result.sections));
+  container.appendChild(createTagSummary(result.tags, result.overall));
+}
+
+function createTagSummary(tagsSource, overallSource) {
+  const tags = Array.isArray(tagsSource) ? tagsSource : [];
+  const overall = overallSource && typeof overallSource === 'object' ? overallSource : {};
+  const hasTaggedQuestions =
+    Number.isFinite(overall.taggedQuestionCount) && overall.taggedQuestionCount > 0;
+
+  const section = document.createElement('section');
+  section.className = 'analysis-tag-summary';
+  section.setAttribute('aria-labelledby', 'analysis-tags-title');
+
+  const title = document.createElement('h3');
+  title.id = 'analysis-tags-title';
+  title.textContent = '誤答理由タグ別サマリ';
+
+  const message = document.createElement('p');
+  message.className = 'analysis-tag-summary__message';
+  message.textContent = hasTaggedQuestions
+    ? '誤答した問題で記録した理由を、タグ別に集計しています。'
+    : '誤答理由はまだ記録されていません。誤答した問題で理由を記録すると、ここに傾向を表示します。';
+
+  const list = document.createElement('dl');
+  list.className = 'analysis-tag-list';
+  tags.forEach((tag) => list.appendChild(createTagSummaryItem(tag)));
+
+  const note = document.createElement('p');
+  note.className = 'analysis-tag-summary__note';
+  note.textContent =
+    '1問に複数の理由を記録できるため、タグ別件数の合計は誤答理由タグ付き問題数と一致しない場合があります。';
+
+  section.append(title, message, list, note);
+  return section;
+}
+
+function createTagSummaryItem(tagSource) {
+  const tag = tagSource && typeof tagSource === 'object' ? tagSource : {};
+  const item = document.createElement('div');
+  item.className = 'analysis-tag-item';
+
+  const label = document.createElement('dt');
+  label.className = 'analysis-tag-item__label';
+  label.textContent = typeof tag.label === 'string' ? tag.label : '';
+
+  const count = document.createElement('dd');
+  count.className = 'analysis-tag-item__count';
+  count.textContent = `${formatSummaryCount(tag.taggedQuestionCount)}問`;
+
+  item.append(label, count);
+  return item;
 }
 
 function createSummarySection(summarySource, titleText, titleId) {

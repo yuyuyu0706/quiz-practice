@@ -125,6 +125,21 @@ function sectionSummaries(page: Page) {
   return page.locator('.analysis-section-card');
 }
 
+function tagSummary(page: Page) {
+  return page.locator('section[aria-labelledby="analysis-tags-title"]');
+}
+
+function tagItem(summary: Locator, label: string) {
+  return summary
+    .locator('.analysis-tag-item')
+    .filter({ has: summary.page().locator('dt', { hasText: new RegExp(`^${label}$`) }) })
+    .first();
+}
+
+async function expectTagCount(summary: Locator, label: string, value: string) {
+  await expect(tagItem(summary, label).locator('dd.analysis-tag-item__count')).toHaveText(value);
+}
+
 function metric(summary: Locator, label: string) {
   return summary
     .locator('.analysis-metric')
@@ -152,6 +167,11 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '回答済み問題数', `0 / ${groups.flat().length}`);
     await expectMetric(overall, '正答率', '未算出');
     await expect(overall).not.toContainText('0%');
+
+    const tags = tagSummary(page);
+    await expect(tags).toContainText('誤答理由はまだ記録されていません');
+    await expectTagCount(tags, 'ケアレスミス', '0問');
+    await expectTagCount(tags, '概念・挙動がイメージできない', '0問');
 
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
@@ -208,6 +228,15 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '誤答数', '3');
     await expectMetric(overall, '正答率', '50%');
     await expectMetric(overall, '誤答理由タグ付き問題数', '2');
+
+    const tags = tagSummary(page);
+    await expect(tags).toContainText('誤答した問題で記録した理由を、タグ別に集計しています。');
+    await expectTagCount(tags, 'ケアレスミス', '1問');
+    await expectTagCount(tags, '概念・挙動がイメージできない', '1問');
+    await expectTagCount(tags, '用語・機能の意味を混同した', '0問');
+    await expect(tags).toContainText(
+      'タグ別件数の合計は誤答理由タグ付き問題数と一致しない場合があります'
+    );
 
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
