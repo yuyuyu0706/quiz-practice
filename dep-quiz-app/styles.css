@@ -1096,7 +1096,7 @@ input:focus-visible,
   overflow-wrap: anywhere;
 }
 .analysis-section-details__summary:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--dep-primary);
   outline-offset: 4px;
   border-radius: 8px;
 }
