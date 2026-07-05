@@ -122,7 +122,7 @@ function overallSummary(page: Page) {
 }
 
 function sectionDetails(page: Page) {
-  return page.locator('.analysis-section-details');
+  return page.locator('.analysis-sections.analysis-disclosure');
 }
 
 function sectionDetailSummary(page: Page) {
@@ -141,11 +141,11 @@ async function expandSectionDetails(page: Page) {
 }
 
 function tagSummary(page: Page) {
-  return page.locator('section[aria-labelledby="analysis-tags-title"]');
+  return page.locator('[aria-labelledby="analysis-tags-title"]');
 }
 
 function focusSummary(page: Page) {
-  return page.locator('section[aria-labelledby="analysis-focus-title"]');
+  return page.locator('[aria-labelledby="analysis-focus-title"]');
 }
 
 function focusCard(summary: Locator, heading: string) {
@@ -174,7 +174,8 @@ function metric(summary: Locator, label: string) {
 }
 
 async function expectMetric(summary: Locator, label: string, value: string) {
-  await expect(metric(summary, label).locator('dd.analysis-metric__value')).toHaveText(value);
+  const expected = label === '正答率' ? `${value}※` : value;
+  await expect(metric(summary, label).locator('dd.analysis-metric__value')).toHaveText(expected);
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
@@ -216,11 +217,13 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(overall).not.toContainText('0%');
 
     const tags = tagSummary(page);
+    await tags.locator('summary').click();
     await expect(tags).toContainText('誤答理由はまだ記録されていません');
     await expectTagCount(tags, 'ケアレスミス', '0問');
     await expectTagCount(tags, '概念・挙動がイメージできない', '0問');
 
     const focus = focusSummary(page);
+    await focus.locator('summary').click();
     await expect(focus).toContainText(
       '回答履歴がないため、優先して見直すSectionや誤答理由はまだ判定しません。'
     );
@@ -242,7 +245,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
       await expect(card).not.toContainText('0%');
     }
 
-    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る', exact: true }).click();
     await expect(page.locator('#home-view')).toBeVisible();
   });
 
@@ -285,6 +288,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '誤答理由タグ付き問題数', '2');
 
     const tags = tagSummary(page);
+    await tags.locator('summary').click();
     await expect(tags).toContainText('誤答した問題で記録した理由を、タグ別に集計しています。');
     await expectTagCount(tags, 'ケアレスミス', '1問');
     await expectTagCount(tags, '概念・挙動がイメージできない', '1問');
@@ -294,6 +298,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     );
 
     const focus = focusSummary(page);
+    await focus.locator('summary').click();
     await expect(focus).toContainText('分析結果から、次に見直す候補を表示しています。');
 
     const sectionFocus = focusCard(focus, '優先して見直すSection');
@@ -331,8 +336,8 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(insufficient).toContainText('参考値');
     await expectMetric(insufficient, '回答済み問題数', `1 / ${groups[1].length}`);
     await expectMetric(insufficient, '正答率', '50%');
-    await expect(metric(insufficient, '正答率').locator('dd.analysis-metric__note')).toHaveText(
-      '累計解答数ベースで算出しています。'
+    await expect(insufficient.locator('.analysis-accuracy-footnote')).toHaveText(
+      '※ 正答率は累計解答数ベースで算出しています。'
     );
     await expectMetric(insufficient, '誤答理由タグ付き問題数', '1');
 
@@ -373,10 +378,8 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
 
     await expect(
       page
-        .locator('#analysis-container > section')
-        .evaluateAll((sections) =>
-          sections.map((section) => section.getAttribute('aria-labelledby'))
-        )
+        .locator('#analysis-container > *')
+        .evaluateAll((regions) => regions.map((region) => region.getAttribute('aria-labelledby')))
     ).resolves.toEqual([
       'analysis-summary-title',
       'analysis-focus-title',
@@ -386,7 +389,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
 
     const details = sectionDetails(page);
     await expect(details).not.toHaveAttribute('open', '');
-    await expect(sectionDetailSummary(page)).toHaveText('Section別の詳細を表示');
+    await expect(sectionDetailSummary(page)).toContainText('Section別サマリ');
     await expect(sectionSummaries(page).first()).not.toBeVisible();
 
     await sectionDetailSummary(page).click();
@@ -406,12 +409,79 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(details).not.toHaveAttribute('open', '');
     await expect(cards.first()).not.toBeVisible();
 
-    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る', exact: true }).click();
     await expect(page.locator('#home-view')).toBeVisible();
     await page.getByRole('button', { name: '弱点を分析' }).click();
     await expect(page.locator('#analysis-view')).toBeVisible();
     await expect(sectionDetails(page)).not.toHaveAttribute('open', '');
     await expect(sectionSummaries(page).first()).not.toBeVisible();
+  });
+
+  test('guarantees analysis disclosures return paths and accuracy footnotes remain usable', async ({
+    page,
+    request,
+  }) => {
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    const progress: Record<string, ProgressEntry> = {
+      [groups[0][0].id]: progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+      [groups[0][1].id]: progressEntry({
+        seenCount: 1,
+        correctCount: 0,
+        wrongCount: 1,
+        wrongReasonTags: ['concept-behavior-gap'],
+      }),
+      [groups[0][2].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+      [groups[1][0].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+    };
+
+    await seedStorage(page, progress);
+    await openAnalysis(page);
+
+    const disclosures = page.locator('.analysis-disclosure');
+    await expect(disclosures).toHaveCount(3);
+    await expect(
+      disclosures.evaluateAll((items) => items.every((item) => !item.hasAttribute('open')))
+    ).resolves.toBe(true);
+    await expect(page.getByRole('button', { name: '← ホームへ戻る' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'ホームへ戻る', exact: true })).toBeVisible();
+
+    await expectMetric(overallSummary(page), '正答率', '60%');
+    await expect(overallSummary(page).locator('.analysis-accuracy-footnote')).toHaveText(
+      '※ 正答率は累計解答数ベースで算出しています。'
+    );
+    await expect(metric(overallSummary(page), '正答率')).not.toContainText(
+      '累計解答数ベースで算出しています。'
+    );
+
+    const focusSummaryElement = focusSummary(page).locator('summary');
+    await focusSummaryElement.focus();
+    await page.keyboard.press('Enter');
+    await expect(focusSummary(page)).toHaveAttribute('open', '');
+    await expect(focusCard(focusSummary(page), '優先して見直すSection')).toBeVisible();
+    await expect(focusSummary(page).locator('.analysis-accuracy-footnote')).toHaveText(
+      '※ 正答率は累計解答数ベースで算出しています。'
+    );
+    await page.keyboard.press('Space');
+    await expect(focusSummary(page)).not.toHaveAttribute('open', '');
+
+    for (const summary of [tagSummary(page).locator('summary'), sectionDetailSummary(page)]) {
+      const height = await summary.evaluate((element) => element.getBoundingClientRect().height);
+      expect(height).toBeGreaterThanOrEqual(44);
+      await summary.click();
+    }
+    await expect(tagSummary(page)).toHaveAttribute('open', '');
+    await expect(sectionDetails(page)).toHaveAttribute('open', '');
+    await expect(
+      sectionSummaries(page).first().locator('.analysis-accuracy-footnote')
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: '← ホームへ戻る' }).click();
+    await expect(page.locator('#home-view')).toBeVisible();
+    await page.getByRole('button', { name: '弱点を分析' }).click();
+    await expect(disclosures).toHaveCount(3);
+    await expect(
+      disclosures.evaluateAll((items) => items.every((item) => !item.hasAttribute('open')))
+    ).resolves.toBe(true);
   });
 
   test('guarantees mobile analysis keeps compact grids without horizontal overflow', async ({
@@ -456,6 +526,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectGridColumnCount(overall.locator('.analysis-metrics'), 2);
 
     const focus = focusSummary(page);
+    await focus.locator('summary').click();
     await expect(focus).toContainText('分析結果から、次に見直す候補を表示しています。');
     await expectGridColumnCount(focus.locator('.analysis-focus-list'), 1);
     await expectGridColumnCount(
@@ -470,6 +541,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     ).toHaveCSS('grid-column-end', '-1');
 
     const tags = tagSummary(page);
+    await tags.locator('summary').click();
     await expectTagCount(tags, 'ケアレスミス', '1問');
     await expectTagCount(tags, '概念・挙動がイメージできない', '1問');
     await expectGridColumnCount(tags.locator('.analysis-tag-list'), 2);
@@ -525,11 +597,13 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '誤答理由タグ付き問題数', '1');
 
     const tags = tagSummary(page);
+    await tags.locator('summary').click();
     await expect(tags).toContainText('誤答した問題で記録した理由を、タグ別に集計しています。');
     await expectTagCount(tags, 'ケアレスミス', '1問');
     await expectTagCount(tags, '概念・挙動がイメージできない', '0問');
 
     const focus = focusSummary(page);
+    await focus.locator('summary').click();
     await expect(focus).toContainText('分析結果から、次に見直す候補を表示しています。');
 
     const sectionFocus = focusCard(focus, '優先して見直すSection');
@@ -589,8 +663,8 @@ test.describe('[DEP][DATA] Analysis / Storage immutability', () => {
     await expectMetric(overall, '正答数', '3');
     await expectMetric(overall, '誤答数', '1');
     await expectMetric(overall, '正答率', '未算出');
-    await expect(metric(overall, '正答率').locator('dd.analysis-metric__note')).toHaveText(
-      '記録の不整合により率を判定できません。'
+    await expect(overall.locator('.analysis-accuracy-footnote')).toHaveText(
+      '※ 正答率は記録の不整合により率を判定できません。'
     );
 
     await expandSectionDetails(page);
@@ -602,11 +676,11 @@ test.describe('[DEP][DATA] Analysis / Storage immutability', () => {
     await expectMetric(card, '正答数', '3');
     await expectMetric(card, '誤答数', '1');
     await expectMetric(card, '正答率', '未算出');
-    await expect(metric(card, '正答率').locator('dd.analysis-metric__note')).toHaveText(
-      '記録の不整合により率を判定できません。'
+    await expect(card.locator('.analysis-accuracy-footnote')).toHaveText(
+      '※ 正答率は記録の不整合により率を判定できません。'
     );
 
-    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る', exact: true }).click();
     await expect(page.locator('#home-view')).toBeVisible();
     await expectStorageSnapshot(page, expectedStorage);
   });

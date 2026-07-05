@@ -1295,3 +1295,98 @@ input:focus-visible,
     overflow-wrap: anywhere;
   }
 }
+
+.analysis-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+.analysis-view-header h2 {
+  margin: 0;
+}
+.analysis-home-button {
+  min-height: 44px;
+  flex: 0 1 auto;
+}
+.analysis-disclosure {
+  min-width: 0;
+  margin-top: 22px;
+  border: 1px solid var(--dep-primary-border);
+  border-radius: 14px;
+  background: #fff;
+}
+.analysis-disclosure__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 12px 14px;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--dep-surface-tint);
+  border-radius: 14px;
+  list-style: none;
+}
+.analysis-disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+.analysis-disclosure__summary::after {
+  content: '▼';
+  flex: 0 0 auto;
+  margin-left: 12px;
+  color: var(--dep-primary);
+  font-size: 0.88rem;
+  transition: transform 0.15s ease;
+}
+.analysis-disclosure[open] > .analysis-disclosure__summary {
+  border-bottom: 1px solid var(--dep-primary-border);
+  border-radius: 14px 14px 0 0;
+}
+.analysis-disclosure[open] > .analysis-disclosure__summary::after {
+  transform: rotate(180deg);
+}
+.analysis-disclosure__summary:focus-visible {
+  outline: 3px solid var(--dep-primary);
+  outline-offset: 3px;
+}
+.analysis-disclosure__title {
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.analysis-disclosure__content {
+  padding: 14px;
+}
+.analysis-accuracy-footnote {
+  min-width: 0;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .analysis-view-header {
+    align-items: flex-start;
+  }
+
+  .analysis-home-button {
+    width: 100%;
+  }
+
+  .analysis-disclosure {
+    margin-top: 16px;
+  }
+
+  .analysis-disclosure__summary {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  .analysis-disclosure__content {
+    padding: 12px;
+  }
+}

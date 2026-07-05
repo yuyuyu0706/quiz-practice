@@ -161,11 +161,18 @@
       </section>
 
       <section id="analysis-view" class="card view">
-        <h2>弱点分析</h2>
+        <div class="analysis-view-header">
+          <h2>弱点分析</h2>
+          <button type="button" class="analysis-home-button" data-analysis-back-home>
+            ← ホームへ戻る
+          </button>
+        </div>
         <p class="message">最新の学習状況から弱点分析を表示します。</p>
         <div id="analysis-container" aria-live="polite"></div>
         <div class="button-row wrap">
-          <button id="analysis-back-home" type="button">ホームへ戻る</button>
+          <button id="analysis-back-home" type="button" data-analysis-back-home>
+            ホームへ戻る
+          </button>
         </div>
       </section>
 
