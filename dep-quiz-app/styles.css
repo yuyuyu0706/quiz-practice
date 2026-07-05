@@ -608,7 +608,7 @@ button.primary:hover:not(:disabled) {
 .analysis-summary {
   margin-top: 18px;
 }
-.analysis-summary h2,
+.analysis-summary h3,
 .analysis-focus-summary h3,
 .analysis-tag-summary h3,
 .analysis-sections h3 {
