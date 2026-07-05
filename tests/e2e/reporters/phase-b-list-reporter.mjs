@@ -30,6 +30,10 @@ const caseLabels = new Map([
     'analysis-disclosure',
   ],
   [
+    'guarantees mobile analysis keeps compact grids without horizontal overflow',
+    'analysis-mobile-layout',
+  ],
+  [
     'guarantees inconsistent progress remains unmodified while analysis shows unresolved counts',
     'analysis-storage',
   ],

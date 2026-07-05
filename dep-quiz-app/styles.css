@@ -1213,3 +1213,85 @@ input:focus-visible,
   line-height: 1.55;
   overflow-wrap: anywhere;
 }
+
+@media (max-width: 480px) {
+  #analysis-view,
+  #analysis-container,
+  .analysis-summary,
+  .analysis-focus-summary,
+  .analysis-tag-summary,
+  .analysis-sections,
+  .analysis-focus-card,
+  .analysis-section-card {
+    min-width: 0;
+  }
+
+  #analysis-container {
+    overflow-wrap: anywhere;
+  }
+
+  .analysis-summary,
+  .analysis-focus-summary,
+  .analysis-tag-summary,
+  .analysis-sections {
+    margin-top: 16px;
+  }
+
+  .analysis-status {
+    padding: 9px 10px;
+    margin-bottom: 10px;
+  }
+
+  .analysis-summary .analysis-metrics,
+  .analysis-section-card .analysis-metrics,
+  .analysis-tag-list,
+  .analysis-focus-card .analysis-focus-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analysis-focus-card .analysis-focus-metrics .analysis-metric:only-child {
+    grid-column: 1 / -1;
+  }
+
+  .analysis-focus-list,
+  .analysis-section-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analysis-metrics,
+  .analysis-tag-list {
+    gap: 8px;
+  }
+
+  .analysis-focus-list,
+  .analysis-section-list {
+    gap: 10px;
+  }
+
+  .analysis-metric,
+  .analysis-tag-item {
+    padding: 9px 10px;
+  }
+
+  .analysis-focus-card,
+  .analysis-section-card {
+    padding: 12px;
+  }
+
+  .analysis-focus-summary__message,
+  .analysis-tag-summary__message,
+  .analysis-tag-summary__note,
+  .analysis-focus-card__reason {
+    overflow-wrap: anywhere;
+  }
+
+  .analysis-section-details,
+  .analysis-section-details__summary {
+    min-width: 0;
+  }
+
+  .analysis-section-details__summary {
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+}

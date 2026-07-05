@@ -177,6 +177,27 @@ async function expectMetric(summary: Locator, label: string, value: string) {
   await expect(metric(summary, label).locator('dd.analysis-metric__value')).toHaveText(value);
 }
 
+async function expectNoHorizontalOverflow(page: Page) {
+  const viewport = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    analysisClientWidth: document.querySelector('#analysis-view')?.clientWidth ?? 0,
+    analysisScrollWidth: document.querySelector('#analysis-view')?.scrollWidth ?? 0,
+  }));
+  expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth);
+  expect(viewport.analysisScrollWidth).toBeLessThanOrEqual(viewport.analysisClientWidth);
+}
+
+async function expectGridColumnCount(locator: Locator, expectedColumns: number) {
+  await expect(locator).toBeVisible();
+  const columns = await locator.evaluate((element) =>
+    getComputedStyle(element)
+      .gridTemplateColumns.split(' ')
+      .filter((column) => column.trim().length > 0)
+  );
+  expect(columns).toHaveLength(expectedColumns);
+}
+
 test.describe('[DEP][UI] Analysis / Weakness summary', () => {
   test('guarantees empty progress shows unstarted overall and section summaries without fallback rates', async ({
     page,
@@ -391,6 +412,83 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(page.locator('#analysis-view')).toBeVisible();
     await expect(sectionDetails(page)).not.toHaveAttribute('open', '');
     await expect(sectionSummaries(page).first()).not.toBeVisible();
+  });
+
+  test('guarantees mobile analysis keeps compact grids without horizontal overflow', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'mobile-chrome',
+      'Mobile analysis layout is asserted only on the Pixel 5 mobile-chrome project.'
+    );
+
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    expect(groups.length).toBeGreaterThanOrEqual(3);
+    expect(groups[0].length).toBeGreaterThanOrEqual(3);
+    expect(groups[1].length).toBeGreaterThanOrEqual(1);
+
+    const progress: Record<string, ProgressEntry> = {
+      [groups[0][0].id]: progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+      [groups[0][1].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+      [groups[0][2].id]: progressEntry({
+        seenCount: 1,
+        correctCount: 0,
+        wrongCount: 1,
+        wrongReasonTags: ['concept-behavior-gap'],
+      }),
+      [groups[1][0].id]: progressEntry({
+        seenCount: 2,
+        correctCount: 1,
+        wrongCount: 1,
+        wrongReasonTags: ['careless-mistake'],
+      }),
+    };
+
+    await seedStorage(page, progress);
+    await openAnalysis(page);
+    await expectNoHorizontalOverflow(page);
+
+    const overall = overallSummary(page);
+    await expect(overall).toContainText('回答履歴を基に学習状況を集計');
+    await expectMetric(overall, '回答済み問題数', `4 / ${groups.flat().length}`);
+    await expectMetric(overall, '正答率', '50%');
+    await expectGridColumnCount(overall.locator('.analysis-metrics'), 2);
+
+    const focus = focusSummary(page);
+    await expect(focus).toContainText('分析結果から、次に見直す候補を表示しています。');
+    await expectGridColumnCount(focus.locator('.analysis-focus-list'), 1);
+    await expectGridColumnCount(
+      focusCard(focus, '優先して見直すSection').locator('.analysis-focus-metrics'),
+      2
+    );
+    await expect(
+      focusCard(focus, '最も多く記録された誤答理由').locator('.analysis-metric')
+    ).toHaveCSS('grid-column-start', '1');
+    await expect(
+      focusCard(focus, '最も多く記録された誤答理由').locator('.analysis-metric')
+    ).toHaveCSS('grid-column-end', '-1');
+
+    const tags = tagSummary(page);
+    await expectTagCount(tags, 'ケアレスミス', '1問');
+    await expectTagCount(tags, '概念・挙動がイメージできない', '1問');
+    await expectGridColumnCount(tags.locator('.analysis-tag-list'), 2);
+
+    const details = sectionDetails(page);
+    await expect(details).not.toHaveAttribute('open', '');
+    await expect(sectionSummaries(page).first()).not.toBeVisible();
+    await expectNoHorizontalOverflow(page);
+
+    await expandSectionDetails(page);
+    await expectGridColumnCount(page.locator('.analysis-section-list'), 1);
+
+    const cards = sectionSummaries(page);
+    await expect(cards).toHaveCount(groups.length);
+    await expect(cards.first()).toBeVisible();
+    await expectMetric(cards.nth(0), '回答済み問題数', `3 / ${groups[0].length}`);
+    await expectMetric(cards.nth(0), '正答率', '50%');
+    await expectGridColumnCount(cards.nth(0).locator('.analysis-metrics'), 2);
+    await expectNoHorizontalOverflow(page);
   });
 
   test('shows section not-enough-data guidance when overall is ready but every section is insufficient', async ({
