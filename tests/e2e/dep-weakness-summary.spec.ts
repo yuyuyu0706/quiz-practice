@@ -177,6 +177,11 @@ async function expectMetric(summary: Locator, label: string, value: string) {
   await expect(metric(summary, label).locator('dd.analysis-metric__value')).toHaveText(value);
 }
 
+async function expectMetricLabelsNotToContain(summary: Locator, text: string) {
+  const labels = await summary.locator('.analysis-metric__label').allTextContents();
+  expect(labels).not.toContain(text);
+}
+
 async function expectNoHorizontalOverflow(page: Page) {
   const viewport = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
@@ -291,7 +296,8 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '正答数', '3');
     await expectMetric(overall, '誤答数', '3');
     await expectMetric(overall, '正答率 ※', '50%');
-    await expectMetric(overall, '誤答理由タグ付き問題数', '2');
+    await expectMetric(overall, '理由タグ問題数', '2');
+    await expectMetricLabelsNotToContain(overall, '誤答理由タグ付き問題数');
     await expectDesktopGridColumnCount(page, overall.locator('.analysis-metrics'), 6);
 
     const tags = tagSummary(page);
@@ -300,9 +306,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectTagCount(tags, 'ケアレスミス', '1問');
     await expectTagCount(tags, '概念・挙動がイメージできない', '1問');
     await expectTagCount(tags, '用語・機能の意味を混同した', '0問');
-    await expect(tags).toContainText(
-      'タグ別件数の合計は誤答理由タグ付き問題数と一致しない場合があります'
-    );
+    await expect(tags).toContainText('タグ別件数の合計は理由タグ問題数と一致しない場合があります');
 
     const focus = focusSummary(page);
     await focus.locator('summary').click();
@@ -347,7 +351,8 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(ready).toContainText('回答履歴を基に学習状況を集計');
     await expectMetric(ready, '回答済み問題数', `3 / ${groups[0].length}`);
     await expectMetric(ready, '正答率 ※', '50%');
-    await expectMetric(ready, '誤答理由タグ付き問題数', '1');
+    await expectMetric(ready, '理由タグ問題数', '1');
+    await expectMetricLabelsNotToContain(ready, '誤答理由タグ付き問題数');
     await expectDesktopGridColumnCount(page, ready.locator('.analysis-metrics'), 3);
 
     const insufficient = cards.nth(1);
@@ -357,7 +362,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(insufficient.locator('.analysis-accuracy-footnote')).toHaveText(
       '※ 正答率は累計解答数ベースで算出しています。'
     );
-    await expectMetric(insufficient, '誤答理由タグ付き問題数', '1');
+    await expectMetric(insufficient, '理由タグ問題数', '1');
 
     const unstarted = cards.nth(2);
     await expect(unstarted).toContainText('回答履歴がまだない');
@@ -624,7 +629,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '正答数', '2');
     await expectMetric(overall, '誤答数', '1');
     await expectMetric(overall, '正答率 ※', '67%');
-    await expectMetric(overall, '誤答理由タグ付き問題数', '1');
+    await expectMetric(overall, '理由タグ問題数', '1');
 
     const tags = tagSummary(page);
     await tags.locator('summary').click();

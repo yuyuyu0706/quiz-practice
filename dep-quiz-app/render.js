@@ -585,7 +585,7 @@ function createTagSummary(tagsSource, overallSource) {
   const note = document.createElement('p');
   note.className = 'analysis-tag-summary__note';
   note.textContent =
-    '1問に複数の理由を記録できるため、タグ別件数の合計は誤答理由タグ付き問題数と一致しない場合があります。';
+    '1問に複数の理由を記録できるため、タグ別件数の合計は理由タグ問題数と一致しない場合があります。';
 
   content.append(message, list, note);
   return section;
@@ -691,7 +691,7 @@ function createAnalysisMetrics(summary) {
       value: formatAccuracyRate(summary),
       accuracyRateStatus: summary.accuracyRateStatus,
     },
-    { label: '誤答理由タグ付き問題数', value: formatSummaryCount(summary.taggedQuestionCount) },
+    { label: '理由タグ問題数', value: formatSummaryCount(summary.taggedQuestionCount) },
   ];
 }
 
