@@ -129,6 +129,17 @@ function tagSummary(page: Page) {
   return page.locator('section[aria-labelledby="analysis-tags-title"]');
 }
 
+function focusSummary(page: Page) {
+  return page.locator('section[aria-labelledby="analysis-focus-title"]');
+}
+
+function focusCard(summary: Locator, heading: string) {
+  return summary
+    .locator('.analysis-focus-card')
+    .filter({ has: summary.page().getByRole('heading', { name: heading }) })
+    .first();
+}
+
 function tagItem(summary: Locator, label: string) {
   return summary
     .locator('.analysis-tag-item')
@@ -172,6 +183,12 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(tags).toContainText('誤答理由はまだ記録されていません');
     await expectTagCount(tags, 'ケアレスミス', '0問');
     await expectTagCount(tags, '概念・挙動がイメージできない', '0問');
+
+    const focus = focusSummary(page);
+    await expect(focus).toContainText(
+      '回答履歴がないため、優先して見直すSectionや誤答理由はまだ判定しません。'
+    );
+    await expect(focus.locator('.analysis-focus-card')).toHaveCount(0);
 
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
@@ -237,6 +254,26 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(tags).toContainText(
       'タグ別件数の合計は誤答理由タグ付き問題数と一致しない場合があります'
     );
+
+    const focus = focusSummary(page);
+    await expect(focus).toContainText('分析結果から、次に見直す候補を表示しています。');
+
+    const sectionFocus = focusCard(focus, '優先して見直すSection');
+    await expect(sectionFocus.locator('.analysis-focus-card__target')).toHaveText(
+      `Section ${groups[0][0].section}：${groups[0][0].sectionTitle}`
+    );
+    await expectMetric(sectionFocus, '回答済み問題数', '3');
+    await expectMetric(sectionFocus, '累計解答数', '4');
+    await expectMetric(sectionFocus, '誤答数', '2');
+    await expectMetric(sectionFocus, '正答率', '50%');
+    await expect(sectionFocus).toContainText('誤答数が最も多い領域です');
+
+    const tagFocus = focusCard(focus, '最も多く記録された誤答理由');
+    await expect(tagFocus.locator('.analysis-focus-card__target')).toHaveText(
+      '概念・挙動がイメージできない'
+    );
+    await expectMetric(tagFocus, 'タグ付き問題数', '1問');
+    await expect(tagFocus).toContainText('記録済みの理由の中で、最も多いパターンです。');
 
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);

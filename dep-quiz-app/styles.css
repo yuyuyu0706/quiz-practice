@@ -1101,3 +1101,43 @@ input:focus-visible,
 .analysis-section-card h3 {
   margin-top: 0;
 }
+
+.analysis-focus-summary {
+  margin-top: 24px;
+}
+.analysis-focus-summary__message {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+.analysis-focus-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.analysis-focus-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+}
+.analysis-focus-card h4 {
+  margin: 0 0 10px;
+}
+.analysis-focus-card__target {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.analysis-focus-metrics {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.analysis-focus-card__reason {
+  margin: 12px 0 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
