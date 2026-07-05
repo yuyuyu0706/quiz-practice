@@ -1044,6 +1044,45 @@ input:focus-visible,
   border-color: #f0c36d;
   background: #fffdf6;
 }
+
+.analysis-tag-summary {
+  margin-top: 24px;
+}
+.analysis-tag-summary__message {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+.analysis-tag-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.analysis-tag-item {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, var(--dep-surface-tint));
+}
+.analysis-tag-item__label {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.analysis-tag-item__count {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.analysis-tag-summary__note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .analysis-sections {
   margin-top: 24px;
 }
