@@ -26,6 +26,10 @@ const caseLabels = new Map([
     'analysis-mixed',
   ],
   [
+    'guarantees analysis prioritizes focus and reveals section details on demand',
+    'analysis-disclosure',
+  ],
+  [
     'guarantees inconsistent progress remains unmodified while analysis shows unresolved counts',
     'analysis-storage',
   ],

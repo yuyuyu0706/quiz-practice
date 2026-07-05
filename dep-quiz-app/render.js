@@ -375,9 +375,9 @@ export function renderAnalysisSummary(container, analysis) {
   container.appendChild(
     createSummarySection(result.overall, '学習全体サマリ', 'analysis-summary-title')
   );
-  container.appendChild(createSectionSummaries(result.sections));
-  container.appendChild(createTagSummary(result.tags, result.overall));
   container.appendChild(createFocusSummary(result.overall, result.priorities));
+  container.appendChild(createTagSummary(result.tags, result.overall));
+  container.appendChild(createSectionSummaries(result.sections));
 }
 
 function createFocusSummary(overallSource, prioritiesSource) {
@@ -614,6 +614,13 @@ function createSectionSummaries(sectionsSource) {
   title.id = 'analysis-sections-title';
   title.textContent = 'Section別サマリ';
 
+  const details = document.createElement('details');
+  details.className = 'analysis-section-details';
+
+  const summary = document.createElement('summary');
+  summary.className = 'analysis-section-details__summary';
+  summary.textContent = 'Section別の詳細を表示';
+
   const list = document.createElement('div');
   list.className = 'analysis-section-list';
 
@@ -629,7 +636,8 @@ function createSectionSummaries(sectionsSource) {
     list.appendChild(card);
   });
 
-  wrapper.append(title, list);
+  details.append(summary, list);
+  wrapper.append(title, details);
   return wrapper;
 }
 

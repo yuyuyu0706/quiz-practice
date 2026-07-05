@@ -121,8 +121,23 @@ function overallSummary(page: Page) {
   return page.locator('section[aria-labelledby="analysis-summary-title"]');
 }
 
+function sectionDetails(page: Page) {
+  return page.locator('.analysis-section-details');
+}
+
+function sectionDetailSummary(page: Page) {
+  return sectionDetails(page).locator('summary');
+}
+
 function sectionSummaries(page: Page) {
   return page.locator('.analysis-section-card');
+}
+
+async function expandSectionDetails(page: Page) {
+  const details = sectionDetails(page);
+  await expect(details).not.toHaveAttribute('open', '');
+  await sectionDetailSummary(page).click();
+  await expect(details).toHaveAttribute('open', '');
 }
 
 function tagSummary(page: Page) {
@@ -189,6 +204,8 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
       '回答履歴がないため、優先して見直すSectionや誤答理由はまだ判定しません。'
     );
     await expect(focus.locator('.analysis-focus-card')).toHaveCount(0);
+
+    await expandSectionDetails(page);
 
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
@@ -275,6 +292,8 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(tagFocus, 'タグ付き問題数', '1問');
     await expect(tagFocus).toContainText('記録済みの理由の中で、最も多いパターンです。');
 
+    await expandSectionDetails(page);
+
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
     await expect(cards.getByRole('heading')).toHaveText(
@@ -300,6 +319,78 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(unstarted).toContainText('回答履歴がまだない');
     await expectMetric(unstarted, '回答済み問題数', `0 / ${groups[2].length}`);
     await expectMetric(unstarted, '正答率', '未算出');
+  });
+
+  test('guarantees analysis prioritizes focus and reveals section details on demand', async ({
+    page,
+    request,
+  }) => {
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    expect(groups.length).toBeGreaterThanOrEqual(3);
+    expect(groups[0].length).toBeGreaterThanOrEqual(3);
+    expect(groups[1].length).toBeGreaterThanOrEqual(1);
+
+    const progress: Record<string, ProgressEntry> = {
+      [groups[0][0].id]: progressEntry({ seenCount: 2, correctCount: 1, wrongCount: 1 }),
+      [groups[0][1].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+      [groups[0][2].id]: progressEntry({
+        seenCount: 1,
+        correctCount: 0,
+        wrongCount: 1,
+        wrongReasonTags: ['concept-behavior-gap'],
+      }),
+      [groups[1][0].id]: progressEntry({
+        seenCount: 2,
+        correctCount: 1,
+        wrongCount: 1,
+        wrongReasonTags: ['careless-mistake'],
+      }),
+    };
+
+    await seedStorage(page, progress);
+    await openAnalysis(page);
+
+    await expect(
+      page
+        .locator('#analysis-container > section')
+        .evaluateAll((sections) =>
+          sections.map((section) => section.getAttribute('aria-labelledby'))
+        )
+    ).resolves.toEqual([
+      'analysis-summary-title',
+      'analysis-focus-title',
+      'analysis-tags-title',
+      'analysis-sections-title',
+    ]);
+
+    const details = sectionDetails(page);
+    await expect(details).not.toHaveAttribute('open', '');
+    await expect(sectionDetailSummary(page)).toHaveText('Section別の詳細を表示');
+    await expect(sectionSummaries(page).first()).not.toBeVisible();
+
+    await sectionDetailSummary(page).click();
+    await expect(details).toHaveAttribute('open', '');
+
+    const cards = sectionSummaries(page);
+    await expect(cards).toHaveCount(groups.length);
+    await expect(cards.first()).toBeVisible();
+    await expect(cards.getByRole('heading')).toHaveText(
+      groups.map((group) => `Section ${group[0].section}：${group[0].sectionTitle}`)
+    );
+    await expectMetric(cards.nth(0), '回答済み問題数', `3 / ${groups[0].length}`);
+    await expectMetric(cards.nth(0), '累計解答数', '4');
+    await expectMetric(cards.nth(0), '正答率', '50%');
+
+    await sectionDetailSummary(page).click();
+    await expect(details).not.toHaveAttribute('open', '');
+    await expect(cards.first()).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await expect(page.locator('#home-view')).toBeVisible();
+    await page.getByRole('button', { name: '弱点を分析' }).click();
+    await expect(page.locator('#analysis-view')).toBeVisible();
+    await expect(sectionDetails(page)).not.toHaveAttribute('open', '');
+    await expect(sectionSummaries(page).first()).not.toBeVisible();
   });
 
   test('shows section not-enough-data guidance when overall is ready but every section is insufficient', async ({
@@ -356,6 +447,8 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(tagFocus.locator('.analysis-focus-card__target')).toHaveText('ケアレスミス');
     await expectMetric(tagFocus, 'タグ付き問題数', '1問');
 
+    await expandSectionDetails(page);
+
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
     for (let index = 0; index < 3; index += 1) {
@@ -401,6 +494,8 @@ test.describe('[DEP][DATA] Analysis / Storage immutability', () => {
     await expect(metric(overall, '正答率').locator('dd.analysis-metric__note')).toHaveText(
       '記録の不整合により率を判定できません。'
     );
+
+    await expandSectionDetails(page);
 
     const card = sectionSummaries(page).nth(0);
     await expect(card).toContainText('参考値');
