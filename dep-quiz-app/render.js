@@ -377,6 +377,158 @@ export function renderAnalysisSummary(container, analysis) {
   );
   container.appendChild(createSectionSummaries(result.sections));
   container.appendChild(createTagSummary(result.tags, result.overall));
+  container.appendChild(createFocusSummary(result.overall, result.priorities));
+}
+
+function createFocusSummary(overallSource, prioritiesSource) {
+  const overall = overallSource && typeof overallSource === 'object' ? overallSource : {};
+  const priorities =
+    prioritiesSource && typeof prioritiesSource === 'object' ? prioritiesSource : {};
+
+  const section = document.createElement('section');
+  section.className = 'analysis-focus-summary';
+  section.setAttribute('aria-labelledby', 'analysis-focus-title');
+
+  const title = document.createElement('h3');
+  title.id = 'analysis-focus-title';
+  title.textContent = '重点ポイント';
+
+  const message = document.createElement('p');
+  message.className = 'analysis-focus-summary__message';
+
+  section.append(title, message);
+
+  if (overall.analysisStatus === 'unstarted') {
+    message.textContent = '回答履歴がないため、優先して見直すSectionや誤答理由はまだ判定しません。';
+    return section;
+  }
+
+  if (overall.analysisStatus === 'insufficient') {
+    message.textContent =
+      '回答済み問題数が少ないため、重点対象はまだ表示しません。もう少し回答すると傾向を確認できます。';
+    return section;
+  }
+
+  message.textContent =
+    '分析結果から、次に見直す候補を表示しています。表示中の数値は既存の分析結果に基づきます。';
+
+  const list = document.createElement('div');
+  list.className = 'analysis-focus-list';
+  list.append(createPrioritySectionCard(priorities.section), createPriorityTagCard(priorities.tag));
+  section.appendChild(list);
+  return section;
+}
+
+function createPrioritySectionCard(prioritySource) {
+  const priority = prioritySource && typeof prioritySource === 'object' ? prioritySource : {};
+  const item = priority.item && typeof priority.item === 'object' ? priority.item : null;
+
+  if (priority.reasonCode === 'highest-wrong-count' && item) {
+    return createFocusCard({
+      title: '優先して見直すSection',
+      target: getSectionSummaryTitle(item),
+      metrics: [
+        { label: '回答済み問題数', value: formatSummaryCount(item.answeredQuestionCount) },
+        { label: '累計解答数', value: formatSummaryCount(item.totalAttemptCount) },
+        { label: '誤答数', value: formatSummaryCount(item.wrongCount) },
+        {
+          label: '正答率',
+          value: formatAccuracyRate(item),
+          note: getAccuracyRateNote(item.accuracyRateStatus),
+        },
+      ],
+      reason: '分析可能なSectionの中で、誤答数が最も多い領域です。',
+    });
+  }
+
+  if (priority.reasonCode === 'not-enough-data') {
+    return createFocusCard({
+      title: '優先して見直すSection',
+      target: '重点Sectionはまだ表示しません',
+      metrics: [],
+      reason: 'Sectionごとの回答済み問題数が少ないため、重点Sectionはまだ表示しません。',
+    });
+  }
+
+  if (priority.reasonCode === 'not-started') {
+    return createFocusCard({
+      title: '優先して見直すSection',
+      target: '重点Sectionはまだ表示しません',
+      metrics: [],
+      reason: 'Sectionごとの回答履歴がないため、重点Sectionはまだ表示しません。',
+    });
+  }
+
+  if (priority.reasonCode === 'no-wrong-answers') {
+    return createFocusCard({
+      title: '優先して見直すSection',
+      target: '優先Sectionはありません',
+      metrics: [],
+      reason: '分析可能な範囲に誤答がないため、重点Sectionは表示していません。',
+    });
+  }
+
+  return createFocusCard({
+    title: '優先して見直すSection',
+    target: '重点Sectionを準備できません',
+    metrics: [],
+    reason: '分析結果の状態を確認できないため、Section候補を安全に表示していません。',
+  });
+}
+
+function createPriorityTagCard(prioritySource) {
+  const priority = prioritySource && typeof prioritySource === 'object' ? prioritySource : {};
+  const item = priority.item && typeof priority.item === 'object' ? priority.item : null;
+
+  if (priority.reasonCode === 'highest-tagged-question-count' && item) {
+    return createFocusCard({
+      title: '最も多く記録された誤答理由',
+      target: typeof item.label === 'string' ? item.label : '',
+      metrics: [
+        { label: 'タグ付き問題数', value: `${formatSummaryCount(item.taggedQuestionCount)}問` },
+      ],
+      reason: '記録済みの理由の中で、最も多いパターンです。',
+    });
+  }
+
+  if (priority.reasonCode === 'no-tagged-questions') {
+    return createFocusCard({
+      title: '最も多く記録された誤答理由',
+      target: '重点タグはありません',
+      metrics: [],
+      reason: '誤答理由タグがまだ記録されていないため、重点タグは表示していません。',
+    });
+  }
+
+  return createFocusCard({
+    title: '最も多く記録された誤答理由',
+    target: '重点タグを準備できません',
+    metrics: [],
+    reason: '分析結果の状態を確認できないため、タグ候補を安全に表示していません。',
+  });
+}
+
+function createFocusCard({ title, target, metrics, reason }) {
+  const card = document.createElement('article');
+  card.className = 'analysis-focus-card';
+
+  const heading = document.createElement('h4');
+  heading.textContent = title;
+
+  const targetElement = document.createElement('p');
+  targetElement.className = 'analysis-focus-card__target';
+  targetElement.textContent = target;
+
+  const metricsList = document.createElement('dl');
+  metricsList.className = 'analysis-focus-metrics';
+  metrics.forEach((metric) => metricsList.appendChild(createAnalysisMetric(metric)));
+
+  const reasonElement = document.createElement('p');
+  reasonElement.className = 'analysis-focus-card__reason';
+  reasonElement.textContent = reason;
+
+  card.append(heading, targetElement, metricsList, reasonElement);
+  return card;
 }
 
 function createTagSummary(tagsSource, overallSource) {
