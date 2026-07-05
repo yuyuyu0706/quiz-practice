@@ -1401,9 +1401,13 @@ input:focus-visible,
   }
 
   .analysis-summary:not(.analysis-section-card) .analysis-metric__label {
-    min-height: calc(0.8rem * 1.35 * 2);
+    display: -webkit-box;
+    margin-bottom: 1px;
+    overflow: hidden;
     font-size: 0.8rem;
-    line-height: 1.35;
+    line-height: 1.28;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .analysis-summary:not(.analysis-section-card) .analysis-metric__value {
