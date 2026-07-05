@@ -441,6 +441,24 @@ function createPrioritySectionCard(prioritySource) {
     });
   }
 
+  if (priority.reasonCode === 'not-enough-data') {
+    return createFocusCard({
+      title: '優先して見直すSection',
+      target: '重点Sectionはまだ表示しません',
+      metrics: [],
+      reason: 'Sectionごとの回答済み問題数が少ないため、重点Sectionはまだ表示しません。',
+    });
+  }
+
+  if (priority.reasonCode === 'not-started') {
+    return createFocusCard({
+      title: '優先して見直すSection',
+      target: '重点Sectionはまだ表示しません',
+      metrics: [],
+      reason: 'Sectionごとの回答履歴がないため、重点Sectionはまだ表示しません。',
+    });
+  }
+
   if (priority.reasonCode === 'no-wrong-answers') {
     return createFocusCard({
       title: '優先して見直すSection',
