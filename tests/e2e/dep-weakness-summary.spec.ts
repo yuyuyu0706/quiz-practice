@@ -174,8 +174,7 @@ function metric(summary: Locator, label: string) {
 }
 
 async function expectMetric(summary: Locator, label: string, value: string) {
-  const expected = label === '正答率' ? `${value}※` : value;
-  await expect(metric(summary, label).locator('dd.analysis-metric__value')).toHaveText(expected);
+  await expect(metric(summary, label).locator('dd.analysis-metric__value')).toHaveText(value);
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
@@ -199,6 +198,12 @@ async function expectGridColumnCount(locator: Locator, expectedColumns: number) 
   expect(columns).toHaveLength(expectedColumns);
 }
 
+async function expectDesktopGridColumnCount(page: Page, locator: Locator, expectedColumns: number) {
+  const viewportWidth = await page.evaluate(() => document.documentElement.clientWidth);
+  if (viewportWidth < 769) return;
+  await expectGridColumnCount(locator, expectedColumns);
+}
+
 test.describe('[DEP][UI] Analysis / Weakness summary', () => {
   test('guarantees empty progress shows unstarted overall and section summaries without fallback rates', async ({
     page,
@@ -213,7 +218,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     const overall = overallSummary(page);
     await expect(overall).toContainText('回答履歴がまだない');
     await expectMetric(overall, '回答済み問題数', `0 / ${groups.flat().length}`);
-    await expectMetric(overall, '正答率', '未算出');
+    await expectMetric(overall, '正答率 ※', '未算出');
     await expect(overall).not.toContainText('0%');
 
     const tags = tagSummary(page);
@@ -236,12 +241,13 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     for (let index = 0; index < groups.length; index += 1) {
       const group = groups[index];
       const card = cards.nth(index);
-      await expect(card.getByRole('heading')).toHaveText(
+      await expect(card.getByRole('heading')).toHaveAttribute(
+        'aria-label',
         `Section ${group[0].section}：${group[0].sectionTitle}`
       );
       await expect(card).toContainText('回答履歴がまだない');
       await expectMetric(card, '回答済み問題数', `0 / ${group.length}`);
-      await expectMetric(card, '正答率', '未算出');
+      await expectMetric(card, '正答率 ※', '未算出');
       await expect(card).not.toContainText('0%');
     }
 
@@ -284,8 +290,9 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '累計解答数', '6');
     await expectMetric(overall, '正答数', '3');
     await expectMetric(overall, '誤答数', '3');
-    await expectMetric(overall, '正答率', '50%');
+    await expectMetric(overall, '正答率 ※', '50%');
     await expectMetric(overall, '誤答理由タグ付き問題数', '2');
+    await expectDesktopGridColumnCount(page, overall.locator('.analysis-metrics'), 6);
 
     const tags = tagSummary(page);
     await tags.locator('summary').click();
@@ -308,7 +315,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(sectionFocus, '回答済み問題数', '3');
     await expectMetric(sectionFocus, '累計解答数', '4');
     await expectMetric(sectionFocus, '誤答数', '2');
-    await expectMetric(sectionFocus, '正答率', '50%');
+    await expectMetric(sectionFocus, '正答率 ※', '50%');
     await expect(sectionFocus).toContainText('誤答数が最も多い領域です');
 
     const tagFocus = focusCard(focus, '最も多く記録された誤答理由');
@@ -322,20 +329,31 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
 
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
-    await expect(cards.getByRole('heading')).toHaveText(
+    await expect(
+      cards
+        .getByRole('heading')
+        .evaluateAll((headings) => headings.map((heading) => heading.getAttribute('aria-label')))
+    ).resolves.toEqual(
       groups.map((group) => `Section ${group[0].section}：${group[0].sectionTitle}`)
+    );
+    await expect(cards.nth(0).locator('.analysis-section-card__pin')).toHaveText(
+      `Section ${groups[0][0].section}`
+    );
+    await expect(cards.nth(0).locator('.analysis-section-card__name')).toHaveText(
+      groups[0][0].sectionTitle ?? ''
     );
 
     const ready = cards.nth(0);
     await expect(ready).toContainText('回答履歴を基に学習状況を集計');
     await expectMetric(ready, '回答済み問題数', `3 / ${groups[0].length}`);
-    await expectMetric(ready, '正答率', '50%');
+    await expectMetric(ready, '正答率 ※', '50%');
     await expectMetric(ready, '誤答理由タグ付き問題数', '1');
+    await expectDesktopGridColumnCount(page, ready.locator('.analysis-metrics'), 3);
 
     const insufficient = cards.nth(1);
     await expect(insufficient).toContainText('参考値');
     await expectMetric(insufficient, '回答済み問題数', `1 / ${groups[1].length}`);
-    await expectMetric(insufficient, '正答率', '50%');
+    await expectMetric(insufficient, '正答率 ※', '50%');
     await expect(insufficient.locator('.analysis-accuracy-footnote')).toHaveText(
       '※ 正答率は累計解答数ベースで算出しています。'
     );
@@ -344,7 +362,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     const unstarted = cards.nth(2);
     await expect(unstarted).toContainText('回答履歴がまだない');
     await expectMetric(unstarted, '回答済み問題数', `0 / ${groups[2].length}`);
-    await expectMetric(unstarted, '正答率', '未算出');
+    await expectMetric(unstarted, '正答率 ※', '未算出');
   });
 
   test('guarantees analysis prioritizes focus and reveals section details on demand', async ({
@@ -398,12 +416,23 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     const cards = sectionSummaries(page);
     await expect(cards).toHaveCount(groups.length);
     await expect(cards.first()).toBeVisible();
-    await expect(cards.getByRole('heading')).toHaveText(
+    await expect(
+      cards
+        .getByRole('heading')
+        .evaluateAll((headings) => headings.map((heading) => heading.getAttribute('aria-label')))
+    ).resolves.toEqual(
       groups.map((group) => `Section ${group[0].section}：${group[0].sectionTitle}`)
+    );
+    await expect(cards.nth(0).locator('.analysis-section-card__pin')).toHaveText(
+      `Section ${groups[0][0].section}`
+    );
+    await expect(cards.nth(0).locator('.analysis-section-card__name')).toHaveText(
+      groups[0][0].sectionTitle ?? ''
     );
     await expectMetric(cards.nth(0), '回答済み問題数', `3 / ${groups[0].length}`);
     await expectMetric(cards.nth(0), '累計解答数', '4');
-    await expectMetric(cards.nth(0), '正答率', '50%');
+    await expectMetric(cards.nth(0), '正答率 ※', '50%');
+    await expectDesktopGridColumnCount(page, cards.nth(0).locator('.analysis-metrics'), 3);
 
     await sectionDetailSummary(page).click();
     await expect(details).not.toHaveAttribute('open', '');
@@ -445,13 +474,14 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(page.getByRole('button', { name: '← ホームへ戻る' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'ホームへ戻る', exact: true })).toBeVisible();
 
-    await expectMetric(overallSummary(page), '正答率', '60%');
+    await expectMetric(overallSummary(page), '正答率 ※', '60%');
     await expect(overallSummary(page).locator('.analysis-accuracy-footnote')).toHaveText(
       '※ 正答率は累計解答数ベースで算出しています。'
     );
-    await expect(metric(overallSummary(page), '正答率')).not.toContainText(
+    await expect(metric(overallSummary(page), '正答率 ※')).not.toContainText(
       '累計解答数ベースで算出しています。'
     );
+    await expect(overallSummary(page).locator('.analysis-metric__note')).toHaveCount(0);
 
     const focusSummaryElement = focusSummary(page).locator('summary');
     await focusSummaryElement.focus();
@@ -522,7 +552,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     const overall = overallSummary(page);
     await expect(overall).toContainText('回答履歴を基に学習状況を集計');
     await expectMetric(overall, '回答済み問題数', `4 / ${groups.flat().length}`);
-    await expectMetric(overall, '正答率', '50%');
+    await expectMetric(overall, '正答率 ※', '50%');
     await expectGridColumnCount(overall.locator('.analysis-metrics'), 2);
 
     const focus = focusSummary(page);
@@ -558,7 +588,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(cards).toHaveCount(groups.length);
     await expect(cards.first()).toBeVisible();
     await expectMetric(cards.nth(0), '回答済み問題数', `3 / ${groups[0].length}`);
-    await expectMetric(cards.nth(0), '正答率', '50%');
+    await expectMetric(cards.nth(0), '正答率 ※', '50%');
     await expectGridColumnCount(cards.nth(0).locator('.analysis-metrics'), 2);
     await expectNoHorizontalOverflow(page);
   });
@@ -593,7 +623,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expectMetric(overall, '累計解答数', '3');
     await expectMetric(overall, '正答数', '2');
     await expectMetric(overall, '誤答数', '1');
-    await expectMetric(overall, '正答率', '67%');
+    await expectMetric(overall, '正答率 ※', '67%');
     await expectMetric(overall, '誤答理由タグ付き問題数', '1');
 
     const tags = tagSummary(page);
@@ -662,7 +692,7 @@ test.describe('[DEP][DATA] Analysis / Storage immutability', () => {
     await expectMetric(overall, '累計解答数', '3');
     await expectMetric(overall, '正答数', '3');
     await expectMetric(overall, '誤答数', '1');
-    await expectMetric(overall, '正答率', '未算出');
+    await expectMetric(overall, '正答率 ※', '未算出');
     await expect(overall.locator('.analysis-accuracy-footnote')).toHaveText(
       '※ 正答率は記録の不整合により率を判定できません。'
     );
@@ -675,7 +705,7 @@ test.describe('[DEP][DATA] Analysis / Storage immutability', () => {
     await expectMetric(card, '累計解答数', '3');
     await expectMetric(card, '正答数', '3');
     await expectMetric(card, '誤答数', '1');
-    await expectMetric(card, '正答率', '未算出');
+    await expectMetric(card, '正答率 ※', '未算出');
     await expect(card.locator('.analysis-accuracy-footnote')).toHaveText(
       '※ 正答率は記録の不整合により率を判定できません。'
     );

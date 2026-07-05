@@ -459,7 +459,7 @@ function createPrioritySectionCard(prioritySource) {
         { label: '累計解答数', value: formatSummaryCount(item.totalAttemptCount) },
         { label: '誤答数', value: formatSummaryCount(item.wrongCount) },
         {
-          label: '正答率',
+          label: '正答率 ※',
           value: formatAccuracyRate(item),
           accuracyRateStatus: item.accuracyRateStatus,
         },
@@ -555,8 +555,8 @@ function createFocusCard({ title, target, metrics, reason }) {
   reasonElement.textContent = reason;
 
   card.append(heading, targetElement, metricsList);
-  if (metrics.some((metric) => metric.label === '正答率')) {
-    card.appendChild(createAccuracyFootnote(metrics.find((metric) => metric.label === '正答率')));
+  if (metrics.some((metric) => isAccuracyMetric(metric))) {
+    card.appendChild(createAccuracyFootnote(metrics.find((metric) => isAccuracyMetric(metric))));
   }
   card.appendChild(reasonElement);
   return card;
@@ -608,7 +608,7 @@ function createTagSummaryItem(tagSource) {
   return item;
 }
 
-function createSummarySection(summarySource, titleText, titleId) {
+function createSummarySection(summarySource, titleText, titleId, options = {}) {
   const summary = summarySource && typeof summarySource === 'object' ? summarySource : {};
   const section = document.createElement('section');
   section.className = 'analysis-summary';
@@ -616,7 +616,25 @@ function createSummarySection(summarySource, titleText, titleId) {
 
   const title = document.createElement('h3');
   title.id = titleId;
-  title.textContent = titleText;
+
+  if (options.sectionHeading) {
+    title.className = 'analysis-section-card__heading';
+    title.setAttribute('aria-label', titleText);
+
+    const pin = document.createElement('span');
+    pin.className = 'analysis-section-card__pin';
+    pin.setAttribute('aria-hidden', 'true');
+    pin.textContent = options.sectionHeading.pinLabel;
+
+    const name = document.createElement('span');
+    name.className = 'analysis-section-card__name';
+    name.setAttribute('aria-hidden', 'true');
+    name.textContent = options.sectionHeading.name;
+
+    title.append(pin, name);
+  } else {
+    title.textContent = titleText;
+  }
 
   const statusMessage = document.createElement('p');
   statusMessage.className = `analysis-status analysis-status--${summary.analysisStatus ?? 'unknown'}`;
@@ -646,7 +664,8 @@ function createSectionSummaries(sectionsSource) {
     const card = createSummarySection(
       sectionSummary,
       getSectionSummaryTitle(sectionSummary),
-      headingId
+      headingId,
+      { sectionHeading: getSectionHeadingParts(sectionSummary) }
     );
     card.classList.add('analysis-section-card');
     list.appendChild(card);
@@ -668,12 +687,25 @@ function createAnalysisMetrics(summary) {
     { label: '正答数', value: formatSummaryCount(summary.correctCount) },
     { label: '誤答数', value: formatSummaryCount(summary.wrongCount) },
     {
-      label: '正答率',
+      label: '正答率 ※',
       value: formatAccuracyRate(summary),
       accuracyRateStatus: summary.accuracyRateStatus,
     },
     { label: '誤答理由タグ付き問題数', value: formatSummaryCount(summary.taggedQuestionCount) },
   ];
+}
+
+function isAccuracyMetric(metric) {
+  return metric?.label === '正答率 ※';
+}
+
+function getSectionHeadingParts(summary) {
+  const sectionNumber = formatSectionNumber(summary?.section);
+  const title = typeof summary?.sectionTitle === 'string' ? summary.sectionTitle.trim() : '';
+  return {
+    pinLabel: sectionNumber ? `Section ${sectionNumber}` : 'Section',
+    name: title || 'Section',
+  };
 }
 
 function getSectionSummaryTitle(summary) {
@@ -705,7 +737,7 @@ function createAnalysisMetric({ label, value }) {
 
   const description = document.createElement('dd');
   description.className = 'analysis-metric__value';
-  description.textContent = label === '正答率' ? `${value}※` : value;
+  description.textContent = value;
 
   item.append(term, description);
 
