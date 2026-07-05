@@ -326,7 +326,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(tagFocus.locator('.analysis-focus-card__target')).toHaveText(
       '概念・挙動がイメージできない'
     );
-    await expectMetric(tagFocus, 'タグ付き問題数', '1問');
+    await expectMetric(tagFocus, '理由タグ問題数', '1問');
     await expect(tagFocus).toContainText('記録済みの理由の中で、最も多いパターンです。');
 
     await expandSectionDetails(page);
@@ -652,7 +652,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
 
     const tagFocus = focusCard(focus, '最も多く記録された誤答理由');
     await expect(tagFocus.locator('.analysis-focus-card__target')).toHaveText('ケアレスミス');
-    await expectMetric(tagFocus, 'タグ付き問題数', '1問');
+    await expectMetric(tagFocus, '理由タグ問題数', '1問');
 
     await expandSectionDetails(page);
 

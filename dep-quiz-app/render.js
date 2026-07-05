@@ -512,7 +512,7 @@ function createPriorityTagCard(prioritySource) {
       title: '最も多く記録された誤答理由',
       target: typeof item.label === 'string' ? item.label : '',
       metrics: [
-        { label: 'タグ付き問題数', value: `${formatSummaryCount(item.taggedQuestionCount)}問` },
+        { label: '理由タグ問題数', value: `${formatSummaryCount(item.taggedQuestionCount)}問` },
       ],
       reason: '記録済みの理由の中で、最も多いパターンです。',
     });
