@@ -209,6 +209,11 @@ async function expectDesktopGridColumnCount(page: Page, locator: Locator, expect
   await expectGridColumnCount(locator, expectedColumns);
 }
 
+async function expectMinTouchHeight(locator: Locator, minimumHeight = 44) {
+  const height = await locator.evaluate((element) => element.getBoundingClientRect().height);
+  expect(height).toBeGreaterThanOrEqual(minimumHeight);
+}
+
 test.describe('[DEP][UI] Analysis / Weakness summary', () => {
   test('guarantees empty progress shows unstarted overall and section summaries without fallback rates', async ({
     page,
@@ -260,7 +265,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(page.locator('#home-view')).toBeVisible();
   });
 
-  test('guarantees mixed progress preserves section order and ready insufficient unstarted indicators', async ({
+  test('guarantees analysis integration regression preserves tag summary and focus contracts', async ({
     page,
     request,
   }) => {
@@ -276,7 +281,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
         seenCount: 1,
         correctCount: 0,
         wrongCount: 1,
-        wrongReasonTags: ['concept-behavior-gap'],
+        wrongReasonTags: ['concept-behavior-gap', 'spec-memory-error'],
       }),
       [groups[1][0].id]: progressEntry({
         seenCount: 2,
@@ -303,9 +308,26 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     const tags = tagSummary(page);
     await tags.locator('summary').click();
     await expect(tags).toContainText('誤答した問題で記録した理由を、タグ別に集計しています。');
-    await expectTagCount(tags, 'ケアレスミス', '1問');
+    await expect(
+      tags
+        .locator('.analysis-tag-item__label')
+        .evaluateAll((labels) => labels.map((label) => label.textContent?.trim()))
+    ).resolves.toEqual([
+      '概念・挙動がイメージできない',
+      '用語・機能の意味を混同した',
+      '仕様の覚え違い',
+      '実装コードが理解できない',
+      '問題文の読み落とし',
+      '選択肢の違いが分からず迷った',
+      'ケアレスミス',
+    ]);
     await expectTagCount(tags, '概念・挙動がイメージできない', '1問');
     await expectTagCount(tags, '用語・機能の意味を混同した', '0問');
+    await expectTagCount(tags, '仕様の覚え違い', '1問');
+    await expectTagCount(tags, '実装コードが理解できない', '0問');
+    await expectTagCount(tags, '問題文の読み落とし', '0問');
+    await expectTagCount(tags, '選択肢の違いが分からず迷った', '0問');
+    await expectTagCount(tags, 'ケアレスミス', '1問');
     await expect(tags).toContainText('タグ別件数の合計は理由タグ問題数と一致しない場合があります');
 
     const focus = focusSummary(page);
@@ -500,8 +522,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(focusSummary(page)).not.toHaveAttribute('open', '');
 
     for (const summary of [tagSummary(page).locator('summary'), sectionDetailSummary(page)]) {
-      const height = await summary.evaluate((element) => element.getBoundingClientRect().height);
-      expect(height).toBeGreaterThanOrEqual(44);
+      await expectMinTouchHeight(summary);
       await summary.click();
     }
     await expect(tagSummary(page)).toHaveAttribute('open', '');
@@ -517,6 +538,94 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(
       disclosures.evaluateAll((items) => items.every((item) => !item.hasAttribute('open')))
     ).resolves.toBe(true);
+  });
+
+  test('guarantees ready analysis states without wrong answers or tags stay undecided', async ({
+    page,
+    request,
+  }) => {
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    expect(groups.length).toBeGreaterThanOrEqual(1);
+    expect(groups[0].length).toBeGreaterThanOrEqual(3);
+
+    const noWrongProgress: Record<string, ProgressEntry> = {
+      [groups[0][0].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+      [groups[0][1].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+      [groups[0][2].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+    };
+
+    await seedStorage(page, noWrongProgress);
+    await openAnalysis(page);
+
+    const noWrongOverall = overallSummary(page);
+    await expect(noWrongOverall).toContainText('回答履歴を基に学習状況を集計');
+    await expectMetric(noWrongOverall, '回答済み問題数', `3 / ${groups.flat().length}`);
+    await expectMetric(noWrongOverall, '誤答数', '0');
+    await expectMetric(noWrongOverall, '理由タグ問題数', '0');
+
+    await focusSummary(page).locator('summary').click();
+    const noWrongSectionFocus = focusCard(focusSummary(page), '優先して見直すSection');
+    await expect(noWrongSectionFocus.locator('.analysis-focus-card__target')).toHaveText(
+      '優先Sectionはありません'
+    );
+    await expect(noWrongSectionFocus).toContainText(
+      '分析可能な範囲に誤答がないため、重点Sectionは表示していません。'
+    );
+    await expect(noWrongSectionFocus).not.toContainText('誤答数が最も多い領域です');
+
+    const noWrongTagFocus = focusCard(focusSummary(page), '最も多く記録された誤答理由');
+    await expect(
+      noWrongTagFocus.getByRole('heading', { name: '最も多く記録された誤答理由' })
+    ).toBeVisible();
+    await expect(noWrongTagFocus).toContainText('誤答理由タグがまだ記録されていないため');
+    await expect(noWrongTagFocus).not.toContainText('記録済みの理由の中で、最も多いパターンです。');
+    await expectMetricLabelsNotToContain(noWrongTagFocus, '理由タグ問題数');
+  });
+
+  test('guarantees ready analysis with wrong answers but no tags keeps tag focus undecided', async ({
+    page,
+    request,
+  }) => {
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    expect(groups.length).toBeGreaterThanOrEqual(1);
+    expect(groups[0].length).toBeGreaterThanOrEqual(3);
+
+    const wrongWithoutTagsProgress: Record<string, ProgressEntry> = {
+      [groups[0][0].id]: progressEntry({ seenCount: 1, correctCount: 0, wrongCount: 1 }),
+      [groups[0][1].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+      [groups[0][2].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+    };
+
+    await seedStorage(page, wrongWithoutTagsProgress);
+    await openAnalysis(page);
+
+    const wrongWithoutTagsOverall = overallSummary(page);
+    await expect(wrongWithoutTagsOverall).toContainText('回答履歴を基に学習状況を集計');
+    await expectMetric(wrongWithoutTagsOverall, '回答済み問題数', `3 / ${groups.flat().length}`);
+    await expectMetric(wrongWithoutTagsOverall, '誤答数', '1');
+    await expectMetric(wrongWithoutTagsOverall, '理由タグ問題数', '0');
+
+    const tags = tagSummary(page);
+    await tags.locator('summary').click();
+    await expect(tags).toContainText('誤答理由はまだ記録されていません');
+    await expect(tags).not.toContainText('誤答がありません');
+
+    const focus = focusSummary(page);
+    await focus.locator('summary').click();
+    const sectionFocus = focusCard(focus, '優先して見直すSection');
+    await expect(sectionFocus.locator('.analysis-focus-card__target')).toHaveText(
+      `Section ${groups[0][0].section}：${groups[0][0].sectionTitle}`
+    );
+    await expect(sectionFocus).toContainText('誤答数が最も多い領域です');
+    await expect(sectionFocus).not.toContainText('分析可能な範囲に誤答がない');
+
+    const tagFocus = focusCard(focus, '最も多く記録された誤答理由');
+    await expect(
+      tagFocus.getByRole('heading', { name: '最も多く記録された誤答理由' })
+    ).toBeVisible();
+    await expect(tagFocus).toContainText('誤答理由タグがまだ記録されていないため');
+    await expect(tagFocus).not.toContainText('記録済みの理由の中で、最も多いパターンです。');
+    await expectMetricLabelsNotToContain(tagFocus, '理由タグ問題数');
   });
 
   test('guarantees mobile analysis keeps compact grids without horizontal overflow', async ({
@@ -552,6 +661,10 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
 
     await seedStorage(page, progress);
     await openAnalysis(page);
+    await expectMinTouchHeight(page.getByRole('button', { name: '← ホームへ戻る' }));
+    await expectMinTouchHeight(focusSummary(page).locator('summary'));
+    await expectMinTouchHeight(tagSummary(page).locator('summary'));
+    await expectMinTouchHeight(sectionDetailSummary(page));
     await expectNoHorizontalOverflow(page);
 
     const overall = overallSummary(page);

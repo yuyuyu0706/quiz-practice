@@ -22,8 +22,8 @@ const caseLabels = new Map([
     'analysis-empty',
   ],
   [
-    'guarantees mixed progress preserves section order and ready insufficient unstarted indicators',
-    'analysis-mixed',
+    'guarantees analysis integration regression preserves tag summary and focus contracts',
+    'analysis-integration-regression',
   ],
   [
     'guarantees analysis prioritizes focus and reveals section details on demand',
@@ -36,6 +36,18 @@ const caseLabels = new Map([
   [
     'guarantees mobile analysis keeps compact grids without horizontal overflow',
     'analysis-mobile-layout',
+  ],
+  [
+    'guarantees ready analysis states without wrong answers or tags stay undecided',
+    'analysis-ready-undecided',
+  ],
+  [
+    'guarantees ready analysis with wrong answers but no tags keeps tag focus undecided',
+    'analysis-ready-untagged',
+  ],
+  [
+    'shows section not-enough-data guidance when overall is ready but every section is insufficient',
+    'analysis-integration-regression',
   ],
   [
     'guarantees inconsistent progress remains unmodified while analysis shows unresolved counts',
