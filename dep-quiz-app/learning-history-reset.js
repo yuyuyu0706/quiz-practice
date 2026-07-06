@@ -9,11 +9,9 @@ const RESET_ENTRY_KEYS = new Set([
 
 const OPTIONAL_EMPTY_RETAINED_VALUES = {
   bookmark: false,
-  noteText: '',
-  note: '',
-  memo: '',
   noteUpdatedAt: null,
 };
+const OPTIONAL_NOTE_KEYS = new Set(['noteText', 'note', 'memo']);
 
 export function buildLearningHistoryResetPlan(progress, { activeSession = null } = {}) {
   const safeProgress = isPlainObject(progress) ? progress : {};
@@ -97,6 +95,9 @@ function hasWrongReasonTags(value) {
 
 function isEmptyRetainedEntry(entry) {
   return Object.entries(entry).every(([key, value]) => {
+    if (OPTIONAL_NOTE_KEYS.has(key)) {
+      return String(value ?? '').trim().length === 0;
+    }
     if (!Object.hasOwn(OPTIONAL_EMPTY_RETAINED_VALUES, key)) return false;
     return value === OPTIONAL_EMPTY_RETAINED_VALUES[key];
   });

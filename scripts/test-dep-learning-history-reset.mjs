@@ -81,6 +81,25 @@ test('removes entries that have only reset targets or empty retained defaults', 
   assert.equal(plan.impact.retainedEntryCount, 0);
 });
 
+test('removes entries whose only retained note fields are blank or whitespace', () => {
+  const plan = buildLearningHistoryResetPlan({
+    NOTE_TEXT_SPACES: { ...learnedOnly, bookmark: false, noteText: '   ', noteUpdatedAt: null },
+    NOTE_SPACES: { ...learnedOnly, bookmark: false, note: '\t\n', noteUpdatedAt: null },
+    MEMO_SPACES: { ...learnedOnly, bookmark: false, memo: '  ', noteUpdatedAt: null },
+  });
+
+  assert.deepEqual(plan.nextProgress, {});
+  assert.deepEqual(plan.impact, {
+    resetQuestionCount: 3,
+    changedEntryCount: 3,
+    retainedNoteCount: 0,
+    retainedBookmarkCount: 0,
+    removedEntryCount: 3,
+    retainedEntryCount: 0,
+    hasActiveSession: false,
+  });
+});
+
 test('retains note-only, bookmark-only, unknown-only, and old question id entries', () => {
   const plan = buildLearningHistoryResetPlan({
     OLD_NOTE: { noteText: 'old note' },
