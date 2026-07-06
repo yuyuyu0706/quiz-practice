@@ -574,13 +574,12 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(noWrongSectionFocus).not.toContainText('誤答数が最も多い領域です');
 
     const noWrongTagFocus = focusCard(focusSummary(page), '最も多く記録された誤答理由');
-    await expect(noWrongTagFocus.locator('.analysis-focus-card__target')).toHaveText(
-      '重点タグはありません'
-    );
-    await expect(noWrongTagFocus).toContainText(
-      '誤答理由タグがまだ記録されていないため、重点タグは表示していません。'
-    );
+    await expect(
+      noWrongTagFocus.getByRole('heading', { name: '最も多く記録された誤答理由' })
+    ).toBeVisible();
+    await expect(noWrongTagFocus).toContainText('誤答理由タグがまだ記録されていないため');
     await expect(noWrongTagFocus).not.toContainText('記録済みの理由の中で、最も多いパターンです。');
+    await expectMetricLabelsNotToContain(noWrongTagFocus, '理由タグ問題数');
   });
 
   test('guarantees ready analysis with wrong answers but no tags keeps tag focus undecided', async ({
@@ -621,13 +620,12 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(sectionFocus).not.toContainText('分析可能な範囲に誤答がない');
 
     const tagFocus = focusCard(focus, '最も多く記録された誤答理由');
-    await expect(tagFocus.locator('.analysis-focus-card__target')).toHaveText(
-      '重点タグはありません'
-    );
-    await expect(tagFocus).toContainText(
-      '誤答理由タグがまだ記録されていないため、重点タグは表示していません。'
-    );
+    await expect(
+      tagFocus.getByRole('heading', { name: '最も多く記録された誤答理由' })
+    ).toBeVisible();
+    await expect(tagFocus).toContainText('誤答理由タグがまだ記録されていないため');
     await expect(tagFocus).not.toContainText('記録済みの理由の中で、最も多いパターンです。');
+    await expectMetricLabelsNotToContain(tagFocus, '理由タグ問題数');
   });
 
   test('guarantees mobile analysis keeps compact grids without horizontal overflow', async ({
