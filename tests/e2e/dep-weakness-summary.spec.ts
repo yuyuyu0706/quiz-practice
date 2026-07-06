@@ -260,7 +260,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await expect(page.locator('#home-view')).toBeVisible();
   });
 
-  test('guarantees mixed progress preserves section order and ready insufficient unstarted indicators', async ({
+  test('guarantees analysis integration regression preserves tag summary and focus contracts', async ({
     page,
     request,
   }) => {
@@ -276,7 +276,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
         seenCount: 1,
         correctCount: 0,
         wrongCount: 1,
-        wrongReasonTags: ['concept-behavior-gap'],
+        wrongReasonTags: ['concept-behavior-gap', 'spec-memory-error'],
       }),
       [groups[1][0].id]: progressEntry({
         seenCount: 2,
@@ -303,9 +303,26 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     const tags = tagSummary(page);
     await tags.locator('summary').click();
     await expect(tags).toContainText('誤答した問題で記録した理由を、タグ別に集計しています。');
-    await expectTagCount(tags, 'ケアレスミス', '1問');
+    await expect(
+      tags
+        .locator('.analysis-tag-item__label')
+        .evaluateAll((labels) => labels.map((label) => label.textContent?.trim()))
+    ).resolves.toEqual([
+      '概念・挙動がイメージできない',
+      '用語・機能の意味を混同した',
+      '仕様の覚え違い',
+      '実装コードが理解できない',
+      '問題文の読み落とし',
+      '選択肢の違いが分からず迷った',
+      'ケアレスミス',
+    ]);
     await expectTagCount(tags, '概念・挙動がイメージできない', '1問');
     await expectTagCount(tags, '用語・機能の意味を混同した', '0問');
+    await expectTagCount(tags, '仕様の覚え違い', '1問');
+    await expectTagCount(tags, '実装コードが理解できない', '0問');
+    await expectTagCount(tags, '問題文の読み落とし', '0問');
+    await expectTagCount(tags, '選択肢の違いが分からず迷った', '0問');
+    await expectTagCount(tags, 'ケアレスミス', '1問');
     await expect(tags).toContainText('タグ別件数の合計は理由タグ問題数と一致しない場合があります');
 
     const focus = focusSummary(page);
