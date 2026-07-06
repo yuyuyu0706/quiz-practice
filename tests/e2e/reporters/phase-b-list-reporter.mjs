@@ -38,6 +38,14 @@ const caseLabels = new Map([
     'analysis-mobile-layout',
   ],
   [
+    'guarantees ready analysis states without wrong answers or tags stay undecided',
+    'analysis-ready-undecided',
+  ],
+  [
+    'guarantees ready analysis with wrong answers but no tags keeps tag focus undecided',
+    'analysis-ready-untagged',
+  ],
+  [
     'shows section not-enough-data guidance when overall is ready but every section is insufficient',
     'analysis-integration-regression',
   ],
