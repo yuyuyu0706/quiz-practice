@@ -45,6 +45,9 @@ jobs:
       - name: 'Quality Gate: Run DEP learning-history-reset unit tests'
         run: npm run test:dep-learning-history-reset
 
+      - name: 'Quality Gate: Run DEP learning-history-reset storage unit tests'
+        run: npm run test:dep-learning-history-reset-storage
+
       - name: 'Quality Gate: Validate E2E test catalog'
         run: npm run validate:e2e-catalog
 

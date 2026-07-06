@@ -33,8 +33,82 @@ export function saveActiveSession(session) {
 export function clearActiveSession() {
   localStorage.removeItem(STORAGE_KEYS.session);
 }
+export function commitLearningHistoryReset(plan, { storage = globalThis.localStorage } = {}) {
+  validateLearningHistoryResetPlan(plan);
+
+  const progressSnapshot = readRawStorageValue(storage, STORAGE_KEYS.progress);
+  const sessionSnapshot = plan.activeSession.shouldClear
+    ? readRawStorageValue(storage, STORAGE_KEYS.session)
+    : null;
+
+  try {
+    saveJSONToStorage(storage, STORAGE_KEYS.progress, plan.nextProgress);
+  } catch (error) {
+    throw createCommitStorageError('Failed to save learning history reset progress', error, [
+      restoreRawStorageValue(storage, STORAGE_KEYS.progress, progressSnapshot),
+    ]);
+  }
+
+  if (plan.activeSession.shouldClear) {
+    try {
+      storage.removeItem(STORAGE_KEYS.session);
+    } catch (error) {
+      throw createCommitStorageError(
+        'Failed to clear active session for learning history reset',
+        error,
+        [
+          restoreRawStorageValue(storage, STORAGE_KEYS.progress, progressSnapshot),
+          restoreRawStorageValue(storage, STORAGE_KEYS.session, sessionSnapshot),
+        ]
+      );
+    }
+  }
+
+  return {
+    nextProgress: plan.nextProgress,
+    didClearActiveSession: plan.activeSession.shouldClear,
+  };
+}
 export function getRepairedStorageKeys() {
   return [...repairedStorageKeys];
+}
+
+function validateLearningHistoryResetPlan(plan) {
+  if (
+    !isPlainObject(plan) ||
+    !isPlainObject(plan.nextProgress) ||
+    !isPlainObject(plan.activeSession) ||
+    typeof plan.activeSession.shouldClear !== 'boolean'
+  ) {
+    throw new TypeError('Invalid learning history reset plan');
+  }
+}
+
+function isPlainObject(value) {
+  return Object.prototype.toString.call(value) === '[object Object]';
+}
+
+function readRawStorageValue(storage, key) {
+  return storage.getItem(key);
+}
+
+function restoreRawStorageValue(storage, key, rawValue) {
+  try {
+    if (rawValue === null) {
+      storage.removeItem(key);
+    } else {
+      storage.setItem(key, rawValue);
+    }
+    return null;
+  } catch (error) {
+    return { key, error };
+  }
+}
+
+function createCommitStorageError(message, cause, restoreResults) {
+  const error = new Error(message, { cause });
+  error.restoreFailures = restoreResults.filter(Boolean);
+  return error;
 }
 
 function loadJSON(key, fallback) {
@@ -75,5 +149,9 @@ function recordStorageRepair(key) {
 }
 
 function saveJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  saveJSONToStorage(localStorage, key, value);
+}
+
+function saveJSONToStorage(storage, key, value) {
+  storage.setItem(key, JSON.stringify(value));
 }
