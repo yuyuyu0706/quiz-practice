@@ -68,7 +68,7 @@ const els = {
   reviewNotesBtn: document.getElementById('review-notes-btn'),
   notesListBtn: document.getElementById('notes-list-btn'),
   analysisBtn: document.getElementById('analysis-btn'),
-  analysisBackHome: document.getElementById('analysis-back-home'),
+  analysisBackHomeButtons: document.querySelectorAll('[data-analysis-back-home]'),
   analysisContainer: document.getElementById('analysis-container'),
   notesList: document.getElementById('notes-list'),
   notesEmpty: document.getElementById('notes-empty'),
@@ -222,8 +222,10 @@ function attachEvents() {
   els.notesBackHome?.addEventListener('click', () => {
     showView('home');
   });
-  els.analysisBackHome?.addEventListener('click', () => {
-    showView('home');
+  els.analysisBackHomeButtons?.forEach((button) => {
+    button.addEventListener('click', () => {
+      showView('home');
+    });
   });
   els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
 

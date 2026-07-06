@@ -57,12 +57,12 @@ test.describe('[DEP][UI] Home / Learning settings', () => {
 
     await page.getByRole('button', { name: '弱点を分析' }).click();
     await expect(page.locator('#analysis-view')).toBeVisible();
-    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る', exact: true }).click();
     await expect(page.locator('#home-view')).toBeVisible();
 
     await page.getByRole('button', { name: 'メモ一覧' }).click();
     await expect(page.locator('#notes-view')).toBeVisible();
-    await page.getByRole('button', { name: 'ホームへ戻る' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る', exact: true }).click();
     await expect(page.locator('#home-view')).toBeVisible();
   });
 });

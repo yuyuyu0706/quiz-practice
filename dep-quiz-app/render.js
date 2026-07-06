@@ -380,23 +380,50 @@ export function renderAnalysisSummary(container, analysis) {
   container.appendChild(createSectionSummaries(result.sections));
 }
 
+function createAnalysisDisclosure(titleId, titleText) {
+  const details = document.createElement('details');
+  details.className = 'analysis-disclosure';
+  details.setAttribute('aria-labelledby', titleId);
+
+  const summary = document.createElement('summary');
+  summary.className = 'analysis-disclosure__summary';
+
+  const title = document.createElement('span');
+  title.id = titleId;
+  title.className = 'analysis-disclosure__title';
+  title.setAttribute('role', 'heading');
+  title.setAttribute('aria-level', '3');
+  title.textContent = titleText;
+
+  summary.appendChild(title);
+
+  const content = document.createElement('div');
+  content.className = 'analysis-disclosure__content';
+
+  details.append(summary, content);
+  return details;
+}
+
+function createAccuracyFootnote(summary) {
+  const note = document.createElement('p');
+  note.className = 'analysis-accuracy-footnote';
+  note.textContent = `※ 正答率は${getAccuracyRateNote(summary?.accuracyRateStatus)}`;
+  return note;
+}
+
 function createFocusSummary(overallSource, prioritiesSource) {
   const overall = overallSource && typeof overallSource === 'object' ? overallSource : {};
   const priorities =
     prioritiesSource && typeof prioritiesSource === 'object' ? prioritiesSource : {};
 
-  const section = document.createElement('section');
-  section.className = 'analysis-focus-summary';
-  section.setAttribute('aria-labelledby', 'analysis-focus-title');
-
-  const title = document.createElement('h3');
-  title.id = 'analysis-focus-title';
-  title.textContent = '重点ポイント';
+  const section = createAnalysisDisclosure('analysis-focus-title', '重点ポイント');
+  section.classList.add('analysis-focus-summary');
+  const content = section.querySelector('.analysis-disclosure__content');
 
   const message = document.createElement('p');
   message.className = 'analysis-focus-summary__message';
 
-  section.append(title, message);
+  content.appendChild(message);
 
   if (overall.analysisStatus === 'unstarted') {
     message.textContent = '回答履歴がないため、優先して見直すSectionや誤答理由はまだ判定しません。';
@@ -415,7 +442,7 @@ function createFocusSummary(overallSource, prioritiesSource) {
   const list = document.createElement('div');
   list.className = 'analysis-focus-list';
   list.append(createPrioritySectionCard(priorities.section), createPriorityTagCard(priorities.tag));
-  section.appendChild(list);
+  content.appendChild(list);
   return section;
 }
 
@@ -432,9 +459,9 @@ function createPrioritySectionCard(prioritySource) {
         { label: '累計解答数', value: formatSummaryCount(item.totalAttemptCount) },
         { label: '誤答数', value: formatSummaryCount(item.wrongCount) },
         {
-          label: '正答率',
+          label: '正答率 ※',
           value: formatAccuracyRate(item),
-          note: getAccuracyRateNote(item.accuracyRateStatus),
+          accuracyRateStatus: item.accuracyRateStatus,
         },
       ],
       reason: '分析可能なSectionの中で、誤答数が最も多い領域です。',
@@ -485,7 +512,7 @@ function createPriorityTagCard(prioritySource) {
       title: '最も多く記録された誤答理由',
       target: typeof item.label === 'string' ? item.label : '',
       metrics: [
-        { label: 'タグ付き問題数', value: `${formatSummaryCount(item.taggedQuestionCount)}問` },
+        { label: '理由タグ問題数', value: `${formatSummaryCount(item.taggedQuestionCount)}問` },
       ],
       reason: '記録済みの理由の中で、最も多いパターンです。',
     });
@@ -527,7 +554,11 @@ function createFocusCard({ title, target, metrics, reason }) {
   reasonElement.className = 'analysis-focus-card__reason';
   reasonElement.textContent = reason;
 
-  card.append(heading, targetElement, metricsList, reasonElement);
+  card.append(heading, targetElement, metricsList);
+  if (metrics.some((metric) => isAccuracyMetric(metric))) {
+    card.appendChild(createAccuracyFootnote(metrics.find((metric) => isAccuracyMetric(metric))));
+  }
+  card.appendChild(reasonElement);
   return card;
 }
 
@@ -537,13 +568,9 @@ function createTagSummary(tagsSource, overallSource) {
   const hasTaggedQuestions =
     Number.isFinite(overall.taggedQuestionCount) && overall.taggedQuestionCount > 0;
 
-  const section = document.createElement('section');
-  section.className = 'analysis-tag-summary';
-  section.setAttribute('aria-labelledby', 'analysis-tags-title');
-
-  const title = document.createElement('h3');
-  title.id = 'analysis-tags-title';
-  title.textContent = '誤答理由タグ別サマリ';
+  const section = createAnalysisDisclosure('analysis-tags-title', '誤答理由タグ別サマリ');
+  section.classList.add('analysis-tag-summary');
+  const content = section.querySelector('.analysis-disclosure__content');
 
   const message = document.createElement('p');
   message.className = 'analysis-tag-summary__message';
@@ -558,9 +585,9 @@ function createTagSummary(tagsSource, overallSource) {
   const note = document.createElement('p');
   note.className = 'analysis-tag-summary__note';
   note.textContent =
-    '1問に複数の理由を記録できるため、タグ別件数の合計は誤答理由タグ付き問題数と一致しない場合があります。';
+    '1問に複数の理由を記録できるため、タグ別件数の合計は理由タグ問題数と一致しない場合があります。';
 
-  section.append(title, message, list, note);
+  content.append(message, list, note);
   return section;
 }
 
@@ -581,7 +608,7 @@ function createTagSummaryItem(tagSource) {
   return item;
 }
 
-function createSummarySection(summarySource, titleText, titleId) {
+function createSummarySection(summarySource, titleText, titleId, options = {}) {
   const summary = summarySource && typeof summarySource === 'object' ? summarySource : {};
   const section = document.createElement('section');
   section.className = 'analysis-summary';
@@ -589,7 +616,25 @@ function createSummarySection(summarySource, titleText, titleId) {
 
   const title = document.createElement('h3');
   title.id = titleId;
-  title.textContent = titleText;
+
+  if (options.sectionHeading) {
+    title.className = 'analysis-section-card__heading';
+    title.setAttribute('aria-label', titleText);
+
+    const pin = document.createElement('span');
+    pin.className = 'analysis-section-card__pin';
+    pin.setAttribute('aria-hidden', 'true');
+    pin.textContent = options.sectionHeading.pinLabel;
+
+    const name = document.createElement('span');
+    name.className = 'analysis-section-card__name';
+    name.setAttribute('aria-hidden', 'true');
+    name.textContent = options.sectionHeading.name;
+
+    title.append(pin, name);
+  } else {
+    title.textContent = titleText;
+  }
 
   const statusMessage = document.createElement('p');
   statusMessage.className = `analysis-status analysis-status--${summary.analysisStatus ?? 'unknown'}`;
@@ -601,25 +646,14 @@ function createSummarySection(summarySource, titleText, titleId) {
     metrics.appendChild(createAnalysisMetric(metric))
   );
 
-  section.append(title, statusMessage, metrics);
+  section.append(title, statusMessage, metrics, createAccuracyFootnote(summary));
   return section;
 }
 
 function createSectionSummaries(sectionsSource) {
-  const wrapper = document.createElement('section');
-  wrapper.className = 'analysis-sections';
-  wrapper.setAttribute('aria-labelledby', 'analysis-sections-title');
-
-  const title = document.createElement('h3');
-  title.id = 'analysis-sections-title';
-  title.textContent = 'Section別サマリ';
-
-  const details = document.createElement('details');
-  details.className = 'analysis-section-details';
-
-  const summary = document.createElement('summary');
-  summary.className = 'analysis-section-details__summary';
-  summary.textContent = 'Section別の詳細を表示';
+  const wrapper = createAnalysisDisclosure('analysis-sections-title', 'Section別サマリ');
+  wrapper.classList.add('analysis-sections');
+  const content = wrapper.querySelector('.analysis-disclosure__content');
 
   const list = document.createElement('div');
   list.className = 'analysis-section-list';
@@ -630,14 +664,14 @@ function createSectionSummaries(sectionsSource) {
     const card = createSummarySection(
       sectionSummary,
       getSectionSummaryTitle(sectionSummary),
-      headingId
+      headingId,
+      { sectionHeading: getSectionHeadingParts(sectionSummary) }
     );
     card.classList.add('analysis-section-card');
     list.appendChild(card);
   });
 
-  details.append(summary, list);
-  wrapper.append(title, details);
+  content.appendChild(list);
   return wrapper;
 }
 
@@ -653,12 +687,25 @@ function createAnalysisMetrics(summary) {
     { label: '正答数', value: formatSummaryCount(summary.correctCount) },
     { label: '誤答数', value: formatSummaryCount(summary.wrongCount) },
     {
-      label: '正答率',
+      label: '正答率 ※',
       value: formatAccuracyRate(summary),
-      note: getAccuracyRateNote(summary.accuracyRateStatus),
+      accuracyRateStatus: summary.accuracyRateStatus,
     },
-    { label: '誤答理由タグ付き問題数', value: formatSummaryCount(summary.taggedQuestionCount) },
+    { label: '理由タグ問題数', value: formatSummaryCount(summary.taggedQuestionCount) },
   ];
+}
+
+function isAccuracyMetric(metric) {
+  return metric?.label === '正答率 ※';
+}
+
+function getSectionHeadingParts(summary) {
+  const sectionNumber = formatSectionNumber(summary?.section);
+  const title = typeof summary?.sectionTitle === 'string' ? summary.sectionTitle.trim() : '';
+  return {
+    pinLabel: sectionNumber ? `Section ${sectionNumber}` : 'Section',
+    name: title || 'Section',
+  };
 }
 
 function getSectionSummaryTitle(summary) {
@@ -680,7 +727,7 @@ function formatSectionNumber(value) {
   return value.trim();
 }
 
-function createAnalysisMetric({ label, value, note }) {
+function createAnalysisMetric({ label, value }) {
   const item = document.createElement('div');
   item.className = 'analysis-metric';
 
@@ -693,13 +740,6 @@ function createAnalysisMetric({ label, value, note }) {
   description.textContent = value;
 
   item.append(term, description);
-
-  if (note) {
-    const noteElement = document.createElement('dd');
-    noteElement.className = 'analysis-metric__note';
-    noteElement.textContent = note;
-    item.appendChild(noteElement);
-  }
 
   return item;
 }

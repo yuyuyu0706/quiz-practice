@@ -30,6 +30,10 @@ const caseLabels = new Map([
     'analysis-disclosure',
   ],
   [
+    'guarantees analysis disclosures return paths and accuracy footnotes remain usable',
+    'analysis-disclosure-navigation-notes',
+  ],
+  [
     'guarantees mobile analysis keeps compact grids without horizontal overflow',
     'analysis-mobile-layout',
   ],
