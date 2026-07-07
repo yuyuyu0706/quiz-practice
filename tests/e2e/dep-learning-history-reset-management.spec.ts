@@ -218,6 +218,57 @@ test.describe('[DEP][FLOW] Learning data / Reset confirmation', () => {
     await expect(page.getByRole('button', { name: '中断データを削除' })).toBeHidden();
   });
 
+  test('guarantees session-only reset clears only active session and keeps raw progress settings', async ({
+    page,
+  }) => {
+    const expectedStorage = await seedStorage(page, {}, sessionFixture);
+    await openDataManagement(page);
+
+    await expect(page.locator('#data-management-view')).toContainText(
+      'リセット対象の学習履歴はありませんが、リセットを確定すると中断データは削除されます。'
+    );
+    await expect(page.getByRole('button', { name: 'リセット内容を確認する' })).toBeVisible();
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+
+    await expect(page.locator('#learning-history-reset-dialog')).toBeHidden();
+    await expect(page.locator('#learning-history-reset-success')).toContainText(
+      '学習履歴をリセットしました。メモ・ブックマーク・学習設定は保持されています。'
+    );
+    await expect(page.getByRole('button', { name: 'リセット内容を確認する' })).toBeHidden();
+
+    const storage = await page.evaluate(
+      (keys) => keys.map((key) => localStorage.getItem(key)),
+      storageKeys
+    );
+    expect(storage[0]).toBe(expectedStorage[0]);
+    expect(storage[1]).toBe(expectedStorage[1]);
+    expect(storage[2]).toBeNull();
+
+    await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
+    await expect(page.locator('#resume-btn')).toBeHidden();
+    await expect(page.getByRole('button', { name: '中断データを削除' })).toBeHidden();
+  });
+
+  test('guarantees empty reset state has no confirmation entry and keeps raw storage unchanged', async ({
+    page,
+  }) => {
+    const expectedStorage = await seedStorage(page, {}, null);
+    await openDataManagement(page);
+
+    await expect(page.locator('#data-management-view')).toContainText(
+      'リセット対象の学習履歴はありません。'
+    );
+    await expect(page.locator('#data-management-view')).toContainText('影響なし');
+    await expect(page.getByRole('button', { name: 'リセット内容を確認する' })).toBeHidden();
+    await expect(page.locator('#learning-history-reset-dialog')).toBeHidden();
+    await expectStorageSnapshot(page, expectedStorage);
+
+    await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
+    await expect(page.locator('#home-view')).toBeVisible();
+    await expectStorageSnapshot(page, expectedStorage);
+  });
+
   test('guarantees storage failure keeps dialog open and allows retry without success state', async ({
     page,
   }) => {
