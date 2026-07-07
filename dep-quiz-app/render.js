@@ -854,3 +854,95 @@ export function toggleNoteEditor(card, noteText, onSave) {
   editor.append(textarea, saveBtn);
   card.appendChild(editor);
 }
+
+export function renderLearningHistoryResetSummary(container, plan) {
+  if (!container) return;
+
+  const impact = plan?.impact ?? {};
+  const shouldClearActiveSession = Boolean(plan?.activeSession?.shouldClear);
+  const resetQuestionCount = formatSummaryCount(impact.resetQuestionCount);
+  const retainedNoteCount = formatSummaryCount(impact.retainedNoteCount);
+  const retainedBookmarkCount = formatSummaryCount(impact.retainedBookmarkCount);
+
+  container.replaceChildren();
+
+  const hasResetTargets = Number(impact.resetQuestionCount) > 0;
+  const lead = document.createElement('p');
+  lead.className = 'learning-history-reset-summary__lead';
+  if (hasResetTargets) {
+    lead.textContent = `${resetQuestionCount}問の学習履歴がリセット対象です。保持されるデータもあわせて確認できます。`;
+  } else if (shouldClearActiveSession) {
+    lead.textContent =
+      'リセット対象の学習履歴はありませんが、リセットを確定すると中断データは削除されます。';
+  } else {
+    lead.textContent = 'リセット対象の学習履歴はありません。';
+  }
+  container.appendChild(lead);
+
+  const cards = document.createElement('div');
+  cards.className = 'learning-history-reset-cards';
+  cards.append(
+    createLearningHistoryResetCard('リセット対象問題', `${resetQuestionCount}問`),
+    createLearningHistoryResetCard('保持するメモ', `${retainedNoteCount}件`),
+    createLearningHistoryResetCard('保持するブックマーク', `${retainedBookmarkCount}件`),
+    createLearningHistoryResetCard(
+      '中断セッション',
+      shouldClearActiveSession ? '削除予定' : '影響なし'
+    )
+  );
+  container.appendChild(cards);
+
+  if (shouldClearActiveSession) {
+    const notice = document.createElement('div');
+    notice.className = 'learning-history-reset-session-note';
+    notice.textContent =
+      '現在の中断セッションがあります。後続の確認画面でリセットを確定した場合、この中断データは破棄されます。';
+    container.appendChild(notice);
+  }
+
+  const details = document.createElement('div');
+  details.className = 'learning-history-reset-details';
+  details.append(
+    createLearningHistoryResetList('消去対象', [
+      '正解・不正解の履歴',
+      '最終回答日時',
+      '誤答理由タグ',
+    ]),
+    createLearningHistoryResetList('保持対象', ['自分用メモ', 'ブックマーク', '学習設定'])
+  );
+  container.appendChild(details);
+}
+
+function createLearningHistoryResetCard(label, value) {
+  const card = document.createElement('article');
+  card.className = 'learning-history-reset-card';
+
+  const labelElement = document.createElement('p');
+  labelElement.className = 'learning-history-reset-card__label';
+  labelElement.textContent = label;
+
+  const valueElement = document.createElement('p');
+  valueElement.className = 'learning-history-reset-card__value';
+  valueElement.textContent = value;
+
+  card.append(labelElement, valueElement);
+  return card;
+}
+
+function createLearningHistoryResetList(titleText, items) {
+  const section = document.createElement('section');
+  section.className = 'learning-history-reset-detail';
+
+  const title = document.createElement('h3');
+  title.textContent = titleText;
+
+  const list = document.createElement('ul');
+  items.forEach((item) => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    list.appendChild(li);
+  });
+
+  section.append(title, list);
+  return section;
+}
