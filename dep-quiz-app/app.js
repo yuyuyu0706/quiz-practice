@@ -65,7 +65,6 @@ const els = {
     result: document.getElementById('result-view'),
     notes: document.getElementById('notes-view'),
     analysis: document.getElementById('analysis-view'),
-    dataManagement: document.getElementById('data-management-view'),
   },
   form: document.getElementById('settings-form'),
   sectionCheckboxes: document.getElementById('section-checkboxes'),
@@ -75,10 +74,6 @@ const els = {
   reviewNotesBtn: document.getElementById('review-notes-btn'),
   notesListBtn: document.getElementById('notes-list-btn'),
   analysisBtn: document.getElementById('analysis-btn'),
-  dataManagementBtn: document.getElementById('data-management-btn'),
-  dataManagementBackHomeButtons: document.querySelectorAll('[data-data-management-back-home]'),
-  dataManagementTitle: document.getElementById('data-management-title'),
-  learningHistoryResetSummary: document.getElementById('learning-history-reset-summary'),
   learningHistoryResetSuccess: document.getElementById('learning-history-reset-success'),
   learningHistoryResetEntry: document.getElementById('learning-history-reset-entry'),
   learningHistoryResetDialog: document.getElementById('learning-history-reset-dialog'),
@@ -184,7 +179,6 @@ function attachEvents() {
     showView('notes');
   });
   els.analysisBtn?.addEventListener('click', openAnalysisView);
-  els.dataManagementBtn?.addEventListener('click', openDataManagementView);
   els.learningHistoryResetEntry?.addEventListener('click', openLearningHistoryResetDialog);
   els.learningHistoryResetDialogCancel?.addEventListener('click', closeLearningHistoryResetDialog);
   els.learningHistoryResetDialogConfirm?.addEventListener(
@@ -254,11 +248,6 @@ function attachEvents() {
     showView('home');
   });
   els.analysisBackHomeButtons?.forEach((button) => {
-    button.addEventListener('click', () => {
-      showView('home');
-    });
-  });
-  els.dataManagementBackHomeButtons?.forEach((button) => {
     button.addEventListener('click', () => {
       showView('home');
     });
@@ -371,20 +360,18 @@ function isTextEntryTarget(target) {
 }
 
 function openAnalysisView() {
-  state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
-  renderAnalysisSummary(els.analysisContainer, state.analysis);
+  renderAnalysisView();
+  els.learningHistoryResetSuccess?.classList.add('hidden');
   showView('analysis');
 }
 
-function openDataManagementView() {
+function renderAnalysisView() {
+  state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
+  renderAnalysisSummary(els.analysisContainer, state.analysis);
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
   });
-  renderLearningHistoryResetSummary(els.learningHistoryResetSummary, state.activeResetPlan);
   updateLearningHistoryResetEntry();
-  els.learningHistoryResetSuccess?.classList.add('hidden');
-  showView('dataManagement');
-  els.dataManagementTitle?.focus({ preventScroll: true });
 }
 
 function updateLearningHistoryResetEntry() {
@@ -397,7 +384,15 @@ function updateLearningHistoryResetEntry() {
 }
 
 function openLearningHistoryResetDialog() {
+  state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
+    activeSession: loadSession(),
+  });
+  updateLearningHistoryResetEntry();
   if (!state.activeResetPlan || state.isLearningHistoryResetCommitInProgress) return;
+  const canReset =
+    state.activeResetPlan.impact.resetQuestionCount > 0 ||
+    state.activeResetPlan.activeSession.shouldClear === true;
+  if (!canReset) return;
   if (state.learningHistoryResetRestoreBlocked) {
     showLearningHistoryResetDialogError(getLearningHistoryResetRestoreBlockedMessage());
   } else {
@@ -455,8 +450,7 @@ function commitActiveLearningHistoryReset() {
     state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
       activeSession: loadSession(),
     });
-    renderLearningHistoryResetSummary(els.learningHistoryResetSummary, state.activeResetPlan);
-    updateLearningHistoryResetEntry();
+    renderAnalysisView();
     els.learningHistoryResetSuccess?.classList.remove('hidden');
     setLearningHistoryResetDialogBusy(false);
     els.learningHistoryResetDialog?.close();
