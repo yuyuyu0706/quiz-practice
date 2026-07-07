@@ -6,6 +6,7 @@ import {
   loadActiveSession,
   saveActiveSession,
   clearActiveSession,
+  commitLearningHistoryReset,
   getRepairedStorageKeys,
 } from './storage.js';
 import {
@@ -52,6 +53,9 @@ const state = {
   settings: loadSettings(),
   session: null,
   analysis: null,
+  activeResetPlan: null,
+  isLearningHistoryResetCommitInProgress: false,
+  learningHistoryResetRestoreBlocked: false,
 };
 
 const els = {
@@ -75,6 +79,15 @@ const els = {
   dataManagementBackHomeButtons: document.querySelectorAll('[data-data-management-back-home]'),
   dataManagementTitle: document.getElementById('data-management-title'),
   learningHistoryResetSummary: document.getElementById('learning-history-reset-summary'),
+  learningHistoryResetSuccess: document.getElementById('learning-history-reset-success'),
+  learningHistoryResetEntry: document.getElementById('learning-history-reset-entry'),
+  learningHistoryResetDialog: document.getElementById('learning-history-reset-dialog'),
+  learningHistoryResetDialogBody: document.getElementById('learning-history-reset-dialog-body'),
+  learningHistoryResetDialogError: document.getElementById('learning-history-reset-dialog-error'),
+  learningHistoryResetDialogCancel: document.getElementById('learning-history-reset-dialog-cancel'),
+  learningHistoryResetDialogConfirm: document.getElementById(
+    'learning-history-reset-dialog-confirm'
+  ),
   analysisBackHomeButtons: document.querySelectorAll('[data-analysis-back-home]'),
   analysisContainer: document.getElementById('analysis-container'),
   notesList: document.getElementById('notes-list'),
@@ -172,6 +185,16 @@ function attachEvents() {
   });
   els.analysisBtn?.addEventListener('click', openAnalysisView);
   els.dataManagementBtn?.addEventListener('click', openDataManagementView);
+  els.learningHistoryResetEntry?.addEventListener('click', openLearningHistoryResetDialog);
+  els.learningHistoryResetDialogCancel?.addEventListener('click', closeLearningHistoryResetDialog);
+  els.learningHistoryResetDialogConfirm?.addEventListener(
+    'click',
+    commitActiveLearningHistoryReset
+  );
+  els.learningHistoryResetDialog?.addEventListener(
+    'cancel',
+    handleLearningHistoryResetDialogCancel
+  );
 
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
   els.prevQuestion.addEventListener('click', () => {
@@ -354,12 +377,111 @@ function openAnalysisView() {
 }
 
 function openDataManagementView() {
-  const plan = buildLearningHistoryResetPlan(state.progress, {
+  state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
   });
-  renderLearningHistoryResetSummary(els.learningHistoryResetSummary, plan);
+  renderLearningHistoryResetSummary(els.learningHistoryResetSummary, state.activeResetPlan);
+  updateLearningHistoryResetEntry();
+  els.learningHistoryResetSuccess?.classList.add('hidden');
   showView('dataManagement');
   els.dataManagementTitle?.focus({ preventScroll: true });
+}
+
+function updateLearningHistoryResetEntry() {
+  const hasResetTarget = Number(state.activeResetPlan?.impact?.resetQuestionCount) > 0;
+  const shouldClearSession = Boolean(state.activeResetPlan?.activeSession?.shouldClear);
+  els.learningHistoryResetEntry?.classList.toggle(
+    'hidden',
+    !(hasResetTarget || shouldClearSession)
+  );
+}
+
+function openLearningHistoryResetDialog() {
+  if (!state.activeResetPlan || state.isLearningHistoryResetCommitInProgress) return;
+  if (state.learningHistoryResetRestoreBlocked) {
+    showLearningHistoryResetDialogError(getLearningHistoryResetRestoreBlockedMessage());
+  } else {
+    els.learningHistoryResetDialogError?.classList.add('hidden');
+  }
+  renderLearningHistoryResetSummary(els.learningHistoryResetDialogBody, state.activeResetPlan);
+  setLearningHistoryResetDialogBusy(false);
+  els.learningHistoryResetDialog?.showModal();
+  els.learningHistoryResetDialogCancel?.focus({ preventScroll: true });
+}
+
+function closeLearningHistoryResetDialog() {
+  if (state.isLearningHistoryResetCommitInProgress) return;
+  els.learningHistoryResetDialog?.close();
+  els.learningHistoryResetEntry?.focus({ preventScroll: true });
+}
+
+function handleLearningHistoryResetDialogCancel(event) {
+  event.preventDefault();
+  if (!state.isLearningHistoryResetCommitInProgress) closeLearningHistoryResetDialog();
+}
+
+function setLearningHistoryResetDialogBusy(isBusy) {
+  state.isLearningHistoryResetCommitInProgress = isBusy;
+  els.learningHistoryResetDialog?.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+  if (els.learningHistoryResetDialogCancel) els.learningHistoryResetDialogCancel.disabled = isBusy;
+  if (els.learningHistoryResetDialogConfirm) {
+    els.learningHistoryResetDialogConfirm.disabled =
+      isBusy || state.learningHistoryResetRestoreBlocked;
+    els.learningHistoryResetDialogConfirm.textContent = isBusy
+      ? 'リセット中…'
+      : state.learningHistoryResetRestoreBlocked
+        ? '再試行できません'
+        : '学習履歴をリセットする';
+  }
+}
+
+function commitActiveLearningHistoryReset() {
+  if (
+    !state.activeResetPlan ||
+    state.isLearningHistoryResetCommitInProgress ||
+    state.learningHistoryResetRestoreBlocked
+  ) {
+    return;
+  }
+  setLearningHistoryResetDialogBusy(true);
+  els.learningHistoryResetDialogError?.classList.add('hidden');
+
+  try {
+    const result = commitLearningHistoryReset(state.activeResetPlan);
+    state.progress = result.nextProgress;
+    if (result.didClearActiveSession) state.session = null;
+    state.analysis = null;
+    refreshResumeUI();
+    state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
+      activeSession: loadSession(),
+    });
+    renderLearningHistoryResetSummary(els.learningHistoryResetSummary, state.activeResetPlan);
+    updateLearningHistoryResetEntry();
+    els.learningHistoryResetSuccess?.classList.remove('hidden');
+    setLearningHistoryResetDialogBusy(false);
+    els.learningHistoryResetDialog?.close();
+  } catch (error) {
+    const restoreFailures = Array.isArray(error?.restoreFailures) ? error.restoreFailures : [];
+    state.learningHistoryResetRestoreBlocked = restoreFailures.length > 0;
+    const message = state.learningHistoryResetRestoreBlocked
+      ? getLearningHistoryResetRestoreBlockedMessage()
+      : '保存に失敗しました。データの状態を確認してから再試行してください。';
+    showLearningHistoryResetDialogError(message);
+    setLearningHistoryResetDialogBusy(false);
+    if (els.learningHistoryResetDialogConfirm && !state.learningHistoryResetRestoreBlocked) {
+      els.learningHistoryResetDialogConfirm.textContent = '再試行';
+    }
+  }
+}
+
+function getLearningHistoryResetRestoreBlockedMessage() {
+  return '保存に失敗しました。データの状態を確認してから再試行してください。保存の復元も一部失敗した可能性があります。画面を閉じ、再読み込みして状態を確認してください。';
+}
+
+function showLearningHistoryResetDialogError(message) {
+  if (!els.learningHistoryResetDialogError) return;
+  els.learningHistoryResetDialogError.textContent = message;
+  els.learningHistoryResetDialogError.classList.remove('hidden');
 }
 
 function startSession(forcedMode = null) {
