@@ -46,6 +46,7 @@
             <button type="button" id="review-notes-btn">メモあり問題を復習</button>
             <button type="button" id="notes-list-btn">メモ一覧</button>
             <button type="button" id="analysis-btn">弱点を分析</button>
+            <button type="button" id="data-management-btn">学習データを管理</button>
           </div>
         </form>
         <p id="home-message" class="message"></p>
@@ -157,6 +158,28 @@
           <button id="retry-wrong" class="primary">間違いのみ復習を開始</button>
           <button id="result-notes-list-btn" type="button">メモ一覧</button>
           <button id="back-home">ホームへ</button>
+        </div>
+      </section>
+
+      <section id="data-management-view" class="card view">
+        <div class="data-management-view-header">
+          <h2 id="data-management-title" tabindex="-1">学習データ管理</h2>
+          <button type="button" class="data-management-home-button" data-data-management-back-home>
+            ← ホームへ戻る
+          </button>
+        </div>
+        <p class="message">
+          学習履歴リセットの影響範囲を確認できます。この画面では保存データを変更しません。
+        </p>
+        <div
+          id="learning-history-reset-summary"
+          class="learning-history-reset-summary"
+          aria-live="polite"
+        ></div>
+        <div class="button-row wrap data-management-footer-actions">
+          <button id="data-management-back-home" type="button" data-data-management-back-home>
+            ホームへ戻る
+          </button>
         </div>
       </section>
 

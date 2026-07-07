@@ -20,6 +20,7 @@ import {
   getQuestionWrongReasonTags,
   saveWrongReasonTags,
 } from './notes.js';
+import { buildLearningHistoryResetPlan } from './learning-history-reset.js';
 import { buildWeaknessAnalysis } from './analysis.js';
 import { loadQuestions } from './questions.js';
 import {
@@ -42,6 +43,7 @@ import {
   toggleNoteEditor,
   renderStorageRepairNotice,
   renderAnalysisSummary,
+  renderLearningHistoryResetSummary,
 } from './render.js';
 
 const state = {
@@ -59,6 +61,7 @@ const els = {
     result: document.getElementById('result-view'),
     notes: document.getElementById('notes-view'),
     analysis: document.getElementById('analysis-view'),
+    dataManagement: document.getElementById('data-management-view'),
   },
   form: document.getElementById('settings-form'),
   sectionCheckboxes: document.getElementById('section-checkboxes'),
@@ -68,6 +71,10 @@ const els = {
   reviewNotesBtn: document.getElementById('review-notes-btn'),
   notesListBtn: document.getElementById('notes-list-btn'),
   analysisBtn: document.getElementById('analysis-btn'),
+  dataManagementBtn: document.getElementById('data-management-btn'),
+  dataManagementBackHomeButtons: document.querySelectorAll('[data-data-management-back-home]'),
+  dataManagementTitle: document.getElementById('data-management-title'),
+  learningHistoryResetSummary: document.getElementById('learning-history-reset-summary'),
   analysisBackHomeButtons: document.querySelectorAll('[data-analysis-back-home]'),
   analysisContainer: document.getElementById('analysis-container'),
   notesList: document.getElementById('notes-list'),
@@ -164,6 +171,7 @@ function attachEvents() {
     showView('notes');
   });
   els.analysisBtn?.addEventListener('click', openAnalysisView);
+  els.dataManagementBtn?.addEventListener('click', openDataManagementView);
 
   els.submitAnswer.addEventListener('click', submitCurrentAnswer);
   els.prevQuestion.addEventListener('click', () => {
@@ -223,6 +231,11 @@ function attachEvents() {
     showView('home');
   });
   els.analysisBackHomeButtons?.forEach((button) => {
+    button.addEventListener('click', () => {
+      showView('home');
+    });
+  });
+  els.dataManagementBackHomeButtons?.forEach((button) => {
     button.addEventListener('click', () => {
       showView('home');
     });
@@ -338,6 +351,15 @@ function openAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
   renderAnalysisSummary(els.analysisContainer, state.analysis);
   showView('analysis');
+}
+
+function openDataManagementView() {
+  const plan = buildLearningHistoryResetPlan(state.progress, {
+    activeSession: loadSession(),
+  });
+  renderLearningHistoryResetSummary(els.learningHistoryResetSummary, plan);
+  showView('dataManagement');
+  els.dataManagementTitle?.focus({ preventScroll: true });
 }
 
 function startSession(forcedMode = null) {
