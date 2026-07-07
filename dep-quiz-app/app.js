@@ -398,8 +398,11 @@ function updateLearningHistoryResetEntry() {
 
 function openLearningHistoryResetDialog() {
   if (!state.activeResetPlan || state.isLearningHistoryResetCommitInProgress) return;
-  state.learningHistoryResetRestoreBlocked = false;
-  els.learningHistoryResetDialogError?.classList.add('hidden');
+  if (state.learningHistoryResetRestoreBlocked) {
+    showLearningHistoryResetDialogError(getLearningHistoryResetRestoreBlockedMessage());
+  } else {
+    els.learningHistoryResetDialogError?.classList.add('hidden');
+  }
   renderLearningHistoryResetSummary(els.learningHistoryResetDialogBody, state.activeResetPlan);
   setLearningHistoryResetDialogBusy(false);
   els.learningHistoryResetDialog?.showModal();
@@ -433,7 +436,13 @@ function setLearningHistoryResetDialogBusy(isBusy) {
 }
 
 function commitActiveLearningHistoryReset() {
-  if (!state.activeResetPlan || state.isLearningHistoryResetCommitInProgress) return;
+  if (
+    !state.activeResetPlan ||
+    state.isLearningHistoryResetCommitInProgress ||
+    state.learningHistoryResetRestoreBlocked
+  ) {
+    return;
+  }
   setLearningHistoryResetDialogBusy(true);
   els.learningHistoryResetDialogError?.classList.add('hidden');
 
@@ -455,17 +464,24 @@ function commitActiveLearningHistoryReset() {
     const restoreFailures = Array.isArray(error?.restoreFailures) ? error.restoreFailures : [];
     state.learningHistoryResetRestoreBlocked = restoreFailures.length > 0;
     const message = state.learningHistoryResetRestoreBlocked
-      ? '保存に失敗しました。データの状態を確認してから再試行してください。保存の復元も一部失敗した可能性があります。画面を閉じ、再読み込みして状態を確認してください。'
+      ? getLearningHistoryResetRestoreBlockedMessage()
       : '保存に失敗しました。データの状態を確認してから再試行してください。';
-    if (els.learningHistoryResetDialogError) {
-      els.learningHistoryResetDialogError.textContent = message;
-      els.learningHistoryResetDialogError.classList.remove('hidden');
-    }
+    showLearningHistoryResetDialogError(message);
     setLearningHistoryResetDialogBusy(false);
     if (els.learningHistoryResetDialogConfirm && !state.learningHistoryResetRestoreBlocked) {
       els.learningHistoryResetDialogConfirm.textContent = '再試行';
     }
   }
+}
+
+function getLearningHistoryResetRestoreBlockedMessage() {
+  return '保存に失敗しました。データの状態を確認してから再試行してください。保存の復元も一部失敗した可能性があります。画面を閉じ、再読み込みして状態を確認してください。';
+}
+
+function showLearningHistoryResetDialogError(message) {
+  if (!els.learningHistoryResetDialogError) return;
+  els.learningHistoryResetDialogError.textContent = message;
+  els.learningHistoryResetDialogError.classList.remove('hidden');
 }
 
 function startSession(forcedMode = null) {

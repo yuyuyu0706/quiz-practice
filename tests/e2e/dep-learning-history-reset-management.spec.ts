@@ -214,7 +214,7 @@ test.describe('[DEP][FLOW] Learning data / Reset confirmation', () => {
     expect(progress['dep-q-003']).toMatchObject({ bookmark: true });
 
     await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
-    await expect(page.getByRole('button', { name: '中断から再開' })).toBeHidden();
+    await expect(page.locator('#resume-btn')).toBeHidden();
     await expect(page.getByRole('button', { name: '中断データを削除' })).toBeHidden();
   });
 
@@ -243,6 +243,57 @@ test.describe('[DEP][FLOW] Learning data / Reset confirmation', () => {
     );
     await expect(page.getByRole('button', { name: '再試行' })).toBeEnabled();
     await expect(page.locator('#learning-history-reset-success')).toBeHidden();
+    await expectStorageSnapshot(page, expectedStorage);
+  });
+
+  test('guarantees restore failure keeps reset blocked after closing and reopening dialog', async ({
+    page,
+  }) => {
+    const expectedStorage = await seedStorage(page, progressFixture, sessionFixture);
+    await openDataManagement(page);
+    await page.evaluate(() => {
+      const originalRemoveItem = Storage.prototype.removeItem;
+      const originalSetItem = Storage.prototype.setItem;
+      let sessionRemovalFailed = false;
+      Storage.prototype.removeItem = function removeItem(key) {
+        if (key === 'depQuizActiveSession' && !sessionRemovalFailed) {
+          sessionRemovalFailed = true;
+          throw new Error('Injected removeItem failure');
+        }
+        return originalRemoveItem.call(this, key);
+      };
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (key === 'depQuizActiveSession' && sessionRemovalFailed) {
+          throw new Error('Injected restore setItem failure');
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    });
+
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+
+    const dialog = page.locator('#learning-history-reset-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#learning-history-reset-dialog-error')).toContainText(
+      '画面を閉じ、再読み込みして状態を確認してください。'
+    );
+    await expect(page.getByRole('button', { name: '再試行できません' })).toBeDisabled();
+    await expectStorageSnapshot(page, expectedStorage);
+
+    await page.getByRole('button', { name: 'キャンセル' }).click();
+    await expect(dialog).toBeHidden();
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#learning-history-reset-dialog-error')).toContainText(
+      '画面を閉じ、再読み込みして状態を確認してください。'
+    );
+    await expect(page.getByRole('button', { name: '再試行できません' })).toBeDisabled();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    await expect(page.getByRole('button', { name: '再試行できません' })).toBeDisabled();
     await expectStorageSnapshot(page, expectedStorage);
   });
 
