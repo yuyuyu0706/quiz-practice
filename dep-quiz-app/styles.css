@@ -1518,11 +1518,13 @@ input:focus-visible,
   font-weight: 700;
 }
 .analysis-reset-panel {
-  margin: 16px 0 18px;
-  padding: 14px;
-  border: 1px solid #f4d06f;
-  border-radius: 14px;
-  background: #fffaf0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 8px 0 10px;
+}
+.analysis-reset-panel .learning-history-reset-success:not(.hidden) {
+  width: 100%;
 }
 .learning-history-reset-entry,
 .learning-history-reset-dialog__actions button {

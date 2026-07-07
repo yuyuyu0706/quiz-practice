@@ -93,7 +93,20 @@ test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
 
     const view = page.locator('#analysis-view');
     await expect(page.getByRole('button', { name: '← ホームへ戻る' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '学習履歴をリセット' })).toBeVisible();
+    const resetButton = page.getByRole('button', { name: '学習履歴をリセット' });
+    await expect(resetButton).toBeVisible();
+    const [viewBox, resetButtonBox, summaryBox] = await Promise.all([
+      view.boundingBox(),
+      resetButton.boundingBox(),
+      page.getByRole('heading', { name: '学習全体サマリ' }).boundingBox(),
+    ]);
+    expect(viewBox).not.toBeNull();
+    expect(resetButtonBox).not.toBeNull();
+    expect(summaryBox).not.toBeNull();
+    expect(resetButtonBox!.x + resetButtonBox!.width).toBeGreaterThan(
+      viewBox!.x + viewBox!.width - 32
+    );
+    expect(resetButtonBox!.y).toBeLessThan(summaryBox!.y);
     await expect(view).not.toContainText('2問の学習履歴がリセット対象です');
     await expect(view).not.toContainText('リセット対象問題');
     await page.getByRole('button', { name: '学習履歴をリセット' }).click();
@@ -141,6 +154,8 @@ test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
       () => document.documentElement.scrollWidth > window.innerWidth
     );
     expect(hasHorizontalOverflow).toBe(false);
+    const resetButton = page.getByRole('button', { name: '学習履歴をリセット' });
+    await expect(resetButton).toHaveCSS('min-height', '44px');
     await expect(page.getByRole('button', { name: '← ホームへ戻る' })).toHaveCSS(
       'min-height',
       '44px'
