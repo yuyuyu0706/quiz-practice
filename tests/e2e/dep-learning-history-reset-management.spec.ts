@@ -141,6 +141,7 @@ test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
     await page.evaluate(() => localStorage.setItem('depQuizActiveSession', 'null'));
     await page.getByRole('button', { name: '弱点を分析' }).click();
     await expect(page.getByRole('button', { name: '学習履歴をリセット' })).toBeHidden();
+    await expect(page.locator('.analysis-reset-panel')).toBeHidden();
   });
 
   test('guarantees reset entry mobile has no horizontal overflow and return controls work', async ({
