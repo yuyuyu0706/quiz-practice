@@ -172,10 +172,46 @@
           学習履歴リセットの影響範囲を確認できます。この画面では保存データを変更しません。
         </p>
         <div
+          id="learning-history-reset-success"
+          class="learning-history-reset-success hidden"
+          role="status"
+          aria-live="polite"
+        >
+          学習履歴をリセットしました。メモ・ブックマーク・学習設定は保持されています。
+        </div>
+        <div
           id="learning-history-reset-summary"
           class="learning-history-reset-summary"
           aria-live="polite"
         ></div>
+        <div class="button-row wrap learning-history-reset-entry-row">
+          <button id="learning-history-reset-entry" type="button" class="primary hidden">
+            リセット内容を確認する
+          </button>
+        </div>
+        <dialog
+          id="learning-history-reset-dialog"
+          class="learning-history-reset-dialog"
+          aria-labelledby="learning-history-reset-dialog-title"
+          aria-describedby="learning-history-reset-dialog-description"
+        >
+          <h3 id="learning-history-reset-dialog-title">学習履歴リセットの最終確認</h3>
+          <p id="learning-history-reset-dialog-description" class="message">
+            消去対象と保持対象を確認し、実行する場合だけ確定してください。
+          </p>
+          <div id="learning-history-reset-dialog-body" class="learning-history-reset-summary"></div>
+          <p
+            id="learning-history-reset-dialog-error"
+            class="learning-history-reset-dialog__error hidden"
+            role="alert"
+          ></p>
+          <div class="button-row wrap learning-history-reset-dialog__actions">
+            <button id="learning-history-reset-dialog-cancel" type="button">キャンセル</button>
+            <button id="learning-history-reset-dialog-confirm" type="button" class="danger-primary">
+              学習履歴をリセットする
+            </button>
+          </div>
+        </dialog>
         <div class="button-row wrap data-management-footer-actions">
           <button id="data-management-back-home" type="button" data-data-management-back-home>
             ホームへ戻る

@@ -156,3 +156,112 @@ test.describe('[DEP][DATA] Learning data / Reset overview immutability', () => {
     await expectStorageSnapshot(page, expectedStorage);
   });
 });
+
+test.describe('[DEP][FLOW] Learning data / Reset confirmation', () => {
+  test('guarantees final confirmation cancel and escape keep raw storage unchanged', async ({
+    page,
+  }) => {
+    const expectedStorage = await seedStorage(page, progressFixture, sessionFixture);
+    await openDataManagement(page);
+
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    const dialog = page.locator('#learning-history-reset-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.getByRole('button', { name: 'キャンセル' })).toBeFocused();
+    await expect(dialog).toContainText('2問の学習履歴がリセット対象です');
+    await page.getByRole('button', { name: 'キャンセル' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('button', { name: 'リセット内容を確認する' })).toBeFocused();
+    await expectStorageSnapshot(page, expectedStorage);
+
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('button', { name: 'リセット内容を確認する' })).toBeFocused();
+    await expectStorageSnapshot(page, expectedStorage);
+  });
+
+  test('guarantees reset commit preserves notes bookmarks settings and clears history session', async ({
+    page,
+  }) => {
+    await seedStorage(page, progressFixture, sessionFixture);
+    await openDataManagement(page);
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+
+    await expect(page.locator('#learning-history-reset-dialog')).toBeHidden();
+    await expect(page.locator('#learning-history-reset-success')).toContainText(
+      '学習履歴をリセットしました。メモ・ブックマーク・学習設定は保持されています。'
+    );
+    await expect(page.locator('#data-management-view')).toContainText(
+      'リセット対象の学習履歴はありません。'
+    );
+    await expect(page.getByRole('button', { name: 'リセット内容を確認する' })).toBeHidden();
+
+    const storage = await page.evaluate(
+      (keys) => keys.map((key) => localStorage.getItem(key)),
+      storageKeys
+    );
+    const progress = JSON.parse(storage[0] ?? '{}');
+    expect(storage[1]).toBe(JSON.stringify(defaultSettings));
+    expect(storage[2]).toBeNull();
+    expect(progress['dep-q-001']).toEqual({
+      bookmark: true,
+      noteText: 'Lakeflow Jobs の復習メモ',
+      noteUpdatedAt: '2026-07-04T00:01:00.000Z',
+    });
+    expect(progress['dep-q-002']).toBeUndefined();
+    expect(progress['dep-q-003']).toMatchObject({ bookmark: true });
+
+    await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
+    await expect(page.getByRole('button', { name: '中断から再開' })).toBeHidden();
+    await expect(page.getByRole('button', { name: '中断データを削除' })).toBeHidden();
+  });
+
+  test('guarantees storage failure keeps dialog open and allows retry without success state', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const originalRemoveItem = Storage.prototype.removeItem;
+      let failed = false;
+      Storage.prototype.removeItem = function removeItem(key) {
+        if (key === 'depQuizActiveSession' && !failed) {
+          failed = true;
+          throw new Error('Injected removeItem failure');
+        }
+        return originalRemoveItem.call(this, key);
+      };
+    });
+    const expectedStorage = await seedStorage(page, progressFixture, sessionFixture);
+    await openDataManagement(page);
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+
+    await expect(page.locator('#learning-history-reset-dialog')).toBeVisible();
+    await expect(page.locator('#learning-history-reset-dialog-error')).toContainText(
+      '保存に失敗しました。データの状態を確認してから再試行してください。'
+    );
+    await expect(page.getByRole('button', { name: '再試行' })).toBeEnabled();
+    await expect(page.locator('#learning-history-reset-success')).toBeHidden();
+    await expectStorageSnapshot(page, expectedStorage);
+  });
+
+  test('guarantees mobile confirmation dialog has no horizontal overflow and touch targets', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 393, height: 851 });
+    await seedStorage(page, progressFixture, sessionFixture);
+    await openDataManagement(page);
+    await page.getByRole('button', { name: 'リセット内容を確認する' }).click();
+
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth
+    );
+    expect(hasHorizontalOverflow).toBe(false);
+    await expect(page.getByRole('button', { name: 'キャンセル' })).toHaveCSS('min-height', '44px');
+    await expect(page.getByRole('button', { name: '学習履歴をリセットする' })).toHaveCSS(
+      'min-height',
+      '44px'
+    );
+  });
+});
