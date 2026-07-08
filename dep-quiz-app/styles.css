@@ -1519,18 +1519,20 @@ input:focus-visible,
 }
 .analysis-reset-panel {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  margin: 8px 0 10px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 4px 0 12px;
+}
+.analysis-reset-message {
+  flex: 1 1 320px;
+  min-width: 0;
+  margin: 0;
 }
 .analysis-reset-panel .learning-history-reset-success:not(.hidden) {
+  flex: 0 0 100%;
   width: 100%;
-}
-.analysis-reset-panel:has(.learning-history-reset-entry.hidden):has(
-    .learning-history-reset-success.hidden
-  ) {
-  display: none;
-  margin: 0;
 }
 .learning-history-reset-entry,
 .learning-history-reset-dialog__actions button {

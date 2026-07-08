@@ -94,18 +94,32 @@ test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
     const view = page.locator('#analysis-view');
     await expect(page.getByRole('button', { name: '← ホームへ戻る' })).toBeVisible();
     const resetButton = page.getByRole('button', { name: '学習履歴をリセット' });
+    const resetMessage = page.locator('.analysis-reset-message');
+    await expect(resetMessage).toHaveText('最新の学習状況から弱点分析を表示します。');
     await expect(resetButton).toBeVisible();
-    const [viewBox, resetButtonBox, summaryBox] = await Promise.all([
+    const [viewBox, resetButtonBox, resetMessageBox, summaryBox] = await Promise.all([
       view.boundingBox(),
       resetButton.boundingBox(),
+      resetMessage.boundingBox(),
       page.getByRole('heading', { name: '学習全体サマリ' }).boundingBox(),
     ]);
     expect(viewBox).not.toBeNull();
     expect(resetButtonBox).not.toBeNull();
+    expect(resetMessageBox).not.toBeNull();
     expect(summaryBox).not.toBeNull();
-    expect(resetButtonBox!.x + resetButtonBox!.width).toBeGreaterThan(
-      viewBox!.x + viewBox!.width - 32
-    );
+    if ((page.viewportSize()?.width ?? 0) >= 600) {
+      expect(resetButtonBox!.x).toBeGreaterThan(resetMessageBox!.x + resetMessageBox!.width - 1);
+      expect(resetButtonBox!.x + resetButtonBox!.width).toBeGreaterThan(
+        viewBox!.x + viewBox!.width - 32
+      );
+      expect(
+        Math.abs(
+          resetButtonBox!.y +
+            resetButtonBox!.height / 2 -
+            (resetMessageBox!.y + resetMessageBox!.height / 2)
+        )
+      ).toBeLessThan(8);
+    }
     expect(resetButtonBox!.y).toBeLessThan(summaryBox!.y);
     await expect(view).not.toContainText('2問の学習履歴がリセット対象です');
     await expect(view).not.toContainText('リセット対象問題');
@@ -140,8 +154,8 @@ test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
     await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
     await page.evaluate(() => localStorage.setItem('depQuizActiveSession', 'null'));
     await page.getByRole('button', { name: '弱点を分析' }).click();
+    await expect(page.locator('.analysis-reset-message')).toBeVisible();
     await expect(page.getByRole('button', { name: '学習履歴をリセット' })).toBeHidden();
-    await expect(page.locator('.analysis-reset-panel')).toBeHidden();
   });
 
   test('guarantees reset entry mobile has no horizontal overflow and return controls work', async ({
