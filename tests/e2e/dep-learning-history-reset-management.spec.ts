@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 import { gotoDepHome } from './helpers';
 
@@ -16,6 +16,7 @@ const progressFixture = {
     noteUpdatedAt: '2026-07-04T00:01:00.000Z',
     wrongReasonTags: ['concept-gap'],
     wrongReasonUpdatedAt: '2026-07-04T00:02:00.000Z',
+    unknownRetainedAttribute: 'keep me after reset',
   },
   'dep-q-002': {
     seenCount: 1,
@@ -56,6 +57,17 @@ const sessionFixture = {
   settingsSnapshot: defaultSettings,
 };
 
+const analysisProgressFixture = {
+  'DEP-Q201': progressFixture['dep-q-001'],
+  'DEP-Q202': progressFixture['dep-q-002'],
+  'DEP-Q203': progressFixture['dep-q-003'],
+};
+
+const analysisSessionFixture = {
+  ...sessionFixture,
+  order: ['DEP-Q201'],
+};
+
 async function seedStorage(page: Page, progress: unknown, session: unknown = null) {
   const expectedStorage = [
     JSON.stringify(progress),
@@ -72,6 +84,25 @@ async function seedStorage(page: Page, progress: unknown, session: unknown = nul
   return expectedStorage;
 }
 
+async function seedStorageOnLoadedPage(page: Page, progress: unknown, session: unknown = null) {
+  const expectedStorage = [
+    JSON.stringify(progress),
+    JSON.stringify(defaultSettings),
+    JSON.stringify(session),
+  ];
+  await gotoDepHome(page);
+  await page.evaluate(
+    ({ keys, expected }) => {
+      localStorage.clear();
+      keys.forEach((key, index) => localStorage.setItem(key, expected[index]));
+    },
+    { keys: storageKeys, expected: expectedStorage }
+  );
+  await page.reload();
+  await expect(page.locator('#home-view')).toBeVisible();
+  return expectedStorage;
+}
+
 async function expectStorageSnapshot(page: Page, expectedStorage: string[]) {
   await expect
     .poll(() => page.evaluate((keys) => keys.map((key) => localStorage.getItem(key)), storageKeys))
@@ -80,8 +111,38 @@ async function expectStorageSnapshot(page: Page, expectedStorage: string[]) {
 
 async function openAnalysis(page: Page) {
   await gotoDepHome(page);
+  await openAnalysisFromHome(page);
+}
+
+async function openAnalysisFromHome(page: Page) {
   await page.getByRole('button', { name: '弱点を分析' }).click();
   await expect(page.locator('#analysis-view')).toBeVisible();
+}
+
+function overallSummary(page: Page) {
+  return page.locator('section[aria-labelledby="analysis-summary-title"]');
+}
+
+function metric(summary: Locator, label: string) {
+  return summary
+    .locator('.analysis-metric')
+    .filter({ has: summary.page().locator('dt', { hasText: new RegExp(`^${label}$`) }) })
+    .first();
+}
+
+async function expectMetric(summary: Locator, label: string, value: string) {
+  await expect(metric(summary, label).locator('dd.analysis-metric__value')).toHaveText(value);
+}
+
+function tagItem(summary: Locator, label: string) {
+  return summary
+    .locator('.analysis-tag-item')
+    .filter({ has: summary.page().locator('dt', { hasText: new RegExp(`^${label}$`) }) })
+    .first();
+}
+
+async function expectTagCount(summary: Locator, label: string, value: string) {
+  await expect(tagItem(summary, label).locator('dd.analysis-tag-item__count')).toHaveText(value);
 }
 
 test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
@@ -186,6 +247,89 @@ test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
   });
 });
 
+test.describe('[DEP][DATA] Weakness analysis / Reset reload consistency', () => {
+  test('guarantees committed reset survives reload with retained data only and refreshed analysis', async ({
+    page,
+  }) => {
+    await seedStorageOnLoadedPage(page, analysisProgressFixture, analysisSessionFixture);
+    await openAnalysisFromHome(page);
+    await expectMetric(overallSummary(page), '誤答数', '2');
+    await expectMetric(overallSummary(page), '正答率 ※', '33%');
+    await expect(page.locator('[aria-labelledby="analysis-tags-title"]')).toContainText(
+      '概念・挙動がイメージできない'
+    );
+
+    await page.getByRole('button', { name: '学習履歴をリセット' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+    await expect(page.locator('#learning-history-reset-success')).toContainText(
+      '学習履歴をリセットしました。メモ・ブックマーク・学習設定は保持されています。'
+    );
+
+    await page.reload();
+    await expect(page.locator('#home-view')).toBeVisible();
+    await expect(page.locator('#resume-btn')).toBeHidden();
+    await expect(page.getByRole('button', { name: '中断データを削除' })).toBeHidden();
+
+    const storage = await page.evaluate(
+      (keys) => keys.map((key) => localStorage.getItem(key)),
+      storageKeys
+    );
+    const progress = JSON.parse(storage[0] ?? '{}');
+    expect(storage[1]).toBe(JSON.stringify(defaultSettings));
+    expect(storage[2]).toBeNull();
+    expect(progress['DEP-Q201']).toEqual({
+      bookmark: true,
+      noteText: 'Lakeflow Jobs の復習メモ',
+      noteUpdatedAt: '2026-07-04T00:01:00.000Z',
+      unknownRetainedAttribute: 'keep me after reset',
+    });
+    expect(progress['DEP-Q201']).not.toHaveProperty('seenCount');
+    expect(progress['DEP-Q201']).not.toHaveProperty('correctCount');
+    expect(progress['DEP-Q201']).not.toHaveProperty('wrongCount');
+    expect(progress['DEP-Q201']).not.toHaveProperty('lastAnsweredAt');
+    expect(progress['DEP-Q201']).not.toHaveProperty('wrongReasonTags');
+    expect(progress['DEP-Q201']).not.toHaveProperty('wrongReasonUpdatedAt');
+    expect(progress['DEP-Q202']).toBeUndefined();
+    expect(progress['DEP-Q203']).toMatchObject({ bookmark: true });
+
+    await openAnalysisFromHome(page);
+    await expectMetric(overallSummary(page), '誤答数', '0');
+    await expectMetric(overallSummary(page), '正答率 ※', '未算出');
+    await expect(page.locator('#analysis-view')).not.toContainText('33%');
+    await expectTagCount(
+      page.locator('[aria-labelledby="analysis-tags-title"]'),
+      '概念・挙動がイメージできない',
+      '0問'
+    );
+    await expect(page.getByRole('button', { name: '学習履歴をリセット' })).toBeHidden();
+  });
+
+  test('guarantees session-only reset survives reload without changing progress or settings raw strings', async ({
+    page,
+  }) => {
+    const expectedStorage = await seedStorageOnLoadedPage(page, {}, analysisSessionFixture);
+    await openAnalysisFromHome(page);
+    await page.getByRole('button', { name: '学習履歴をリセット' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+
+    await page.reload();
+    await expect(page.locator('#home-view')).toBeVisible();
+    await expect(page.locator('#resume-btn')).toBeHidden();
+    await expect(page.getByRole('button', { name: '中断データを削除' })).toBeHidden();
+
+    const storage = await page.evaluate(
+      (keys) => keys.map((key) => localStorage.getItem(key)),
+      storageKeys
+    );
+    expect(storage[0]).toBe(expectedStorage[0]);
+    expect(storage[1]).toBe(expectedStorage[1]);
+    expect(storage[2]).toBeNull();
+
+    await openAnalysisFromHome(page);
+    await expect(page.getByRole('button', { name: '学習履歴をリセット' })).toBeHidden();
+  });
+});
+
 test.describe('[DEP][DATA] Weakness analysis / Reset entry immutability', () => {
   test('guarantees reset entry and home return keep raw storage strings unchanged', async ({
     page,
@@ -247,6 +391,7 @@ test.describe('[DEP][FLOW] Weakness analysis / Reset confirmation', () => {
       bookmark: true,
       noteText: 'Lakeflow Jobs の復習メモ',
       noteUpdatedAt: '2026-07-04T00:01:00.000Z',
+      unknownRetainedAttribute: 'keep me after reset',
     });
     expect(progress['dep-q-002']).toBeUndefined();
     expect(progress['dep-q-003']).toMatchObject({ bookmark: true });
