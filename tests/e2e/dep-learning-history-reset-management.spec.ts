@@ -97,16 +97,22 @@ test.describe('[DEP][UI] Weakness analysis / Reset entry', () => {
     const resetMessage = page.locator('.analysis-reset-message');
     await expect(resetMessage).toHaveText('最新の学習状況から弱点分析を表示します。');
     await expect(resetButton).toBeVisible();
-    const [viewBox, resetButtonBox, resetMessageBox, summaryBox] = await Promise.all([
-      view.boundingBox(),
-      resetButton.boundingBox(),
-      resetMessage.boundingBox(),
-      page.getByRole('heading', { name: '学習全体サマリ' }).boundingBox(),
-    ]);
+    const [viewBox, resetPanelBox, resetButtonBox, resetMessageBox, summaryBox] = await Promise.all(
+      [
+        view.boundingBox(),
+        page.locator('.analysis-reset-panel').boundingBox(),
+        resetButton.boundingBox(),
+        resetMessage.boundingBox(),
+        page.getByRole('heading', { name: '学習全体サマリ' }).boundingBox(),
+      ]
+    );
     expect(viewBox).not.toBeNull();
+    expect(resetPanelBox).not.toBeNull();
     expect(resetButtonBox).not.toBeNull();
     expect(resetMessageBox).not.toBeNull();
     expect(summaryBox).not.toBeNull();
+    expect(resetMessageBox!.x).toBeLessThanOrEqual(resetPanelBox!.x + 1);
+    await expect(resetMessage).toHaveCSS('text-align', 'left');
     if ((page.viewportSize()?.width ?? 0) >= 600) {
       expect(resetButtonBox!.x).toBeGreaterThan(resetMessageBox!.x + resetMessageBox!.width - 1);
       expect(resetButtonBox!.x + resetButtonBox!.width).toBeGreaterThan(

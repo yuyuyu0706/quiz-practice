@@ -1529,6 +1529,7 @@ input:focus-visible,
   flex: 1 1 320px;
   min-width: 0;
   margin: 0;
+  text-align: left;
 }
 .analysis-reset-panel .learning-history-reset-success:not(.hidden) {
   flex: 0 0 100%;
