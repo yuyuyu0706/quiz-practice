@@ -46,7 +46,6 @@
             <button type="button" id="review-notes-btn">メモあり問題を復習</button>
             <button type="button" id="notes-list-btn">メモ一覧</button>
             <button type="button" id="analysis-btn">弱点を分析</button>
-            <button type="button" id="data-management-btn">学習データを管理</button>
           </div>
         </form>
         <p id="home-message" class="message"></p>
@@ -161,33 +160,30 @@
         </div>
       </section>
 
-      <section id="data-management-view" class="card view">
-        <div class="data-management-view-header">
-          <h2 id="data-management-title" tabindex="-1">学習データ管理</h2>
-          <button type="button" class="data-management-home-button" data-data-management-back-home>
+      <section id="analysis-view" class="card view">
+        <div class="analysis-view-header">
+          <h2>弱点分析</h2>
+          <button type="button" class="analysis-home-button" data-analysis-back-home>
             ← ホームへ戻る
           </button>
         </div>
-        <p class="message">
-          学習履歴リセットの影響範囲を確認できます。この画面では保存データを変更しません。
-        </p>
-        <div
-          id="learning-history-reset-success"
-          class="learning-history-reset-success hidden"
-          role="status"
-          aria-live="polite"
-        >
-          学習履歴をリセットしました。メモ・ブックマーク・学習設定は保持されています。
-        </div>
-        <div
-          id="learning-history-reset-summary"
-          class="learning-history-reset-summary"
-          aria-live="polite"
-        ></div>
-        <div class="button-row wrap learning-history-reset-entry-row">
-          <button id="learning-history-reset-entry" type="button" class="primary hidden">
-            リセット内容を確認する
+        <div class="analysis-reset-panel" aria-label="学習履歴リセット">
+          <p class="message analysis-reset-message">最新の学習状況から弱点分析を表示します。</p>
+          <button
+            id="learning-history-reset-entry"
+            type="button"
+            class="learning-history-reset-entry hidden"
+          >
+            学習履歴をリセット
           </button>
+          <div
+            id="learning-history-reset-success"
+            class="learning-history-reset-success hidden"
+            role="status"
+            aria-live="polite"
+          >
+            学習履歴をリセットしました。メモ・ブックマーク・学習設定は保持されています。
+          </div>
         </div>
         <dialog
           id="learning-history-reset-dialog"
@@ -212,21 +208,6 @@
             </button>
           </div>
         </dialog>
-        <div class="button-row wrap data-management-footer-actions">
-          <button id="data-management-back-home" type="button" data-data-management-back-home>
-            ホームへ戻る
-          </button>
-        </div>
-      </section>
-
-      <section id="analysis-view" class="card view">
-        <div class="analysis-view-header">
-          <h2>弱点分析</h2>
-          <button type="button" class="analysis-home-button" data-analysis-back-home>
-            ← ホームへ戻る
-          </button>
-        </div>
-        <p class="message">最新の学習状況から弱点分析を表示します。</p>
         <div id="analysis-container" aria-live="polite"></div>
         <div class="button-row wrap">
           <button id="analysis-back-home" type="button" data-analysis-back-home>
