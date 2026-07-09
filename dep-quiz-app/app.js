@@ -44,6 +44,7 @@ import {
   toggleNoteEditor,
   renderStorageRepairNotice,
   renderAnalysisSummary,
+  renderWeaknessReviewTargetPanel,
   renderLearningHistoryResetSummary,
 } from './render.js';
 
@@ -85,6 +86,7 @@ const els = {
   ),
   analysisBackHomeButtons: document.querySelectorAll('[data-analysis-back-home]'),
   analysisContainer: document.getElementById('analysis-container'),
+  weaknessReviewTargetsPanel: document.getElementById('weakness-review-targets-panel'),
   notesList: document.getElementById('notes-list'),
   notesEmpty: document.getElementById('notes-empty'),
   deleteAllNotes: document.getElementById('delete-all-notes'),
@@ -368,6 +370,7 @@ function openAnalysisView() {
 function renderAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
   renderAnalysisSummary(els.analysisContainer, state.analysis);
+  renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel);
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
   });
