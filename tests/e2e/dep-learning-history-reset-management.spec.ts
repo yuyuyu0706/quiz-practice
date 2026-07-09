@@ -58,14 +58,14 @@ const sessionFixture = {
 };
 
 const analysisProgressFixture = {
-  'DEP-Q201': progressFixture['dep-q-001'],
-  'DEP-Q202': progressFixture['dep-q-002'],
+  'DEP-Q202': progressFixture['dep-q-001'],
   'DEP-Q203': progressFixture['dep-q-003'],
+  'DEP-Q204': progressFixture['dep-q-002'],
 };
 
 const analysisSessionFixture = {
   ...sessionFixture,
-  order: ['DEP-Q201'],
+  order: ['DEP-Q202'],
 };
 
 async function seedStorage(page: Page, progress: unknown, session: unknown = null) {
@@ -277,19 +277,19 @@ test.describe('[DEP][DATA] Weakness analysis / Reset reload consistency', () => 
     const progress = JSON.parse(storage[0] ?? '{}');
     expect(storage[1]).toBe(JSON.stringify(defaultSettings));
     expect(storage[2]).toBeNull();
-    expect(progress['DEP-Q201']).toEqual({
+    expect(progress['DEP-Q202']).toEqual({
       bookmark: true,
       noteText: 'Lakeflow Jobs の復習メモ',
       noteUpdatedAt: '2026-07-04T00:01:00.000Z',
       unknownRetainedAttribute: 'keep me after reset',
     });
-    expect(progress['DEP-Q201']).not.toHaveProperty('seenCount');
-    expect(progress['DEP-Q201']).not.toHaveProperty('correctCount');
-    expect(progress['DEP-Q201']).not.toHaveProperty('wrongCount');
-    expect(progress['DEP-Q201']).not.toHaveProperty('lastAnsweredAt');
-    expect(progress['DEP-Q201']).not.toHaveProperty('wrongReasonTags');
-    expect(progress['DEP-Q201']).not.toHaveProperty('wrongReasonUpdatedAt');
-    expect(progress['DEP-Q202']).toBeUndefined();
+    expect(progress['DEP-Q202']).not.toHaveProperty('seenCount');
+    expect(progress['DEP-Q202']).not.toHaveProperty('correctCount');
+    expect(progress['DEP-Q202']).not.toHaveProperty('wrongCount');
+    expect(progress['DEP-Q202']).not.toHaveProperty('lastAnsweredAt');
+    expect(progress['DEP-Q202']).not.toHaveProperty('wrongReasonTags');
+    expect(progress['DEP-Q202']).not.toHaveProperty('wrongReasonUpdatedAt');
+    expect(progress['DEP-Q204']).toBeUndefined();
     expect(progress['DEP-Q203']).toMatchObject({ bookmark: true });
 
     await openAnalysisFromHome(page);
@@ -327,6 +327,89 @@ test.describe('[DEP][DATA] Weakness analysis / Reset reload consistency', () => 
 
     await openAnalysisFromHome(page);
     await expect(page.getByRole('button', { name: '学習履歴をリセット' })).toBeHidden();
+  });
+});
+
+test.describe('[DEP][FLOW] Learning history reset / Review routes after reset', () => {
+  test('guarantees wrong-only review uses no stale wrong history after reset', async ({ page }) => {
+    await seedStorageOnLoadedPage(page, analysisProgressFixture, analysisSessionFixture);
+    await openAnalysisFromHome(page);
+    await page.getByRole('button', { name: '学習履歴をリセット' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
+    await expect(page.locator('#home-view')).toBeVisible();
+    await expect(page.locator('#resume-btn')).toBeHidden();
+    await expect(page.getByRole('button', { name: '中断データを削除' })).toBeHidden();
+
+    await page.locator('input[name="mode"][value="wrongOnly"]').check();
+    await page.getByRole('button', { name: '開始' }).click();
+
+    await expect(page.locator('#home-view')).toBeVisible();
+    await expect(page.locator('#quiz-view')).toBeHidden();
+    await expect(page.locator('#home-message')).toContainText('対象となる問題がありません');
+    const storage = await page.evaluate(() => ({
+      progress: JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}'),
+      session: localStorage.getItem('depQuizActiveSession'),
+    }));
+    expect(storage.session).toBeNull();
+    expect(storage.progress['DEP-Q202']).not.toHaveProperty('wrongCount');
+    expect(storage.progress['DEP-Q202']).not.toHaveProperty('wrongReasonTags');
+    expect(storage.progress['DEP-Q204']).toBeUndefined();
+  });
+
+  test('guarantees bookmark review keeps retained bookmarks without restoring old history', async ({
+    page,
+  }) => {
+    await seedStorageOnLoadedPage(page, analysisProgressFixture, analysisSessionFixture);
+    await openAnalysisFromHome(page);
+    await page.getByRole('button', { name: '学習履歴をリセット' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
+
+    await page.locator('input[name="mode"][value="bookmarks"]').check();
+    await page.getByRole('button', { name: '開始' }).click();
+    await expect(page.locator('#quiz-view')).toBeVisible();
+
+    const reviewSession = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null')
+    );
+    const reviewProgress = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}')
+    );
+    expect(reviewSession.mode).toBe('bookmarks');
+    expect(reviewSession.order).toEqual(['DEP-Q202', 'DEP-Q203']);
+    for (const id of reviewSession.order as string[]) {
+      expect(reviewProgress[id]?.bookmark).toBe(true);
+      expect(reviewProgress[id]).not.toHaveProperty('seenCount');
+      expect(reviewProgress[id]).not.toHaveProperty('correctCount');
+      expect(reviewProgress[id]).not.toHaveProperty('wrongCount');
+      expect(reviewProgress[id]).not.toHaveProperty('wrongReasonTags');
+    }
+  });
+
+  test('guarantees notes-only review keeps retained memo text after reset', async ({ page }) => {
+    await seedStorageOnLoadedPage(page, analysisProgressFixture, analysisSessionFixture);
+    await openAnalysisFromHome(page);
+    await page.getByRole('button', { name: '学習履歴をリセット' }).click();
+    await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
+    await page.getByRole('button', { name: 'ホームへ戻る' }).last().click();
+
+    await page.getByRole('button', { name: 'メモあり問題を復習' }).click();
+    await expect(page.locator('#quiz-view')).toBeVisible();
+    await expect(page.locator('#quiz-question .quiz-question-id')).toHaveText('DEP-Q202');
+    await expect(page.locator('#question-note')).toHaveValue('Lakeflow Jobs の復習メモ');
+
+    const reviewSession = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null')
+    );
+    const reviewProgress = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}')
+    );
+    expect(reviewSession.mode).toBe('notesOnly');
+    expect(reviewSession.order).toEqual(['DEP-Q202']);
+    expect(reviewProgress['DEP-Q202'].noteText).toBe('Lakeflow Jobs の復習メモ');
+    expect(reviewProgress['DEP-Q202']).not.toHaveProperty('wrongCount');
+    expect(reviewProgress['DEP-Q202']).not.toHaveProperty('wrongReasonTags');
   });
 });
 
