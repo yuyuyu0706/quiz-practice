@@ -67,6 +67,7 @@ const els = {
     result: document.getElementById('result-view'),
     notes: document.getElementById('notes-view'),
     analysis: document.getElementById('analysis-view'),
+    weaknessReviewTargets: document.getElementById('weakness-review-targets-view'),
   },
   form: document.getElementById('settings-form'),
   sectionCheckboxes: document.getElementById('section-checkboxes'),
@@ -88,6 +89,9 @@ const els = {
   analysisBackHomeButtons: document.querySelectorAll('[data-analysis-back-home]'),
   analysisContainer: document.getElementById('analysis-container'),
   weaknessReviewTargetsPanel: document.getElementById('weakness-review-targets-panel'),
+  weaknessReviewTargetsBackAnalysis: document.getElementById(
+    'weakness-review-targets-back-analysis'
+  ),
   notesList: document.getElementById('notes-list'),
   notesEmpty: document.getElementById('notes-empty'),
   deleteAllNotes: document.getElementById('delete-all-notes'),
@@ -256,6 +260,9 @@ function attachEvents() {
       showView('home');
     });
   });
+  els.weaknessReviewTargetsBackAnalysis?.addEventListener('click', () => {
+    showView('analysis');
+  });
   els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
 
   els.suspendToHome.addEventListener('click', () => {
@@ -372,7 +379,6 @@ function openAnalysisView() {
 function renderAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
   renderAnalysisSummary(els.analysisContainer, state.analysis);
-  renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel);
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
   });
@@ -393,7 +399,7 @@ function handleWeaknessReviewTargetRequest(event) {
     condition,
   });
   renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel, targetPlan);
-  els.weaknessReviewTargetsPanel?.scrollIntoView({ block: 'nearest' });
+  showView('weaknessReviewTargets');
 }
 
 function buildWeaknessReviewTargetCondition(trigger) {
