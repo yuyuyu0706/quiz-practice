@@ -733,7 +733,18 @@ function createTagSummaryItem(tagSource) {
   count.className = 'analysis-tag-item__count';
   count.textContent = `${formatSummaryCount(tag.taggedQuestionCount)}問`;
 
-  item.append(label, count);
+  const actions = document.createElement('dd');
+  actions.className = 'analysis-tag-item__actions';
+  actions.appendChild(
+    createReviewTargetButton({
+      label: 'この理由の問題を見る',
+      targetType: 'wrongReasonTag',
+      targetValueName: 'reviewTargetTag',
+      targetValue: tag.id,
+    })
+  );
+
+  item.append(label, count, actions);
   return item;
 }
 
@@ -776,6 +787,17 @@ function createSummarySection(summarySource, titleText, titleId, options = {}) {
   );
 
   section.append(title, statusMessage, metrics, createAccuracyFootnote(summary));
+  const sectionNumber = formatSectionNumber(summary.section);
+  if (sectionNumber) {
+    section.appendChild(
+      createReviewTargetButton({
+        label: 'このSectionの問題を見る',
+        targetType: 'section',
+        targetValueName: 'reviewTargetSection',
+        targetValue: sectionNumber,
+      })
+    );
+  }
   return section;
 }
 
@@ -802,6 +824,23 @@ function createSectionSummaries(sectionsSource) {
 
   content.appendChild(list);
   return wrapper;
+}
+
+function createReviewTargetButton({
+  label,
+  targetType,
+  targetValueName,
+  targetValue,
+  disabled = false,
+}) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'analysis-review-target-button';
+  button.textContent = label;
+  button.dataset.reviewTargetType = targetType;
+  button.dataset[targetValueName] = String(targetValue ?? '');
+  button.disabled = disabled || !button.dataset[targetValueName];
+  return button;
 }
 
 function createAnalysisMetrics(summary) {

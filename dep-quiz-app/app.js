@@ -23,6 +23,7 @@ import {
 } from './notes.js';
 import { buildLearningHistoryResetPlan } from './learning-history-reset.js';
 import { buildWeaknessAnalysis } from './analysis.js';
+import { buildWeaknessReviewTargetPlan } from './weakness-review-targets.js';
 import { loadQuestions } from './questions.js';
 import {
   createQuizSession,
@@ -181,6 +182,7 @@ function attachEvents() {
     showView('notes');
   });
   els.analysisBtn?.addEventListener('click', openAnalysisView);
+  els.analysisContainer?.addEventListener('click', handleWeaknessReviewTargetRequest);
   els.learningHistoryResetEntry?.addEventListener('click', openLearningHistoryResetDialog);
   els.learningHistoryResetDialogCancel?.addEventListener('click', closeLearningHistoryResetDialog);
   els.learningHistoryResetDialogConfirm?.addEventListener(
@@ -375,6 +377,39 @@ function renderAnalysisView() {
     activeSession: loadSession(),
   });
   updateLearningHistoryResetEntry();
+}
+
+function handleWeaknessReviewTargetRequest(event) {
+  const trigger =
+    event.target instanceof Element ? event.target.closest('[data-review-target-type]') : null;
+  if (!(trigger instanceof HTMLElement) || !els.analysisContainer?.contains(trigger)) return;
+
+  const condition = buildWeaknessReviewTargetCondition(trigger);
+  if (!condition) return;
+
+  const targetPlan = buildWeaknessReviewTargetPlan({
+    questions: state.questions,
+    progress: state.progress,
+    condition,
+  });
+  renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel, targetPlan);
+  els.weaknessReviewTargetsPanel?.scrollIntoView({ block: 'nearest' });
+}
+
+function buildWeaknessReviewTargetCondition(trigger) {
+  const targetType = trigger.dataset.reviewTargetType;
+
+  if (targetType === 'section') {
+    const section = trigger.dataset.reviewTargetSection?.trim();
+    return section ? { type: 'section', section } : null;
+  }
+
+  if (targetType === 'wrongReasonTag') {
+    const tag = trigger.dataset.reviewTargetTag?.trim();
+    return tag ? { type: 'wrongReasonTag', tag } : null;
+  }
+
+  return null;
 }
 
 function updateLearningHistoryResetEntry() {
