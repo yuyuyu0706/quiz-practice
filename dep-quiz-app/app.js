@@ -23,6 +23,7 @@ import {
 } from './notes.js';
 import { buildLearningHistoryResetPlan } from './learning-history-reset.js';
 import { buildWeaknessAnalysis } from './analysis.js';
+import { buildWeaknessReviewTargetPlan } from './weakness-review-targets.js';
 import { loadQuestions } from './questions.js';
 import {
   createQuizSession,
@@ -44,6 +45,7 @@ import {
   toggleNoteEditor,
   renderStorageRepairNotice,
   renderAnalysisSummary,
+  renderWeaknessReviewTargetPanel,
   renderLearningHistoryResetSummary,
 } from './render.js';
 
@@ -85,6 +87,7 @@ const els = {
   ),
   analysisBackHomeButtons: document.querySelectorAll('[data-analysis-back-home]'),
   analysisContainer: document.getElementById('analysis-container'),
+  weaknessReviewTargetsPanel: document.getElementById('weakness-review-targets-panel'),
   notesList: document.getElementById('notes-list'),
   notesEmpty: document.getElementById('notes-empty'),
   deleteAllNotes: document.getElementById('delete-all-notes'),
@@ -179,6 +182,7 @@ function attachEvents() {
     showView('notes');
   });
   els.analysisBtn?.addEventListener('click', openAnalysisView);
+  els.views.analysis?.addEventListener('click', handleWeaknessReviewTargetClick);
   els.learningHistoryResetEntry?.addEventListener('click', openLearningHistoryResetDialog);
   els.learningHistoryResetDialogCancel?.addEventListener('click', closeLearningHistoryResetDialog);
   els.learningHistoryResetDialogConfirm?.addEventListener(
@@ -368,10 +372,43 @@ function openAnalysisView() {
 function renderAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
   renderAnalysisSummary(els.analysisContainer, state.analysis);
+  renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel);
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
   });
   updateLearningHistoryResetEntry();
+}
+
+function handleWeaknessReviewTargetClick(event) {
+  if (!(event.target instanceof Element)) return;
+
+  const button = event.target.closest('[data-review-target-type]');
+  if (!button || !els.views.analysis?.contains(button)) return;
+
+  const condition = buildWeaknessReviewTargetCondition(button);
+  if (!condition) return;
+
+  const targetPlan = buildWeaknessReviewTargetPlan({
+    questions: state.questions,
+    progress: state.progress,
+    condition,
+  });
+  renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel, targetPlan);
+  els.weaknessReviewTargetsPanel?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
+function buildWeaknessReviewTargetCondition(button) {
+  if (button.dataset.reviewTargetType === 'section') {
+    const section = button.dataset.reviewTargetSection;
+    return section ? { type: 'section', section } : null;
+  }
+
+  if (button.dataset.reviewTargetType === 'wrongReasonTag') {
+    const tag = button.dataset.reviewTargetTag;
+    return tag ? { type: 'wrongReasonTag', tag } : null;
+  }
+
+  return null;
 }
 
 function updateLearningHistoryResetEntry() {

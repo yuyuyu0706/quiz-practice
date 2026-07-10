@@ -380,6 +380,135 @@ export function renderAnalysisSummary(container, analysis) {
   container.appendChild(createSectionSummaries(result.sections));
 }
 
+export function renderWeaknessReviewTargetPanel(panel, targetPlan) {
+  if (!panel) return;
+
+  panel.replaceChildren();
+
+  if (!targetPlan || typeof targetPlan !== 'object') {
+    panel.hidden = true;
+    return;
+  }
+
+  panel.hidden = false;
+
+  const title = document.createElement('h3');
+  title.id = 'weakness-review-targets-panel-title';
+  title.textContent = '復習対象の問題';
+
+  const condition = document.createElement('p');
+  condition.className = 'weakness-review-targets-panel__condition';
+  condition.textContent = `条件: ${formatTargetConditionLabel(targetPlan.condition)}`;
+
+  const count = document.createElement('p');
+  count.className = 'weakness-review-targets-panel__count';
+  count.textContent = `対象件数: ${formatSummaryCount(targetPlan.targetCount)}問`;
+
+  panel.append(title, condition, count);
+
+  if (targetPlan.emptyState) {
+    const emptyMessage = document.createElement('p');
+    emptyMessage.className = 'weakness-review-targets-panel__empty';
+    emptyMessage.textContent = 'この条件に該当する問題はありません。';
+    panel.appendChild(emptyMessage);
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'weakness-review-targets-list';
+
+  const items = Array.isArray(targetPlan.items) ? targetPlan.items : [];
+  items.forEach((item) => list.appendChild(createWeaknessReviewTargetItem(item)));
+
+  panel.appendChild(list);
+}
+
+function createWeaknessReviewTargetItem(itemSource) {
+  const item = itemSource && typeof itemSource === 'object' ? itemSource : {};
+  const article = document.createElement('article');
+  article.className = 'weakness-review-target-item';
+
+  const heading = document.createElement('h4');
+  heading.className = 'weakness-review-target-item__title';
+  heading.textContent = formatTargetQuestionTitle(item);
+
+  const question = document.createElement('p');
+  question.className = 'weakness-review-target-item__question';
+  question.textContent = getQuestionPreview(item.questionText) || '問題文を表示できません。';
+
+  const meta = document.createElement('dl');
+  meta.className = 'weakness-review-target-item__meta';
+  meta.append(
+    createTargetMetaItem('学習状態', formatTargetStatus(item.status)),
+    createTargetMetaItem('解答回数', `${formatSummaryCount(item.seenCount)}回`),
+    createTargetMetaItem('正答数', formatSummaryCount(item.correctCount)),
+    createTargetMetaItem('誤答数', formatSummaryCount(item.wrongCount))
+  );
+
+  const badges = document.createElement('div');
+  badges.className = 'weakness-review-target-item__badges';
+  appendTargetBadge(badges, item.hasWrongReasonTags, '誤答理由あり');
+  appendTargetBadge(badges, item.hasNote, 'メモあり');
+  appendTargetBadge(badges, item.bookmarked, 'ブックマークあり');
+
+  article.append(heading, question, meta);
+  if (badges.childElementCount > 0) {
+    article.appendChild(badges);
+  }
+
+  return article;
+}
+
+function createTargetMetaItem(labelText, valueText) {
+  const item = document.createElement('div');
+  item.className = 'weakness-review-target-item__meta-item';
+
+  const label = document.createElement('dt');
+  label.textContent = labelText;
+
+  const value = document.createElement('dd');
+  value.textContent = valueText;
+
+  item.append(label, value);
+  return item;
+}
+
+function appendTargetBadge(container, enabled, label) {
+  if (!enabled) return;
+
+  const badge = document.createElement('span');
+  badge.className = 'weakness-review-target-item__badge';
+  badge.textContent = label;
+  container.appendChild(badge);
+}
+
+function formatTargetQuestionTitle(item) {
+  const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : '問題ID未設定';
+  const section = formatSectionNumber(item.section);
+  const sectionTitle = typeof item.sectionTitle === 'string' ? item.sectionTitle.trim() : '';
+  const sectionLabel = section ? `Section ${section}` : 'Section';
+  return sectionTitle ? `${id} / ${sectionLabel}：${sectionTitle}` : `${id} / ${sectionLabel}`;
+}
+
+function formatTargetConditionLabel(conditionSource) {
+  const condition = conditionSource && typeof conditionSource === 'object' ? conditionSource : {};
+  if (typeof condition.label === 'string' && condition.label.trim()) {
+    return condition.label.trim();
+  }
+
+  return '条件未指定';
+}
+
+function formatTargetStatus(status) {
+  const labels = {
+    unseen: '未学習',
+    answered: '回答済み',
+    correct: '正答あり',
+    wrong: '誤答あり',
+  };
+  return labels[status] ?? '状態未設定';
+}
+
 function createAnalysisDisclosure(titleId, titleText) {
   const details = document.createElement('details');
   details.className = 'analysis-disclosure';
@@ -604,7 +733,14 @@ function createTagSummaryItem(tagSource) {
   count.className = 'analysis-tag-item__count';
   count.textContent = `${formatSummaryCount(tag.taggedQuestionCount)}問`;
 
-  item.append(label, count);
+  const action = createReviewTargetButton({
+    label: 'この理由の問題を見る',
+    type: 'wrongReasonTag',
+    valueName: 'tag',
+    value: typeof tag.id === 'string' ? tag.id : '',
+  });
+
+  item.append(label, count, action);
   return item;
 }
 
@@ -647,6 +783,18 @@ function createSummarySection(summarySource, titleText, titleId, options = {}) {
   );
 
   section.append(title, statusMessage, metrics, createAccuracyFootnote(summary));
+
+  if (options.reviewTargetSection) {
+    section.appendChild(
+      createReviewTargetButton({
+        label: 'このSectionの問題を見る',
+        type: 'section',
+        valueName: 'section',
+        value: options.reviewTargetSection,
+      })
+    );
+  }
+
   return section;
 }
 
@@ -665,7 +813,10 @@ function createSectionSummaries(sectionsSource) {
       sectionSummary,
       getSectionSummaryTitle(sectionSummary),
       headingId,
-      { sectionHeading: getSectionHeadingParts(sectionSummary) }
+      {
+        sectionHeading: getSectionHeadingParts(sectionSummary),
+        reviewTargetSection: formatSectionNumber(sectionSummary?.section),
+      }
     );
     card.classList.add('analysis-section-card');
     list.appendChild(card);
@@ -673,6 +824,21 @@ function createSectionSummaries(sectionsSource) {
 
   content.appendChild(list);
   return wrapper;
+}
+
+function createReviewTargetButton({ label, type, valueName, value }) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'analysis-review-target-button';
+  button.dataset.reviewTargetType = type;
+  button.dataset[`reviewTarget${capitalizeDatasetKey(valueName)}`] = value;
+  button.textContent = label;
+  return button;
+}
+
+function capitalizeDatasetKey(value) {
+  const text = typeof value === 'string' ? value : '';
+  return text ? `${text.charAt(0).toUpperCase()}${text.slice(1)}` : '';
 }
 
 function createAnalysisMetrics(summary) {

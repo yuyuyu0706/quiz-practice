@@ -1590,3 +1590,138 @@ input:focus-visible,
     width: 100%;
   }
 }
+
+.weakness-review-targets-panel {
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid var(--dep-primary-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, var(--dep-surface-tint));
+}
+.weakness-review-targets-panel h3 {
+  margin: 0 0 10px;
+}
+.weakness-review-targets-panel__condition,
+.weakness-review-targets-panel__count,
+.weakness-review-targets-panel__empty {
+  min-width: 0;
+  margin: 0 0 10px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.weakness-review-targets-panel__condition,
+.weakness-review-targets-panel__empty {
+  color: var(--muted);
+}
+.weakness-review-targets-panel__count {
+  color: var(--text);
+  font-weight: 700;
+}
+.weakness-review-targets-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.weakness-review-target-item {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+.weakness-review-target-item__title {
+  min-width: 0;
+  margin: 0 0 8px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.weakness-review-target-item__question {
+  min-width: 0;
+  margin: 0 0 10px;
+  color: var(--muted);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.weakness-review-target-item__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.weakness-review-target-item__meta-item {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--dep-surface-tint);
+}
+.weakness-review-target-item__meta-item dt {
+  margin: 0 0 3px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.weakness-review-target-item__meta-item dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.weakness-review-target-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.weakness-review-target-item__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 9px;
+  border: 1px solid var(--dep-primary-border);
+  border-radius: 999px;
+  background: var(--dep-primary-soft);
+  color: #163923;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+@media (max-width: 480px) {
+  .weakness-review-targets-panel,
+  .weakness-review-target-item {
+    min-width: 0;
+  }
+
+  .weakness-review-targets-panel {
+    margin-top: 16px;
+    padding: 12px;
+  }
+
+  .weakness-review-target-item {
+    padding: 12px;
+  }
+
+  .weakness-review-target-item__meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.analysis-review-target-button {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-color: var(--dep-primary-border);
+  background: #fff;
+  color: var(--dep-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.analysis-review-target-button:hover:not(:disabled),
+.analysis-review-target-button:focus-visible:not(:disabled) {
+  background: var(--dep-primary-soft);
+}
+.analysis-section-card .analysis-review-target-button {
+  margin-top: 12px;
+}
