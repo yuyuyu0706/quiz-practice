@@ -167,7 +167,7 @@ function attachEvents() {
       return;
     }
     state.session = saved;
-    showView('quiz');
+    showView('quiz', { scrollToTop: false });
     renderQuestion({ scrollToTop: true });
   });
 
@@ -543,7 +543,7 @@ function startSession(forcedMode = null) {
   state.session = session;
 
   persistSession();
-  showView('quiz');
+  showView('quiz', { scrollToTop: false });
   renderQuestion({ scrollToTop: true });
 }
 
@@ -740,9 +740,21 @@ function clearSession() {
   clearActiveSession();
 }
 
-function showView(name) {
+function showView(name, options = {}) {
+  const { scrollToTop = true } = options;
   closeSecondaryActions({ forceDesktopState: true });
   switchView(els.views, name);
+  if (scrollToTop) {
+    scrollWindowToTop();
+  }
+}
+
+function scrollWindowToTop() {
+  const scrollOptions = { top: 0, left: 0, behavior: 'auto' };
+  window.scrollTo(scrollOptions);
+  window.requestAnimationFrame?.(() => {
+    window.scrollTo(scrollOptions);
+  });
 }
 
 function buildSectionCheckboxes() {
@@ -936,7 +948,7 @@ function startSingleQuestionSession(questionId) {
     mode: 'single',
   });
   persistSession();
-  showView('quiz');
+  showView('quiz', { scrollToTop: false });
   renderQuestion({ scrollToTop: true });
 }
 
