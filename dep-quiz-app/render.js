@@ -428,12 +428,15 @@ export function renderWeaknessReviewTargetPanel(panel, targetPlan) {
   list.className = 'weakness-review-targets-list';
 
   const items = Array.isArray(targetPlan.items) ? targetPlan.items : [];
-  items.forEach((item) => list.appendChild(createWeaknessReviewTargetItem(item)));
+  const omitSectionInCards = targetPlan.condition?.type === 'section';
+  items.forEach((item) =>
+    list.appendChild(createWeaknessReviewTargetItem(item, { omitSection: omitSectionInCards }))
+  );
 
   panel.appendChild(list);
 }
 
-function createWeaknessReviewTargetItem(itemSource) {
+function createWeaknessReviewTargetItem(itemSource, options = {}) {
   const item = itemSource && typeof itemSource === 'object' ? itemSource : {};
   const article = document.createElement('article');
   article.className = 'weakness-review-target-item';
@@ -445,11 +448,14 @@ function createWeaknessReviewTargetItem(itemSource) {
   id.className = 'weakness-review-target-item__id';
   id.textContent = formatTargetQuestionId(item.id);
 
-  const section = document.createElement('p');
-  section.className = 'weakness-review-target-item__section';
-  section.textContent = formatTargetSectionLabel(item);
+  header.appendChild(id);
 
-  header.append(id, section);
+  if (options.omitSection !== true) {
+    const section = document.createElement('p');
+    section.className = 'weakness-review-target-item__section';
+    section.textContent = formatTargetSectionLabel(item);
+    header.appendChild(section);
+  }
 
   const question = document.createElement('p');
   question.className = 'weakness-review-target-item__question';

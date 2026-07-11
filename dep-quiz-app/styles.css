@@ -1712,27 +1712,35 @@ input:focus-visible,
 }
 .weakness-review-target-item__meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 6px;
   min-width: 0;
   margin: 0;
 }
 .weakness-review-target-item__meta-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 2px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 7px 9px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--dep-surface-tint);
 }
 .weakness-review-target-item__meta-item dt {
+  flex: 0 1 auto;
   min-width: 0;
-  margin: 0 0 3px;
+  margin: 0;
   color: var(--muted);
   font-size: 0.82rem;
+  font-weight: 700;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
 .weakness-review-target-item__meta-item dd {
+  flex: 0 1 auto;
   min-width: 0;
   margin: 0;
   color: var(--text);
@@ -1779,10 +1787,10 @@ input:focus-visible,
 
   .weakness-review-target-item__meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
   }
 
   .weakness-review-target-item__meta-item {
-    padding: 7px 8px;
+    column-gap: 6px;
+    padding: 6px 8px;
   }
 }
