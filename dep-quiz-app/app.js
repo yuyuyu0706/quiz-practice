@@ -269,9 +269,10 @@ function attachEvents() {
     if (!state.session) return;
     closeSecondaryActions();
     persistSession();
-    showView('home');
+    showView('home', { scrollToTop: false });
     els.homeMessage.textContent = '中断状態を保存しました。';
     refreshResumeUI();
+    scrollHomeActionsIntoViewOnMobile();
   });
 
   document.addEventListener('keydown', handleKeyboard);
@@ -755,6 +756,11 @@ function scrollWindowToTop() {
   window.requestAnimationFrame?.(() => {
     window.scrollTo(scrollOptions);
   });
+}
+
+function scrollHomeActionsIntoViewOnMobile() {
+  if (!isMobileViewport()) return;
+  els.form?.querySelector('.button-row')?.scrollIntoView({ behavior: 'auto', block: 'center' });
 }
 
 function buildSectionCheckboxes() {
