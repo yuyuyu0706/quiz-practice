@@ -407,9 +407,19 @@ export function renderWeaknessReviewTargetPanel(panel, targetPlan) {
   panel.append(title, condition, count);
 
   if (targetPlan.emptyState) {
-    const emptyMessage = document.createElement('p');
+    const emptyMessage = document.createElement('div');
     emptyMessage.className = 'weakness-review-targets-panel__empty';
-    emptyMessage.textContent = 'この条件に該当する問題はありません。';
+
+    const emptyTitle = document.createElement('p');
+    emptyTitle.className = 'weakness-review-targets-panel__empty-title';
+    emptyTitle.textContent = '該当する問題はありません';
+
+    const emptyDescription = document.createElement('p');
+    emptyDescription.className = 'weakness-review-targets-panel__empty-description';
+    emptyDescription.textContent =
+      '選択した条件に一致する問題がありません。弱点分析画面に戻り、別のSectionまたは誤答理由タグを選び直してください。';
+
+    emptyMessage.append(emptyTitle, emptyDescription);
     panel.appendChild(emptyMessage);
     return;
   }
@@ -418,19 +428,34 @@ export function renderWeaknessReviewTargetPanel(panel, targetPlan) {
   list.className = 'weakness-review-targets-list';
 
   const items = Array.isArray(targetPlan.items) ? targetPlan.items : [];
-  items.forEach((item) => list.appendChild(createWeaknessReviewTargetItem(item)));
+  const omitSectionInCards = targetPlan.condition?.type === 'section';
+  items.forEach((item) =>
+    list.appendChild(createWeaknessReviewTargetItem(item, { omitSection: omitSectionInCards }))
+  );
 
   panel.appendChild(list);
 }
 
-function createWeaknessReviewTargetItem(itemSource) {
+function createWeaknessReviewTargetItem(itemSource, options = {}) {
   const item = itemSource && typeof itemSource === 'object' ? itemSource : {};
   const article = document.createElement('article');
   article.className = 'weakness-review-target-item';
 
-  const heading = document.createElement('h4');
-  heading.className = 'weakness-review-target-item__title';
-  heading.textContent = formatTargetQuestionTitle(item);
+  const header = document.createElement('div');
+  header.className = 'weakness-review-target-item__header';
+
+  const id = document.createElement('h4');
+  id.className = 'weakness-review-target-item__id';
+  id.textContent = formatTargetQuestionId(item.id);
+
+  header.appendChild(id);
+
+  if (options.omitSection !== true) {
+    const section = document.createElement('p');
+    section.className = 'weakness-review-target-item__section';
+    section.textContent = formatTargetSectionLabel(item);
+    header.appendChild(section);
+  }
 
   const question = document.createElement('p');
   question.className = 'weakness-review-target-item__question';
@@ -439,19 +464,19 @@ function createWeaknessReviewTargetItem(itemSource) {
   const meta = document.createElement('dl');
   meta.className = 'weakness-review-target-item__meta';
   meta.append(
-    createTargetMetaItem('学習状態', formatTargetStatus(item.status)),
-    createTargetMetaItem('解答回数', `${formatSummaryCount(item.seenCount)}回`),
-    createTargetMetaItem('正答数', formatSummaryCount(item.correctCount)),
-    createTargetMetaItem('誤答数', formatSummaryCount(item.wrongCount))
+    createTargetMetaItem('状態', formatTargetStatus(item.status)),
+    createTargetMetaItem('解答', `${formatSummaryCount(item.seenCount)}回`),
+    createTargetMetaItem('正答', `${formatSummaryCount(item.correctCount)}問`),
+    createTargetMetaItem('誤答', `${formatSummaryCount(item.wrongCount)}問`)
   );
 
   const badges = document.createElement('div');
   badges.className = 'weakness-review-target-item__badges';
   appendTargetBadge(badges, item.hasWrongReasonTags, '誤答理由あり');
   appendTargetBadge(badges, item.hasNote, 'メモあり');
-  appendTargetBadge(badges, item.bookmarked, 'ブックマークあり');
+  appendTargetBadge(badges, item.bookmarked, 'ブックマーク');
 
-  article.append(heading, question, meta);
+  article.append(header, question, meta);
   if (badges.childElementCount > 0) {
     article.appendChild(badges);
   }
@@ -482,12 +507,16 @@ function appendTargetBadge(container, enabled, label) {
   container.appendChild(badge);
 }
 
-function formatTargetQuestionTitle(item) {
-  const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : '問題ID未設定';
+function formatTargetQuestionId(idSource) {
+  const id = typeof idSource === 'string' && idSource.trim() ? idSource.trim() : '問題ID未設定';
+  return `問題ID: ${id}`;
+}
+
+function formatTargetSectionLabel(item) {
   const section = formatSectionNumber(item.section);
   const sectionTitle = typeof item.sectionTitle === 'string' ? item.sectionTitle.trim() : '';
   const sectionLabel = section ? `Section ${section}` : 'Section';
-  return sectionTitle ? `${id} / ${sectionLabel}：${sectionTitle}` : `${id} / ${sectionLabel}`;
+  return sectionTitle ? `${sectionLabel}：${sectionTitle}` : sectionLabel;
 }
 
 function formatTargetConditionLabel(conditionSource) {

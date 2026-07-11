@@ -151,6 +151,7 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
     await expect(panel).toContainText(`対象件数: ${groups[0].length}問`);
     await expect(panel).toContainText(groups[0][0].id);
     await expect(panel).toContainText(groups[0][1].id);
+    await expect(panel.locator('.weakness-review-target-item__section')).toHaveCount(0);
 
     await expectBackToAnalysis(page);
     await expect(getStorageSnapshot(page)).resolves.toEqual(before);
@@ -216,6 +217,18 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
     await expect(panel).toContainText(taggedQuestion.id);
     await expect(panel).toContainText(otherTaggedQuestion.id);
     await expect(panel).not.toContainText(untaggedQuestion.id);
+    const itemSections = panel.locator('.weakness-review-target-item__section');
+    await expect(itemSections).toHaveCount(2);
+    await expect(
+      itemSections.filter({
+        hasText: `Section ${taggedQuestion.section}：${taggedQuestion.sectionTitle}`,
+      })
+    ).toHaveCount(1);
+    await expect(
+      itemSections.filter({
+        hasText: `Section ${otherTaggedQuestion.section}：${otherTaggedQuestion.sectionTitle}`,
+      })
+    ).toHaveCount(1);
 
     await expectBackToAnalysis(page);
     await expect(getStorageSnapshot(page)).resolves.toEqual(before);

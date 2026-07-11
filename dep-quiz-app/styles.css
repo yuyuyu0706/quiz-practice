@@ -1621,6 +1621,7 @@ input:focus-visible,
 }
 
 .weakness-review-targets-panel {
+  min-width: 0;
   margin-top: 22px;
   padding: 16px;
   border: 1px solid var(--dep-primary-border);
@@ -1642,26 +1643,64 @@ input:focus-visible,
 .weakness-review-targets-panel__empty {
   color: var(--muted);
 }
+.weakness-review-targets-panel__empty {
+  padding: 14px;
+  border: 1px dashed var(--dep-primary-border);
+  border-radius: 14px;
+  background: #fff;
+}
+.weakness-review-targets-panel__empty-title,
+.weakness-review-targets-panel__empty-description {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.weakness-review-targets-panel__empty-title {
+  color: var(--text);
+  font-weight: 700;
+}
+.weakness-review-targets-panel__empty-description {
+  margin-top: 6px;
+  color: var(--muted);
+}
 .weakness-review-targets-panel__count {
   color: var(--text);
   font-weight: 700;
 }
 .weakness-review-targets-list {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 12px;
   margin-top: 12px;
 }
 .weakness-review-target-item {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   padding: 14px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: #fff;
 }
-.weakness-review-target-item__title {
+.weakness-review-target-item__header {
+  display: grid;
+  gap: 4px;
   min-width: 0;
   margin: 0 0 8px;
+}
+.weakness-review-target-item__id {
+  min-width: 0;
+  margin: 0;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.weakness-review-target-item__section {
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .weakness-review-target-item__question {
@@ -1673,33 +1712,47 @@ input:focus-visible,
 }
 .weakness-review-target-item__meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 6px;
+  min-width: 0;
   margin: 0;
 }
 .weakness-review-target-item__meta-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 2px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 7px 9px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--dep-surface-tint);
 }
 .weakness-review-target-item__meta-item dt {
-  margin: 0 0 3px;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
   color: var(--muted);
   font-size: 0.82rem;
+  font-weight: 700;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .weakness-review-target-item__meta-item dd {
+  flex: 0 1 auto;
+  min-width: 0;
   margin: 0;
   color: var(--text);
   font-weight: 700;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .weakness-review-target-item__badges {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
   margin-top: 10px;
 }
 .weakness-review-target-item__badge {
@@ -1714,6 +1767,7 @@ input:focus-visible,
   font-size: 0.84rem;
   font-weight: 700;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 480px) {
@@ -1733,5 +1787,10 @@ input:focus-visible,
 
   .weakness-review-target-item__meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .weakness-review-target-item__meta-item {
+    column-gap: 6px;
+    padding: 6px 8px;
   }
 }
