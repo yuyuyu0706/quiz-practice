@@ -1,8 +1,8 @@
-import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
 import { gotoDepHome } from './helpers';
 
-type Question = { id: string; section: string; sectionTitle?: string };
+type Question = { id: string; section: string; sectionTitle?: string; question?: string };
 type ProgressEntry = {
   seenCount: number;
   correctCount: number;
@@ -112,6 +112,52 @@ async function expectTargetsViewAtTop(page: Page) {
     '別の条件を確認する場合は、弱点分析画面に戻って選び直してください。'
   );
   await page.waitForFunction(() => window.scrollY === 0);
+}
+
+async function expectNoHorizontalOverflow(page: Page) {
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => ({
+        documentOverflow:
+          document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        targetsViewOverflow: (() => {
+          const view = document.querySelector('#weakness-review-targets-view');
+          return view ? view.scrollWidth > view.clientWidth : true;
+        })(),
+      }));
+    })
+    .toEqual({ documentOverflow: false, targetsViewOverflow: false });
+}
+
+async function expectTargetCardsFitViewport(page: Page) {
+  const overflowingCards = await page
+    .locator('.weakness-review-target-item')
+    .evaluateAll((cards) => {
+      const viewportWidth = document.documentElement.clientWidth;
+      return cards
+        .map((card) => {
+          const rect = card.getBoundingClientRect();
+          return { left: rect.left, right: rect.right, viewportWidth };
+        })
+        .filter(({ left, right, viewportWidth }) => left < 0 || right > viewportWidth);
+    });
+  expect(overflowingCards).toEqual([]);
+}
+
+async function expectTargetCardMeta(item: Locator, values: Record<string, string>) {
+  for (const [label, value] of Object.entries(values)) {
+    const metaItems = item.locator('.weakness-review-target-item__meta-item');
+    const count = await metaItems.count();
+    let matched = false;
+    for (let index = 0; index < count; index += 1) {
+      const metaItem = metaItems.nth(index);
+      if ((await metaItem.locator('dt').textContent())?.trim() !== label) continue;
+      await expect(metaItem.locator('dd')).toHaveText(value);
+      matched = true;
+      break;
+    }
+    expect(matched).toBe(true);
+  }
 }
 
 async function expectBackToAnalysis(page: Page) {
@@ -229,6 +275,74 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
         hasText: `Section ${otherTaggedQuestion.section}：${otherTaggedQuestion.sectionTitle}`,
       })
     ).toHaveCount(1);
+
+    await expectBackToAnalysis(page);
+    await expect(getStorageSnapshot(page)).resolves.toEqual(before);
+  });
+
+  test('guarantees mobile target list quality keeps cards readable without horizontal overflow', async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    expect(groups[0].length).toBeGreaterThanOrEqual(2);
+
+    const firstQuestion = groups[0][0];
+    const secondQuestion = groups[0][1];
+    const progress = {
+      [firstQuestion.id]: progressEntry({
+        seenCount: 4,
+        correctCount: 1,
+        wrongCount: 3,
+        wrongReasonTags: [tagId],
+        noteText:
+          'スマホ幅でも補助ラベルと長めのメモ由来状態がカード幅を押し広げないことを確認するためのメモ',
+        bookmark: true,
+      }),
+      [secondQuestion.id]: progressEntry({ seenCount: 2, correctCount: 2, wrongCount: 0 }),
+    };
+    await seedStorage(page, progress, activeSessionFixture(firstQuestion.id));
+    await openAnalysis(page);
+
+    const before = await getStorageSnapshot(page);
+    await page.locator('.analysis-sections.analysis-disclosure > summary').click();
+    await page
+      .locator('.analysis-section-card')
+      .first()
+      .getByRole('button', { name: 'このSectionの問題を見る' })
+      .click();
+
+    await expectTargetsViewAtTop(page);
+    const panel = page.locator('#weakness-review-targets-panel');
+    await expect(panel).toContainText(
+      `条件: Section ${firstQuestion.section}：${firstQuestion.sectionTitle}`
+    );
+    await expect(panel).toContainText(`対象件数: ${groups[0].length}問`);
+
+    const cards = panel.locator('.weakness-review-target-item');
+    await expect(cards).toHaveCount(groups[0].length);
+    const firstCard = cards.filter({ hasText: firstQuestion.id });
+    await expect(firstCard.locator('.weakness-review-target-item__id')).toContainText(
+      firstQuestion.id
+    );
+    await expect(firstCard.locator('.weakness-review-target-item__question')).toContainText(
+      (firstQuestion.question ?? '').slice(0, 20)
+    );
+    await expectTargetCardMeta(firstCard, {
+      状態: '誤答あり',
+      解答: '4回',
+      正答: '1問',
+      誤答: '3問',
+    });
+    await expect(firstCard.locator('.weakness-review-target-item__badge')).toContainText([
+      '誤答理由あり',
+      'メモあり',
+      'ブックマーク',
+    ]);
+    await expect(panel.locator('.weakness-review-target-item__section')).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+    await expectTargetCardsFitViewport(page);
 
     await expectBackToAnalysis(page);
     await expect(getStorageSnapshot(page)).resolves.toEqual(before);
