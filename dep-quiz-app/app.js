@@ -261,6 +261,7 @@ function attachEvents() {
     });
   });
   els.weaknessReviewTargetsBackAnalysis?.addEventListener('click', () => {
+    renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel);
     showView('analysis');
   });
   els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
