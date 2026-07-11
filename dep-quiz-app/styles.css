@@ -1113,6 +1113,21 @@ input:focus-visible,
   line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
+.analysis-tag-item__actions {
+  margin: 8px 0 0;
+}
+.analysis-review-target-button {
+  min-height: 38px;
+  padding: 7px 10px;
+  border-color: var(--dep-primary-border);
+  color: var(--primary-strong);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.analysis-section-card .analysis-review-target-button {
+  width: 100%;
+  margin-top: 10px;
+}
 .analysis-tag-summary__note {
   min-width: 0;
   margin: 10px 0 0;

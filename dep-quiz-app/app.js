@@ -23,6 +23,7 @@ import {
 } from './notes.js';
 import { buildLearningHistoryResetPlan } from './learning-history-reset.js';
 import { buildWeaknessAnalysis } from './analysis.js';
+import { buildWeaknessReviewTargetPlan } from './weakness-review-targets.js';
 import { loadQuestions } from './questions.js';
 import {
   createQuizSession,
@@ -66,6 +67,7 @@ const els = {
     result: document.getElementById('result-view'),
     notes: document.getElementById('notes-view'),
     analysis: document.getElementById('analysis-view'),
+    weaknessReviewTargets: document.getElementById('weakness-review-targets-view'),
   },
   form: document.getElementById('settings-form'),
   sectionCheckboxes: document.getElementById('section-checkboxes'),
@@ -87,6 +89,9 @@ const els = {
   analysisBackHomeButtons: document.querySelectorAll('[data-analysis-back-home]'),
   analysisContainer: document.getElementById('analysis-container'),
   weaknessReviewTargetsPanel: document.getElementById('weakness-review-targets-panel'),
+  weaknessReviewTargetsBackAnalysis: document.getElementById(
+    'weakness-review-targets-back-analysis'
+  ),
   notesList: document.getElementById('notes-list'),
   notesEmpty: document.getElementById('notes-empty'),
   deleteAllNotes: document.getElementById('delete-all-notes'),
@@ -162,7 +167,7 @@ function attachEvents() {
       return;
     }
     state.session = saved;
-    showView('quiz');
+    showView('quiz', { scrollToTop: false });
     renderQuestion({ scrollToTop: true });
   });
 
@@ -181,6 +186,7 @@ function attachEvents() {
     showView('notes');
   });
   els.analysisBtn?.addEventListener('click', openAnalysisView);
+  els.analysisContainer?.addEventListener('click', handleWeaknessReviewTargetRequest);
   els.learningHistoryResetEntry?.addEventListener('click', openLearningHistoryResetDialog);
   els.learningHistoryResetDialogCancel?.addEventListener('click', closeLearningHistoryResetDialog);
   els.learningHistoryResetDialogConfirm?.addEventListener(
@@ -254,15 +260,19 @@ function attachEvents() {
       showView('home');
     });
   });
+  els.weaknessReviewTargetsBackAnalysis?.addEventListener('click', () => {
+    showView('analysis');
+  });
   els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
 
   els.suspendToHome.addEventListener('click', () => {
     if (!state.session) return;
     closeSecondaryActions();
     persistSession();
-    showView('home');
+    showView('home', { scrollToTop: false });
     els.homeMessage.textContent = '中断状態を保存しました。';
     refreshResumeUI();
+    scrollHomeActionsIntoViewOnMobile();
   });
 
   document.addEventListener('keydown', handleKeyboard);
@@ -370,11 +380,43 @@ function openAnalysisView() {
 function renderAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
   renderAnalysisSummary(els.analysisContainer, state.analysis);
-  renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel);
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
   });
   updateLearningHistoryResetEntry();
+}
+
+function handleWeaknessReviewTargetRequest(event) {
+  const trigger =
+    event.target instanceof Element ? event.target.closest('[data-review-target-type]') : null;
+  if (!(trigger instanceof HTMLElement) || !els.analysisContainer?.contains(trigger)) return;
+
+  const condition = buildWeaknessReviewTargetCondition(trigger);
+  if (!condition) return;
+
+  const targetPlan = buildWeaknessReviewTargetPlan({
+    questions: state.questions,
+    progress: state.progress,
+    condition,
+  });
+  renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel, targetPlan);
+  showView('weaknessReviewTargets');
+}
+
+function buildWeaknessReviewTargetCondition(trigger) {
+  const targetType = trigger.dataset.reviewTargetType;
+
+  if (targetType === 'section') {
+    const section = trigger.dataset.reviewTargetSection?.trim();
+    return section ? { type: 'section', section } : null;
+  }
+
+  if (targetType === 'wrongReasonTag') {
+    const tag = trigger.dataset.reviewTargetTag?.trim();
+    return tag ? { type: 'wrongReasonTag', tag } : null;
+  }
+
+  return null;
 }
 
 function updateLearningHistoryResetEntry() {
@@ -502,7 +544,7 @@ function startSession(forcedMode = null) {
   state.session = session;
 
   persistSession();
-  showView('quiz');
+  showView('quiz', { scrollToTop: false });
   renderQuestion({ scrollToTop: true });
 }
 
@@ -699,9 +741,26 @@ function clearSession() {
   clearActiveSession();
 }
 
-function showView(name) {
+function showView(name, options = {}) {
+  const { scrollToTop = true } = options;
   closeSecondaryActions({ forceDesktopState: true });
   switchView(els.views, name);
+  if (scrollToTop) {
+    scrollWindowToTop();
+  }
+}
+
+function scrollWindowToTop() {
+  const scrollOptions = { top: 0, left: 0, behavior: 'auto' };
+  window.scrollTo(scrollOptions);
+  window.requestAnimationFrame?.(() => {
+    window.scrollTo(scrollOptions);
+  });
+}
+
+function scrollHomeActionsIntoViewOnMobile() {
+  if (!isMobileViewport()) return;
+  els.form?.querySelector('.button-row')?.scrollIntoView({ behavior: 'auto', block: 'center' });
 }
 
 function buildSectionCheckboxes() {
@@ -895,7 +954,7 @@ function startSingleQuestionSession(questionId) {
     mode: 'single',
   });
   persistSession();
-  showView('quiz');
+  showView('quiz', { scrollToTop: false });
   renderQuestion({ scrollToTop: true });
 }
 
