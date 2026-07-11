@@ -105,6 +105,12 @@ async function expectTargetsViewAtTop(page: Page) {
   await expect(page.locator('#weakness-review-targets-view')).toBeVisible();
   await expect(page.locator('#analysis-view')).not.toBeVisible();
   await expect(page.locator('#weakness-review-targets-panel')).toBeVisible();
+  await expect(page.locator('#weakness-review-targets-view')).toContainText(
+    '弱点分析画面で選択した条件に該当する問題を表示しています。'
+  );
+  await expect(page.locator('#weakness-review-targets-view')).toContainText(
+    '別の条件を確認する場合は、弱点分析画面に戻って選び直してください。'
+  );
   await page.waitForFunction(() => window.scrollY === 0);
 }
 
@@ -112,6 +118,7 @@ async function expectBackToAnalysis(page: Page) {
   await page.getByRole('button', { name: '← 弱点分析へ戻る' }).click();
   await expect(page.locator('#analysis-view')).toBeVisible();
   await expect(page.locator('#weakness-review-targets-view')).not.toBeVisible();
+  await expect(page.locator('#weakness-review-targets-panel')).toBeHidden();
   await expect(page.locator('#analysis-view .weakness-review-targets-panel')).toHaveCount(0);
 }
 
@@ -180,6 +187,19 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
     await openAnalysis(page);
 
     const before = await getStorageSnapshot(page);
+    await page.locator('.analysis-sections.analysis-disclosure > summary').click();
+    await page
+      .locator('.analysis-section-card')
+      .first()
+      .getByRole('button', { name: 'このSectionの問題を見る' })
+      .click();
+
+    await expectTargetsViewAtTop(page);
+    const panel = page.locator('#weakness-review-targets-panel');
+    const firstSectionCondition = `条件: Section ${taggedQuestion.section}：${taggedQuestion.sectionTitle}`;
+    await expect(panel).toContainText(firstSectionCondition);
+    await expectBackToAnalysis(page);
+
     const tags = page.locator('[aria-labelledby="analysis-tags-title"]');
     await tags.locator('summary').click();
     await tags
@@ -189,9 +209,9 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
       .click();
 
     await expectTargetsViewAtTop(page);
-    const panel = page.locator('#weakness-review-targets-panel');
     await expect(panel).toContainText('復習対象の問題');
     await expect(panel).toContainText(`条件: ${tagLabel}`);
+    await expect(panel).not.toContainText(firstSectionCondition);
     await expect(panel).toContainText('対象件数: 2問');
     await expect(panel).toContainText(taggedQuestion.id);
     await expect(panel).toContainText(otherTaggedQuestion.id);

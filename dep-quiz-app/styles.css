@@ -1606,6 +1606,20 @@ input:focus-visible,
   }
 }
 
+.weakness-review-targets-header {
+  align-items: flex-start;
+}
+.weakness-review-targets-header__body {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+.weakness-review-targets-header__description {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
 .weakness-review-targets-panel {
   margin-top: 22px;
   padding: 16px;

@@ -217,9 +217,21 @@
       </section>
 
       <section id="weakness-review-targets-view" class="card view">
-        <div class="analysis-view-header">
-          <h2>復習対象の問題</h2>
-          <button id="weakness-review-targets-back-analysis" type="button">← 弱点分析へ戻る</button>
+        <div class="analysis-view-header weakness-review-targets-header">
+          <div class="weakness-review-targets-header__body">
+            <h2>復習対象の問題</h2>
+            <p class="weakness-review-targets-header__description">
+              弱点分析画面で選択した条件に該当する問題を表示しています。<br />
+              別の条件を確認する場合は、弱点分析画面に戻って選び直してください。
+            </p>
+          </div>
+          <button
+            id="weakness-review-targets-back-analysis"
+            type="button"
+            title="対象一覧の確認を終了し、弱点分析で別の条件を選び直します"
+          >
+            ← 弱点分析へ戻る
+          </button>
         </div>
         <section
           id="weakness-review-targets-panel"
