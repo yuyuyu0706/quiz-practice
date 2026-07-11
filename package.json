@@ -7,7 +7,7 @@
     "validate:dea-questions": "node scripts/validate-dea-questions.mjs",
     "test:e2e": "playwright test",
     "test:dea-plus-notes": "node scripts/test-dea-plus-notes.mjs",
-    "test": "npm run validate:dea-questions && npm run validate:dep-questions && npm run validate:dea-plus-questions && npm run validate:e2e-fixtures && npm run test:question-validator && npm run test:dea-plus-notes && npm run test:dep-wrong-reason-tags && npm run test:dep-weakness-summary && npm run test:dep-weakness-review-targets && npm run test:dep-learning-history-reset && npm run test:dep-learning-history-reset-storage && npm run test:e2e",
+    "test": "npm run validate:dea-questions && npm run validate:dep-questions && npm run validate:dea-plus-questions && npm run validate:e2e-fixtures && npm run test:question-validator && npm run test:dea-plus-notes && npm run test:dep-wrong-reason-tags && npm run test:dep-weakness-summary && npm run test:dep-weakness-review-targets && npm run test:dep-weakness-review-session && npm run test:dep-learning-history-reset && npm run test:dep-learning-history-reset-storage && npm run test:e2e",
     "validate:dep-questions": "node scripts/validate-dep-questions.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -20,7 +20,8 @@
     "test:dep-weakness-summary": "node scripts/test-dep-weakness-summary.mjs",
     "test:dep-learning-history-reset": "node scripts/test-dep-learning-history-reset.mjs",
     "test:dep-learning-history-reset-storage": "node scripts/test-dep-learning-history-reset-storage.mjs",
-    "test:dep-weakness-review-targets": "node scripts/test-dep-weakness-review-targets.mjs"
+    "test:dep-weakness-review-targets": "node scripts/test-dep-weakness-review-targets.mjs",
+    "test:dep-weakness-review-session": "node scripts/test-dep-weakness-review-session.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",

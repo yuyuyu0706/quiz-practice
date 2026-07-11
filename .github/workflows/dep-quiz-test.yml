@@ -45,6 +45,9 @@ jobs:
       - name: 'Quality Gate: Run DEP weakness review target unit tests'
         run: npm run test:dep-weakness-review-targets
 
+      - name: 'Quality Gate: Run DEP weakness review session unit tests'
+        run: npm run test:dep-weakness-review-session
+
       - name: 'Quality Gate: Run DEP learning-history-reset unit tests'
         run: npm run test:dep-learning-history-reset
 
