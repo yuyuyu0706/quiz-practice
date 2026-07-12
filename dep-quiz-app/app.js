@@ -24,6 +24,7 @@ import {
 import { buildLearningHistoryResetPlan } from './learning-history-reset.js';
 import { buildWeaknessAnalysis } from './analysis.js';
 import { buildWeaknessReviewTargetPlan } from './weakness-review-targets.js';
+import { createWeaknessReviewSession } from './weakness-review-session.js';
 import { loadQuestions } from './questions.js';
 import {
   createQuizSession,
@@ -56,6 +57,7 @@ const state = {
   session: null,
   analysis: null,
   activeResetPlan: null,
+  activeWeaknessReviewTargetPlan: null,
   isLearningHistoryResetCommitInProgress: false,
   learningHistoryResetRestoreBlocked: false,
 };
@@ -187,6 +189,7 @@ function attachEvents() {
   });
   els.analysisBtn?.addEventListener('click', openAnalysisView);
   els.analysisContainer?.addEventListener('click', handleWeaknessReviewTargetRequest);
+  els.weaknessReviewTargetsPanel?.addEventListener('click', handleWeaknessReviewStartRequest);
   els.learningHistoryResetEntry?.addEventListener('click', openLearningHistoryResetDialog);
   els.learningHistoryResetDialogCancel?.addEventListener('click', closeLearningHistoryResetDialog);
   els.learningHistoryResetDialogConfirm?.addEventListener(
@@ -261,6 +264,7 @@ function attachEvents() {
     });
   });
   els.weaknessReviewTargetsBackAnalysis?.addEventListener('click', () => {
+    clearActiveWeaknessReviewTargetPlan();
     renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel);
     showView('analysis');
   });
@@ -400,8 +404,33 @@ function handleWeaknessReviewTargetRequest(event) {
     progress: state.progress,
     condition,
   });
+  state.activeWeaknessReviewTargetPlan = targetPlan;
   renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel, targetPlan);
   showView('weaknessReviewTargets');
+}
+
+function handleWeaknessReviewStartRequest(event) {
+  const trigger =
+    event.target instanceof Element ? event.target.closest('[data-weakness-review-start]') : null;
+  if (!(trigger instanceof HTMLElement) || !els.weaknessReviewTargetsPanel?.contains(trigger))
+    return;
+
+  const targetPlan = state.activeWeaknessReviewTargetPlan;
+  if (
+    !targetPlan ||
+    targetPlan.emptyState ||
+    !Array.isArray(targetPlan.items) ||
+    targetPlan.items.length === 0
+  ) {
+    return;
+  }
+
+  const session = createWeaknessReviewSession(targetPlan);
+  activateSession(session);
+}
+
+function clearActiveWeaknessReviewTargetPlan() {
+  state.activeWeaknessReviewTargetPlan = null;
 }
 
 function buildWeaknessReviewTargetCondition(trigger) {
@@ -542,8 +571,11 @@ function startSession(forcedMode = null) {
     return;
   }
 
-  state.session = session;
+  activateSession(session);
+}
 
+function activateSession(session) {
+  state.session = session;
   persistSession();
   showView('quiz', { scrollToTop: false });
   renderQuestion({ scrollToTop: true });

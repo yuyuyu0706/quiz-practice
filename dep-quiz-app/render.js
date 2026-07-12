@@ -406,6 +406,21 @@ export function renderWeaknessReviewTargetPanel(panel, targetPlan) {
 
   panel.append(title, condition, count);
 
+  const items = Array.isArray(targetPlan.items) ? targetPlan.items : [];
+  if (!targetPlan.emptyState && items.length > 0) {
+    const actionRow = document.createElement('div');
+    actionRow.className = 'weakness-review-targets-panel__actions';
+
+    const startButton = document.createElement('button');
+    startButton.type = 'button';
+    startButton.className = 'primary';
+    startButton.dataset.weaknessReviewStart = 'true';
+    startButton.textContent = 'この条件で復習する';
+
+    actionRow.appendChild(startButton);
+    panel.appendChild(actionRow);
+  }
+
   if (targetPlan.emptyState) {
     const emptyMessage = document.createElement('div');
     emptyMessage.className = 'weakness-review-targets-panel__empty';
@@ -427,7 +442,6 @@ export function renderWeaknessReviewTargetPanel(panel, targetPlan) {
   const list = document.createElement('div');
   list.className = 'weakness-review-targets-list';
 
-  const items = Array.isArray(targetPlan.items) ? targetPlan.items : [];
   const omitSectionInCards = targetPlan.condition?.type === 'section';
   items.forEach((item) =>
     list.appendChild(createWeaknessReviewTargetItem(item, { omitSection: omitSectionInCards }))
