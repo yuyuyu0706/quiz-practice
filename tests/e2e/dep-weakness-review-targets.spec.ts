@@ -407,8 +407,10 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
       [groups[0][0].id]: progressEntry({ seenCount: 1, correctCount: 0, wrongCount: 1 }),
       [groups[0][1].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
     };
-    await seedStorage(page, progress, activeSessionFixture(groups[0][0].id));
+    const existingSession = activeSessionFixture(groups[0][0].id);
+    const before = await seedStorage(page, progress, existingSession);
     await openAnalysis(page);
+    await expect(getStorageSnapshot(page)).resolves.toEqual(before);
 
     await page.locator('.analysis-sections.analysis-disclosure > summary').click();
     await page
@@ -419,6 +421,10 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
 
     const panel = page.locator('#weakness-review-targets-panel');
     await expect(panel.getByRole('button', { name: 'この条件で復習する' })).toBeVisible();
+    const beforeStart = await getStorageSnapshot(page);
+    expect(beforeStart).toEqual(before);
+    expect(JSON.parse(beforeStart.depQuizActiveSession ?? 'null')).toEqual(existingSession);
+
     await panel.getByRole('button', { name: 'この条件で復習する' }).click();
 
     await expect(page.locator('#quiz-view')).toBeVisible();
@@ -427,9 +433,13 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
       (groups[0][0].question ?? '').slice(0, 20)
     );
 
-    const activeSession = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null')
-    );
+    const afterStart = await getStorageSnapshot(page);
+    expect(afterStart.depQuizProgress).toBe(before.depQuizProgress);
+    expect(afterStart.depQuizSettings).toBe(before.depQuizSettings);
+    expect(afterStart.depQuizActiveSession).not.toBe(before.depQuizActiveSession);
+
+    const activeSession = JSON.parse(afterStart.depQuizActiveSession ?? 'null');
+    expect(activeSession).not.toEqual(existingSession);
     expect(activeSession.mode).toBe('weaknessReview');
     expect(activeSession.order).toEqual(groups[0].map((question) => question.id));
     expect(activeSession.settingsSnapshot.condition).toMatchObject({
@@ -462,8 +472,10 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
         wrongReasonTags: [tagId],
       }),
     };
-    await seedStorage(page, progress, activeSessionFixture(taggedQuestion.id));
+    const existingSession = activeSessionFixture(taggedQuestion.id);
+    const before = await seedStorage(page, progress, existingSession);
     await openAnalysis(page);
+    await expect(getStorageSnapshot(page)).resolves.toEqual(before);
 
     await page.locator('.analysis-sections.analysis-disclosure > summary').click();
     await page
@@ -471,7 +483,9 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
       .first()
       .getByRole('button', { name: 'このSectionの問題を見る' })
       .click();
+    await expect(getStorageSnapshot(page)).resolves.toEqual(before);
     await expectBackToAnalysis(page);
+    await expect(getStorageSnapshot(page)).resolves.toEqual(before);
 
     const tags = page.locator('[aria-labelledby="analysis-tags-title"]');
     await tags.locator('summary').click();
@@ -483,11 +497,19 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
 
     const panel = page.locator('#weakness-review-targets-panel');
     await expect(panel.getByRole('button', { name: 'この条件で復習する' })).toBeVisible();
+    const beforeStart = await getStorageSnapshot(page);
+    expect(beforeStart).toEqual(before);
+    expect(JSON.parse(beforeStart.depQuizActiveSession ?? 'null')).toEqual(existingSession);
+
     await panel.getByRole('button', { name: 'この条件で復習する' }).click();
 
-    const activeSession = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null')
-    );
+    const afterStart = await getStorageSnapshot(page);
+    expect(afterStart.depQuizProgress).toBe(before.depQuizProgress);
+    expect(afterStart.depQuizSettings).toBe(before.depQuizSettings);
+    expect(afterStart.depQuizActiveSession).not.toBe(before.depQuizActiveSession);
+
+    const activeSession = JSON.parse(afterStart.depQuizActiveSession ?? 'null');
+    expect(activeSession).not.toEqual(existingSession);
     expect(activeSession.mode).toBe('weaknessReview');
     expect(activeSession.order).toEqual(
       questions
