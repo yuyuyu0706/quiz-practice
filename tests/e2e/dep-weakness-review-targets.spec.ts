@@ -349,6 +349,53 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
     await expect(getStorageSnapshot(page)).resolves.toEqual(before);
   });
 
+  test('guarantees empty target plan shows no matches without start CTA or storage mutation', async ({
+    page,
+    request,
+  }) => {
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    const progress = {
+      [groups[0][0].id]: progressEntry({ seenCount: 1, correctCount: 0, wrongCount: 1 }),
+    };
+    await seedStorage(page, progress, activeSessionFixture(groups[0][0].id));
+    await openAnalysis(page);
+
+    const before = await getStorageSnapshot(page);
+    await page.evaluate(async () => {
+      const { renderWeaknessReviewTargetPanel, showView } = await import('/dep-quiz-app/render.js');
+      const views = {
+        home: document.getElementById('home-view'),
+        quiz: document.getElementById('quiz-view'),
+        result: document.getElementById('result-view'),
+        notes: document.getElementById('notes-view'),
+        analysis: document.getElementById('analysis-view'),
+        weaknessReviewTargets: document.getElementById('weakness-review-targets-view'),
+      };
+      renderWeaknessReviewTargetPanel(document.getElementById('weakness-review-targets-panel'), {
+        condition: {
+          type: 'wrongReasonTag',
+          value: 'concept-behavior-gap',
+          label: '概念・挙動がイメージできない',
+        },
+        targetCount: 0,
+        items: [],
+        emptyState: { reasonCode: 'NO_MATCHING_QUESTIONS' },
+        unavailableProgressIds: [],
+      });
+      showView(views, 'weaknessReviewTargets');
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    });
+
+    await expectTargetsViewAtTop(page);
+    const panel = page.locator('#weakness-review-targets-panel');
+    await expect(panel).toContainText('対象件数: 0問');
+    await expect(panel).toContainText('該当する問題はありません');
+    await expect(panel.getByRole('button', { name: 'この条件で復習する' })).toHaveCount(0);
+
+    await expectBackToAnalysis(page);
+    await expect(getStorageSnapshot(page)).resolves.toEqual(before);
+  });
+
   test('starts weakness review from the displayed section target plan and saves active session', async ({
     page,
     request,
