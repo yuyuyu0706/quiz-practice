@@ -207,7 +207,8 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
     page,
     request,
   }) => {
-    const groups = groupQuestionsBySection(await loadQuestions(request));
+    const questions = await loadQuestions(request);
+    const groups = groupQuestionsBySection(questions);
     expect(groups.length).toBeGreaterThanOrEqual(2);
 
     const taggedQuestion = groups[0][0];
@@ -346,5 +347,156 @@ test.describe('[DEP][FLOW] Weakness review targets / Analysis entrypoints', () =
 
     await expectBackToAnalysis(page);
     await expect(getStorageSnapshot(page)).resolves.toEqual(before);
+  });
+
+  test('guarantees empty target plan shows no matches without start CTA or storage mutation', async ({
+    page,
+    request,
+  }) => {
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    const progress = {
+      [groups[0][0].id]: progressEntry({ seenCount: 1, correctCount: 0, wrongCount: 1 }),
+    };
+    await seedStorage(page, progress, activeSessionFixture(groups[0][0].id));
+    await openAnalysis(page);
+
+    const before = await getStorageSnapshot(page);
+    await page.evaluate(async () => {
+      const { renderWeaknessReviewTargetPanel, showView } = await import('/dep-quiz-app/render.js');
+      const views = {
+        home: document.getElementById('home-view'),
+        quiz: document.getElementById('quiz-view'),
+        result: document.getElementById('result-view'),
+        notes: document.getElementById('notes-view'),
+        analysis: document.getElementById('analysis-view'),
+        weaknessReviewTargets: document.getElementById('weakness-review-targets-view'),
+      };
+      renderWeaknessReviewTargetPanel(document.getElementById('weakness-review-targets-panel'), {
+        condition: {
+          type: 'wrongReasonTag',
+          value: 'concept-behavior-gap',
+          label: '概念・挙動がイメージできない',
+        },
+        targetCount: 0,
+        items: [],
+        emptyState: { reasonCode: 'NO_MATCHING_QUESTIONS' },
+        unavailableProgressIds: [],
+      });
+      showView(views, 'weaknessReviewTargets');
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    });
+
+    await expectTargetsViewAtTop(page);
+    const panel = page.locator('#weakness-review-targets-panel');
+    await expect(panel).toContainText('対象件数: 0問');
+    await expect(panel).toContainText('該当する問題はありません');
+    await expect(panel.getByRole('button', { name: 'この条件で復習する' })).toHaveCount(0);
+
+    await expectBackToAnalysis(page);
+    await expect(getStorageSnapshot(page)).resolves.toEqual(before);
+  });
+
+  test('starts weakness review from the displayed section target plan and saves active session', async ({
+    page,
+    request,
+  }) => {
+    const groups = groupQuestionsBySection(await loadQuestions(request));
+    expect(groups[0].length).toBeGreaterThanOrEqual(2);
+
+    const progress = {
+      [groups[0][0].id]: progressEntry({ seenCount: 1, correctCount: 0, wrongCount: 1 }),
+      [groups[0][1].id]: progressEntry({ seenCount: 1, correctCount: 1, wrongCount: 0 }),
+    };
+    await seedStorage(page, progress, activeSessionFixture(groups[0][0].id));
+    await openAnalysis(page);
+
+    await page.locator('.analysis-sections.analysis-disclosure > summary').click();
+    await page
+      .locator('.analysis-section-card')
+      .first()
+      .getByRole('button', { name: 'このSectionの問題を見る' })
+      .click();
+
+    const panel = page.locator('#weakness-review-targets-panel');
+    await expect(panel.getByRole('button', { name: 'この条件で復習する' })).toBeVisible();
+    await panel.getByRole('button', { name: 'この条件で復習する' }).click();
+
+    await expect(page.locator('#quiz-view')).toBeVisible();
+    await expect(page.locator('#weakness-review-targets-view')).not.toBeVisible();
+    await expect(page.locator('#quiz-question')).toContainText(
+      (groups[0][0].question ?? '').slice(0, 20)
+    );
+
+    const activeSession = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null')
+    );
+    expect(activeSession.mode).toBe('weaknessReview');
+    expect(activeSession.order).toEqual(groups[0].map((question) => question.id));
+    expect(activeSession.settingsSnapshot.condition).toMatchObject({
+      type: 'section',
+      value: groups[0][0].section,
+    });
+  });
+
+  test('starts weakness review from the latest wrong-reason tag target plan after switching conditions', async ({
+    page,
+    request,
+  }) => {
+    const questions = await loadQuestions(request);
+    const groups = groupQuestionsBySection(questions);
+    expect(groups.length).toBeGreaterThanOrEqual(2);
+
+    const taggedQuestion = groups[0][0];
+    const otherTaggedQuestion = groups[1][0];
+    const progress = {
+      [taggedQuestion.id]: progressEntry({
+        seenCount: 1,
+        correctCount: 0,
+        wrongCount: 1,
+        wrongReasonTags: [tagId],
+      }),
+      [otherTaggedQuestion.id]: progressEntry({
+        seenCount: 2,
+        correctCount: 1,
+        wrongCount: 1,
+        wrongReasonTags: [tagId],
+      }),
+    };
+    await seedStorage(page, progress, activeSessionFixture(taggedQuestion.id));
+    await openAnalysis(page);
+
+    await page.locator('.analysis-sections.analysis-disclosure > summary').click();
+    await page
+      .locator('.analysis-section-card')
+      .first()
+      .getByRole('button', { name: 'このSectionの問題を見る' })
+      .click();
+    await expectBackToAnalysis(page);
+
+    const tags = page.locator('[aria-labelledby="analysis-tags-title"]');
+    await tags.locator('summary').click();
+    await tags
+      .locator('.analysis-tag-item')
+      .filter({ has: page.locator('dt', { hasText: new RegExp(`^${tagLabel}$`) }) })
+      .getByRole('button', { name: 'この理由の問題を見る' })
+      .click();
+
+    const panel = page.locator('#weakness-review-targets-panel');
+    await expect(panel.getByRole('button', { name: 'この条件で復習する' })).toBeVisible();
+    await panel.getByRole('button', { name: 'この条件で復習する' }).click();
+
+    const activeSession = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('depQuizActiveSession') ?? 'null')
+    );
+    expect(activeSession.mode).toBe('weaknessReview');
+    expect(activeSession.order).toEqual(
+      questions
+        .filter((question) => [taggedQuestion.id, otherTaggedQuestion.id].includes(question.id))
+        .map((question) => question.id)
+    );
+    expect(activeSession.settingsSnapshot.condition).toMatchObject({
+      type: 'wrongReasonTag',
+      value: tagId,
+    });
   });
 });

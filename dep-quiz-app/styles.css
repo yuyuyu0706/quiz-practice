@@ -1667,6 +1667,17 @@ input:focus-visible,
   color: var(--text);
   font-weight: 700;
 }
+.weakness-review-targets-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 12px 0 14px;
+}
+.weakness-review-targets-panel__actions .primary {
+  max-width: 100%;
+  white-space: normal;
+}
 .weakness-review-targets-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
