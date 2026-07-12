@@ -133,6 +133,7 @@ const els = {
   wrongList: document.getElementById('wrong-list'),
   retryWrong: document.getElementById('retry-wrong'),
   resultNotesListBtn: document.getElementById('result-notes-list-btn'),
+  resultAnalysisBtn: document.getElementById('result-analysis-btn'),
   backHome: document.getElementById('back-home'),
 };
 
@@ -247,6 +248,7 @@ function attachEvents() {
   els.clearWrongReasonTags?.addEventListener('click', handleClearWrongReasonTags);
 
   els.retryWrong.addEventListener('click', () => startSession('wrongOnly'));
+  els.resultAnalysisBtn?.addEventListener('click', openAnalysisView);
   els.resultNotesListBtn?.addEventListener('click', () => {
     renderNotesList();
     showView('notes');
@@ -717,6 +719,7 @@ function scrollChoiceGroupIntoView() {
 }
 
 function finishSession() {
+  const completedMode = state.session?.mode;
   const result = buildSessionResult(
     state.session,
     state.questions,
@@ -724,6 +727,7 @@ function finishSession() {
     getStoredSelectedLabel
   );
   renderResult(els, result);
+  els.resultAnalysisBtn?.classList.toggle('hidden', completedMode !== 'weaknessReview');
   state.session.completedAt = new Date().toISOString();
   clearSession();
   state.session = null;
