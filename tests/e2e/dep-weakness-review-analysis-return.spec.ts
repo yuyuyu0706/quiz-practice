@@ -121,7 +121,10 @@ test.describe('[DEP][FLOW] Weakness review / Analysis return', () => {
     page,
     request,
   }, testInfo) => {
-    test.skip(testInfo.project.name !== 'chromium', 'Desktop weakness review return coverage.');
+    test.skip(
+      !['chromium', 'mobile-chrome'].includes(testInfo.project.name),
+      'Desktop and mobile weakness review return coverage.'
+    );
 
     const [taggedQuestion] = await loadQuestions(request);
     const progress = {
