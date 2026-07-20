@@ -1,13 +1,12 @@
 # Title
 
-<!-- prettier-ignore -->
+<!-- prettier-ignore-start -->
 ````markdown
-~~~
+```~~~
 TODO
-~~~
 ````
-
-`TODO and C:\Users\example`
+``TODO and C:\Users\example``
+<!-- prettier-ignore-end -->
 
 ## Chapter A
 

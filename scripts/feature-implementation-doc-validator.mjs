@@ -34,8 +34,16 @@ const messages = {
 
 const normalizePath = (value) => value.split(path.sep).join('/');
 const isExternal = (target) => /^https?:\/\//i.test(target);
+const openingFencePattern = /^\s{0,3}(`{3,}|~{3,})\s*.*$/;
 const withoutInlineCodeAndUrls = (text) =>
   text.replace(/(`+)[\s\S]*?\1/g, '').replace(/https?:\/\/[^\s)>]+/gi, '');
+
+function isClosingFence(text, openFence) {
+  const closingFencePattern = new RegExp(
+    `^\\s{0,3}${openFence.character}{${openFence.length},}\\s*$`
+  );
+  return closingFencePattern.test(text);
+}
 
 export function parseFeatureImplementationMarkdown(content, options = {}) {
   const lines = content.replace(/\r\n?/g, '\n').split('\n');
@@ -47,18 +55,12 @@ export function parseFeatureImplementationMarkdown(content, options = {}) {
 
   lines.forEach((text, index) => {
     const line = index + 1;
-    const fence = text.match(/^\s{0,3}(`{3,}|~{3,})\s*.*$/);
-    if (
-      openFence &&
-      fence &&
-      fence[1][0] === openFence.character &&
-      fence[1].length >= openFence.length &&
-      /^\s{0,3}[`~]+\s*$/.test(text)
-    ) {
+    if (openFence && isClosingFence(text, openFence)) {
       openFence = null;
       return;
     }
     if (openFence) return;
+    const fence = text.match(openingFencePattern);
     if (fence) {
       openFence = { character: fence[1][0], length: fence[1].length };
       return;

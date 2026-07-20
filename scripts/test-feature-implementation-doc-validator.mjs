@@ -43,6 +43,12 @@ assertRules(`${commonInvalid}/fdoc-c007-local-path.md`, ['FDOC-C007']);
 assertRules(`${commonInvalid}/fdoc-c008-placeholder.md`, ['FDOC-C008']);
 assertRules('common/valid/local-links/document.md', []);
 assertRules('common/valid/code-exclusion.md', []);
+assert.deepEqual(
+  validateFixture('common/valid/code-exclusion.md').filter((diagnostic) =>
+    ['FDOC-C007', 'FDOC-C008'].includes(diagnostic.ruleId)
+  ),
+  []
+);
 
 const missingImage = validateFixture(`${commonInvalid}/fdoc-c005-missing-image.md`)[0];
 assert.deepEqual(
