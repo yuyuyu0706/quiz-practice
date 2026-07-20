@@ -9,14 +9,15 @@
 ## 第2章 弱点分析を起点とする学習フィードバックループ
 
 ![図2](images/phase-d-weakness-learning-section2.png)
+![図3](images/phase-d-weakness-learning-section3.png)
 
 ## 第3章 学習履歴を学習判断へ変える ― 弱点分析の仕組み
-
-![図3](images/phase-d-weakness-learning-section3.png)
 
 ## 第4章 分析を学習行動へつなぐ ― 対象問題一覧と弱点起点の復習
 
 ![図4](images/phase-d-weakness-learning-section4.png)
+
+## 第5章 学習周期を切り替える ― 学習履歴リセット
 
 ![図5](images/phase-d-weakness-learning-section5.png)
 

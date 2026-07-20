@@ -35,7 +35,7 @@ const messages = {
 const normalizePath = (value) => value.split(path.sep).join('/');
 const isExternal = (target) => /^https?:\/\//i.test(target);
 const withoutInlineCodeAndUrls = (text) =>
-  text.replace(/`[^`]*`/g, '').replace(/https?:\/\/[^\s)>]+/gi, '');
+  text.replace(/(`+)[\s\S]*?\1/g, '').replace(/https?:\/\/[^\s)>]+/gi, '');
 
 export function parseFeatureImplementationMarkdown(content, options = {}) {
   const lines = content.replace(/\r\n?/g, '\n').split('\n');
@@ -43,15 +43,26 @@ export function parseFeatureImplementationMarkdown(content, options = {}) {
   const images = [];
   const links = [];
   const searchableLines = [];
-  let fenced = false;
+  let openFence = null;
 
   lines.forEach((text, index) => {
     const line = index + 1;
-    if (/^\s*(```|~~~)/.test(text)) {
-      fenced = !fenced;
+    const fence = text.match(/^\s{0,3}(`{3,}|~{3,})\s*.*$/);
+    if (
+      openFence &&
+      fence &&
+      fence[1][0] === openFence.character &&
+      fence[1].length >= openFence.length &&
+      /^\s{0,3}[`~]+\s*$/.test(text)
+    ) {
+      openFence = null;
       return;
     }
-    if (fenced) return;
+    if (openFence) return;
+    if (fence) {
+      openFence = { character: fence[1][0], length: fence[1].length };
+      return;
+    }
 
     const heading = text.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
     if (heading) headings.push({ level: heading[1].length, text: heading[2], line });
@@ -105,11 +116,11 @@ export function validateCommonRules(document, context = {}) {
   const seen = new Set();
   document.headings.forEach((heading) => {
     stacks.length = heading.level - 1;
-    const parent = stacks[heading.level - 2] ?? '__root__';
+    const parent = stacks[heading.level - 2]?.id ?? '__root__';
     const key = `${parent}\u0000${heading.level}\u0000${heading.text}`;
     if (seen.has(key)) diagnostics.push(diagnostic(file, 'FDOC-C004', heading.line, heading.text));
     seen.add(key);
-    stacks[heading.level - 1] = heading.text;
+    stacks[heading.level - 1] = { id: `heading-${heading.line}` };
   });
 
   document.images.forEach((image) => {

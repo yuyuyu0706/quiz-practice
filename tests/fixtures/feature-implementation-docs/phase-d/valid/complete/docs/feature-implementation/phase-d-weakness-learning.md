@@ -18,6 +18,8 @@
 
 ![図4](images/phase-d-weakness-learning-section4.png)
 
+## 第5章 学習周期を切り替える ― 学習履歴リセット
+
 ![図5](images/phase-d-weakness-learning-section5.png)
 
 ## 第6章 弱点分析を支える主要な設計思想

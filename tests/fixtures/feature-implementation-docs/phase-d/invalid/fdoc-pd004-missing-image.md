@@ -16,7 +16,7 @@
 
 ## 第4章 分析を学習行動へつなぐ ― 対象問題一覧と弱点起点の復習
 
-![図4](images/phase-d-weakness-learning-section4.png)
+## 第5章 学習周期を切り替える ― 学習履歴リセット
 
 ![図5](images/phase-d-weakness-learning-section5.png)
 
