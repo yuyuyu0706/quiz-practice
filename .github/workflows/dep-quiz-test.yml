@@ -33,6 +33,12 @@ jobs:
       - name: 'Quality Gate: Check code formatting'
         run: npm run format:check
 
+      - name: 'Quality Gate: Test feature implementation document validator'
+        run: npm run test:feature-doc-validator
+
+      - name: 'Quality Gate: Validate feature implementation documents'
+        run: npm run validate:feature-docs
+
       - name: 'Quality Gate: Validate DEP question schema'
         run: npm run validate:dep-questions
 
