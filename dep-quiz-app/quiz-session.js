@@ -1,4 +1,7 @@
+import { assertConfidenceLevel, normalizeConfidenceLevel } from './confidence.js';
+
 const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
+export const SESSION_SCHEMA_VERSION = 2;
 
 export function shuffle(array) {
   const out = [...array];
@@ -11,12 +14,13 @@ export function shuffle(array) {
 
 export function createSession(order, mode, settingsSnapshot) {
   return {
-    schemaVersion: 1,
+    schemaVersion: SESSION_SCHEMA_VERSION,
     app: 'dep-quiz-app',
     mode,
     order,
     currentIndex: 0,
     answers: {},
+    confidenceByQuestion: {},
     choiceMap: {},
     graded: {},
     completedAt: null,
@@ -119,7 +123,7 @@ export function getStoredSelectedLabel(session, questionId, choices, choiceMap =
 }
 
 export function normalizeLoadedSession(saved) {
-  if (!saved) return null;
+  if (!isPlainObject(saved)) return null;
   if (!Array.isArray(saved.order) || saved.order.length === 0) {
     return null;
   }
@@ -129,15 +133,27 @@ export function normalizeLoadedSession(saved) {
     return null;
   }
 
+  const order = [...saved.order];
+  const confidenceByQuestion = {};
+  if (isPlainObject(saved.confidenceByQuestion)) {
+    const orderIds = new Set(order);
+    Object.entries(saved.confidenceByQuestion).forEach(([questionId, value]) => {
+      const confidence = normalizeConfidenceLevel(value);
+      if (orderIds.has(questionId) && confidence) confidenceByQuestion[questionId] = confidence;
+    });
+  }
+
   const session = {
-    schemaVersion: saved.schemaVersion ?? 1,
-    app: saved.app ?? 'dea-quiz-app',
+    ...saved,
+    schemaVersion: SESSION_SCHEMA_VERSION,
+    app: 'dep-quiz-app',
     mode: saved.mode ?? 'normal',
-    order: saved.order,
+    order,
     currentIndex: idx,
-    answers: saved.answers ?? {},
-    choiceMap: saved.choiceMap ?? {},
-    graded: saved.graded ?? {},
+    answers: copyPlainObject(saved.answers),
+    confidenceByQuestion,
+    choiceMap: copyPlainObject(saved.choiceMap),
+    graded: copyPlainObject(saved.graded),
     completedAt: saved.completedAt ?? null,
     explanationOpen: Boolean(saved.explanationOpen),
     startedAt: saved.startedAt ?? new Date().toISOString(),
@@ -145,4 +161,43 @@ export function normalizeLoadedSession(saved) {
   };
 
   return session.completedAt ? null : session;
+}
+
+export function getStoredConfidenceLevel(session, questionId) {
+  if (!isPlainObject(session?.confidenceByQuestion)) return null;
+  if (!Object.hasOwn(session.confidenceByQuestion, questionId)) return null;
+  return normalizeConfidenceLevel(session.confidenceByQuestion[questionId]);
+}
+
+export function setSessionConfidenceLevel(session, questionId, confidence) {
+  if (!isPlainObject(session) || !Array.isArray(session.order)) {
+    throw new TypeError('Invalid session');
+  }
+  if (typeof questionId !== 'string' || questionId.trim().length === 0) {
+    throw new TypeError('questionId must be a non-empty string');
+  }
+
+  const validatedConfidence = assertConfidenceLevel(confidence);
+  if (!session.order.includes(questionId)) {
+    throw new RangeError('questionId is not part of the session');
+  }
+  if (!isPlainObject(session.graded) || !isPlainObject(session.confidenceByQuestion)) {
+    throw new TypeError('Invalid session maps');
+  }
+  if (session.graded[questionId]) {
+    throw new Error('Cannot change confidence after grading');
+  }
+
+  session.confidenceByQuestion[questionId] = validatedConfidence;
+  return validatedConfidence;
+}
+
+function isPlainObject(value) {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function copyPlainObject(value) {
+  return isPlainObject(value) ? { ...value } : {};
 }
