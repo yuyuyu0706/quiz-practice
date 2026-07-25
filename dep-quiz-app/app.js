@@ -342,8 +342,10 @@ function handleKeyboard(event) {
     D: 'D',
   };
   if (map[key]) {
+    const question = getCurrentQuestion();
+    if (!question || state.session.graded[question.id]) return;
     const choiceInput = els.choicesForm.querySelector(`input[value="${map[key]}"]`);
-    if (choiceInput) {
+    if (choiceInput && !choiceInput.disabled) {
       choiceInput.checked = true;
       handleChoiceSelectionChange();
     }
