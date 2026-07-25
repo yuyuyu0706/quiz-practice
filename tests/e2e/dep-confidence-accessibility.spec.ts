@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startDepQuiz } from './helpers';
+import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
 test.describe('[DEP][UI] Confidence input', () => {
   test('supports confidence shortcuts, persistence, ARIA, and graded-state locking', async ({
@@ -57,6 +57,41 @@ test.describe('[DEP][UI] Confidence input', () => {
     });
     await page.keyboard.press('l');
     await expect(page.locator('input[name="confidence"]:checked')).toHaveValue('medium');
+  });
+
+  test('keeps native arrow-key selection within answer and confidence radio groups', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop radio keyboard coverage.');
+    await startDepQuiz(page, 'all');
+    await answerCurrentQuestion(page);
+    await page.locator('#next-question').click();
+    await expect(page.locator('#quiz-progress')).toContainText(/2\s*\/\s*/);
+
+    const sessionIndex = async () =>
+      page.evaluate(() => {
+        const session = JSON.parse(localStorage.getItem('depQuizActiveSession') ?? '{}');
+        return session.currentIndex;
+      });
+    expect(await sessionIndex()).toBe(1);
+
+    const choices = page.locator('#choices-form input[name="choice"]');
+    await choices.nth(1).check();
+    await choices.nth(1).focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(choices.first()).toBeChecked();
+    await expect(page.locator('#quiz-progress')).toContainText(/2\s*\/\s*/);
+    expect(await sessionIndex()).toBe(1);
+    await expect(page.locator('#quiz-message')).not.toContainText('未回答です');
+
+    const confidence = page.locator('#confidence-options input[name="confidence"]');
+    await confidence.first().check();
+    await confidence.first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(confidence.nth(1)).toBeChecked();
+    await expect(page.locator('#quiz-progress')).toContainText(/2\s*\/\s*/);
+    expect(await sessionIndex()).toBe(1);
+    await expect(page.locator('#quiz-message')).not.toContainText('未回答です');
   });
 
   test('keeps confidence controls usable without horizontal overflow at 375px', async ({

@@ -368,10 +368,20 @@ function handleKeyboard(event) {
     event.preventDefault();
     submitCurrentAnswer();
   } else if (event.key === 'ArrowRight') {
+    if (isAnswerInputRadioTarget(event.target)) return;
     moveQuestion(1);
   } else if (event.key === 'ArrowLeft') {
+    if (isAnswerInputRadioTarget(event.target)) return;
     moveQuestion(-1);
   }
+}
+
+function isAnswerInputRadioTarget(target) {
+  return (
+    target instanceof HTMLInputElement &&
+    target.type === 'radio' &&
+    (target.name === 'choice' || target.name === 'confidence')
+  );
 }
 
 function isQuizShortcutIsolatedTarget(target) {
