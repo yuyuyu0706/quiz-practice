@@ -69,6 +69,7 @@ test('uses the version 2 contract in every quiz and weakness review mode', () =>
 test('migrates version 1 while preserving session data and unknown properties', () => {
   const saved = {
     schemaVersion: 1,
+    app: 'dea-quiz-app',
     mode: 'wrongOnly',
     order: ['Q1', 'Q2'],
     currentIndex: 1,

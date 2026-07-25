@@ -146,7 +146,7 @@ export function normalizeLoadedSession(saved) {
   const session = {
     ...saved,
     schemaVersion: SESSION_SCHEMA_VERSION,
-    app: saved.app ?? 'dep-quiz-app',
+    app: 'dep-quiz-app',
     mode: saved.mode ?? 'normal',
     order,
     currentIndex: idx,
