@@ -1,17 +1,9 @@
 import { assertConfidenceLevel, normalizeConfidenceLevel } from './confidence.js';
+import { normalizeWrongReasonTags } from './wrong-reason-tags.js';
+
+export { normalizeWrongReasonTags } from './wrong-reason-tags.js';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
-const WRONG_REASON_TAG_IDS = [
-  'concept-behavior-gap',
-  'term-feature-meaning-confusion',
-  'spec-memory-error',
-  'code-understanding-gap',
-  'question-reading-overlook',
-  'choice-difference-unclear',
-  'careless-mistake',
-];
-const WRONG_REASON_TAG_ID_SET = new Set(WRONG_REASON_TAG_IDS);
-
 export const ANSWER_RESULT_IDS = Object.freeze(['correct', 'wrong']);
 const ANSWER_RESULT_ID_SET = new Set(ANSWER_RESULT_IDS);
 
@@ -29,18 +21,6 @@ export function baseProgress() {
     wrongReasonTags: [],
     wrongReasonUpdatedAt: null,
   };
-}
-
-export function normalizeWrongReasonTags(rawTags) {
-  if (!Array.isArray(rawTags)) return [];
-
-  const accepted = new Set();
-  rawTags.forEach((tag) => {
-    if (typeof tag !== 'string') return;
-    const normalizedTag = tag.trim();
-    if (WRONG_REASON_TAG_ID_SET.has(normalizedTag)) accepted.add(normalizedTag);
-  });
-  return WRONG_REASON_TAG_IDS.filter((tagId) => accepted.has(tagId));
 }
 
 export function normalizeLastConfidenceAnswer(value) {
