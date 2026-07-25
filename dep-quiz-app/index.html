@@ -59,13 +59,22 @@
         </div>
         <h2 id="quiz-question"></h2>
         <form id="choices-form" class="choices"></form>
+        <section id="confidence-panel" class="confidence-panel" aria-label="回答の確信度">
+          <fieldset id="confidence-fieldset" class="confidence-fieldset">
+            <legend>回答の確信度</legend>
+            <p id="confidence-hint" class="confidence-hint">
+              今の回答にどのくらい確信がありますか？
+            </p>
+            <div id="confidence-options" class="confidence-options"></div>
+          </fieldset>
+        </section>
         <p id="result-indicator" class="indicator"></p>
         <div class="button-group button-group-primary" aria-label="主要操作">
           <div class="button-row button-row-primary">
             <button id="submit-answer" class="primary">回答する</button>
             <button id="next-question" type="button" class="primary" disabled>次へ</button>
           </div>
-          <p id="selection-hint" class="selection-hint">選択肢を選ぶと「回答する」が押せます。</p>
+          <p id="selection-hint" class="selection-hint">選択肢と確信度を選んでください。</p>
         </div>
         <div class="button-group button-group-secondary" aria-label="補助操作">
           <div class="button-row button-row-secondary-top">

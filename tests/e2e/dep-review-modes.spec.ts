@@ -76,6 +76,7 @@ test.describe('[DEP][FLOW] Review / Desktop modes', () => {
     expect(wrongChoiceLabel).toBeTruthy();
 
     await page.locator(`input[name="choice"][value="${wrongChoiceLabel}"]`).check();
+    await page.locator('#confidence-options input[value="medium"]').check();
     await page.getByRole('button', { name: '回答する' }).click();
     await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);
 

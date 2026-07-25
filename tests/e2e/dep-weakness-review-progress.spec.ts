@@ -129,6 +129,7 @@ async function answerCurrentQuestionAs(page: Page, correctness: 'correct' | 'wro
   const label = correctness === 'correct' ? context.correctLabel : context.wrongLabel;
   expect(label).toBeTruthy();
   await page.locator(`#choices-form input[value="${label}"]`).check();
+  await page.locator('#confidence-options input[value="medium"]').check();
   await expect(page.getByRole('button', { name: '回答する' })).toBeEnabled();
   await page.getByRole('button', { name: '回答する' }).click();
   await expect(page.locator('#result-indicator')).toContainText(

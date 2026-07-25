@@ -59,6 +59,9 @@ export async function startDeaPlusQuiz(page: Page, count: '10' | '20' | '50' | '
 export async function answerCurrentQuestion(page: Page) {
   await expect(page.locator('#choices-form label')).toHaveCount(4);
   await page.locator('#choices-form label').first().click();
+  if (await page.locator('#confidence-options').isVisible()) {
+    await page.locator('#confidence-options input[value="medium"]').check();
+  }
   await expect(page.getByRole('button', { name: '回答する' })).toBeEnabled();
   await page.getByRole('button', { name: '回答する' }).click();
   await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);

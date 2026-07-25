@@ -44,6 +44,7 @@ async function answerCurrentQuestionAs(page: Page, correctness: 'correct' | 'wro
   const label = correctness === 'correct' ? context.correctLabel : context.wrongLabel;
   expect(label).toBeTruthy();
   await page.locator(`#choices-form input[value="${label}"]`).check();
+  await page.locator('#confidence-options input[value="medium"]').check();
   await expect(page.getByRole('button', { name: '回答する' })).toBeEnabled();
   await page.getByRole('button', { name: '回答する' }).click();
   await expect(page.locator('#result-indicator')).toContainText(
@@ -148,6 +149,7 @@ test.describe('[DEP][DATA] Wrong reason tags / Persistence and isolation', () =>
     expect(await progressForQuestion(page, questionId)).toMatchObject(progressAfterAnswer);
 
     await page.locator('#next-question').click();
+    await page.locator('#confidence-options input[value="medium"]').check();
     await page.locator('#choices-form input[value="A"]').focus();
     await page.keyboard.press('2');
     await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue('B');

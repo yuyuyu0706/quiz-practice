@@ -253,6 +253,8 @@ export function renderQuestion(els, data) {
     choiceLabels,
     choiceMap,
     chosen,
+    confidenceLevels,
+    confidence,
     graded,
     explanationOpen,
     bookmarkEnabled,
@@ -283,11 +285,33 @@ export function renderQuestion(els, data) {
     input.name = 'choice';
     input.value = label;
     input.checked = chosen === label;
+    input.disabled = Boolean(graded);
     choiceLabel.appendChild(input);
 
     const text = question.choices[choiceMap[label]];
     appendFormattedTextWithCodeBlocks(choiceLabel, ` ${label}. ${text}`);
     els.choicesForm.appendChild(choiceLabel);
+  });
+
+  els.confidenceOptions.replaceChildren();
+  confidenceLevels.forEach((level) => {
+    const option = document.createElement('label');
+    option.className = 'confidence-option';
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'confidence';
+    input.value = level.id;
+    input.checked = confidence === level.id;
+    input.disabled = Boolean(graded);
+    const copy = document.createElement('span');
+    copy.className = 'confidence-option__copy';
+    const title = document.createElement('strong');
+    title.textContent = level.label;
+    const description = document.createElement('span');
+    description.textContent = level.description;
+    copy.append(title, description);
+    option.append(input, copy);
+    els.confidenceOptions.appendChild(option);
   });
 
   renderExplanation(els, { question, choiceMap });

@@ -77,6 +77,7 @@ test.describe('[DEP][DATA] Notes / Keyboard isolation', () => {
     await startDepQuiz(page, 'all');
     const initialProgress = await page.locator('#quiz-progress').textContent();
 
+    await page.locator('#confidence-options input[value="medium"]').check();
     await page.locator('#choices-form input[value="A"]').focus();
     await page.keyboard.press('2');
     await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue('B');
