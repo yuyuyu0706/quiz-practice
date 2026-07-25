@@ -58,12 +58,21 @@
           <p id="quiz-progress"></p>
         </div>
         <h2 id="quiz-question"></h2>
-        <form id="choices-form" class="choices"></form>
+        <form
+          id="choices-form"
+          class="choices"
+          aria-labelledby="quiz-question"
+          aria-describedby="selection-hint"
+        ></form>
         <section id="confidence-panel" class="confidence-panel" aria-label="回答の確信度">
-          <fieldset id="confidence-fieldset" class="confidence-fieldset">
+          <fieldset
+            id="confidence-fieldset"
+            class="confidence-fieldset"
+            aria-describedby="confidence-hint selection-hint"
+          >
             <legend>回答の確信度</legend>
             <p id="confidence-hint" class="confidence-hint">
-              今の回答にどのくらい確信がありますか？
+              今の回答にどのくらい確信がありますか？（H: 確信あり、M: 迷いあり、L: 自信なし）
             </p>
             <div id="confidence-options" class="confidence-options"></div>
           </fieldset>

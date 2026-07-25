@@ -107,6 +107,7 @@ const els = {
   quizProgress: document.getElementById('quiz-progress'),
   quizQuestion: document.getElementById('quiz-question'),
   choicesForm: document.getElementById('choices-form'),
+  confidenceFieldset: document.getElementById('confidence-fieldset'),
   confidenceOptions: document.getElementById('confidence-options'),
   resultIndicator: document.getElementById('result-indicator'),
   explanation: document.getElementById('explanation'),
@@ -329,6 +330,7 @@ function closeSecondaryActions(options = {}) {
 
 function handleKeyboard(event) {
   if (!state.session || els.views.quiz.className.indexOf('active') === -1) return;
+  if (event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
   if (isQuizShortcutIsolatedTarget(event.target) || isTextEntryTarget(event.target)) return;
   const key = event.key.toUpperCase();
   const map = {
@@ -341,11 +343,24 @@ function handleKeyboard(event) {
     C: 'C',
     D: 'D',
   };
-  if (map[key]) {
-    const question = getCurrentQuestion();
-    if (!question || state.session.graded[question.id]) return;
+  const question = getCurrentQuestion();
+  if (!question) return;
+  const confidenceMap = { H: 'high', M: 'medium', L: 'low' };
+  if (confidenceMap[key]) {
+    if (state.session.graded[question.id]) return;
+    const confidenceInput = els.confidenceOptions.querySelector(
+      `input[name="confidence"][value="${confidenceMap[key]}"]`
+    );
+    if (confidenceInput && !confidenceInput.disabled) {
+      event.preventDefault();
+      confidenceInput.checked = true;
+      handleConfidenceSelectionChange({ announce: true });
+    }
+  } else if (map[key]) {
+    if (state.session.graded[question.id]) return;
     const choiceInput = els.choicesForm.querySelector(`input[value="${map[key]}"]`);
     if (choiceInput && !choiceInput.disabled) {
+      event.preventDefault();
       choiceInput.checked = true;
       handleChoiceSelectionChange();
     }
@@ -635,12 +650,17 @@ function submitCurrentAnswer(event) {
   if (!inputState.canSubmit) {
     els.quizMessage.textContent = getAnswerInputHint(inputState.id);
     els.choicesForm.classList.toggle('needs-selection', !selected);
+    els.confidenceFieldset.classList.toggle(
+      'needs-selection',
+      inputState.id === 'missing_both' || inputState.id === 'missing_confidence'
+    );
     updatePrimaryActions(question.id);
-    if (!selected) scrollChoiceGroupIntoView();
+    focusMissingAnswerInput(inputState.id);
     return;
   }
 
   els.choicesForm.classList.remove('needs-selection');
+  els.confidenceFieldset.classList.remove('needs-selection');
 
   const selectedLabel = selected.value;
   const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
@@ -694,14 +714,31 @@ function handleChoiceSelectionChange() {
   updatePrimaryActions(getCurrentQuestion()?.id);
 }
 
-function handleConfidenceSelectionChange() {
+function handleConfidenceSelectionChange(options = {}) {
   const question = getCurrentQuestion();
   const selected = els.confidenceOptions.querySelector('input[name="confidence"]:checked');
   if (!question || !selected || state.session.graded[question.id]) return;
   setSessionConfidenceLevel(state.session, question.id, selected.value);
   persistSession();
-  els.quizMessage.textContent = '';
+  els.confidenceFieldset.classList.remove('needs-selection');
+  const level = CONFIDENCE_LEVELS.find(({ id }) => id === selected.value);
+  els.quizMessage.textContent =
+    options.announce && level ? `確信度「${level.label}」を選択しました。` : '';
   updatePrimaryActions(question.id);
+}
+
+function focusMissingAnswerInput(inputStateId) {
+  const selector =
+    inputStateId === 'missing_confidence'
+      ? 'input[name="confidence"]:checked, input[name="confidence"]:not(:disabled)'
+      : 'input[name="choice"]:checked, input[name="choice"]:not(:disabled)';
+  const container = inputStateId === 'missing_confidence' ? els.confidenceOptions : els.choicesForm;
+  const target = container.querySelector(selector);
+  if (!target || target.disabled) return;
+  target.focus({ preventScroll: true });
+  if (isMobileViewport()) {
+    target.closest('label')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
 function getCurrentAnswerInputState(questionId) {
