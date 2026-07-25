@@ -46,12 +46,13 @@ test('creates a weakness review session from a section target plan', () => {
 
   const session = createWeaknessReviewSession(plan);
 
-  assert.equal(session.schemaVersion, 1);
+  assert.equal(session.schemaVersion, 2);
   assert.equal(session.app, 'dep-quiz-app');
   assert.equal(session.mode, 'weaknessReview');
   assert.deepEqual(session.order, ['DEP-Q3', 'DEP-Q1', 'DEP-Q2']);
   assert.equal(session.currentIndex, 0);
   assert.deepEqual(session.answers, {});
+  assert.deepEqual(session.confidenceByQuestion, {});
   assert.deepEqual(session.choiceMap, {});
   assert.deepEqual(session.graded, {});
   assert.equal(session.completedAt, null);
