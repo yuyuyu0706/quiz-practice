@@ -274,6 +274,7 @@ export function renderQuestion(els, data) {
   els.resultIndicator.className = 'indicator';
   els.quizMessage.textContent = '';
   els.choicesForm.classList.remove('needs-selection');
+  els.confidenceFieldset.classList.remove('needs-selection');
   els.choicesForm.replaceChildren();
 
   choiceLabels.forEach((label) => {
@@ -301,6 +302,7 @@ export function renderQuestion(els, data) {
     input.type = 'radio';
     input.name = 'confidence';
     input.value = level.id;
+    input.setAttribute('aria-keyshortcuts', level.id.charAt(0).toUpperCase());
     input.checked = confidence === level.id;
     input.disabled = Boolean(graded);
     const copy = document.createElement('span');
