@@ -51,8 +51,18 @@ test('rejects malformed latest evaluations while reading', () => {
     { result: 'correct', confidence: 'HIGH', answeredAt: firstDate },
     { result: 'correct', confidence: ' high ', answeredAt: firstDate },
     { result: 'correct', confidence: 'high', answeredAt: '2026-07-25T10:00:00' },
+    { result: 'correct', confidence: 'high', answeredAt: '2026-02-31T10:00:00.000Z' },
   ]) {
     assert.equal(normalizeLastConfidenceAnswer(value), null);
+  }
+});
+
+test('accepts valid UTC ISO dates with and without milliseconds', () => {
+  for (const answeredAt of [firstDate, '2026-07-25T10:00:00Z']) {
+    assert.deepEqual(
+      normalizeLastConfidenceAnswer({ result: 'correct', confidence: 'high', answeredAt }),
+      { result: 'correct', confidence: 'high', answeredAt }
+    );
   }
 });
 
@@ -157,6 +167,14 @@ test('rejects invalid write inputs', () => {
   );
   assert.throws(
     () => applyConfidenceAnswerResult({}, 'Q1', { ...valid, answeredAt: 'invalid' }),
+    TypeError
+  );
+  assert.throws(
+    () =>
+      applyConfidenceAnswerResult({}, 'Q1', {
+        ...valid,
+        answeredAt: '2026-02-31T10:00:00.000Z',
+      }),
     TypeError
   );
 });

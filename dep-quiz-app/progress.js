@@ -120,7 +120,11 @@ function normalizeNoteText(item) {
 
 function normalizeIsoDate(value) {
   if (typeof value !== 'string' || !ISO_DATE_PATTERN.test(value)) return null;
-  return Number.isNaN(Date.parse(value)) ? null : value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const normalizedValue = value.includes('.') ? value : value.replace(/Z$/, '.000Z');
+  return date.toISOString() === normalizedValue ? value : null;
 }
 
 function isPlainObject(value) {
