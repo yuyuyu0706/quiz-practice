@@ -3,6 +3,7 @@ const RESET_ENTRY_KEYS = new Set([
   'correctCount',
   'wrongCount',
   'lastAnsweredAt',
+  'lastConfidenceAnswer',
   'wrongReasonTags',
   'wrongReasonUpdatedAt',
 ]);
@@ -80,6 +81,7 @@ function hasMeaningfulResetTarget(entry) {
     hasPositiveCount(entry.correctCount) ||
     hasPositiveCount(entry.wrongCount) ||
     entry.lastAnsweredAt != null ||
+    entry.lastConfidenceAnswer != null ||
     hasWrongReasonTags(entry.wrongReasonTags) ||
     entry.wrongReasonUpdatedAt != null
   );

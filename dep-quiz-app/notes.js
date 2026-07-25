@@ -1,4 +1,6 @@
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+import { baseProgress, normalizeProgressEntry, normalizeWrongReasonTags } from './progress.js';
+
+export { baseProgress, normalizeProgressEntry, normalizeWrongReasonTags } from './progress.js';
 
 export const WRONG_REASON_TAGS = Object.freeze([
   Object.freeze({ id: 'concept-behavior-gap', label: '概念・挙動がイメージできない' }),
@@ -9,60 +11,6 @@ export const WRONG_REASON_TAGS = Object.freeze([
   Object.freeze({ id: 'choice-difference-unclear', label: '選択肢の違いが分からず迷った' }),
   Object.freeze({ id: 'careless-mistake', label: 'ケアレスミス' }),
 ]);
-
-const WRONG_REASON_TAG_IDS = WRONG_REASON_TAGS.map((tag) => tag.id);
-const WRONG_REASON_TAG_ID_SET = new Set(WRONG_REASON_TAG_IDS);
-
-export function baseProgress() {
-  return {
-    seenCount: 0,
-    correctCount: 0,
-    wrongCount: 0,
-    lastAnsweredAt: null,
-    bookmark: false,
-    noteText: '',
-    note: '',
-    noteUpdatedAt: null,
-    wrongReasonTags: [],
-    wrongReasonUpdatedAt: null,
-  };
-}
-
-export function normalizeWrongReasonTags(rawTags) {
-  if (!Array.isArray(rawTags)) return [];
-
-  const accepted = new Set();
-  rawTags.forEach((tag) => {
-    if (typeof tag !== 'string') return;
-    const normalizedTag = tag.trim();
-    if (WRONG_REASON_TAG_ID_SET.has(normalizedTag)) {
-      accepted.add(normalizedTag);
-    }
-  });
-
-  return WRONG_REASON_TAG_IDS.filter((tagId) => accepted.has(tagId));
-}
-
-export function normalizeProgressEntry(entry) {
-  if (!isPlainObject(entry)) return baseProgress();
-
-  const noteText = normalizeNoteText(entry);
-  const wrongReasonTags = normalizeWrongReasonTags(entry.wrongReasonTags);
-
-  return {
-    seenCount: normalizeCount(entry.seenCount),
-    correctCount: normalizeCount(entry.correctCount),
-    wrongCount: normalizeCount(entry.wrongCount),
-    lastAnsweredAt: normalizeIsoDate(entry.lastAnsweredAt),
-    bookmark: typeof entry.bookmark === 'boolean' ? entry.bookmark : false,
-    noteText,
-    note: noteText,
-    noteUpdatedAt: normalizeIsoDate(entry.noteUpdatedAt),
-    wrongReasonTags,
-    wrongReasonUpdatedAt:
-      wrongReasonTags.length > 0 ? normalizeIsoDate(entry.wrongReasonUpdatedAt) : null,
-  };
-}
 
 export function getQuestionNote(progress, questionId) {
   const item = isPlainObject(progress) ? (progress[questionId] ?? {}) : {};
@@ -138,21 +86,6 @@ export function getAllNoteItems(questions, progress) {
     })
     .filter(Boolean)
     .sort((a, b) => new Date(b.noteUpdatedAt ?? 0) - new Date(a.noteUpdatedAt ?? 0));
-}
-
-function normalizeCount(value) {
-  const number = Number(value ?? 0);
-  return Number.isInteger(number) && number >= 0 ? number : 0;
-}
-
-function normalizeNoteText(item) {
-  const note = item.noteText ?? item.note ?? item.memo ?? '';
-  return typeof note === 'string' ? note : '';
-}
-
-function normalizeIsoDate(value) {
-  if (typeof value !== 'string' || !ISO_DATE_PATTERN.test(value)) return null;
-  return Number.isNaN(Date.parse(value)) ? null : value;
 }
 
 function isPlainObject(value) {

@@ -22,6 +22,11 @@ const learnedOnly = {
   correctCount: 1,
   wrongCount: 1,
   lastAnsweredAt: '2026-07-06T00:00:00.000Z',
+  lastConfidenceAnswer: {
+    result: 'wrong',
+    confidence: 'high',
+    answeredAt: '2026-07-06T00:00:00.000Z',
+  },
   wrongReasonTags: ['careless-mistake'],
   wrongReasonUpdatedAt: '2026-07-06T00:01:00.000Z',
 };
@@ -31,6 +36,7 @@ const defaultOnly = {
   correctCount: 0,
   wrongCount: 0,
   lastAnsweredAt: null,
+  lastConfidenceAnswer: null,
   bookmark: false,
   noteText: '',
   note: '',
@@ -79,6 +85,24 @@ test('removes entries that have only reset targets or empty retained defaults', 
   assert.equal(plan.impact.changedEntryCount, 2);
   assert.equal(plan.impact.removedEntryCount, 2);
   assert.equal(plan.impact.retainedEntryCount, 0);
+});
+
+test('removes latest confidence answers while preserving retained fields', () => {
+  const lastConfidenceAnswer = {
+    result: 'correct',
+    confidence: 'medium',
+    answeredAt: '2026-07-07T00:00:00.000Z',
+  };
+  const plan = buildLearningHistoryResetPlan({
+    LATEST_ONLY: { lastConfidenceAnswer },
+    LATEST_WITH_NOTE: { lastConfidenceAnswer, noteText: 'keep' },
+    NULL_ONLY: { lastConfidenceAnswer: null },
+  });
+
+  assert.deepEqual(plan.nextProgress, { LATEST_WITH_NOTE: { noteText: 'keep' } });
+  assert.equal(plan.impact.resetQuestionCount, 2);
+  assert.equal(plan.impact.changedEntryCount, 3);
+  assert.equal(plan.impact.removedEntryCount, 2);
 });
 
 test('removes entries whose only retained note fields are blank or whitespace', () => {
