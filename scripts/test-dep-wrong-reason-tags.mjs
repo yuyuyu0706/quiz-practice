@@ -11,6 +11,11 @@ import {
   saveWrongReasonTags,
   WRONG_REASON_TAGS,
 } from '../dep-quiz-app/notes.js';
+import {
+  normalizeWrongReasonTags as normalizeWrongReasonTagsFromRegistry,
+  WRONG_REASON_TAG_IDS,
+  WRONG_REASON_TAGS as WRONG_REASON_TAGS_FROM_REGISTRY,
+} from '../dep-quiz-app/wrong-reason-tags.js';
 
 function test(name, fn) {
   try {
@@ -53,6 +58,12 @@ test('WRONG_REASON_TAGS exposes seven stable IDs and labels', () => {
     { id: 'choice-difference-unclear', label: '選択肢の違いが分からず迷った' },
     { id: 'careless-mistake', label: 'ケアレスミス' },
   ]);
+  assert.equal(WRONG_REASON_TAGS, WRONG_REASON_TAGS_FROM_REGISTRY);
+  assert.deepEqual(
+    WRONG_REASON_TAG_IDS,
+    WRONG_REASON_TAGS.map(({ id }) => id)
+  );
+  assert.equal(normalizeWrongReasonTags, normalizeWrongReasonTagsFromRegistry);
 });
 
 test('normalizeWrongReasonTags removes invalid values and orders by registry', () => {

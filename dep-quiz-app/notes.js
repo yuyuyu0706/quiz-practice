@@ -1,16 +1,8 @@
-import { baseProgress, normalizeProgressEntry, normalizeWrongReasonTags } from './progress.js';
+import { baseProgress, normalizeProgressEntry } from './progress.js';
+import { normalizeWrongReasonTags } from './wrong-reason-tags.js';
 
-export { baseProgress, normalizeProgressEntry, normalizeWrongReasonTags } from './progress.js';
-
-export const WRONG_REASON_TAGS = Object.freeze([
-  Object.freeze({ id: 'concept-behavior-gap', label: '概念・挙動がイメージできない' }),
-  Object.freeze({ id: 'term-feature-meaning-confusion', label: '用語・機能の意味を混同した' }),
-  Object.freeze({ id: 'spec-memory-error', label: '仕様の覚え違い' }),
-  Object.freeze({ id: 'code-understanding-gap', label: '実装コードが理解できない' }),
-  Object.freeze({ id: 'question-reading-overlook', label: '問題文の読み落とし' }),
-  Object.freeze({ id: 'choice-difference-unclear', label: '選択肢の違いが分からず迷った' }),
-  Object.freeze({ id: 'careless-mistake', label: 'ケアレスミス' }),
-]);
+export { baseProgress, normalizeProgressEntry } from './progress.js';
+export { WRONG_REASON_TAGS, normalizeWrongReasonTags } from './wrong-reason-tags.js';
 
 export function getQuestionNote(progress, questionId) {
   const item = isPlainObject(progress) ? (progress[questionId] ?? {}) : {};
