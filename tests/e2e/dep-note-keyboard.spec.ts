@@ -77,6 +77,7 @@ test.describe('[DEP][DATA] Notes / Keyboard isolation', () => {
     await startDepQuiz(page, 'all');
     const initialProgress = await page.locator('#quiz-progress').textContent();
 
+    await page.locator('#confidence-options input[value="medium"]').check();
     await page.locator('#choices-form input[value="A"]').focus();
     await page.keyboard.press('2');
     await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue('B');
@@ -88,6 +89,38 @@ test.describe('[DEP][DATA] Notes / Keyboard isolation', () => {
 
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('#quiz-progress')).toContainText(/2\s*\/\s*/);
+  });
+
+  test('keeps the graded answer unchanged when another choice shortcut is pressed', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop-only keyboard shortcut coverage.');
+    await startDepQuiz(page, 'all');
+
+    await page.locator('#confidence-options input[value="medium"]').check();
+    await page.locator('#choices-form input[value="A"]').focus();
+    await page.keyboard.press('2');
+    await page.keyboard.press('Enter');
+
+    const indicatorAtGrading = await page.locator('#result-indicator').textContent();
+    const sessionAtGrading = await page.evaluate(() => {
+      const session = JSON.parse(localStorage.getItem('depQuizActiveSession') ?? '{}');
+      const questionId = session.order[session.currentIndex];
+      return { questionId, answer: session.answers[questionId] };
+    });
+    await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue('B');
+    await expect(page.locator('#choices-form input[name="choice"]').first()).toBeDisabled();
+
+    await page.keyboard.press('A');
+
+    await expect(page.locator('#choices-form input[name="choice"]:checked')).toHaveValue('B');
+    await expect(page.locator('#result-indicator')).toHaveText(indicatorAtGrading ?? '');
+    const sessionAfterShortcut = await page.evaluate(() => {
+      const session = JSON.parse(localStorage.getItem('depQuizActiveSession') ?? '{}');
+      const questionId = session.order[session.currentIndex];
+      return { questionId, answer: session.answers[questionId] };
+    });
+    expect(sessionAfterShortcut).toEqual(sessionAtGrading);
   });
 
   test('guarantees answered question Enter does not double count progress while note is focused', async ({

@@ -113,6 +113,7 @@ async function answerCurrentQuestionCorrectly(page: Page) {
   });
   expect(correctLabel).toBeTruthy();
   await page.locator(`#choices-form input[value="${correctLabel}"]`).check();
+  await page.locator('#confidence-options input[value="medium"]').check();
   await page.getByRole('button', { name: '回答する' }).click();
 }
 

@@ -36,7 +36,11 @@ import {
   getCurrentQuestion as getCurrentQuestionFromSession,
   getStoredSelectedLabel as getStoredSelectedLabelFromSession,
   normalizeLoadedSession,
+  getStoredConfidenceLevel,
+  setSessionConfidenceLevel,
 } from './quiz-session.js';
+import { CONFIDENCE_LEVELS } from './confidence.js';
+import { getAnswerInputState } from './answer-input-state.js';
 import {
   showView as switchView,
   renderNotesList as renderNotesListView,
@@ -103,6 +107,7 @@ const els = {
   quizProgress: document.getElementById('quiz-progress'),
   quizQuestion: document.getElementById('quiz-question'),
   choicesForm: document.getElementById('choices-form'),
+  confidenceOptions: document.getElementById('confidence-options'),
   resultIndicator: document.getElementById('result-indicator'),
   explanation: document.getElementById('explanation'),
   quizMessage: document.getElementById('quiz-message'),
@@ -222,6 +227,7 @@ function attachEvents() {
   });
 
   els.choicesForm.addEventListener('change', handleChoiceSelectionChange);
+  els.confidenceOptions.addEventListener('change', handleConfidenceSelectionChange);
 
   els.toggleExplanation.addEventListener('click', () => {
     closeSecondaryActions();
@@ -336,8 +342,10 @@ function handleKeyboard(event) {
     D: 'D',
   };
   if (map[key]) {
+    const question = getCurrentQuestion();
+    if (!question || state.session.graded[question.id]) return;
     const choiceInput = els.choicesForm.querySelector(`input[value="${map[key]}"]`);
-    if (choiceInput) {
+    if (choiceInput && !choiceInput.disabled) {
       choiceInput.checked = true;
       handleChoiceSelectionChange();
     }
@@ -591,6 +599,7 @@ function renderQuestion(options = {}) {
   const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
   const chosen = getStoredSelectedLabel(question.id, question.choices, choiceMap);
   const graded = state.session.graded[question.id];
+  const confidence = getStoredConfidenceLevel(state.session, question.id);
   renderQuestionView(els, {
     question,
     idx,
@@ -598,6 +607,8 @@ function renderQuestion(options = {}) {
     choiceLabels: getChoiceLabels(question.choices),
     choiceMap,
     chosen,
+    confidenceLevels: CONFIDENCE_LEVELS,
+    confidence,
     graded,
     explanationOpen: state.session.explanationOpen,
     bookmarkEnabled: state.progress[question.id]?.bookmark,
@@ -620,11 +631,12 @@ function submitCurrentAnswer(event) {
   }
 
   const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
-  if (!selected) {
-    els.quizMessage.textContent = '選択肢を1つ選んでから「回答する」を押してください。';
-    els.choicesForm.classList.add('needs-selection');
-    els.selectionHint.textContent = '未選択です。まずは選択肢をタップしてください。';
-    scrollChoiceGroupIntoView();
+  const inputState = getCurrentAnswerInputState(question.id);
+  if (!inputState.canSubmit) {
+    els.quizMessage.textContent = getAnswerInputHint(inputState.id);
+    els.choicesForm.classList.toggle('needs-selection', !selected);
+    updatePrimaryActions(question.id);
+    if (!selected) scrollChoiceGroupIntoView();
     return;
   }
 
@@ -670,15 +682,50 @@ function moveQuestion(delta) {
 }
 
 function handleChoiceSelectionChange() {
+  const question = getCurrentQuestion();
+  if (!question || state.session.graded[question.id]) return;
+  const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
+  if (selected) {
+    state.session.answers[question.id] = selected.value;
+    persistSession();
+  }
   els.quizMessage.textContent = '';
   els.choicesForm.classList.remove('needs-selection');
   updatePrimaryActions(getCurrentQuestion()?.id);
 }
 
+function handleConfidenceSelectionChange() {
+  const question = getCurrentQuestion();
+  const selected = els.confidenceOptions.querySelector('input[name="confidence"]:checked');
+  if (!question || !selected || state.session.graded[question.id]) return;
+  setSessionConfidenceLevel(state.session, question.id, selected.value);
+  persistSession();
+  els.quizMessage.textContent = '';
+  updatePrimaryActions(question.id);
+}
+
+function getCurrentAnswerInputState(questionId) {
+  return getAnswerInputState({
+    hasChoice: Boolean(els.choicesForm.querySelector('input[name="choice"]:checked')),
+    confidence: getStoredConfidenceLevel(state.session, questionId),
+    graded: Boolean(state.session?.graded?.[questionId]),
+  });
+}
+
+function getAnswerInputHint(id) {
+  return {
+    missing_both: '選択肢と確信度を選んでください。',
+    missing_choice: '選択肢を選んでください。',
+    missing_confidence: '回答前に確信度を選んでください。',
+    ready: '回答と確信度を選択済みです。「回答する」で採点します。',
+    graded: '',
+  }[id];
+}
+
 function updatePrimaryActions(questionId) {
-  const selected = els.choicesForm.querySelector('input[name="choice"]:checked');
-  const graded = Boolean(state.session?.graded?.[questionId]);
-  const canSubmit = Boolean(selected) && !graded;
+  const inputState = getCurrentAnswerInputState(questionId);
+  const graded = inputState.id === 'graded';
+  const canSubmit = inputState.canSubmit;
   const canNext = graded;
 
   els.submitAnswer.disabled = !canSubmit;
@@ -686,11 +733,7 @@ function updatePrimaryActions(questionId) {
   els.nextQuestionInline.disabled = !canNext;
   els.selectionHint.hidden = graded;
 
-  if (selected) {
-    els.selectionHint.textContent = '選択済みです。「回答する」で採点します。';
-  } else {
-    els.selectionHint.textContent = '選択肢を選ぶと「回答する」が押せます。';
-  }
+  els.selectionHint.textContent = getAnswerInputHint(inputState.id);
 }
 
 function updateExplanationActions() {

@@ -116,6 +116,7 @@ test.describe('[DEP][FLOW] Weakness review / Session lifecycle', () => {
       (firstQuestion.question ?? '').slice(0, 20)
     );
     await page.locator('#choices-form label').first().click();
+    await page.locator('#confidence-options input[value="medium"]').check();
     await page.getByRole('button', { name: '回答する' }).click();
     await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);
     await page.getByRole('button', { name: '次へ' }).first().click();
