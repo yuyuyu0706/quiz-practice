@@ -208,13 +208,50 @@
 
 ## 第6章 弱点分析を支える主要な設計思想
 
-弱点分析を学習フィードバックループとして成立させるには、分析・対象確認・復習・学習履歴リセットを、同じ状態管理の考え方でつなぐ必要がある。本章では、その循環を破綻させないための設計思想を整理する。
+弱点分析を学習フィードバックループとして成立させるには、分析・対象確認・復習・学習履歴リセットを、同じ状態管理の考え方でつなぐ必要がある。本章では、その循環を破綻させないための4つの設計思想を整理する。
 
 ![弱点分析を支える4つの主要な設計思想](images/phase-d-weakness-learning-section6.png)
 
-図6の各思想は、独立したルールではなく、状態重複、分析の陳腐化、体験の分断、意図しない更新を同時に避けるために組み合わされる。これにより、分析結果の整合性と鮮度を保ちながら、既存の学習体験を再利用し、状態変更を利用者の明示的な操作に限定できる。
+### 思想1：既存状態を正本として再利用する
 
-この設計は、弱点を確認してから復習し、その結果を最新の学習履歴として再分析へ戻す循環の信頼性を支える。第7章では、この思想の上で現在どこまで実現済みかと、まだ現在の機能として扱わない将来候補を分けて説明する。
+**何を防ぐか：** 分析・対象確認・復習・リセットが、それぞれ独立した状態コピーを持つことによる整合性の破綻を防ぐ。
+
+各機能が同じ `depQuizProgress` をそのまま受け取ることで、どのタイミングで分析しても・対象確認しても・リセットしても、常に同一の学習履歴を参照する。`buildWeaknessAnalysis(questions, progress)`、`buildWeaknessReviewTargetPlan({ questions, progress, condition })`、`buildLearningHistoryResetPlan(progress)` のいずれも、外部から渡された `progress` を入力として受け取るだけであり、内部で状態のコピーを保持しない。これにより、複数の機能が互いに異なる「自前の状態コピー」を持って乖離するという状況が生じない。
+
+### 思想2：分析結果を保存せず、最新履歴から再導出する
+
+**何を防ぐか：** 保存した分析結果が学習の進行によって陳腐化し、実際の状態と乖離することを防ぐ。
+
+`buildWeaknessAnalysis()` は storage への書き込みを一切行わない pure function である。分析結果はその場で導出され、保存も蓄積もしない。復習が完了して `depQuizProgress` が更新されると、次回の分析実行時には最新の `depQuizProgress` から自動的に再計算される。これにより、「保存時点の分析」が現在の学習状態と乖離するという問題が起きない。
+
+### 思想3：専用クイズエンジンを作らず、既存クイズ体験を再利用する
+
+**何を防ぐか：** 弱点復習専用の並行実装による保守負担と、通常学習と弱点復習の体験の分断を防ぐ。
+
+`createWeaknessReviewSession()` は内部で `createSession(order, WEAKNESS_REVIEW_MODE, settingsSnapshot)` を呼び出す。変わるのは問題の選び方（`order`：弱点問題のIDリスト）と `settingsSnapshot.condition`（弱点抽出条件の引き継ぎ）のみであり、クイズ進行・回答受付・履歴書き戻しの仕組みは既存の `quiz-session.js` をそのまま使う。弱点復習のためだけにクイズエンジンを別途実装しないため、クイズ体験の一貫性が保たれ、保守負担が生じない。
+
+### 思想4：閲覧と状態変更を分離する
+
+**何を防ぐか：** 対象一覧の閲覧・条件変更・分析の閲覧が、意図せず storage を書き換えることを防ぐ。
+
+`buildWeaknessAnalysis()`、`buildWeaknessReviewTargetPlan()`、`buildLearningHistoryResetPlan()` はすべて read-only であり、呼び出しただけでは storage への変更が生じない。状態変更は「復習セッション開始」「回答送信」「リセット実行（`commitLearningHistoryReset()`）」という利用者の明示的な操作のみで行われる。これにより、分析・確認といった閲覧操作が意図せず学習履歴を書き換えるリスクがない。
+
+### 4思想の組み合わせ効果
+
+各思想は独立したルールではなく、組み合わせることで循環の信頼性が高まる。
+
+- **思想1 × 思想2**：単一正本（`depQuizProgress`）があるため、「最新履歴からの再導出」が常に正確に動く。別々のコピーが存在しないので、再導出結果がどの機能から見ても一致する。
+- **思想2 → 思想1**：分析結果を保存しないため、復習後の再分析では思想1の最新状態が自動的に反映される。保存された古い分析結果が残ることはない。
+- **思想3 × 思想4**：既存クイズ体験を再利用することで、クイズエンジンレベルでも閲覧と変更の分離が維持される。弱点復習専用のエンジンを作ると、その独自エンジンで思想4を別途実装する必要が生じる。
+- **思想4 → 思想1**：閲覧操作が状態を変えないため、思想1の単一正本が汚染されない。誰かが分析・確認を実行しても、学習履歴は変わらない。
+
+**主な参照先**
+
+- 現行実装：[`dep-quiz-app/analysis.js`](../../dep-quiz-app/analysis.js)（`buildWeaknessAnalysis()`）
+- 現行実装：[`dep-quiz-app/weakness-review-targets.js`](../../dep-quiz-app/weakness-review-targets.js)（`buildWeaknessReviewTargetPlan()`）
+- 現行実装：[`dep-quiz-app/weakness-review-session.js`](../../dep-quiz-app/weakness-review-session.js)（`createWeaknessReviewSession()`）
+- 現行実装：[`dep-quiz-app/learning-history-reset.js`](../../dep-quiz-app/learning-history-reset.js)（`buildLearningHistoryResetPlan()`）
+- 横断E2E：[`tests/e2e/dep-weakness-review-d3-integration.spec.ts`](../../tests/e2e/dep-weakness-review-d3-integration.spec.ts)
 
 ## 第7章 現在地と今後の発展方向
 
@@ -222,9 +259,48 @@
 
 ![弱点分析の現在地・現在の境界・今後の発展方向](images/phase-d-weakness-learning-section7.png)
 
-図7の将来候補は、保証済み機能や確定ロードマップではない。その中でも、複数の観点を組み合わせて学習状況を捉えるクロス分析、一人ひとりの状況に応じて次の行動を提案するAIリコメンド、施策による変化を確かめる学習効果の測定は、優先度の高い将来構想として位置付ける。実現するには、どの履歴を母数にするか、どの評価指標で効果を測るか、どの判断や推薦を説明可能にするかといった追加設計が必要になる。
+### 現在保証されていること（E2Eで確認済み）
 
-したがって、本文書では現在実装済みの機能を、最新の学習履歴にもとづく分析、対象確認、復習、再分析の学習フィードバックループとして位置付ける。将来候補は、その判断材料をさらに活用する方向として扱い、現在の境界と明確に分離する。第8章では、現在地や境界を詳しく確認するための正本を案内する。
+以下は現在実装済みであり、E2Eテストによって振る舞いが保証されている。
+
+- 弱点分析（全体・Section別・誤答理由タグ・重点ポイント）の都度導出
+- 分析結果から対象問題一覧の確認（`buildWeaknessReviewTargetPlan()`）
+- 弱点起点の復習セッション（`createWeaknessReviewSession()`）
+- 復習完了後の `depQuizProgress` への書き戻し → 再分析で最新状態が反映される（D3横断ループ保証）
+- 学習履歴リセット（計画確認 → 実行）とリセット後に弱点分析が未学習状態から再出発する回帰
+
+### 意図した現在の制約
+
+以下は機能の欠如ではなく、現在の設計として意図した制約である。
+
+- 分析結果は storage に保存されない（常に再計算 — `buildWeaknessAnalysis()` は pure function）
+- 対象抽出条件は `section` または `wrongReasonTag` の1種類のみ（`condition.type` が二択）
+- 弱点復習セッション中の対象問題の追加・変更は不可
+- 学習履歴リセットは利用者の明示的操作のみ（循環中に自動実行されない）
+- 正答率は `correctCount + wrongCount ≠ totalAttemptCount` の場合に算出しない（`accuracyRateStatus: 'inconsistent-counts'`）
+
+### 未実装領域
+
+以下は現時点では実装していない領域である。
+
+- 複数条件の組み合わせ（section AND wrongReasonTag）
+- 分析結果の時系列記録・推移比較
+- 復習途中での対象問題の動的な追加・除外
+
+### 将来候補（保証済み機能でも確定ロードマップでもない）
+
+以下は今後の発展方向として考えられるものの、保証済み機能でも確定ロードマップでもなく、それぞれ追加設計が必要となる。
+
+- **時系列分析**：いつの学習履歴を母数にするか、どの時点の状態を比較するかの設計が必要
+- **クロス分析**（Section × 誤答理由タグ）：対象抽出条件の型拡張と分析軸の追加設計が必要
+- **学習効果測定**（復習前後の比較）：どの評価指標で測るか、比較ベースラインの定義が必要
+- **AIリコメンド**：どの判断・推薦を説明可能にするかの設計が必要
+
+**主な参照先**
+
+- 横断E2E：[`tests/e2e/dep-weakness-review-d3-integration.spec.ts`](../../tests/e2e/dep-weakness-review-d3-integration.spec.ts)
+- リセット管理E2E：[`tests/e2e/dep-learning-history-reset-management.spec.ts`](../../tests/e2e/dep-learning-history-reset-management.spec.ts)
+- 現行実装：[`dep-quiz-app/analysis.js`](../../dep-quiz-app/analysis.js)、[`dep-quiz-app/weakness-review-targets.js`](../../dep-quiz-app/weakness-review-targets.js)、[`dep-quiz-app/weakness-review-session.js`](../../dep-quiz-app/weakness-review-session.js)、[`dep-quiz-app/learning-history-reset.js`](../../dep-quiz-app/learning-history-reset.js)
 
 ## 第8章 参考情報
 
