@@ -11,10 +11,19 @@ test.describe('[DEP][UI] Confidence input', () => {
     const options = page.locator('.confidence-option');
     await expect(options).toHaveCount(3);
     await expect(options).toHaveText(['確信あり/High', '迷いあり/Medium', '自信なし/Low']);
-    const widths = await options.evaluateAll((nodes) =>
-      nodes.map((node) => Math.round(node.getBoundingClientRect().width))
+    const optionPositions = await options.evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        left: Math.round(node.getBoundingClientRect().left),
+        right: Math.round(node.getBoundingClientRect().right),
+      }))
     );
-    expect(new Set(widths).size).toBe(1);
+    expect(optionPositions[0].left).toBe(
+      Math.round((await page.locator('#confidence-options').boundingBox())?.x ?? -1)
+    );
+    expect(optionPositions[2].right).toBeLessThan(
+      Math.round((await page.locator('#confidence-options').boundingBox())?.x ?? 0) +
+        Math.round((await page.locator('#confidence-options').boundingBox())?.width ?? 0)
+    );
     await expect(page.locator('#confidence-detail')).toBeHidden();
     await expect(page.locator('#confidence-hint')).toHaveCount(0);
     expect(
@@ -25,22 +34,33 @@ test.describe('[DEP][UI] Confidence input', () => {
     expect(await options.allTextContents()).not.toContain('根拠を持って正しいと判断している');
 
     const descriptions = [
-      '根拠を持って正しいと判断している',
-      '候補は絞れたが、判断に迷いがある',
-      '勘に近い、または十分な根拠が持てない',
+      '確信あり : High : 根拠を持って正しいと判断している',
+      '迷いあり : Medium : 候補は絞れたが、判断に迷いがある',
+      '自信なし : Low : 勘に近い、または十分な根拠が持てない',
     ];
     for (let index = 0; index < descriptions.length; index += 1) {
       await options.nth(index).click();
       await expect(page.locator('#confidence-detail')).toHaveText(descriptions[index]);
       await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'selected');
     }
+    await expect(page.locator('#confidence-detail strong')).toHaveText('自信なし');
+    await expect(page.locator('#confidence-detail .confidence-detail__level')).toHaveText('Low');
+    const detailStyles = await page.locator('#confidence-detail').evaluate((detail) => ({
+      labelWeight: getComputedStyle(detail.querySelector('strong')!).fontWeight,
+      detailColor: getComputedStyle(detail).color,
+      levelColor: getComputedStyle(detail.querySelector('.confidence-detail__level')!).color,
+    }));
+    expect(Number(detailStyles.labelWeight)).toBeGreaterThanOrEqual(600);
+    expect(detailStyles.levelColor).not.toBe(detailStyles.detailColor);
     await options.nth(1).click();
     await expect(page.locator('#selection-hint')).toContainText('選択肢を選んでください。');
 
     await page.locator('#choices-form label').first().click();
     await expect(page.locator('#selection-hint')).toBeHidden();
     await page.getByRole('button', { name: '回答する' }).click();
-    await expect(page.locator('#confidence-detail')).toHaveText('候補は絞れたが、判断に迷いがある');
+    await expect(page.locator('#confidence-detail')).toHaveText(
+      '迷いあり : Medium : 候補は絞れたが、判断に迷いがある'
+    );
     await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'graded');
     expect(
       await page
@@ -155,8 +175,15 @@ test.describe('[DEP][UI] Confidence input', () => {
       .locator('.confidence-option')
       .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)));
     expect(new Set(rows).size).toBe(1);
-    await option.click();
-    await expect(option.locator('input')).toBeChecked();
+    for (const confidenceOption of await page.locator('.confidence-option').all()) {
+      await confidenceOption.click();
+      await expect(confidenceOption.locator('input')).toBeChecked();
+      expect(
+        await page
+          .locator('#confidence-detail')
+          .evaluate((detail) => detail.scrollWidth <= detail.clientWidth)
+      ).toBe(true);
+    }
     const hasOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth
     );

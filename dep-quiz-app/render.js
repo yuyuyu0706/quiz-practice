@@ -359,7 +359,17 @@ export function updateConfidenceDetail(detail, level, graded) {
   detail.replaceChildren();
   if (!level) return;
 
-  detail.textContent = level.description;
+  const label = document.createElement('strong');
+  label.textContent = level.label;
+  const levelId = document.createElement('span');
+  levelId.className = 'confidence-detail__level';
+  levelId.textContent = `${level.id.charAt(0).toUpperCase()}${level.id.slice(1)}`;
+  detail.append(
+    label,
+    document.createTextNode(' : '),
+    levelId,
+    document.createTextNode(` : ${level.description}`)
+  );
 }
 
 export function renderExplanation(els, { question, choiceMap }) {
