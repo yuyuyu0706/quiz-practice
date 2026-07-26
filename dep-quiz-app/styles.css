@@ -335,7 +335,7 @@ button.primary:hover:not(:disabled) {
   background: #fdeceb;
 }
 .confidence-panel {
-  margin: 8px 0 4px;
+  margin: 8px 0 0;
 }
 .confidence-fieldset {
   margin: 0;
@@ -372,7 +372,7 @@ button.primary:hover:not(:disabled) {
   gap: 3px;
   flex: 0 0 auto;
   justify-content: center;
-  padding: 3px 6px;
+  padding: 3px 7px;
   border-radius: 999px;
   cursor: pointer;
   min-width: 0;
@@ -433,14 +433,14 @@ button.primary:hover:not(:disabled) {
 }
 @media (max-width: 640px) {
   .confidence-panel {
-    margin-bottom: 8px;
+    margin-bottom: 0;
   }
   .confidence-options {
     gap: 7px;
   }
   .confidence-option {
     gap: 2px;
-    padding-inline: 2px;
+    padding-inline: 3px;
   }
   .confidence-option input {
     margin: 0;
@@ -459,6 +459,13 @@ button.primary:hover:not(:disabled) {
     font-size: 0.7rem;
     letter-spacing: -0.01em;
   }
+}
+.indicator:empty {
+  display: none;
+}
+.confidence-panel + .indicator:empty + .button-group-primary {
+  margin-top: 2px;
+  padding-top: 8px;
 }
 .indicator.ok {
   color: var(--ok);

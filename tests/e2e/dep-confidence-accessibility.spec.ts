@@ -36,7 +36,7 @@ test.describe('[DEP][UI] Confidence input', () => {
     const descriptions = [
       '確信あり : 根拠を持って正しいと判断している',
       '迷いあり : 候補は絞れたが、判断に迷いがある',
-      '自信なし : 勘に近い、または十分な根拠が持てない',
+      '自信なし : 勘に近い、十分な根拠が持てない',
     ];
     for (let index = 0; index < descriptions.length; index += 1) {
       await options.nth(index).click();
@@ -180,6 +180,13 @@ test.describe('[DEP][UI] Confidence input', () => {
     });
     expect(capsuleHeight).toBeLessThan(38);
     expect(capsuleHeight).toBeGreaterThanOrEqual(32);
+    const visualCapsuleBottom = await option.evaluate((element) => {
+      const style = getComputedStyle(element, '::before');
+      return element.getBoundingClientRect().bottom - parseFloat(style.bottom);
+    });
+    const submitButtonBox = await page.locator('#submit-answer').boundingBox();
+    expect(submitButtonBox).not.toBeNull();
+    expect(submitButtonBox!.y - visualCapsuleBottom).toBeLessThan(20);
     await expect(page.locator('.confidence-option')).toHaveCount(3);
     const rows = await page
       .locator('.confidence-option')

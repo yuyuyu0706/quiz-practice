@@ -12,7 +12,7 @@ export const CONFIDENCE_LEVELS = Object.freeze([
   Object.freeze({
     id: 'low',
     label: '自信なし',
-    description: '勘に近い、または十分な根拠が持てない',
+    description: '勘に近い、十分な根拠が持てない',
   }),
 ]);
 
