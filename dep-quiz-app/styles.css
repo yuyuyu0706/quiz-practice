@@ -349,8 +349,15 @@ button.primary:hover:not(:disabled) {
   outline-offset: 5px;
 }
 .confidence-fieldset legend {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 8px;
   padding: 0;
   margin-bottom: 5px;
+}
+.confidence-fieldset__title {
+  flex: 0 0 auto;
   font-weight: 700;
 }
 .confidence-options {
@@ -415,10 +422,11 @@ button.primary:hover:not(:disabled) {
   font-size: 0.76rem;
 }
 .confidence-detail {
-  min-height: 1.6em;
-  margin: 5px 2px 0;
+  min-width: 0;
+  margin: 0;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
+  font-weight: 400;
 }
 .confidence-detail--selected {
   color: var(--text);
@@ -451,9 +459,8 @@ button.primary:hover:not(:disabled) {
     font-size: 0.65rem;
   }
   .confidence-detail {
-    font-size: 0.74rem;
+    font-size: 0.7rem;
     letter-spacing: -0.01em;
-    white-space: nowrap;
   }
 }
 .indicator.ok {

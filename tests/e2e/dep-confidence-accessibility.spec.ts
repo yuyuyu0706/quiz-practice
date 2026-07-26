@@ -52,6 +52,12 @@ test.describe('[DEP][UI] Confidence input', () => {
     }));
     expect(Number(detailStyles.labelWeight)).toBeGreaterThanOrEqual(600);
     expect(detailStyles.levelColor).not.toBe(detailStyles.detailColor);
+    const titleBox = await page.locator('.confidence-fieldset__title').boundingBox();
+    const detailBox = await page.locator('#confidence-detail').boundingBox();
+    expect(titleBox).not.toBeNull();
+    expect(detailBox).not.toBeNull();
+    expect(detailBox!.x).toBeGreaterThan(titleBox!.x + titleBox!.width);
+    expect(detailBox!.y).toBeLessThan(titleBox!.y + titleBox!.height);
     await options.nth(1).click();
     await expect(page.locator('#selection-hint')).toContainText('選択肢を選んでください。');
 
