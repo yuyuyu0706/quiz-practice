@@ -170,6 +170,14 @@ test.describe('[DEP][UI] Confidence input', () => {
 
     const option = page.locator('.confidence-option').first();
     expect((await option.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    const capsuleHeight = await option.evaluate((element) => {
+      const style = getComputedStyle(element, '::before');
+      return (
+        element.getBoundingClientRect().height - parseFloat(style.top) - parseFloat(style.bottom)
+      );
+    });
+    expect(capsuleHeight).toBeLessThan(44);
+    expect(capsuleHeight).toBeGreaterThanOrEqual(36);
     await expect(page.locator('.confidence-option')).toHaveCount(3);
     const rows = await page
       .locator('.confidence-option')

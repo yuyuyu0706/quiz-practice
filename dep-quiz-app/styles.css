@@ -359,12 +359,13 @@ button.primary:hover:not(:disabled) {
   gap: 8px;
 }
 .confidence-option {
+  position: relative;
+  isolation: isolate;
   display: flex;
   gap: 3px;
   flex: 0 0 auto;
   justify-content: center;
   padding: 3px 6px;
-  border: 1px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
   min-width: 0;
@@ -372,11 +373,20 @@ button.primary:hover:not(:disabled) {
   align-items: center;
   white-space: nowrap;
 }
-.confidence-option:hover:not(:has(input:disabled)) {
+.confidence-option::before {
+  position: absolute;
+  z-index: -1;
+  inset: 3px 0;
+  border: 1px solid var(--border);
+  border-radius: inherit;
+  background: var(--card);
+  content: '';
+}
+.confidence-option:hover:not(:has(input:disabled))::before {
   border-color: var(--dep-primary-border);
   background: var(--dep-surface-tint);
 }
-.confidence-option:has(input:checked) {
+.confidence-option:has(input:checked)::before {
   border-color: var(--primary);
   background: var(--dep-primary-soft);
   box-shadow: 0 0 0 2px var(--dep-primary-ring);
