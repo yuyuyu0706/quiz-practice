@@ -339,7 +339,7 @@ button.primary:hover:not(:disabled) {
 }
 .confidence-fieldset {
   margin: 0;
-  padding: 14px;
+  padding: 10px 12px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
 }
@@ -353,46 +353,104 @@ button.primary:hover:not(:disabled) {
   font-weight: 700;
 }
 .confidence-hint {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: var(--muted);
   font-size: 0.92rem;
 }
 .confidence-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 .confidence-option {
   display: flex;
-  gap: 8px;
-  padding: 11px;
+  gap: 6px;
+  padding: 7px 9px;
   border: 1px solid var(--border);
   border-radius: 10px;
   cursor: pointer;
   min-width: 0;
   min-height: 44px;
   align-items: center;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+.confidence-option:hover:not(:has(input:disabled)) {
+  border-color: var(--dep-primary-border);
+  background: var(--dep-surface-tint);
 }
 .confidence-option:has(input:checked) {
   border-color: var(--primary);
   background: var(--dep-primary-soft);
   box-shadow: 0 0 0 2px var(--dep-primary-ring);
 }
+.confidence-option:has(input:focus-visible) {
+  outline: 3px solid var(--dep-primary-ring);
+  outline-offset: 2px;
+}
+.confidence-option:has(input:disabled) {
+  cursor: not-allowed;
+}
 .confidence-option__copy {
-  display: grid;
-  gap: 3px;
-  font-size: 0.86rem;
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 .confidence-option__copy strong {
-  font-size: 0.96rem;
+  font-size: 0.92rem;
+}
+.confidence-option__shortcut {
+  min-width: 1.7em;
+  padding: 1px 5px;
+  border: 1px solid #aeb9b2;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+}
+.confidence-detail {
+  min-height: 1.6em;
+  margin: 8px 2px 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.confidence-detail--selected {
+  color: var(--text);
 }
 @media (max-width: 640px) {
   .confidence-panel {
     margin-bottom: 14px;
   }
   .confidence-options {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .confidence-option {
+    justify-content: center;
+    padding-inline: 6px;
+  }
+  .confidence-option input {
+    margin: 0;
+  }
+  .confidence-option__copy {
+    flex: initial;
+  }
+  .confidence-option__copy strong {
+    font-size: 0.82rem;
+  }
+  .confidence-option__shortcut {
+    min-width: 1.55em;
+    padding-inline: 3px;
+    font-size: 0.72rem;
+  }
+  .confidence-detail {
+    font-size: 0.82rem;
   }
 }
 .indicator.ok {

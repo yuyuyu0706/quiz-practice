@@ -2,6 +2,41 @@ import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
 test.describe('[DEP][UI] Confidence input', () => {
+  test('shows compact equal-width choices and only the selected confidence detail', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop visual-state coverage.');
+    await startDepQuiz(page, 'all');
+
+    const options = page.locator('.confidence-option');
+    await expect(options).toHaveCount(3);
+    await expect(options).toHaveText(['確信ありH', '迷いありM', '自信なしL']);
+    const widths = await options.evaluateAll((nodes) =>
+      nodes.map((node) => Math.round(node.getBoundingClientRect().width))
+    );
+    expect(new Set(widths).size).toBe(1);
+    await expect(page.locator('#confidence-detail')).toHaveText('H・M・Lから1つ選んでください。');
+    expect(await options.allTextContents()).not.toContain('根拠を持って正しいと判断している');
+
+    await options.nth(1).click();
+    await expect(page.locator('#confidence-detail')).toHaveText(
+      '選択中：迷いあり — 候補は絞れたが、判断に迷いがある'
+    );
+    await expect(page.locator('#selection-hint')).toContainText('選択肢を選んでください。');
+
+    await page.locator('#choices-form label').first().click();
+    await expect(page.locator('#selection-hint')).toBeHidden();
+    await page.getByRole('button', { name: '回答する' }).click();
+    await expect(page.locator('#confidence-detail')).toContainText(
+      '選択済み（採点済み）：迷いあり'
+    );
+    expect(
+      await page
+        .locator('input[name="confidence"]')
+        .evaluateAll((inputs) => inputs.every((input) => (input as HTMLInputElement).disabled))
+    ).toBe(true);
+  });
+
   test('supports confidence shortcuts, persistence, ARIA, and graded-state locking', async ({
     page,
   }, testInfo) => {
@@ -103,6 +138,11 @@ test.describe('[DEP][UI] Confidence input', () => {
 
     const option = page.locator('.confidence-option').first();
     expect((await option.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    await expect(page.locator('.confidence-option')).toHaveCount(3);
+    const rows = await page
+      .locator('.confidence-option')
+      .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)));
+    expect(new Set(rows).size).toBe(1);
     await option.click();
     await expect(option.locator('input')).toBeChecked();
     const hasOverflow = await page.evaluate(
