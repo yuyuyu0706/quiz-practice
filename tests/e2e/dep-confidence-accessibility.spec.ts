@@ -24,16 +24,24 @@ test.describe('[DEP][UI] Confidence input', () => {
     ).toBe('none');
     expect(await options.allTextContents()).not.toContain('根拠を持って正しいと判断している');
 
+    const descriptions = [
+      '根拠を持って正しいと判断している',
+      '候補は絞れたが、判断に迷いがある',
+      '勘に近い、または十分な根拠が持てない',
+    ];
+    for (let index = 0; index < descriptions.length; index += 1) {
+      await options.nth(index).click();
+      await expect(page.locator('#confidence-detail')).toHaveText(descriptions[index]);
+      await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'selected');
+    }
     await options.nth(1).click();
-    await expect(page.locator('#confidence-detail')).toHaveText('選択中：迷いあり');
     await expect(page.locator('#selection-hint')).toContainText('選択肢を選んでください。');
 
     await page.locator('#choices-form label').first().click();
     await expect(page.locator('#selection-hint')).toBeHidden();
     await page.getByRole('button', { name: '回答する' }).click();
-    await expect(page.locator('#confidence-detail')).toContainText(
-      '選択済み（採点済み）：迷いあり'
-    );
+    await expect(page.locator('#confidence-detail')).toHaveText('候補は絞れたが、判断に迷いがある');
+    await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'graded');
     expect(
       await page
         .locator('input[name="confidence"]')

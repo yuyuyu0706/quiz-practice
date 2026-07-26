@@ -355,12 +355,11 @@ export function updateConfidenceDetail(detail, level, graded) {
 
   detail.classList.toggle('confidence-detail--selected', Boolean(level));
   detail.hidden = !level;
+  detail.dataset.state = !level ? 'unselected' : graded ? 'graded' : 'selected';
   detail.replaceChildren();
   if (!level) return;
 
-  const state = document.createElement('strong');
-  state.textContent = graded ? `選択済み（採点済み）：${level.label}` : `選択中：${level.label}`;
-  detail.appendChild(state);
+  detail.textContent = level.description;
 }
 
 export function renderExplanation(els, { question, choiceMap }) {

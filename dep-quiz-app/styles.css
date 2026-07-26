@@ -360,9 +360,9 @@ button.primary:hover:not(:disabled) {
 }
 .confidence-option {
   display: flex;
-  gap: 6px;
-  justify-content: center;
-  padding: 6px 10px;
+  gap: 3px;
+  justify-content: flex-start;
+  padding: 3px 6px;
   border: 1px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
@@ -390,8 +390,8 @@ button.primary:hover:not(:disabled) {
 .confidence-option__copy {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 2px;
   min-width: 0;
   white-space: nowrap;
 }
@@ -421,13 +421,14 @@ button.primary:hover:not(:disabled) {
     gap: 5px;
   }
   .confidence-option {
-    padding-inline: 4px;
+    gap: 2px;
+    padding-inline: 2px;
   }
   .confidence-option input {
     margin: 0;
   }
   .confidence-option__copy {
-    gap: 2px;
+    gap: 1px;
   }
   .confidence-option__copy strong {
     font-size: 0.69rem;
