@@ -41,6 +41,7 @@ import {
 } from './quiz-session.js';
 import { CONFIDENCE_LEVELS } from './confidence.js';
 import { getAnswerInputState } from './answer-input-state.js';
+import { applyConfidenceAnswerResult } from './progress.js';
 import {
   showView as switchView,
   renderNotesList as renderNotesListView,
@@ -674,20 +675,19 @@ function submitCurrentAnswer(event) {
 
   const selectedLabel = selected.value;
   const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
+  const confidence = getStoredConfidenceLevel(state.session, question.id);
+  const correct = gradeAnswer(question, selectedLabel, choiceMap);
+  const answeredAt = new Date().toISOString();
+  const nextProgress = applyConfidenceAnswerResult(state.progress, question.id, {
+    result: correct ? 'correct' : 'wrong',
+    confidence,
+    answeredAt,
+  });
+
   state.session.answers[question.id] = selectedLabel;
   state.session.graded[question.id] = true;
   state.session.explanationOpen = true;
-
-  const correct = gradeAnswer(question, selectedLabel, choiceMap);
-  const currentProgress = state.progress[question.id] ?? baseProgress();
-  currentProgress.seenCount += 1;
-  if (correct) {
-    currentProgress.correctCount += 1;
-  } else {
-    currentProgress.wrongCount += 1;
-  }
-  currentProgress.lastAnsweredAt = new Date().toISOString();
-  state.progress[question.id] = currentProgress;
+  state.progress = nextProgress;
 
   saveProgress(state.progress);
   renderQuestion();
