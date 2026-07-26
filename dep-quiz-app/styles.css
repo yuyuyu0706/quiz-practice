@@ -413,6 +413,14 @@ button.primary:hover:not(:disabled) {
   min-width: 0;
   white-space: nowrap;
 }
+.confidence-option__copy strong,
+.confidence-option__separator,
+.confidence-option__level {
+  display: inline-flex;
+  height: 16px;
+  align-items: center;
+  line-height: 16px;
+}
 .confidence-option__copy strong {
   font-size: 0.84rem;
 }
@@ -447,6 +455,12 @@ button.primary:hover:not(:disabled) {
   }
   .confidence-option__copy {
     gap: 1px;
+  }
+  .confidence-option__copy strong,
+  .confidence-option__separator,
+  .confidence-option__level {
+    height: 14px;
+    line-height: 14px;
   }
   .confidence-option__copy strong {
     font-size: 0.69rem;

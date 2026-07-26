@@ -11,6 +11,12 @@ test.describe('[DEP][UI] Confidence input', () => {
     const options = page.locator('.confidence-option');
     await expect(options).toHaveCount(3);
     await expect(options).toHaveText(['確信あり/High', '迷いあり/Medium', '自信なし/Low']);
+    const labelBox = await options.first().locator('.confidence-option__copy strong').boundingBox();
+    const levelBox = await options.first().locator('.confidence-option__level').boundingBox();
+    expect(labelBox).not.toBeNull();
+    expect(levelBox).not.toBeNull();
+    expect(labelBox!.height).toBe(levelBox!.height);
+    expect(labelBox!.y).toBe(levelBox!.y);
     const optionPositions = await options.evaluateAll((nodes) =>
       nodes.map((node) => ({
         left: Math.round(node.getBoundingClientRect().left),
