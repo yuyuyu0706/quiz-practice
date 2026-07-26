@@ -50,6 +50,7 @@ FDOC-M001〜FDOC-M007 の人手レビュー結果を、PR 本文の末尾に次�
 チェック印だけの形式的な記載にしない。
 
 ### FDOC-M002（章間の因果関係）
+
 ...
 
 （以下 M003〜M007 も同様の形式で記載する）
@@ -86,4 +87,3 @@ npm run validate:feature-docs
   - Lv4：`docs/templates/lv4_issue.md`
 - 品質契約：`docs/feature-implementation/quality/quality-contract.md`
 - 品質運用ガイド：`docs/feature-implementation/quality/operation-guide.md`
-
