@@ -34,9 +34,9 @@ test.describe('[DEP][UI] Confidence input', () => {
     expect(await options.allTextContents()).not.toContain('根拠を持って正しいと判断している');
 
     const descriptions = [
-      '確信あり : High : 根拠を持って正しいと判断している',
-      '迷いあり : Medium : 候補は絞れたが、判断に迷いがある',
-      '自信なし : Low : 勘に近い、または十分な根拠が持てない',
+      '確信あり : 根拠を持って正しいと判断している',
+      '迷いあり : 候補は絞れたが、判断に迷いがある',
+      '自信なし : 勘に近い、または十分な根拠が持てない',
     ];
     for (let index = 0; index < descriptions.length; index += 1) {
       await options.nth(index).click();
@@ -44,14 +44,10 @@ test.describe('[DEP][UI] Confidence input', () => {
       await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'selected');
     }
     await expect(page.locator('#confidence-detail strong')).toHaveText('自信なし');
-    await expect(page.locator('#confidence-detail .confidence-detail__level')).toHaveText('Low');
     const detailStyles = await page.locator('#confidence-detail').evaluate((detail) => ({
       labelWeight: getComputedStyle(detail.querySelector('strong')!).fontWeight,
-      detailColor: getComputedStyle(detail).color,
-      levelColor: getComputedStyle(detail.querySelector('.confidence-detail__level')!).color,
     }));
     expect(Number(detailStyles.labelWeight)).toBeGreaterThanOrEqual(600);
-    expect(detailStyles.levelColor).not.toBe(detailStyles.detailColor);
     const titleBox = await page.locator('.confidence-fieldset__title').boundingBox();
     const detailBox = await page.locator('#confidence-detail').boundingBox();
     expect(titleBox).not.toBeNull();
@@ -65,7 +61,7 @@ test.describe('[DEP][UI] Confidence input', () => {
     await expect(page.locator('#selection-hint')).toBeHidden();
     await page.getByRole('button', { name: '回答する' }).click();
     await expect(page.locator('#confidence-detail')).toHaveText(
-      '迷いあり : Medium : 候補は絞れたが、判断に迷いがある'
+      '迷いあり : 候補は絞れたが、判断に迷いがある'
     );
     await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'graded');
     expect(
@@ -182,8 +178,8 @@ test.describe('[DEP][UI] Confidence input', () => {
         element.getBoundingClientRect().height - parseFloat(style.top) - parseFloat(style.bottom)
       );
     });
-    expect(capsuleHeight).toBeLessThan(44);
-    expect(capsuleHeight).toBeGreaterThanOrEqual(36);
+    expect(capsuleHeight).toBeLessThan(38);
+    expect(capsuleHeight).toBeGreaterThanOrEqual(32);
     await expect(page.locator('.confidence-option')).toHaveCount(3);
     const rows = await page
       .locator('.confidence-option')
