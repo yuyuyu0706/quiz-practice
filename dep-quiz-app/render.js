@@ -310,11 +310,14 @@ export function renderQuestion(els, data) {
     copy.className = 'confidence-option__copy';
     const title = document.createElement('strong');
     title.textContent = level.label;
-    const shortcut = document.createElement('kbd');
-    shortcut.className = 'confidence-option__shortcut';
-    shortcut.textContent = level.id.charAt(0).toUpperCase();
-    shortcut.setAttribute('aria-label', `${shortcut.textContent} キー`);
-    copy.append(title, shortcut);
+    const separator = document.createElement('span');
+    separator.className = 'confidence-option__separator';
+    separator.setAttribute('aria-hidden', 'true');
+    separator.textContent = '/';
+    const levelName = document.createElement('span');
+    levelName.className = 'confidence-option__level';
+    levelName.textContent = `${level.id.charAt(0).toUpperCase()}${level.id.slice(1)}`;
+    copy.append(title, separator, levelName);
     option.append(input, copy);
     els.confidenceOptions.appendChild(option);
   });
@@ -351,15 +354,13 @@ export function updateConfidenceDetail(detail, level, graded) {
   if (!detail) return;
 
   detail.classList.toggle('confidence-detail--selected', Boolean(level));
+  detail.hidden = !level;
   detail.replaceChildren();
-  if (!level) {
-    detail.textContent = 'H・M・Lから1つ選んでください。';
-    return;
-  }
+  if (!level) return;
 
   const state = document.createElement('strong');
   state.textContent = graded ? `選択済み（採点済み）：${level.label}` : `選択中：${level.label}`;
-  detail.append(state, document.createTextNode(` — ${level.description}`));
+  detail.appendChild(state);
 }
 
 export function renderExplanation(els, { question, choiceMap }) {

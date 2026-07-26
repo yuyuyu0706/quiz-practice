@@ -10,18 +10,22 @@ test.describe('[DEP][UI] Confidence input', () => {
 
     const options = page.locator('.confidence-option');
     await expect(options).toHaveCount(3);
-    await expect(options).toHaveText(['確信ありH', '迷いありM', '自信なしL']);
+    await expect(options).toHaveText(['確信あり/High', '迷いあり/Medium', '自信なし/Low']);
     const widths = await options.evaluateAll((nodes) =>
       nodes.map((node) => Math.round(node.getBoundingClientRect().width))
     );
     expect(new Set(widths).size).toBe(1);
-    await expect(page.locator('#confidence-detail')).toHaveText('H・M・Lから1つ選んでください。');
+    await expect(page.locator('#confidence-detail')).toBeHidden();
+    await expect(page.locator('#confidence-hint')).toHaveCount(0);
+    expect(
+      await page
+        .locator('#confidence-fieldset')
+        .evaluate((fieldset) => getComputedStyle(fieldset).borderStyle)
+    ).toBe('none');
     expect(await options.allTextContents()).not.toContain('根拠を持って正しいと判断している');
 
     await options.nth(1).click();
-    await expect(page.locator('#confidence-detail')).toHaveText(
-      '選択中：迷いあり — 候補は絞れたが、判断に迷いがある'
-    );
+    await expect(page.locator('#confidence-detail')).toHaveText('選択中：迷いあり');
     await expect(page.locator('#selection-hint')).toContainText('選択肢を選んでください。');
 
     await page.locator('#choices-form label').first().click();
