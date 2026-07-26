@@ -303,18 +303,29 @@ export function renderQuestion(els, data) {
     input.name = 'confidence';
     input.value = level.id;
     input.setAttribute('aria-keyshortcuts', level.id.charAt(0).toUpperCase());
+    input.setAttribute('aria-describedby', 'confidence-detail');
     input.checked = confidence === level.id;
     input.disabled = Boolean(graded);
     const copy = document.createElement('span');
     copy.className = 'confidence-option__copy';
     const title = document.createElement('strong');
     title.textContent = level.label;
-    const description = document.createElement('span');
-    description.textContent = level.description;
-    copy.append(title, description);
+    const separator = document.createElement('span');
+    separator.className = 'confidence-option__separator';
+    separator.setAttribute('aria-hidden', 'true');
+    separator.textContent = '/';
+    const levelName = document.createElement('span');
+    levelName.className = 'confidence-option__level';
+    levelName.textContent = `${level.id.charAt(0).toUpperCase()}${level.id.slice(1)}`;
+    copy.append(title, separator, levelName);
     option.append(input, copy);
     els.confidenceOptions.appendChild(option);
   });
+  updateConfidenceDetail(
+    els.confidenceDetail,
+    confidenceLevels.find(({ id }) => id === confidence),
+    Boolean(graded)
+  );
 
   renderExplanation(els, { question, choiceMap });
   els.explanation.classList.toggle('hidden', !explanationOpen);
@@ -337,6 +348,20 @@ export function renderQuestion(els, data) {
   }
 
   els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
+}
+
+export function updateConfidenceDetail(detail, level, graded) {
+  if (!detail) return;
+
+  detail.classList.toggle('confidence-detail--selected', Boolean(level));
+  detail.hidden = !level;
+  detail.dataset.state = !level ? 'unselected' : graded ? 'graded' : 'selected';
+  detail.replaceChildren();
+  if (!level) return;
+
+  const label = document.createElement('strong');
+  label.textContent = level.label;
+  detail.append(label, document.createTextNode(` : ${level.description}`));
 }
 
 export function renderExplanation(els, { question, choiceMap }) {

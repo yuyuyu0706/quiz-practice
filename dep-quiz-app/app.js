@@ -47,6 +47,7 @@ import {
   renderNotesList as renderNotesListView,
   formatDateTime,
   renderQuestion as renderQuestionView,
+  updateConfidenceDetail,
   renderResult,
   toggleNoteEditor,
   renderStorageRepairNotice,
@@ -110,6 +111,7 @@ const els = {
   choicesForm: document.getElementById('choices-form'),
   confidenceFieldset: document.getElementById('confidence-fieldset'),
   confidenceOptions: document.getElementById('confidence-options'),
+  confidenceDetail: document.getElementById('confidence-detail'),
   resultIndicator: document.getElementById('result-indicator'),
   explanation: document.getElementById('explanation'),
   quizMessage: document.getElementById('quiz-message'),
@@ -732,6 +734,7 @@ function handleConfidenceSelectionChange(options = {}) {
   persistSession();
   els.confidenceFieldset.classList.remove('needs-selection');
   const level = CONFIDENCE_LEVELS.find(({ id }) => id === selected.value);
+  updateConfidenceDetail(els.confidenceDetail, level, false);
   els.quizMessage.textContent =
     options.announce && level ? `確信度「${level.label}」を選択しました。` : '';
   updatePrimaryActions(question.id);
@@ -764,7 +767,7 @@ function getAnswerInputHint(id) {
     missing_both: '選択肢と確信度を選んでください。',
     missing_choice: '選択肢を選んでください。',
     missing_confidence: '回答前に確信度を選んでください。',
-    ready: '回答と確信度を選択済みです。「回答する」で採点します。',
+    ready: '',
     graded: '',
   }[id];
 }
@@ -778,7 +781,7 @@ function updatePrimaryActions(questionId) {
   els.submitAnswer.disabled = !canSubmit;
   els.nextQuestion.disabled = !canNext;
   els.nextQuestionInline.disabled = !canNext;
-  els.selectionHint.hidden = graded;
+  els.selectionHint.hidden = graded || inputState.id === 'ready';
 
   els.selectionHint.textContent = getAnswerInputHint(inputState.id);
 }

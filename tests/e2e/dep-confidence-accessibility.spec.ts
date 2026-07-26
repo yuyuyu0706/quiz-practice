@@ -2,6 +2,81 @@ import { test, expect } from '@playwright/test';
 import { answerCurrentQuestion, startDepQuiz } from './helpers';
 
 test.describe('[DEP][UI] Confidence input', () => {
+  test('shows compact equal-width choices and only the selected confidence detail', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop visual-state coverage.');
+    await startDepQuiz(page, 'all');
+
+    const options = page.locator('.confidence-option');
+    await expect(options).toHaveCount(3);
+    await expect(options).toHaveText(['確信あり/High', '迷いあり/Medium', '自信なし/Low']);
+    const labelBox = await options.first().locator('.confidence-option__copy strong').boundingBox();
+    const levelBox = await options.first().locator('.confidence-option__level').boundingBox();
+    expect(labelBox).not.toBeNull();
+    expect(levelBox).not.toBeNull();
+    expect(labelBox!.height).toBe(levelBox!.height);
+    expect(labelBox!.y).toBe(levelBox!.y);
+    const optionPositions = await options.evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        left: Math.round(node.getBoundingClientRect().left),
+        right: Math.round(node.getBoundingClientRect().right),
+      }))
+    );
+    expect(optionPositions[0].left).toBe(
+      Math.round((await page.locator('#confidence-options').boundingBox())?.x ?? -1)
+    );
+    expect(optionPositions[2].right).toBeLessThan(
+      Math.round((await page.locator('#confidence-options').boundingBox())?.x ?? 0) +
+        Math.round((await page.locator('#confidence-options').boundingBox())?.width ?? 0)
+    );
+    await expect(page.locator('#confidence-detail')).toBeHidden();
+    await expect(page.locator('#confidence-hint')).toHaveCount(0);
+    expect(
+      await page
+        .locator('#confidence-fieldset')
+        .evaluate((fieldset) => getComputedStyle(fieldset).borderStyle)
+    ).toBe('none');
+    expect(await options.allTextContents()).not.toContain('根拠を持って正しいと判断している');
+
+    const descriptions = [
+      '確信あり : 根拠を持って正しいと判断している',
+      '迷いあり : 候補は絞れたが、判断に迷いがある',
+      '自信なし : 勘に近い、十分な根拠が持てない',
+    ];
+    for (let index = 0; index < descriptions.length; index += 1) {
+      await options.nth(index).click();
+      await expect(page.locator('#confidence-detail')).toHaveText(descriptions[index]);
+      await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'selected');
+    }
+    await expect(page.locator('#confidence-detail strong')).toHaveText('自信なし');
+    const detailStyles = await page.locator('#confidence-detail').evaluate((detail) => ({
+      labelWeight: getComputedStyle(detail.querySelector('strong')!).fontWeight,
+    }));
+    expect(Number(detailStyles.labelWeight)).toBeGreaterThanOrEqual(600);
+    const titleBox = await page.locator('.confidence-fieldset__title').boundingBox();
+    const detailBox = await page.locator('#confidence-detail').boundingBox();
+    expect(titleBox).not.toBeNull();
+    expect(detailBox).not.toBeNull();
+    expect(detailBox!.x).toBeGreaterThan(titleBox!.x + titleBox!.width);
+    expect(detailBox!.y).toBeLessThan(titleBox!.y + titleBox!.height);
+    await options.nth(1).click();
+    await expect(page.locator('#selection-hint')).toContainText('選択肢を選んでください。');
+
+    await page.locator('#choices-form label').first().click();
+    await expect(page.locator('#selection-hint')).toBeHidden();
+    await page.getByRole('button', { name: '回答する' }).click();
+    await expect(page.locator('#confidence-detail')).toHaveText(
+      '迷いあり : 候補は絞れたが、判断に迷いがある'
+    );
+    await expect(page.locator('#confidence-detail')).toHaveAttribute('data-state', 'graded');
+    expect(
+      await page
+        .locator('input[name="confidence"]')
+        .evaluateAll((inputs) => inputs.every((input) => (input as HTMLInputElement).disabled))
+    ).toBe(true);
+  });
+
   test('supports confidence shortcuts, persistence, ARIA, and graded-state locking', async ({
     page,
   }, testInfo) => {
@@ -103,8 +178,35 @@ test.describe('[DEP][UI] Confidence input', () => {
 
     const option = page.locator('.confidence-option').first();
     expect((await option.boundingBox())?.height).toBeGreaterThanOrEqual(44);
-    await option.click();
-    await expect(option.locator('input')).toBeChecked();
+    const capsuleHeight = await option.evaluate((element) => {
+      const style = getComputedStyle(element, '::before');
+      return (
+        element.getBoundingClientRect().height - parseFloat(style.top) - parseFloat(style.bottom)
+      );
+    });
+    expect(capsuleHeight).toBeLessThan(38);
+    expect(capsuleHeight).toBeGreaterThanOrEqual(32);
+    const visualCapsuleBottom = await option.evaluate((element) => {
+      const style = getComputedStyle(element, '::before');
+      return element.getBoundingClientRect().bottom - parseFloat(style.bottom);
+    });
+    const submitButtonBox = await page.locator('#submit-answer').boundingBox();
+    expect(submitButtonBox).not.toBeNull();
+    expect(submitButtonBox!.y - visualCapsuleBottom).toBeLessThan(20);
+    await expect(page.locator('.confidence-option')).toHaveCount(3);
+    const rows = await page
+      .locator('.confidence-option')
+      .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)));
+    expect(new Set(rows).size).toBe(1);
+    for (const confidenceOption of await page.locator('.confidence-option').all()) {
+      await confidenceOption.click();
+      await expect(confidenceOption.locator('input')).toBeChecked();
+      expect(
+        await page
+          .locator('#confidence-detail')
+          .evaluate((detail) => detail.scrollWidth <= detail.clientWidth)
+      ).toBe(true);
+    }
     const hasOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth
     );

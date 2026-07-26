@@ -32,7 +32,7 @@ test('CONFIDENCE_LEVELS exposes three immutable stable definitions in registry o
     {
       id: 'low',
       label: '自信なし',
-      description: '勘に近い、または十分な根拠を持てない',
+      description: '勘に近い、十分な根拠が持てない',
     },
   ]);
   assert.equal(Object.isFrozen(CONFIDENCE_LEVELS), true);
