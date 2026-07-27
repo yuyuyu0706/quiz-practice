@@ -661,6 +661,10 @@ function renderQuestion(options = {}) {
   closeSecondaryActions();
   if (focusConfidenceOutcome && confidenceOutcome) {
     els.confidenceOutcome.focus({ preventScroll: true });
+    els.confidenceOutcome.scrollIntoView({
+      behavior: getScrollBehavior(),
+      block: 'nearest',
+    });
   }
   if (scrollToTop) scrollQuizIntoView();
 }

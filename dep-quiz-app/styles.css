@@ -1105,7 +1105,7 @@ button.primary:hover:not(:disabled) {
     backdrop-filter: blur(8px);
   }
 
-  .button-group-primary:has(#review-explanation:not(.hidden)) {
+  #quiz-view:has(#confidence-outcome[data-guidance='review']) > .button-group-primary {
     position: static;
     box-shadow: none;
     backdrop-filter: none;
