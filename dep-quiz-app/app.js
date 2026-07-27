@@ -40,6 +40,7 @@ import {
   setSessionConfidenceLevel,
 } from './quiz-session.js';
 import { CONFIDENCE_LEVELS } from './confidence.js';
+import { getConfidenceOutcome } from './confidence-outcome.js';
 import { getAnswerInputState } from './answer-input-state.js';
 import { applyConfidenceAnswerResult } from './progress.js';
 import {
@@ -113,6 +114,10 @@ const els = {
   confidenceOptions: document.getElementById('confidence-options'),
   confidenceDetail: document.getElementById('confidence-detail'),
   resultIndicator: document.getElementById('result-indicator'),
+  confidenceOutcome: document.getElementById('confidence-outcome'),
+  confidenceOutcomeTitle: document.getElementById('confidence-outcome-title'),
+  confidenceOutcomeMeaning: document.getElementById('confidence-outcome-meaning'),
+  confidenceOutcomeAction: document.getElementById('confidence-outcome-action'),
   explanation: document.getElementById('explanation'),
   quizMessage: document.getElementById('quiz-message'),
   selectionHint: document.getElementById('selection-hint'),
@@ -628,6 +633,10 @@ function renderQuestion(options = {}) {
   const chosen = getStoredSelectedLabel(question.id, question.choices, choiceMap);
   const graded = state.session.graded[question.id];
   const confidence = getStoredConfidenceLevel(state.session, question.id);
+  const confidenceAnswer = graded ? state.progress[question.id]?.lastConfidenceAnswer : null;
+  const confidenceOutcome = confidenceAnswer
+    ? getConfidenceOutcome(confidenceAnswer.result, confidenceAnswer.confidence)
+    : null;
   renderQuestionView(els, {
     question,
     idx,
@@ -637,6 +646,7 @@ function renderQuestion(options = {}) {
     chosen,
     confidenceLevels: CONFIDENCE_LEVELS,
     confidence,
+    confidenceOutcome,
     graded,
     explanationOpen: state.session.explanationOpen,
     bookmarkEnabled: state.progress[question.id]?.bookmark,
