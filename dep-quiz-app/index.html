@@ -82,15 +82,26 @@
           id="confidence-outcome"
           class="confidence-outcome hidden"
           aria-labelledby="confidence-outcome-title"
+          tabindex="-1"
         >
-          <h3 id="confidence-outcome-title"></h3>
-          <p id="confidence-outcome-meaning"></p>
-          <p id="confidence-outcome-action"></p>
+          <p class="confidence-outcome__eyebrow">今回の理解状態</p>
+          <h3 id="confidence-outcome-title" class="confidence-outcome__title"></h3>
+          <div class="confidence-outcome__detail">
+            <p class="confidence-outcome__label">状態の意味</p>
+            <p id="confidence-outcome-meaning" class="confidence-outcome__meaning"></p>
+          </div>
+          <div class="confidence-outcome__detail confidence-outcome__detail--action">
+            <p class="confidence-outcome__label">次にやること</p>
+            <p id="confidence-outcome-action" class="confidence-outcome__action"></p>
+          </div>
         </section>
         <div class="button-group button-group-primary" aria-label="主要操作">
           <div class="button-row button-row-primary">
             <button id="submit-answer" class="primary">回答する</button>
-            <button id="next-question" type="button" class="primary" disabled>次へ</button>
+            <button id="review-explanation" type="button" class="primary hidden">解説を確認</button>
+            <button id="next-question" type="button" class="primary hidden" disabled>
+              次へ進む
+            </button>
           </div>
           <p id="selection-hint" class="selection-hint">選択肢と確信度を選んでください。</p>
         </div>
@@ -119,7 +130,7 @@
             中断してホームへ
           </button>
         </div>
-        <article id="explanation" class="explanation hidden"></article>
+        <article id="explanation" class="explanation hidden" tabindex="-1"></article>
         <section
           id="wrong-reason-panel"
           class="wrong-reason-panel hidden"

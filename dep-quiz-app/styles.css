@@ -489,6 +489,62 @@ button.primary:hover:not(:disabled) {
   color: var(--ng);
   font-weight: 700;
 }
+.confidence-outcome {
+  --outcome-accent: #2563eb;
+  --outcome-soft: #eff6ff;
+  position: relative;
+  margin-top: 12px;
+  padding: 18px 18px 18px 22px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  border: 1px solid color-mix(in srgb, var(--outcome-accent) 35%, white);
+  border-left: 6px solid var(--outcome-accent);
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--outcome-soft), #fff 72%);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+.confidence-outcome--correct {
+  --outcome-accent: #16713a;
+  --outcome-soft: #effbf3;
+}
+.confidence-outcome--wrong {
+  --outcome-accent: #b42335;
+  --outcome-soft: #fff1f2;
+}
+.confidence-outcome__eyebrow,
+.confidence-outcome__label {
+  margin: 0;
+  color: var(--outcome-accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.confidence-outcome__title {
+  margin: 4px 0 14px;
+  color: #172033;
+  font-size: clamp(1.15rem, 3vw, 1.4rem);
+  line-height: 1.4;
+}
+.confidence-outcome__detail {
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--outcome-accent) 18%, white);
+}
+.confidence-outcome__detail--action {
+  margin-top: 10px;
+}
+.confidence-outcome__meaning,
+.confidence-outcome__action {
+  margin: 3px 0 0;
+  line-height: 1.65;
+}
+.confidence-outcome__action {
+  font-weight: 650;
+}
+.confidence-outcome:focus-visible,
+.explanation:focus-visible {
+  outline: 3px solid var(--dep-primary-ring);
+  outline-offset: 3px;
+}
 .explanation {
   margin-top: 12px;
   border-left: 4px solid var(--primary);
@@ -1035,6 +1091,16 @@ button.primary:hover:not(:disabled) {
     z-index: 5;
     box-shadow: 0 14px 24px rgba(47, 125, 75, 0.16);
     backdrop-filter: blur(8px);
+  }
+
+  .button-group-primary:has(#review-explanation:not(.hidden)) {
+    position: static;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .confidence-outcome {
+    padding: 14px 13px 14px 16px;
   }
 
   .button-group-secondary {

@@ -357,12 +357,21 @@ export function renderConfidenceOutcome(els, outcome) {
   els.confidenceOutcomeMeaning.textContent = '';
   els.confidenceOutcomeAction.textContent = '';
   els.confidenceOutcome.classList.add('hidden');
+  els.confidenceOutcome.classList.remove(
+    'confidence-outcome--correct',
+    'confidence-outcome--wrong'
+  );
+  delete els.confidenceOutcome.dataset.outcome;
+  delete els.confidenceOutcome.dataset.guidance;
 
   if (!outcome) return;
 
   els.confidenceOutcomeTitle.textContent = outcome.title;
   els.confidenceOutcomeMeaning.textContent = outcome.meaning;
   els.confidenceOutcomeAction.textContent = outcome.action;
+  els.confidenceOutcome.dataset.outcome = outcome.id;
+  els.confidenceOutcome.dataset.guidance = outcome.id === 'correct_high' ? 'advance' : 'review';
+  els.confidenceOutcome.classList.add(`confidence-outcome--${outcome.result}`);
   els.confidenceOutcome.classList.remove('hidden');
 }
 
