@@ -6,6 +6,24 @@ import {
   getConfidenceOutcome,
   getConfidenceOutcomeById,
 } from '../dep-quiz-app/confidence-outcome.js';
+import { renderConfidenceOutcome } from '../dep-quiz-app/render.js';
+
+function createOutcomeElements() {
+  const classes = new Set(['confidence-outcome', 'hidden']);
+
+  return {
+    confidenceOutcome: {
+      classList: {
+        add: (...names) => names.forEach((name) => classes.add(name)),
+        remove: (...names) => names.forEach((name) => classes.delete(name)),
+        contains: (name) => classes.has(name),
+      },
+    },
+    confidenceOutcomeTitle: { textContent: '' },
+    confidenceOutcomeMeaning: { textContent: '' },
+    confidenceOutcomeAction: { textContent: '' },
+  };
+}
 
 function test(name, fn) {
   try {
@@ -126,4 +144,28 @@ test('lookups do not mutate caller values or existing progress data', () => {
     'wrong_medium'
   );
   assert.deepEqual(progress, snapshot);
+});
+
+test('rendering shows the canonical title, meaning, and action after grading', () => {
+  const els = createOutcomeElements();
+  const outcome = getConfidenceOutcome('wrong', 'medium');
+
+  renderConfidenceOutcome(els, outcome);
+
+  assert.equal(els.confidenceOutcome.classList.contains('hidden'), false);
+  assert.equal(els.confidenceOutcomeTitle.textContent, outcome.title);
+  assert.equal(els.confidenceOutcomeMeaning.textContent, outcome.meaning);
+  assert.equal(els.confidenceOutcomeAction.textContent, outcome.action);
+});
+
+test('rendering clears stale feedback when no outcome can be derived', () => {
+  const els = createOutcomeElements();
+  renderConfidenceOutcome(els, getConfidenceOutcome('correct', 'high'));
+
+  renderConfidenceOutcome(els, getConfidenceOutcome('correct', 'invalid'));
+
+  assert.equal(els.confidenceOutcome.classList.contains('hidden'), true);
+  assert.equal(els.confidenceOutcomeTitle.textContent, '');
+  assert.equal(els.confidenceOutcomeMeaning.textContent, '');
+  assert.equal(els.confidenceOutcomeAction.textContent, '');
 });
