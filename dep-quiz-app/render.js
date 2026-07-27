@@ -255,6 +255,7 @@ export function renderQuestion(els, data) {
     chosen,
     confidenceLevels,
     confidence,
+    confidenceOutcome,
     graded,
     explanationOpen,
     bookmarkEnabled,
@@ -272,6 +273,7 @@ export function renderQuestion(els, data) {
 
   els.resultIndicator.textContent = '';
   els.resultIndicator.className = 'indicator';
+  renderConfidenceOutcome(els, confidenceOutcome);
   els.quizMessage.textContent = '';
   els.choicesForm.classList.remove('needs-selection');
   els.confidenceFieldset.classList.remove('needs-selection');
@@ -348,6 +350,20 @@ export function renderQuestion(els, data) {
   }
 
   els.bookmarkBtn.textContent = bookmarkEnabled ? 'ブックマーク★' : 'ブックマーク☆';
+}
+
+export function renderConfidenceOutcome(els, outcome) {
+  els.confidenceOutcomeTitle.textContent = '';
+  els.confidenceOutcomeMeaning.textContent = '';
+  els.confidenceOutcomeAction.textContent = '';
+  els.confidenceOutcome.classList.add('hidden');
+
+  if (!outcome) return;
+
+  els.confidenceOutcomeTitle.textContent = outcome.title;
+  els.confidenceOutcomeMeaning.textContent = outcome.meaning;
+  els.confidenceOutcomeAction.textContent = outcome.action;
+  els.confidenceOutcome.classList.remove('hidden');
 }
 
 export function updateConfidenceDetail(detail, level, graded) {
