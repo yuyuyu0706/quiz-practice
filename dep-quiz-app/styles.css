@@ -546,6 +546,7 @@ button.primary:hover:not(:disabled) {
 .confidence-outcome__toggle {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   width: max-content;
   max-width: 100%;
