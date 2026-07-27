@@ -661,8 +661,6 @@ function renderQuestion(options = {}) {
   closeSecondaryActions();
   if (focusConfidenceOutcome && confidenceOutcome) {
     els.confidenceOutcome.focus({ preventScroll: true });
-    // 採点を連続してもアニメーションが操作を妨げないよう、結果は即座に表示範囲へ移す。
-    els.confidenceOutcome.scrollIntoView({ behavior: 'auto', block: 'nearest' });
   }
   if (scrollToTop) scrollQuizIntoView();
 }
@@ -798,7 +796,7 @@ function updatePrimaryActions(questionId) {
   const reviewFirst = graded && guidance === 'review';
 
   els.submitAnswer.disabled = !canSubmit;
-  els.submitAnswer.classList.toggle('hidden', graded);
+  els.submitAnswer.classList.toggle('graded-control-withdrawn', graded);
   els.reviewExplanation.classList.toggle('hidden', !graded);
   els.reviewExplanation.classList.toggle('primary', reviewFirst);
   els.nextQuestion.classList.toggle('hidden', !graded);
