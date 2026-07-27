@@ -57,6 +57,19 @@ test('public APIs derive and retrieve the same definition for every valid combin
   }
 });
 
+test('reviewed Japanese copy remains fixed for the agreed outcomes', () => {
+  assert.equal(getConfidenceOutcomeById('correct_low').title, '油断禁物。偶然の正解かもしれません');
+  assert.equal(getConfidenceOutcomeById('wrong_high').title, '誤認です。前提から見直しましょう');
+  assert.equal(
+    getConfidenceOutcomeById('wrong_high').action,
+    'まず「なぜ、間違いか？」を確認し、誤っていた前提から見直してください。'
+  );
+  assert.equal(
+    getConfidenceOutcomeById('wrong_medium').title,
+    '理解が不安定です。問題意図と判断理由を振り返りましょう'
+  );
+});
+
 test('public APIs safely reject missing, invalid, and display-label values', () => {
   const invalidPairs = [
     [undefined, undefined],

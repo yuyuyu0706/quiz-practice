@@ -118,6 +118,11 @@ const els = {
   confidenceOutcomeTitle: document.getElementById('confidence-outcome-title'),
   confidenceOutcomeMeaning: document.getElementById('confidence-outcome-meaning'),
   confidenceOutcomeAction: document.getElementById('confidence-outcome-action'),
+  confidenceOutcomeMeaningToggle: document.getElementById('confidence-outcome-meaning-toggle'),
+  confidenceOutcomeActionToggle: document.getElementById('confidence-outcome-action-toggle'),
+  confidenceOutcomeMeaningPanel: document.getElementById('confidence-outcome-meaning-panel'),
+  confidenceOutcomeActionPanel: document.getElementById('confidence-outcome-action-panel'),
+  confidenceOutcomeWhyWrong: document.getElementById('confidence-outcome-why-wrong'),
   explanation: document.getElementById('explanation'),
   quizMessage: document.getElementById('quiz-message'),
   selectionHint: document.getElementById('selection-hint'),
@@ -231,6 +236,13 @@ function attachEvents() {
     moveQuestion(1);
   });
   els.reviewExplanation.addEventListener('click', reviewExplanation);
+  els.confidenceOutcomeMeaningToggle.addEventListener('click', () => {
+    toggleConfidenceOutcomeDetail('meaning');
+  });
+  els.confidenceOutcomeActionToggle.addEventListener('click', () => {
+    toggleConfidenceOutcomeDetail('action');
+  });
+  els.confidenceOutcomeWhyWrong.addEventListener('click', jumpToWhyWrong);
 
   els.secondaryActionsToggle?.addEventListener('click', () => {
     const expanded = els.secondaryActionsToggle.getAttribute('aria-expanded') === 'true';
@@ -814,15 +826,41 @@ function updatePrimaryActions(questionId) {
 
 function reviewExplanation() {
   closeSecondaryActions();
-  if (els.explanation.classList.contains('hidden')) {
-    els.explanation.classList.remove('hidden');
-    state.session.explanationOpen = true;
-    els.toggleExplanation.textContent = '解説を非表示';
-    updateExplanationActions();
-    persistSession();
-  }
+  openExplanation();
   els.explanation.focus({ preventScroll: true });
   els.explanation.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
+}
+
+function toggleConfidenceOutcomeDetail(detail) {
+  const openMeaning =
+    detail === 'meaning' &&
+    els.confidenceOutcomeMeaningToggle.getAttribute('aria-expanded') !== 'true';
+  const openAction =
+    detail === 'action' &&
+    els.confidenceOutcomeActionToggle.getAttribute('aria-expanded') !== 'true';
+
+  els.confidenceOutcomeMeaningToggle.setAttribute('aria-expanded', String(openMeaning));
+  els.confidenceOutcomeActionToggle.setAttribute('aria-expanded', String(openAction));
+  els.confidenceOutcomeMeaningPanel.hidden = !openMeaning;
+  els.confidenceOutcomeActionPanel.hidden = !openAction;
+}
+
+function openExplanation() {
+  if (!els.explanation.classList.contains('hidden')) return;
+  els.explanation.classList.remove('hidden');
+  state.session.explanationOpen = true;
+  els.toggleExplanation.textContent = '解説を非表示';
+  updateExplanationActions();
+  persistSession();
+}
+
+function jumpToWhyWrong() {
+  const whyWrong = els.explanation.querySelector('#why-wrong');
+  if (!whyWrong || els.confidenceOutcomeWhyWrong.classList.contains('hidden')) return;
+  closeSecondaryActions();
+  openExplanation();
+  whyWrong.focus({ preventScroll: true });
+  whyWrong.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
 }
 
 function updateExplanationActions() {

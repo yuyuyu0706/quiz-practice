@@ -82,18 +82,55 @@
           id="confidence-outcome"
           class="confidence-outcome hidden"
           aria-labelledby="confidence-outcome-title"
-          aria-describedby="confidence-outcome-meaning confidence-outcome-action"
+          aria-describedby="confidence-outcome-instruction"
           tabindex="-1"
         >
-          <p class="confidence-outcome__eyebrow">今回の理解状態</p>
+          <p id="confidence-outcome-instruction" class="visually-hidden">
+            詳細は「状態の意味」と「次にやること」から確認できます。
+          </p>
+          <div class="confidence-outcome__header">
+            <p class="confidence-outcome__eyebrow">今回の理解状態</p>
+            <div class="confidence-outcome__toggles" aria-label="理解状態の詳細">
+              <button
+                id="confidence-outcome-meaning-toggle"
+                class="confidence-outcome__toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="confidence-outcome-meaning-panel"
+              >
+                <span aria-hidden="true">ⓘ</span>
+                状態の意味
+              </button>
+              <button
+                id="confidence-outcome-action-toggle"
+                class="confidence-outcome__toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="confidence-outcome-action-panel"
+              >
+                <span aria-hidden="true">➜</span>
+                次にやること
+              </button>
+            </div>
+          </div>
           <h3 id="confidence-outcome-title" class="confidence-outcome__title"></h3>
-          <div class="confidence-outcome__detail">
-            <p class="confidence-outcome__label">状態の意味</p>
+          <div id="confidence-outcome-meaning-panel" class="confidence-outcome__detail" hidden>
             <p id="confidence-outcome-meaning" class="confidence-outcome__meaning"></p>
           </div>
-          <div class="confidence-outcome__detail confidence-outcome__detail--action">
-            <p class="confidence-outcome__label">次にやること</p>
+          <div
+            id="confidence-outcome-action-panel"
+            class="confidence-outcome__detail confidence-outcome__detail--action"
+            hidden
+          >
             <p id="confidence-outcome-action" class="confidence-outcome__action"></p>
+            <button
+              id="confidence-outcome-why-wrong"
+              class="confidence-outcome__jump hidden"
+              type="button"
+              aria-controls="why-wrong"
+            >
+              なぜ、間違いか？を確認
+            </button>
           </div>
         </section>
         <div class="button-group button-group-primary" aria-label="主要操作">
