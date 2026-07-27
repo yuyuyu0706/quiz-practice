@@ -539,17 +539,28 @@ button.primary:hover:not(:disabled) {
 .confidence-outcome__toggles {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+  max-width: 100%;
 }
 .confidence-outcome__toggle {
-  min-height: 44px;
-  padding: 6px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  min-height: 0;
+  padding: 4px 10px;
+  flex: 0 0 auto;
+  align-self: flex-start;
   border-color: color-mix(in srgb, var(--outcome-accent) 35%, white);
   border-radius: 999px;
   color: var(--outcome-accent);
   background: rgba(255, 255, 255, 0.72);
   font-size: 0.8rem;
   font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 .confidence-outcome__toggle[aria-expanded='true'] {
   border-color: var(--outcome-accent);
@@ -1163,18 +1174,6 @@ button.primary:hover:not(:disabled) {
 
   .confidence-outcome {
     padding: 10px 11px 10px 13px;
-  }
-
-  .confidence-outcome__header {
-    align-items: flex-start;
-  }
-
-  .confidence-outcome__toggles {
-    width: 100%;
-  }
-
-  .confidence-outcome__toggle {
-    flex: 1 1 auto;
   }
 
   .button-group-secondary {
