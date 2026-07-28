@@ -159,7 +159,10 @@ test.describe('[DEP][FLOW] Weakness review / Analysis return', () => {
     await expect(page.locator('#quiz-view')).toBeVisible();
 
     await answerCurrentQuestionCorrectly(page);
-    await page.getByRole('button', { name: '次へ', exact: true }).click();
+    await page
+      .getByLabel('主要操作', { exact: true })
+      .getByRole('button', { name: '次へ進む' })
+      .click();
     await expect(page.locator('#result-view')).toBeVisible();
     await expect(page.getByRole('button', { name: '弱点分析を見る' })).toBeVisible();
     await expect(page.getByRole('button', { name: '弱点分析を見る' })).not.toHaveClass(/hidden/);
@@ -186,7 +189,10 @@ test.describe('[DEP][FLOW] Weakness review / Analysis return', () => {
     await page.getByRole('button', { name: '続きから再開' }).click();
     await expect(page.locator('#quiz-view')).toBeVisible();
     await answerCurrentQuestionCorrectly(page);
-    await page.getByRole('button', { name: '次へ', exact: true }).click();
+    await page
+      .getByLabel('主要操作', { exact: true })
+      .getByRole('button', { name: '次へ進む' })
+      .click();
     await expect(page.locator('#result-view')).toBeVisible();
     await expect(page.locator('#result-analysis-btn')).toHaveClass(/hidden/);
   });
