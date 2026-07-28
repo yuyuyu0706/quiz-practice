@@ -76,6 +76,10 @@ async function gradeAndAssertAtomicSave(page: Page, confidence: 'low' | 'medium'
   );
   expect(after.lastConfidenceAnswer.confidence).toBe(confidence);
   expect(after.lastConfidenceAnswer.answeredAt).toBe(after.lastAnsweredAt);
+  await expect(page.locator('#confidence-outcome')).toHaveAttribute(
+    'data-outcome',
+    `${after.lastConfidenceAnswer.result}_${confidence}`
+  );
 }
 
 test.describe('[DEP][FLOW] Confidence input / Cross-flow contract', () => {
