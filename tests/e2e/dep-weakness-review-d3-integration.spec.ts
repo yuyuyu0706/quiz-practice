@@ -169,7 +169,10 @@ test.describe('[DEP][FLOW] Weakness review / D3 end-to-end', () => {
 
     for (let index = 0; index < targetSection.length; index += 1) {
       await answerCurrentQuestionCorrectly(page);
-      await page.getByRole('button', { name: '次へ', exact: true }).click();
+      await page
+        .getByLabel('主要操作', { exact: true })
+        .getByRole('button', { name: '次へ進む' })
+        .click();
     }
 
     await expect(page.locator('#result-view')).toBeVisible();

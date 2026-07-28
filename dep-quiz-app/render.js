@@ -273,7 +273,6 @@ export function renderQuestion(els, data) {
 
   els.resultIndicator.textContent = '';
   els.resultIndicator.className = 'indicator';
-  renderConfidenceOutcome(els, confidenceOutcome);
   els.quizMessage.textContent = '';
   els.choicesForm.classList.remove('needs-selection');
   els.confidenceFieldset.classList.remove('needs-selection');
@@ -330,6 +329,7 @@ export function renderQuestion(els, data) {
   );
 
   renderExplanation(els, { question, choiceMap });
+  renderConfidenceOutcome(els, confidenceOutcome);
   els.explanation.classList.toggle('hidden', !explanationOpen);
   els.toggleExplanation.textContent = explanationOpen ? '解説を非表示' : '解説を表示';
 
@@ -357,12 +357,30 @@ export function renderConfidenceOutcome(els, outcome) {
   els.confidenceOutcomeMeaning.textContent = '';
   els.confidenceOutcomeAction.textContent = '';
   els.confidenceOutcome.classList.add('hidden');
+  els.confidenceOutcome.classList.remove(
+    'confidence-outcome--correct',
+    'confidence-outcome--wrong'
+  );
+  delete els.confidenceOutcome.dataset.outcome;
+  delete els.confidenceOutcome.dataset.guidance;
+  els.confidenceOutcomeMeaningToggle.setAttribute('aria-expanded', 'false');
+  els.confidenceOutcomeActionToggle.setAttribute('aria-expanded', 'false');
+  els.confidenceOutcomeMeaningPanel.hidden = true;
+  els.confidenceOutcomeActionPanel.hidden = true;
+  els.confidenceOutcomeWhyWrong.classList.add('hidden');
 
   if (!outcome) return;
 
   els.confidenceOutcomeTitle.textContent = outcome.title;
   els.confidenceOutcomeMeaning.textContent = outcome.meaning;
   els.confidenceOutcomeAction.textContent = outcome.action;
+  els.confidenceOutcome.dataset.outcome = outcome.id;
+  els.confidenceOutcome.dataset.guidance = outcome.id === 'correct_high' ? 'advance' : 'review';
+  els.confidenceOutcome.classList.add(`confidence-outcome--${outcome.result}`);
+  els.confidenceOutcomeWhyWrong.classList.toggle(
+    'hidden',
+    outcome.id !== 'wrong_high' || !els.explanation.querySelector('#why-wrong')
+  );
   els.confidenceOutcome.classList.remove('hidden');
 }
 
@@ -390,9 +408,13 @@ export function renderExplanation(els, { question, choiceMap }) {
   if (!whyWrongEntries.length) return;
 
   const section = document.createElement('section');
+  section.id = 'why-wrong';
   section.className = 'why-wrong';
+  section.tabIndex = -1;
+  section.setAttribute('aria-labelledby', 'why-wrong-title');
 
   const title = document.createElement('h3');
+  title.id = 'why-wrong-title';
   title.textContent = 'なぜ、間違いか？';
   section.appendChild(title);
 

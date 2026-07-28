@@ -118,11 +118,17 @@ const els = {
   confidenceOutcomeTitle: document.getElementById('confidence-outcome-title'),
   confidenceOutcomeMeaning: document.getElementById('confidence-outcome-meaning'),
   confidenceOutcomeAction: document.getElementById('confidence-outcome-action'),
+  confidenceOutcomeMeaningToggle: document.getElementById('confidence-outcome-meaning-toggle'),
+  confidenceOutcomeActionToggle: document.getElementById('confidence-outcome-action-toggle'),
+  confidenceOutcomeMeaningPanel: document.getElementById('confidence-outcome-meaning-panel'),
+  confidenceOutcomeActionPanel: document.getElementById('confidence-outcome-action-panel'),
+  confidenceOutcomeWhyWrong: document.getElementById('confidence-outcome-why-wrong'),
   explanation: document.getElementById('explanation'),
   quizMessage: document.getElementById('quiz-message'),
   selectionHint: document.getElementById('selection-hint'),
   quizTopAnchor: document.getElementById('quiz-top-anchor'),
   submitAnswer: document.getElementById('submit-answer'),
+  reviewExplanation: document.getElementById('review-explanation'),
   prevQuestion: document.getElementById('prev-question'),
   nextQuestion: document.getElementById('next-question'),
   nextQuestionInline: document.getElementById('next-question-inline'),
@@ -229,6 +235,14 @@ function attachEvents() {
     closeSecondaryActions();
     moveQuestion(1);
   });
+  els.reviewExplanation.addEventListener('click', reviewExplanation);
+  els.confidenceOutcomeMeaningToggle.addEventListener('click', () => {
+    toggleConfidenceOutcomeDetail('meaning');
+  });
+  els.confidenceOutcomeActionToggle.addEventListener('click', () => {
+    toggleConfidenceOutcomeDetail('action');
+  });
+  els.confidenceOutcomeWhyWrong.addEventListener('click', jumpToWhyWrong);
 
   els.secondaryActionsToggle?.addEventListener('click', () => {
     const expanded = els.secondaryActionsToggle.getAttribute('aria-expanded') === 'true';
@@ -625,7 +639,7 @@ function activateSession(session) {
 }
 
 function renderQuestion(options = {}) {
-  const { scrollToTop = false } = options;
+  const { scrollToTop = false, focusConfidenceOutcome = false } = options;
   const question = getCurrentQuestion();
   const idx = state.session.currentIndex + 1;
   const total = state.session.order.length;
@@ -657,6 +671,13 @@ function renderQuestion(options = {}) {
   renderWrongReasonTags(question.id, chosen);
   persistSession();
   closeSecondaryActions();
+  if (focusConfidenceOutcome && confidenceOutcome) {
+    els.confidenceOutcome.focus({ preventScroll: true });
+    els.confidenceOutcome.scrollIntoView({
+      behavior: getScrollBehavior(),
+      block: 'nearest',
+    });
+  }
   if (scrollToTop) scrollQuizIntoView();
 }
 
@@ -702,7 +723,7 @@ function submitCurrentAnswer(event) {
   state.progress = nextProgress;
 
   saveProgress(state.progress);
-  renderQuestion();
+  renderQuestion({ focusConfidenceOutcome: true });
 }
 
 function moveQuestion(delta) {
@@ -787,13 +808,59 @@ function updatePrimaryActions(questionId) {
   const graded = inputState.id === 'graded';
   const canSubmit = inputState.canSubmit;
   const canNext = graded;
+  const guidance = els.confidenceOutcome.dataset.guidance;
+  const reviewFirst = graded && guidance === 'review';
 
   els.submitAnswer.disabled = !canSubmit;
+  els.submitAnswer.classList.toggle('graded-control-withdrawn', graded);
+  els.reviewExplanation.classList.toggle('hidden', !graded);
+  els.reviewExplanation.classList.toggle('primary', reviewFirst);
+  els.nextQuestion.classList.toggle('hidden', !graded);
+  els.nextQuestion.classList.toggle('primary', !reviewFirst);
   els.nextQuestion.disabled = !canNext;
   els.nextQuestionInline.disabled = !canNext;
   els.selectionHint.hidden = graded || inputState.id === 'ready';
 
   els.selectionHint.textContent = getAnswerInputHint(inputState.id);
+}
+
+function reviewExplanation() {
+  closeSecondaryActions();
+  openExplanation();
+  els.explanation.focus({ preventScroll: true });
+  els.explanation.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
+}
+
+function toggleConfidenceOutcomeDetail(detail) {
+  const openMeaning =
+    detail === 'meaning' &&
+    els.confidenceOutcomeMeaningToggle.getAttribute('aria-expanded') !== 'true';
+  const openAction =
+    detail === 'action' &&
+    els.confidenceOutcomeActionToggle.getAttribute('aria-expanded') !== 'true';
+
+  els.confidenceOutcomeMeaningToggle.setAttribute('aria-expanded', String(openMeaning));
+  els.confidenceOutcomeActionToggle.setAttribute('aria-expanded', String(openAction));
+  els.confidenceOutcomeMeaningPanel.hidden = !openMeaning;
+  els.confidenceOutcomeActionPanel.hidden = !openAction;
+}
+
+function openExplanation() {
+  if (!els.explanation.classList.contains('hidden')) return;
+  els.explanation.classList.remove('hidden');
+  state.session.explanationOpen = true;
+  els.toggleExplanation.textContent = '解説を非表示';
+  updateExplanationActions();
+  persistSession();
+}
+
+function jumpToWhyWrong() {
+  const whyWrong = els.explanation.querySelector('#why-wrong');
+  if (!whyWrong || els.confidenceOutcomeWhyWrong.classList.contains('hidden')) return;
+  closeSecondaryActions();
+  openExplanation();
+  whyWrong.focus({ preventScroll: true });
+  whyWrong.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
 }
 
 function updateExplanationActions() {
@@ -807,18 +874,22 @@ function isMobileViewport() {
   return window.matchMedia('(max-width: 768px)').matches;
 }
 
+function getScrollBehavior() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
+
 function scrollQuizIntoView() {
   const target = els.quizTopAnchor ?? els.views.quiz;
   if (!target) return;
 
   if (isMobileViewport()) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
   }
 }
 
 function scrollChoiceGroupIntoView() {
   if (!isMobileViewport()) return;
-  els.choicesForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  els.choicesForm.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
 }
 
 function finishSession() {
