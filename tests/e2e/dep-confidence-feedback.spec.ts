@@ -55,6 +55,25 @@ async function resetAndStart(page: Page) {
   await startDepQuiz(page, '10');
 }
 
+async function expectClearedFeedback(page: Page) {
+  const card = page.locator('#confidence-outcome');
+  await expect(card).toBeHidden();
+  await expect(card).not.toHaveAttribute('data-outcome', /.+/);
+  await expect(card).not.toHaveAttribute('data-guidance', /.+/);
+  await expect(card).not.toHaveClass(/confidence-outcome--(?:correct|wrong)/);
+  await expect(page.locator('#confidence-outcome-meaning-panel')).toBeHidden();
+  await expect(page.locator('#confidence-outcome-action-panel')).toBeHidden();
+  await expect(page.locator('#confidence-outcome-meaning-toggle')).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  await expect(page.locator('#confidence-outcome-action-toggle')).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  await expect(page.locator('#confidence-outcome-why-wrong')).toBeHidden();
+}
+
 test.describe('[DEP][UI] Confidence feedback / Six outcomes', () => {
   test('connects all six graded outcomes to the canonical feedback DOM', async ({
     page,
@@ -91,6 +110,35 @@ test.describe('[DEP][UI] Confidence feedback / Six outcomes', () => {
 });
 
 test.describe('[DEP][FLOW] Confidence feedback / Guidance and disclosures', () => {
+  test('clears stale feedback on the next question and an unclassifiable saved answer', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Desktop redraw reset coverage.');
+    await resetAndStart(page);
+    await grade(page, request, 'wrong', 'high');
+    await page.locator('#confidence-outcome-meaning-toggle').click();
+    await page.locator('#next-question').click();
+    await expectClearedFeedback(page);
+
+    await page.locator('#prev-question').click();
+    await expect(page.locator('#confidence-outcome')).toBeVisible();
+    await page.evaluate(() => {
+      const session = JSON.parse(localStorage.getItem('depQuizActiveSession') ?? '{}');
+      const progress = JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}');
+      const questionId = session.order[session.currentIndex];
+      progress[questionId].lastConfidenceAnswer = {
+        result: 'unknown',
+        confidence: null,
+        answeredAt: 'invalid',
+      };
+      localStorage.setItem('depQuizProgress', JSON.stringify(progress));
+    });
+    await page.reload();
+    await page.getByRole('button', { name: '続きから再開' }).click();
+    await expectClearedFeedback(page);
+  });
+
   test('keeps disclosure ARIA exclusive and routes review guidance to its targets', async ({
     page,
     request,
@@ -104,15 +152,27 @@ test.describe('[DEP][FLOW] Confidence feedback / Guidance and disclosures', () =
 
     const meaning = page.locator('#confidence-outcome-meaning-toggle');
     const action = page.locator('#confidence-outcome-action-toggle');
+    const meaningPanel = page.locator('#confidence-outcome-meaning-panel');
+    const actionPanel = page.locator('#confidence-outcome-action-panel');
     await expect(meaning).toHaveAttribute('aria-controls', 'confidence-outcome-meaning-panel');
     await expect(action).toHaveAttribute('aria-controls', 'confidence-outcome-action-panel');
     await expect(meaning).toHaveAttribute('aria-expanded', 'false');
     await expect(action).toHaveAttribute('aria-expanded', 'false');
+    await expect(meaningPanel).toBeHidden();
+    await expect(actionPanel).toBeHidden();
     await meaning.click();
     await expect(meaning).toHaveAttribute('aria-expanded', 'true');
+    await expect(meaningPanel).toBeVisible();
+    await expect(actionPanel).toBeHidden();
     await action.click();
     await expect(action).toHaveAttribute('aria-expanded', 'true');
     await expect(meaning).toHaveAttribute('aria-expanded', 'false');
+    await expect(meaningPanel).toBeHidden();
+    await expect(actionPanel).toBeVisible();
+    await action.click();
+    await expect(action).toHaveAttribute('aria-expanded', 'false');
+    await expect(actionPanel).toBeHidden();
+    await action.click();
 
     await page.locator('#review-explanation').click();
     await expect(page.locator('#explanation')).toBeFocused();

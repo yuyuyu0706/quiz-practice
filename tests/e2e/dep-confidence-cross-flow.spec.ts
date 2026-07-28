@@ -146,6 +146,10 @@ test.describe('[DEP][FLOW] Confidence input / Cross-flow contract', () => {
         );
         expect(saved.lastConfidenceAnswer.confidence).toBe('medium');
         expect(saved.lastConfidenceAnswer.answeredAt).toBe(saved.lastAnsweredAt);
+        await expect(page.locator('#confidence-outcome')).toHaveAttribute(
+          'data-outcome',
+          `${saved.lastConfidenceAnswer.result}_${saved.lastConfidenceAnswer.confidence}`
+        );
       } else {
         await gradeAndAssertAtomicSave(page, 'medium');
       }
