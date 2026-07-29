@@ -879,6 +879,108 @@ button.primary:hover:not(:disabled) {
 .analysis-summary {
   margin-top: 18px;
 }
+.analysis-confidence-summary {
+  min-width: 0;
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--dep-primary-border);
+  border-radius: 16px;
+  background: var(--dep-surface-tint);
+}
+.analysis-confidence-summary h3,
+.analysis-confidence-summary h4,
+.analysis-confidence-summary h5 {
+  overflow-wrap: anywhere;
+}
+.analysis-confidence-summary h3 {
+  margin: 0 0 8px;
+}
+.analysis-confidence-summary h4 {
+  margin: 22px 0 10px;
+}
+.analysis-confidence-summary h5 {
+  margin: 0 0 8px;
+}
+.analysis-confidence-summary__description,
+.analysis-confidence-summary__footnote {
+  color: var(--muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.analysis-confidence-status,
+.analysis-confidence-quality {
+  padding: 10px 12px;
+  border-radius: 10px;
+  line-height: 1.55;
+}
+.analysis-confidence-status {
+  background: var(--dep-primary-soft);
+}
+.analysis-confidence-quality {
+  border: 1px solid #f8d99b;
+  background: #fffaf0;
+  color: #5f3b08;
+}
+.analysis-confidence-coverage,
+.analysis-confidence-levels,
+.analysis-confidence-outcomes,
+.analysis-confidence-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.analysis-confidence-coverage > div,
+.analysis-confidence-level,
+.analysis-confidence-outcome,
+.analysis-confidence-highlight {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+.analysis-confidence-coverage dt,
+.analysis-confidence-level dt {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.analysis-confidence-coverage dd {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.analysis-confidence-level dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  margin: 0;
+}
+.analysis-confidence-level dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+.analysis-confidence-outcome p,
+.analysis-confidence-highlight p {
+  margin: 0;
+  line-height: 1.5;
+}
+.analysis-confidence-outcome[data-guidance='review'],
+.analysis-confidence-highlight {
+  border-left: 5px solid #c66a14;
+}
+@media (max-width: 480px) {
+  .analysis-confidence-summary {
+    padding: 14px;
+  }
+  .analysis-confidence-coverage,
+  .analysis-confidence-levels,
+  .analysis-confidence-outcomes,
+  .analysis-confidence-highlights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .analysis-summary h3,
 .analysis-focus-summary h3,
 .analysis-tag-summary h3,
