@@ -82,6 +82,95 @@ test('aggregates coverage, latest accuracy, outcomes, and review decisions', () 
   );
 });
 
+test('aggregates all six outcomes with their canonical guidance and review decisions', () => {
+  const cases = [
+    ['Q1', 'correct', 'high', 'correct_high', 'advance'],
+    ['Q2', 'correct', 'medium', 'correct_medium', 'review'],
+    ['Q3', 'correct', 'low', 'correct_low', 'review'],
+    ['Q4', 'wrong', 'high', 'wrong_high', 'review'],
+    ['Q5', 'wrong', 'medium', 'wrong_medium', 'review'],
+    ['Q6', 'wrong', 'low', 'wrong_low', 'review'],
+  ];
+  const questions = cases.map(([questionId]) => ({ id: questionId }));
+  const progress = Object.fromEntries(
+    cases.map(([questionId, result, confidence]) => [questionId, answer(result, confidence)])
+  );
+  const analysis = buildConfidenceAnalysis(questions, progress);
+
+  assert.deepEqual(
+    analysis.classifiedItems.map(({ questionId, outcomeId, guidance }) => ({
+      questionId,
+      outcomeId,
+      guidance,
+    })),
+    cases.map(([questionId, , , outcomeId, guidance]) => ({
+      questionId,
+      outcomeId,
+      guidance,
+    }))
+  );
+  assert.deepEqual(
+    analysis.outcomes.map(({ id, questionCount }) => ({ id, questionCount })),
+    cases.map(([, , , id]) => ({ id, questionCount: 1 }))
+  );
+  assert.equal(analysis.review.advanceQuestionCount, 1);
+  assert.equal(analysis.review.reviewQuestionCount, 5);
+  assert.deepEqual(
+    analysis.review.highlightedOutcomes.map(({ outcomeId }) => outcomeId),
+    ['wrong_high', 'correct_low']
+  );
+});
+
+test('derives analysis only from the latest answer instead of cumulative counts', () => {
+  const questions = [{ id: 'LATEST_CORRECT' }, { id: 'LATEST_WRONG' }];
+  const progress = {
+    LATEST_CORRECT: answer('correct', 'low', {
+      correctCount: 0,
+      wrongCount: 99,
+    }),
+    LATEST_WRONG: answer('wrong', 'high', {
+      correctCount: 99,
+      wrongCount: 0,
+    }),
+  };
+  const analysis = buildConfidenceAnalysis(questions, progress);
+
+  assert.deepEqual(
+    analysis.classifiedItems.map(({ questionId, result, confidence, outcomeId }) => ({
+      questionId,
+      result,
+      confidence,
+      outcomeId,
+    })),
+    [
+      {
+        questionId: 'LATEST_CORRECT',
+        result: 'correct',
+        confidence: 'low',
+        outcomeId: 'correct_low',
+      },
+      {
+        questionId: 'LATEST_WRONG',
+        result: 'wrong',
+        confidence: 'high',
+        outcomeId: 'wrong_high',
+      },
+    ]
+  );
+  assert.deepEqual(
+    analysis.confidenceLevels.map(({ id, correctCount, wrongCount }) => ({
+      id,
+      correctCount,
+      wrongCount,
+    })),
+    [
+      { id: 'high', correctCount: 0, wrongCount: 1 },
+      { id: 'medium', correctCount: 0, wrongCount: 0 },
+      { id: 'low', correctCount: 1, wrongCount: 0 },
+    ]
+  );
+});
+
 test('preserves registry order and includes zero-count entries', () => {
   const analysis = buildConfidenceAnalysis([{ id: 'Q1' }], { Q1: answer('correct', 'high') });
   assert.deepEqual(
