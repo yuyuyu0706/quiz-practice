@@ -375,7 +375,7 @@ export function renderConfidenceOutcome(els, outcome) {
   els.confidenceOutcomeMeaning.textContent = outcome.meaning;
   els.confidenceOutcomeAction.textContent = outcome.action;
   els.confidenceOutcome.dataset.outcome = outcome.id;
-  els.confidenceOutcome.dataset.guidance = outcome.id === 'correct_high' ? 'advance' : 'review';
+  els.confidenceOutcome.dataset.guidance = outcome.guidance;
   els.confidenceOutcome.classList.add(`confidence-outcome--${outcome.result}`);
   els.confidenceOutcomeWhyWrong.classList.toggle(
     'hidden',

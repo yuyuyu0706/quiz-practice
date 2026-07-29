@@ -39,6 +39,7 @@ test('CONFIDENCE_OUTCOMES defines all six unique result and confidence combinati
       'id',
       'result',
       'confidence',
+      'guidance',
       'title',
       'meaning',
       'action',
@@ -47,6 +48,12 @@ test('CONFIDENCE_OUTCOMES defines all six unique result and confidence combinati
       assert.equal(typeof value, 'string');
       assert.notEqual(value.length, 0);
     }
+  }
+});
+
+test('guidance defines correct_high as advance and every other outcome as review', () => {
+  for (const outcome of CONFIDENCE_OUTCOMES) {
+    assert.equal(outcome.guidance, outcome.id === 'correct_high' ? 'advance' : 'review');
   }
 });
 

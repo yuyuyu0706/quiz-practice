@@ -45,6 +45,9 @@ jobs:
       - name: 'Quality Gate: Run DEP confidence foundation tests'
         run: npm run test:dep-confidence-foundation
 
+      - name: 'Quality Gate: Run DEP confidence analysis unit tests'
+        run: npm run test:dep-confidence-analysis
+
       - name: 'Quality Gate: Run DEP wrong-reason-tag unit tests'
         run: npm run test:dep-wrong-reason-tags
 
