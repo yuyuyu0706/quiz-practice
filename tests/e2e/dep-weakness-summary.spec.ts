@@ -427,6 +427,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
         .evaluateAll((regions) => regions.map((region) => region.getAttribute('aria-labelledby')))
     ).resolves.toEqual([
       'analysis-summary-title',
+      'analysis-confidence-title',
       'analysis-focus-title',
       'analysis-tags-title',
       'analysis-sections-title',

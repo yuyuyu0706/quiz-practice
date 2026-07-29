@@ -23,6 +23,7 @@ import {
 } from './notes.js';
 import { buildLearningHistoryResetPlan } from './learning-history-reset.js';
 import { buildWeaknessAnalysis } from './analysis.js';
+import { buildConfidenceAnalysis } from './confidence-analysis.js';
 import { buildWeaknessReviewTargetPlan } from './weakness-review-targets.js';
 import { createWeaknessReviewSession } from './weakness-review-session.js';
 import { loadQuestions } from './questions.js';
@@ -63,6 +64,7 @@ const state = {
   settings: loadSettings(),
   session: null,
   analysis: null,
+  confidenceAnalysis: null,
   activeResetPlan: null,
   activeWeaknessReviewTargetPlan: null,
   isLearningHistoryResetCommitInProgress: false,
@@ -441,7 +443,8 @@ function openAnalysisView() {
 
 function renderAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
-  renderAnalysisSummary(els.analysisContainer, state.analysis);
+  state.confidenceAnalysis = buildConfidenceAnalysis(state.questions, state.progress);
+  renderAnalysisSummary(els.analysisContainer, state.analysis, state.confidenceAnalysis);
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
   });
