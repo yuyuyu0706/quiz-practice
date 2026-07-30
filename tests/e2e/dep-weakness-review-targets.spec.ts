@@ -106,10 +106,10 @@ async function expectTargetsViewAtTop(page: Page) {
   await expect(page.locator('#analysis-view')).not.toBeVisible();
   await expect(page.locator('#weakness-review-targets-panel')).toBeVisible();
   await expect(page.locator('#weakness-review-targets-view')).toContainText(
-    '弱点分析画面で選択した条件に該当する問題を表示しています。'
+    '分析画面で選択した条件に該当する問題を表示しています。'
   );
   await expect(page.locator('#weakness-review-targets-view')).toContainText(
-    '別の条件を確認する場合は、弱点分析画面に戻って選び直してください。'
+    '別の条件を確認する場合は、分析画面に戻って選び直してください。'
   );
   await page.waitForFunction(() => window.scrollY === 0);
 }
@@ -161,7 +161,7 @@ async function expectTargetCardMeta(item: Locator, values: Record<string, string
 }
 
 async function expectBackToAnalysis(page: Page) {
-  await page.getByRole('button', { name: '← 弱点分析へ戻る' }).click();
+  await page.getByRole('button', { name: '← 分析画面へ戻る' }).click();
   await expect(page.locator('#analysis-view')).toBeVisible();
   await expect(page.locator('#weakness-review-targets-view')).not.toBeVisible();
   await expect(page.locator('#weakness-review-targets-panel')).toBeHidden();

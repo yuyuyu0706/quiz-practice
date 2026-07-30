@@ -93,6 +93,46 @@ test('creates a weakness review session from a wrong-reason-tag target plan', ()
   assert.equal(session.settingsSnapshot.count, 1);
 });
 
+function assertConfidenceSessionContract(condition, itemIds) {
+  const plan = targetPlan({
+    condition,
+    targetCount: itemIds.length,
+    items: itemIds.map((id) => targetItem(id)),
+  });
+  const original = deepClone(plan);
+
+  const session = createWeaknessReviewSession(plan);
+  assert.equal(session.mode, 'weaknessReview');
+  assert.deepEqual(session.order, itemIds);
+  assert.equal(session.settingsSnapshot.count, itemIds.length);
+  assert.equal(session.settingsSnapshot.source, 'weaknessReviewTargets');
+  assert.deepEqual(session.settingsSnapshot.condition, condition);
+  assert.deepEqual(normalizeLoadedSession(deepClone(session)), session);
+  assert.deepEqual(plan, original);
+}
+
+test('creates, normalizes, and restores a confidence-outcome weakness review session', () => {
+  assertConfidenceSessionContract(
+    {
+      type: 'confidenceOutcome',
+      value: 'wrong_high',
+      label: '誤認です。前提から見直しましょう',
+    },
+    ['DEP-Q8', 'DEP-Q2']
+  );
+});
+
+test('creates, normalizes, and restores a review-guidance weakness review session', () => {
+  assertConfidenceSessionContract(
+    {
+      type: 'confidenceGuidance',
+      value: 'review',
+      label: '要確認（5分類）',
+    },
+    ['DEP-Q6', 'DEP-Q1', 'DEP-Q9']
+  );
+});
+
 test('preserves targetPlan.items order exactly without re-sorting or deduping', () => {
   const plan = targetPlan({
     items: [targetItem('Z-10'), targetItem('A-01'), targetItem('M-05')],

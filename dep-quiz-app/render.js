@@ -502,6 +502,16 @@ function createConfidenceAnalysisSummary(source) {
 
   section.appendChild(createConfidenceCoverageMetrics(coverage, review));
 
+  section.appendChild(
+    createReviewTargetButton({
+      label: '要確認の問題を見る',
+      targetType: 'confidenceGuidance',
+      targetValueName: 'reviewTargetGuidance',
+      targetValue: 'review',
+      disabled: !Number(review.reviewQuestionCount),
+    })
+  );
+
   const levelsTitle = document.createElement('h4');
   levelsTitle.textContent = '確信度別サマリ';
   const levels = document.createElement('div');
@@ -603,7 +613,17 @@ function createConfidenceOutcome(outcome) {
   title.textContent = outcome.title;
   const detail = document.createElement('p');
   detail.textContent = `${formatSummaryCount(outcome.questionCount)}問・${outcome.guidance === 'advance' ? '安定理解' : '要確認'}`;
-  article.append(title, detail);
+  article.append(
+    title,
+    detail,
+    createReviewTargetButton({
+      label: 'この状態の問題を見る',
+      targetType: 'confidenceOutcome',
+      targetValueName: 'reviewTargetOutcome',
+      targetValue: outcome.id,
+      disabled: !Number(outcome.questionCount),
+    })
+  );
   return article;
 }
 
@@ -667,7 +687,7 @@ export function renderWeaknessReviewTargetPanel(panel, targetPlan) {
     const emptyDescription = document.createElement('p');
     emptyDescription.className = 'weakness-review-targets-panel__empty-description';
     emptyDescription.textContent =
-      '選択した条件に一致する問題がありません。弱点分析画面に戻り、別のSectionまたは誤答理由タグを選び直してください。';
+      '選択した条件に一致する問題がありません。分析画面に戻り、別の条件を選び直してください。';
 
     emptyMessage.append(emptyTitle, emptyDescription);
     panel.appendChild(emptyMessage);
@@ -718,6 +738,20 @@ function createWeaknessReviewTargetItem(itemSource, options = {}) {
     createTargetMetaItem('正答', `${formatSummaryCount(item.correctCount)}問`),
     createTargetMetaItem('誤答', `${formatSummaryCount(item.wrongCount)}問`)
   );
+  if (item.latestUnderstanding) {
+    meta.append(
+      createTargetMetaItem('最新理解状態', item.latestUnderstanding.title),
+      createTargetMetaItem(
+        '結果',
+        item.latestUnderstanding.result === 'correct' ? '正解' : '不正解'
+      ),
+      createTargetMetaItem('確信度', item.latestUnderstanding.confidenceLabel),
+      createTargetMetaItem(
+        '判断',
+        item.latestUnderstanding.guidance === 'advance' ? '安定理解' : '要確認'
+      )
+    );
+  }
 
   const badges = document.createElement('div');
   badges.className = 'weakness-review-target-item__badges';

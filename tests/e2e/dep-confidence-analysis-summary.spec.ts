@@ -137,8 +137,13 @@ test.describe('[DEP][UI] Analysis / Confidence summary', () => {
     ).resolves.toEqual(['wrong_high', 'correct_low']);
     await expect(highlights.nth(0)).toContainText('15問・誤認リスク');
     await expect(highlights.nth(1)).toContainText('15問・正解の再現性不足');
-    await expect(summary.getByRole('button')).toHaveCount(0);
-    await expect(summary.locator('[data-review-target-type]')).toHaveCount(0);
+    await expect(summary.getByRole('button')).toHaveCount(7);
+    await expect(summary.locator('[data-review-target-type="confidenceOutcome"]')).toHaveCount(6);
+    await expect(summary.locator('[data-review-target-type="confidenceGuidance"]')).toHaveAttribute(
+      'data-review-target-guidance',
+      'review'
+    );
+    await expect(highlights.getByRole('button')).toHaveCount(0);
     await expectStorageUnchanged(page, snapshot);
   });
 
