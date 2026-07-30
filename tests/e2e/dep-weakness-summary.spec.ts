@@ -495,7 +495,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await openAnalysis(page);
 
     const disclosures = page.locator('.analysis-disclosure');
-    await expect(disclosures).toHaveCount(3);
+    await expect(disclosures).toHaveCount(4);
     await expect(
       disclosures.evaluateAll((items) => items.every((item) => !item.hasAttribute('open')))
     ).resolves.toBe(true);
@@ -535,7 +535,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await page.getByRole('button', { name: '← ホームへ戻る' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
     await page.getByRole('button', { name: '弱点を分析' }).click();
-    await expect(disclosures).toHaveCount(3);
+    await expect(disclosures).toHaveCount(4);
     await expect(
       disclosures.evaluateAll((items) => items.every((item) => !item.hasAttribute('open')))
     ).resolves.toBe(true);

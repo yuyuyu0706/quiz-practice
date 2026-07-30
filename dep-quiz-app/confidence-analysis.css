@@ -1,0 +1,417 @@
+.analysis-confidence-summary {
+  min-width: 0;
+  margin-top: 22px;
+  padding: 0;
+  border: 1px solid var(--dep-primary-border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.analysis-confidence-summary > .analysis-disclosure__summary {
+  background: linear-gradient(180deg, var(--dep-primary-soft), var(--dep-surface-tint));
+}
+
+.analysis-confidence-summary > .analysis-disclosure__content {
+  display: grid;
+  gap: 20px;
+  padding: 16px;
+}
+
+.analysis-confidence-summary h4,
+.analysis-confidence-summary h5,
+.analysis-confidence-summary h6,
+.analysis-confidence-summary p,
+.analysis-confidence-summary dt,
+.analysis-confidence-summary dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.analysis-confidence-summary__intro {
+  display: grid;
+  gap: 10px;
+}
+
+.analysis-confidence-summary__description,
+.analysis-confidence-summary__footnote {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.analysis-confidence-status,
+.analysis-confidence-quality {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  line-height: 1.55;
+}
+
+.analysis-confidence-status {
+  background: var(--dep-primary-soft);
+}
+
+.analysis-confidence-quality {
+  border: 1px solid #f8d99b;
+  background: #fffaf0;
+  color: #5f3b08;
+}
+
+.analysis-confidence-decision,
+.analysis-confidence-levels-section,
+.analysis-confidence-matrix-section {
+  min-width: 0;
+}
+
+.analysis-confidence-decision > h4,
+.analysis-confidence-levels-section > h4,
+.analysis-confidence-matrix-section > h4 {
+  margin: 0 0 10px;
+}
+
+.analysis-confidence-coverage {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.analysis-confidence-coverage > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.analysis-confidence-coverage > [data-confidence-metric='review'] {
+  border-color: #e5a45e;
+  background: #fff9f2;
+  box-shadow: inset 0 0 0 1px rgba(198, 106, 20, 0.08);
+}
+
+.analysis-confidence-coverage > [data-confidence-metric='advance'] {
+  border-color: var(--dep-primary-border);
+  background: var(--dep-primary-soft);
+}
+
+.analysis-confidence-coverage > [data-confidence-metric='classified'],
+.analysis-confidence-coverage > [data-confidence-metric='unclassified'] {
+  background: var(--dep-surface-tint);
+}
+
+.analysis-confidence-coverage dt {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.analysis-confidence-coverage dd {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-confidence-decision__action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e5a45e;
+  border-radius: 12px;
+  background: #fff9f2;
+}
+
+.analysis-confidence-decision__action-copy {
+  margin: 0;
+  color: #75410d;
+  line-height: 1.5;
+}
+
+.analysis-confidence-primary-action {
+  min-width: 190px;
+  min-height: 44px;
+  border-color: #b85e0d;
+  background: #b85e0d;
+  color: #fff;
+  font-weight: 800;
+}
+
+.analysis-confidence-primary-action:hover:not(:disabled) {
+  border-color: #994b08;
+  background: #994b08;
+}
+
+.analysis-confidence-primary-action:disabled {
+  border-color: #d9d9d9;
+  background: #ececec;
+  color: #777;
+}
+
+.analysis-confidence-levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.analysis-confidence-level {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff, var(--dep-surface-tint));
+}
+
+.analysis-confidence-level h5 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.analysis-confidence-level__accuracy {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.analysis-confidence-level__accuracy dt {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.analysis-confidence-level__accuracy dd {
+  order: -1;
+  margin: 0;
+  color: var(--dep-link);
+  font-size: clamp(1.7rem, 4vw, 2.15rem);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-confidence-level__details {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  margin: 0;
+}
+
+.analysis-confidence-level__details dt {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.analysis-confidence-level__details dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-confidence-matrix {
+  display: grid;
+  gap: 10px;
+}
+
+.analysis-confidence-matrix__column-headings,
+.analysis-confidence-matrix__row {
+  display: grid;
+  grid-template-columns: minmax(88px, 0.55fr) repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
+.analysis-confidence-matrix__column-heading,
+.analysis-confidence-matrix__row-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--dep-surface-tint);
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.analysis-confidence-matrix__corner {
+  background: transparent;
+}
+
+.analysis-confidence-matrix__row-heading {
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.analysis-confidence-matrix__row[data-result='correct'] .analysis-confidence-matrix__row-heading {
+  border: 1px solid var(--dep-primary-border);
+  background: var(--dep-primary-soft);
+}
+
+.analysis-confidence-matrix__row[data-result='wrong'] .analysis-confidence-matrix__row-heading {
+  border: 1px solid #e5a45e;
+  background: #fff9f2;
+}
+
+.analysis-confidence-outcome {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.analysis-confidence-outcome[data-result='correct'] {
+  border-top: 4px solid var(--dep-primary);
+}
+
+.analysis-confidence-outcome[data-result='wrong'] {
+  border-top: 4px solid #c66a14;
+}
+
+.analysis-confidence-outcome__axis-label {
+  display: none;
+  margin: 0 0 5px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.analysis-confidence-outcome h5 {
+  margin: 0 0 8px;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.analysis-confidence-outcome__summary {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.analysis-confidence-outcome__priority {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  color: #75410d;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.analysis-confidence-outcome__priority-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid #e5a45e;
+  border-radius: 999px;
+  background: #fff4e7;
+  color: #8b470d;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.analysis-confidence-outcome .analysis-review-target-button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: auto;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  white-space: normal;
+}
+
+.analysis-confidence-summary__footnote {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 0.86rem;
+}
+
+@media (max-width: 768px) {
+  .analysis-confidence-coverage {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analysis-confidence-decision__action {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analysis-confidence-primary-action {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .analysis-confidence-levels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analysis-confidence-matrix__column-headings {
+    display: none;
+  }
+
+  .analysis-confidence-matrix__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .analysis-confidence-matrix__row-heading {
+    justify-content: flex-start;
+    padding: 9px 10px;
+    text-align: left;
+  }
+
+  .analysis-confidence-outcome__axis-label {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .analysis-confidence-summary {
+    margin-top: 16px;
+  }
+
+  .analysis-confidence-summary > .analysis-disclosure__content {
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .analysis-confidence-coverage {
+    gap: 8px;
+  }
+
+  .analysis-confidence-coverage > div,
+  .analysis-confidence-level,
+  .analysis-confidence-outcome {
+    padding: 10px;
+  }
+
+  .analysis-confidence-coverage dd {
+    font-size: 1.2rem;
+  }
+
+  .analysis-confidence-decision__action {
+    padding: 10px;
+  }
+
+  .analysis-confidence-outcome,
+  .analysis-confidence-primary-action,
+  .analysis-confidence-outcome .analysis-review-target-button {
+    min-width: 0;
+  }
+}

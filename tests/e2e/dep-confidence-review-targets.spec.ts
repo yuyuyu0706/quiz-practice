@@ -39,6 +39,18 @@ async function readStorage(page: Page): Promise<StorageSnapshot> {
   }, STORAGE_KEYS) as Promise<StorageSnapshot>;
 }
 
+function confidenceDisclosure(page: Page) {
+  return page.locator('details.analysis-confidence-summary');
+}
+
+async function openConfidenceDisclosure(page: Page) {
+  const disclosure = confidenceDisclosure(page);
+  await expect(disclosure).not.toHaveAttribute('open', '');
+  await disclosure.locator('summary').click();
+  await expect(disclosure).toHaveAttribute('open', '');
+  return disclosure;
+}
+
 async function seedAnalysis(page: Page, questions: Question[], withProgress = true) {
   const progress = withProgress
     ? Object.fromEntries(
@@ -84,6 +96,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop six-outcome coverage.');
     const questions = await loadQuestions(request);
     const snapshot = await seedAnalysis(page, questions);
+    const disclosure = await openConfidenceDisclosure(page);
 
     for (const [index, outcome] of CONFIDENCE_OUTCOMES.entries()) {
       const button = page
@@ -99,6 +112,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
       expect(await readStorage(page)).toEqual(snapshot);
 
       await page.getByRole('button', { name: '分析画面へ戻る' }).click();
+      await expect(disclosure).toHaveAttribute('open', '');
       await expect(button).toBeFocused();
       expect(await readStorage(page)).toEqual(snapshot);
     }
@@ -111,8 +125,10 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop aggregate/session coverage.');
     const questions = await loadQuestions(request);
     const snapshot = await seedAnalysis(page, questions);
+    const disclosure = await openConfidenceDisclosure(page);
     const reviewButton = page.getByRole('button', { name: '要確認の問題を見る' });
 
+    await expect(reviewButton).toHaveClass(/analysis-confidence-primary-action/);
     await reviewButton.click();
     const cards = page.locator('.weakness-review-target-item');
     await expect(cards).toHaveCount(5);
@@ -122,6 +138,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     expect(await readStorage(page)).toEqual(snapshot);
 
     await page.getByRole('button', { name: '分析画面へ戻る' }).click();
+    await expect(disclosure).toHaveAttribute('open', '');
     await expect(reviewButton).toBeFocused();
     expect(await readStorage(page)).toEqual(snapshot);
     await reviewButton.click();
@@ -148,8 +165,10 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     request,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile empty/responsive coverage.');
+    await page.setViewportSize({ width: 375, height: 812 });
     const questions = await loadQuestions(request);
     const snapshot = await seedAnalysis(page, questions, false);
+    await openConfidenceDisclosure(page);
     const buttons = page.locator('.analysis-confidence-summary [data-review-target-type]');
 
     await expect(buttons).toHaveCount(7);
@@ -158,7 +177,10 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     const widths = await page.evaluate(() => ({
       document: document.documentElement.scrollWidth,
       viewport: document.documentElement.clientWidth,
+      analysis: document.querySelector('#analysis-view')?.scrollWidth ?? 0,
+      analysisViewport: document.querySelector('#analysis-view')?.clientWidth ?? 0,
     }));
     expect(widths.document).toBeLessThanOrEqual(widths.viewport);
+    expect(widths.analysis).toBeLessThanOrEqual(widths.analysisViewport);
   });
 });
