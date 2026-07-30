@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import { buildWeaknessReviewTargetPlan } from '../dep-quiz-app/weakness-review-targets.js';
 import { WRONG_REASON_TAGS } from '../dep-quiz-app/notes.js';
+import { CONFIDENCE_OUTCOMES } from '../dep-quiz-app/confidence-outcome.js';
 
 function test(name, fn) {
   try {
@@ -278,6 +279,56 @@ test('confidence outcome extracts only canonical classified items in question or
     confidenceLabel: '自信なし',
     answeredAt: '2026-01-02T00:00:00.000Z',
   });
+});
+
+test('all six confidence outcome conditions extract only matches in question definition order', () => {
+  const questions = CONFIDENCE_OUTCOMES.flatMap((outcome, index) => [
+    question(`${outcome.id}-first`, String(index + 1)),
+    question(`${outcome.id}-second`, String(index + 1)),
+  ]).reverse();
+  const classifiedItems = CONFIDENCE_OUTCOMES.flatMap((outcome) => [
+    {
+      questionId: `${outcome.id}-second`,
+      result: outcome.result,
+      confidence: outcome.confidence,
+      outcomeId: outcome.id,
+      guidance: outcome.guidance,
+      answeredAt: '2026-07-30T00:00:00.000Z',
+    },
+    {
+      questionId: `${outcome.id}-first`,
+      result: outcome.result,
+      confidence: outcome.confidence,
+      outcomeId: outcome.id,
+      guidance: outcome.guidance,
+      answeredAt: '2026-07-29T00:00:00.000Z',
+    },
+  ]);
+
+  for (const outcome of CONFIDENCE_OUTCOMES) {
+    const result = buildWeaknessReviewTargetPlan({
+      questions,
+      progress: {},
+      confidenceAnalysis: { classifiedItems },
+      condition: { type: 'confidenceOutcome', value: outcome.id },
+    });
+    const expectedIds = questions
+      .filter((item) => item.id.startsWith(`${outcome.id}-`))
+      .map((item) => item.id);
+
+    assert.deepEqual(
+      result.items.map((item) => item.id),
+      expectedIds,
+      outcome.id
+    );
+    assert.equal(result.targetCount, 2, outcome.id);
+    assert.equal(result.emptyState, null, outcome.id);
+    assert.deepEqual(result.condition, {
+      type: 'confidenceOutcome',
+      value: outcome.id,
+      label: outcome.title,
+    });
+  }
 });
 
 test('review guidance derives all five review outcomes and excludes advance', () => {
