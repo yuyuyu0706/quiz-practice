@@ -204,3 +204,155 @@ test('unsupported condition type fails explicitly', () => {
     TypeError
   );
 });
+
+test('confidence outcome extracts only canonical classified items in question order', () => {
+  const questions = [
+    question('Q1', '1'),
+    question('Q2', '2'),
+    question('Q2', '9'),
+    question('Q3', '3'),
+  ];
+  const progress = {
+    Q1: progressEntry({ correctCount: 99, wrongCount: 0 }),
+    Q2: progressEntry({ correctCount: 0, wrongCount: 99 }),
+  };
+  const confidenceAnalysis = {
+    classifiedItems: [
+      {
+        questionId: 'Q2',
+        result: 'correct',
+        confidence: 'low',
+        outcomeId: 'correct_low',
+        guidance: 'review',
+        answeredAt: '2026-01-02T00:00:00.000Z',
+      },
+      {
+        questionId: 'OLD',
+        result: 'correct',
+        confidence: 'low',
+        outcomeId: 'correct_low',
+        guidance: 'review',
+        answeredAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        questionId: 'Q1',
+        result: 'wrong',
+        confidence: 'high',
+        outcomeId: 'wrong_high',
+        guidance: 'review',
+        answeredAt: '2026-01-03T00:00:00.000Z',
+      },
+      {
+        questionId: 'Q3',
+        result: 'wrong',
+        confidence: 'low',
+        outcomeId: 'correct_low',
+        guidance: 'review',
+        answeredAt: '2026-01-04T00:00:00.000Z',
+      },
+    ],
+  };
+
+  const result = buildWeaknessReviewTargetPlan({
+    questions,
+    progress,
+    confidenceAnalysis,
+    condition: { type: 'confidenceOutcome', value: 'correct_low' },
+  });
+
+  assert.deepEqual(result.condition, {
+    type: 'confidenceOutcome',
+    value: 'correct_low',
+    label: '油断禁物。偶然の正解かもしれません',
+  });
+  assert.deepEqual(
+    result.items.map(({ id }) => id),
+    ['Q2']
+  );
+  assert.deepEqual(result.items[0].latestUnderstanding, {
+    outcomeId: 'correct_low',
+    title: '油断禁物。偶然の正解かもしれません',
+    guidance: 'review',
+    result: 'correct',
+    confidence: 'low',
+    confidenceLabel: '自信なし',
+    answeredAt: '2026-01-02T00:00:00.000Z',
+  });
+});
+
+test('review guidance derives all five review outcomes and excludes advance', () => {
+  const outcomeIds = [
+    'correct_high',
+    'correct_medium',
+    'correct_low',
+    'wrong_high',
+    'wrong_medium',
+    'wrong_low',
+  ];
+  const pairs = [
+    ['correct', 'high', 'advance'],
+    ['correct', 'medium', 'review'],
+    ['correct', 'low', 'review'],
+    ['wrong', 'high', 'review'],
+    ['wrong', 'medium', 'review'],
+    ['wrong', 'low', 'review'],
+  ];
+  const questions = outcomeIds.map((id, index) => question(`Q${index}`, '1'));
+  const confidenceAnalysis = {
+    classifiedItems: outcomeIds.map((outcomeId, index) => ({
+      questionId: `Q${index}`,
+      outcomeId,
+      result: pairs[index][0],
+      confidence: pairs[index][1],
+      guidance: pairs[index][2],
+      answeredAt: '2026-01-01T00:00:00.000Z',
+    })),
+  };
+  const original = deepClone(confidenceAnalysis);
+
+  const result = buildWeaknessReviewTargetPlan({
+    questions,
+    progress: {},
+    confidenceAnalysis,
+    condition: { type: 'confidenceGuidance', guidance: 'review' },
+  });
+  assert.deepEqual(result.condition, {
+    type: 'confidenceGuidance',
+    value: 'review',
+    label: '要確認（5分類）',
+  });
+  assert.deepEqual(
+    result.items.map(({ id }) => id),
+    ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']
+  );
+  assert.deepEqual(confidenceAnalysis, original);
+});
+
+test('confidence conditions reject unknown values and return the shared empty state', () => {
+  const options = {
+    questions: [question('Q1', '1')],
+    progress: {},
+    confidenceAnalysis: { classifiedItems: [] },
+  };
+  const empty = buildWeaknessReviewTargetPlan({
+    ...options,
+    condition: { type: 'confidenceOutcome', outcome: 'wrong_low' },
+  });
+  assert.deepEqual(empty.emptyState, { reasonCode: 'NO_MATCHING_QUESTIONS' });
+  assert.throws(
+    () =>
+      buildWeaknessReviewTargetPlan({
+        ...options,
+        condition: { type: 'confidenceOutcome', outcome: 'unknown' },
+      }),
+    /known outcome/
+  );
+  assert.throws(
+    () =>
+      buildWeaknessReviewTargetPlan({
+        ...options,
+        condition: { type: 'confidenceGuidance', guidance: 'advance' },
+      }),
+    /review guidance/
+  );
+});

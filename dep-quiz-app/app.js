@@ -67,6 +67,7 @@ const state = {
   confidenceAnalysis: null,
   activeResetPlan: null,
   activeWeaknessReviewTargetPlan: null,
+  weaknessReviewTargetOrigin: null,
   isLearningHistoryResetCommitInProgress: false,
   learningHistoryResetRestoreBlocked: false,
 };
@@ -297,9 +298,11 @@ function attachEvents() {
     });
   });
   els.weaknessReviewTargetsBackAnalysis?.addEventListener('click', () => {
+    const origin = state.weaknessReviewTargetOrigin;
     clearActiveWeaknessReviewTargetPlan();
     renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel);
     showView('analysis');
+    origin?.focus();
   });
   els.deleteAllNotes?.addEventListener('click', handleDeleteAllNotes);
 
@@ -463,7 +466,9 @@ function handleWeaknessReviewTargetRequest(event) {
     questions: state.questions,
     progress: state.progress,
     condition,
+    confidenceAnalysis: state.confidenceAnalysis,
   });
+  state.weaknessReviewTargetOrigin = trigger;
   state.activeWeaknessReviewTargetPlan = targetPlan;
   renderWeaknessReviewTargetPanel(els.weaknessReviewTargetsPanel, targetPlan);
   showView('weaknessReviewTargets');
@@ -491,6 +496,7 @@ function handleWeaknessReviewStartRequest(event) {
 
 function clearActiveWeaknessReviewTargetPlan() {
   state.activeWeaknessReviewTargetPlan = null;
+  state.weaknessReviewTargetOrigin = null;
 }
 
 function buildWeaknessReviewTargetCondition(trigger) {
@@ -504,6 +510,16 @@ function buildWeaknessReviewTargetCondition(trigger) {
   if (targetType === 'wrongReasonTag') {
     const tag = trigger.dataset.reviewTargetTag?.trim();
     return tag ? { type: 'wrongReasonTag', tag } : null;
+  }
+
+  if (targetType === 'confidenceOutcome') {
+    const outcome = trigger.dataset.reviewTargetOutcome?.trim();
+    return outcome ? { type: 'confidenceOutcome', outcome } : null;
+  }
+
+  if (targetType === 'confidenceGuidance') {
+    const guidance = trigger.dataset.reviewTargetGuidance?.trim();
+    return guidance ? { type: 'confidenceGuidance', guidance } : null;
   }
 
   return null;

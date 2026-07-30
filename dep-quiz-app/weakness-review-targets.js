@@ -1,11 +1,19 @@
 import { normalizeProgressEntry, WRONG_REASON_TAGS } from './notes.js';
+import { CONFIDENCE_LEVELS } from './confidence.js';
+import { CONFIDENCE_OUTCOMES, getConfidenceOutcomeById } from './confidence-outcome.js';
 
 const NO_MATCHING_QUESTIONS = 'NO_MATCHING_QUESTIONS';
 
-export function buildWeaknessReviewTargetPlan({ questions, progress, condition } = {}) {
+export function buildWeaknessReviewTargetPlan({
+  questions,
+  progress,
+  condition,
+  confidenceAnalysis,
+} = {}) {
   const safeQuestions = Array.isArray(questions) ? questions : [];
   const safeProgress = isPlainObject(progress) ? progress : {};
   const normalizedCondition = normalizeCondition(condition, safeQuestions);
+  const confidenceItems = collectConfidenceItems(confidenceAnalysis);
   const questionIds = new Set();
   const validQuestions = [];
 
@@ -26,8 +34,10 @@ export function buildWeaknessReviewTargetPlan({ questions, progress, condition }
   });
 
   const items = validQuestions
-    .filter((question) => isTargetQuestion(question, safeProgress, normalizedCondition))
-    .map((question) => buildTargetItem(question, safeProgress));
+    .filter((question) =>
+      isTargetQuestion(question, safeProgress, normalizedCondition, confidenceItems)
+    )
+    .map((question) => buildTargetItem(question, safeProgress, confidenceItems.get(question.id)));
 
   return {
     condition: normalizedCondition,
@@ -67,23 +77,46 @@ function normalizeCondition(condition, questions) {
     };
   }
 
+  if (condition.type === 'confidenceOutcome') {
+    const outcomeId = normalizeRequiredString(condition.outcome ?? condition.value);
+    const outcome = getConfidenceOutcomeById(outcomeId);
+    if (!outcome) throw new TypeError('confidenceOutcome condition requires a known outcome');
+    return { type: 'confidenceOutcome', value: outcome.id, label: outcome.title };
+  }
+
+  if (condition.type === 'confidenceGuidance') {
+    const guidance = normalizeRequiredString(condition.guidance ?? condition.value);
+    const knownGuidance = CONFIDENCE_OUTCOMES.some((outcome) => outcome.guidance === guidance);
+    if (!knownGuidance || guidance !== 'review') {
+      throw new TypeError('confidenceGuidance condition requires the review guidance');
+    }
+    return { type: 'confidenceGuidance', value: guidance, label: '要確認（5分類）' };
+  }
+
   throw new TypeError(`Unsupported weakness review target condition type: ${condition.type}`);
 }
 
-function isTargetQuestion(question, progress, condition) {
+function isTargetQuestion(question, progress, condition, confidenceItems) {
   if (condition.type === 'section') {
     return question.section === condition.value;
   }
 
-  const normalizedProgress = normalizeProgressEntry(progress[question.id]);
-  return normalizedProgress.wrongReasonTags.includes(condition.value);
+  if (condition.type === 'wrongReasonTag') {
+    const normalizedProgress = normalizeProgressEntry(progress[question.id]);
+    return normalizedProgress.wrongReasonTags.includes(condition.value);
+  }
+
+  const latest = confidenceItems.get(question.id);
+  return condition.type === 'confidenceOutcome'
+    ? latest?.outcomeId === condition.value
+    : latest?.guidance === condition.value;
 }
 
-function buildTargetItem(question, progress) {
+function buildTargetItem(question, progress, confidenceItem) {
   const normalizedProgress = normalizeProgressEntry(progress[question.id]);
   const status = getStatus(normalizedProgress);
 
-  return {
+  const item = {
     id: question.id,
     section: question.section,
     sectionTitle: question.sectionTitle,
@@ -96,6 +129,46 @@ function buildTargetItem(question, progress) {
     hasWrongReasonTags: normalizedProgress.wrongReasonTags.length > 0,
     hasNote: hasProgressNote(progress[question.id]),
     bookmarked: normalizedProgress.bookmark === true,
+  };
+  if (confidenceItem) item.latestUnderstanding = buildLatestUnderstanding(confidenceItem);
+  return item;
+}
+
+function collectConfidenceItems(confidenceAnalysis) {
+  const items =
+    isPlainObject(confidenceAnalysis) && Array.isArray(confidenceAnalysis.classifiedItems)
+      ? confidenceAnalysis.classifiedItems
+      : [];
+  const result = new Map();
+  for (const item of items) {
+    if (!isPlainObject(item)) continue;
+    const questionId = normalizeRequiredString(item.questionId);
+    const outcome = getConfidenceOutcomeById(normalizeRequiredString(item.outcomeId));
+    if (
+      !questionId ||
+      result.has(questionId) ||
+      !outcome ||
+      item.result !== outcome.result ||
+      item.confidence !== outcome.confidence ||
+      item.guidance !== outcome.guidance
+    )
+      continue;
+    result.set(questionId, { ...item, questionId, outcomeId: outcome.id });
+  }
+  return result;
+}
+
+function buildLatestUnderstanding(item) {
+  const outcome = getConfidenceOutcomeById(item.outcomeId);
+  const confidence = CONFIDENCE_LEVELS.find((level) => level.id === item.confidence);
+  return {
+    outcomeId: outcome.id,
+    title: outcome.title,
+    guidance: outcome.guidance,
+    result: outcome.result,
+    confidence: outcome.confidence,
+    confidenceLabel: confidence?.label ?? outcome.confidence,
+    answeredAt: item.answeredAt,
   };
 }
 

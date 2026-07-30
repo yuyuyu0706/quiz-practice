@@ -1517,6 +1517,12 @@ input:focus-visible,
   width: 100%;
   margin-top: 10px;
 }
+.analysis-confidence-summary > .analysis-review-target-button,
+.analysis-confidence-outcome .analysis-review-target-button {
+  width: 100%;
+  margin-top: 10px;
+  white-space: normal;
+}
 .analysis-tag-summary__note {
   min-width: 0;
   margin: 10px 0 0;
