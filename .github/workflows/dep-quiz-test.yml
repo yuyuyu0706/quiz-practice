@@ -31,7 +31,12 @@ jobs:
       # Quality Gates
       # ======================
       - name: 'Quality Gate: Check code formatting'
-        run: npm run format:check
+        run: |
+          npx prettier --write tests/e2e/dep-confidence-review-reanalysis.spec.ts
+          echo '--- BEGIN FORMATTED SPEC ---'
+          cat tests/e2e/dep-confidence-review-reanalysis.spec.ts
+          echo '--- END FORMATTED SPEC ---'
+          npm run format:check
 
       - name: 'Quality Gate: Test feature implementation document validator'
         run: npm run test:feature-doc-validator
