@@ -1,13 +1,14 @@
-name: finalize-issue-371
+name: dep-quiz-tests
 
 on:
+  push:
   pull_request:
 
 permissions:
   contents: write
 
 jobs:
-  finalize:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
