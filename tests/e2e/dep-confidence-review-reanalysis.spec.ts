@@ -1,10 +1,4 @@
-import {
-  test,
-  expect,
-  type APIRequestContext,
-  type Locator,
-  type Page,
-} from '@playwright/test';
+import { test, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
 import { CONFIDENCE_OUTCOMES } from '../../dep-quiz-app/confidence-outcome.js';
 import { gotoDepHome } from './helpers';
@@ -148,16 +142,12 @@ test.describe('[DEP][FLOW] Confidence analysis / Review and reanalysis', () => {
     await expect(correctHigh).toContainText('0問・安定理解');
     await expect(confidenceMetric(summary, 'review')).toHaveText('1問');
     await expect(confidenceMetric(summary, 'advance')).toHaveText('0問');
-    await expect(
-      summary.getByRole('button', { name: '要確認の問題を見る' })
-    ).toBeEnabled();
+    await expect(summary.getByRole('button', { name: '要確認の問題を見る' })).toBeEnabled();
     const wrongHighButton = wrongHigh.getByRole('button', {
       name: 'この状態の問題を見る',
     });
     await expect(wrongHighButton).toBeEnabled();
-    await expect(
-      correctHigh.getByRole('button', { name: 'この状態の問題を見る' })
-    ).toBeDisabled();
+    await expect(correctHigh.getByRole('button', { name: 'この状態の問題を見る' })).toBeDisabled();
     await expect(readStorage(page)).resolves.toEqual(initialStorage);
 
     await wrongHighButton.click();
@@ -185,9 +175,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review and reanalysis', () => {
 
     await page.getByRole('button', { name: '中断してホームへ' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
-    const suspendedSession = JSON.parse(
-      (await readStorage(page)).depQuizActiveSession ?? 'null'
-    );
+    const suspendedSession = JSON.parse((await readStorage(page)).depQuizActiveSession ?? 'null');
     await page.reload();
     await expect(page.locator('#home-view')).toBeVisible();
     await page.getByRole('button', { name: '続きから再開' }).click();
@@ -201,9 +189,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review and reanalysis', () => {
     );
 
     await answerCurrentQuestionCorrectlyWithHighConfidence(page);
-    const progressAfterAnswer = JSON.parse(
-      (await readStorage(page)).depQuizProgress ?? '{}'
-    );
+    const progressAfterAnswer = JSON.parse((await readStorage(page)).depQuizProgress ?? '{}');
     expect(progressAfterAnswer[question.id]).toMatchObject({
       seenCount: 2,
       correctCount: 1,
@@ -234,9 +220,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review and reanalysis', () => {
       await refreshedSummary.locator('summary').click();
     }
     await expect(outcomeCard(refreshedSummary, WRONG_HIGH!.id)).toContainText('0問・要確認');
-    await expect(outcomeCard(refreshedSummary, CORRECT_HIGH!.id)).toContainText(
-      '1問・安定理解'
-    );
+    await expect(outcomeCard(refreshedSummary, CORRECT_HIGH!.id)).toContainText('1問・安定理解');
     await expect(confidenceMetric(refreshedSummary, 'review')).toHaveText('0問');
     await expect(confidenceMetric(refreshedSummary, 'advance')).toHaveText('1問');
     await expect(
