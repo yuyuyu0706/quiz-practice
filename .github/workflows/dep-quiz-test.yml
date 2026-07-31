@@ -53,25 +53,10 @@ jobs:
           NODE
           npx prettier --write tests/e2e/dep-confidence-review-reanalysis.spec.ts docs/testing/e2e-test-catalog.md
 
-      - name: 'Finalize: Restore DEP workflow and add E4 gate'
-        run: |
-          git show origin/main:.github/workflows/dep-quiz-test.yml > .github/workflows/dep-quiz-test.yml
-          node <<'NODE'
-          const fs = require('node:fs');
-          const path = '.github/workflows/dep-quiz-test.yml';
-          const marker = "      - name: 'Quality Gate: Run DEP confidence E3 tests'\n        run: npm run test:dep-confidence-e3\n";
-          const addition = `${marker}\n      - name: 'Quality Gate: Run DEP confidence E4 tests'\n        run: npm run test:dep-confidence-e4\n`;
-          const source = fs.readFileSync(path, 'utf8');
-          if (!source.includes('Quality Gate: Run DEP confidence E4 tests')) {
-            if (!source.includes(marker)) throw new Error('E3 workflow insertion marker not found.');
-            fs.writeFileSync(path, source.replace(marker, addition));
-          }
-          NODE
-
-      - name: 'Finalize: Commit generated files'
+      - name: 'Finalize: Commit catalog coverage'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/e2e/dep-confidence-review-reanalysis.spec.ts docs/testing/e2e-test-catalog.md .github/workflows/dep-quiz-test.yml
-          git commit -m 'Finalize confidence E4 quality gate'
+          git add tests/e2e/dep-confidence-review-reanalysis.spec.ts docs/testing/e2e-test-catalog.md
+          git commit -m 'Document confidence E4 integration coverage'
           git push origin HEAD:codex/issue-371-confidence-review-reanalysis
