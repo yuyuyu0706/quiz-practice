@@ -881,19 +881,11 @@ button.primary:hover:not(:disabled) {
 }
 .analysis-confidence-summary {
   min-width: 0;
-  margin-top: 24px;
-  padding: 18px;
-  border: 1px solid var(--dep-primary-border);
-  border-radius: 16px;
-  background: var(--dep-surface-tint);
 }
 .analysis-confidence-summary h3,
 .analysis-confidence-summary h4,
 .analysis-confidence-summary h5 {
   overflow-wrap: anywhere;
-}
-.analysis-confidence-summary h3 {
-  margin: 0 0 8px;
 }
 .analysis-confidence-summary h4 {
   margin: 22px 0 10px;
@@ -922,9 +914,7 @@ button.primary:hover:not(:disabled) {
   color: #5f3b08;
 }
 .analysis-confidence-coverage,
-.analysis-confidence-levels,
-.analysis-confidence-outcomes,
-.analysis-confidence-highlights {
+.analysis-confidence-levels {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
@@ -932,8 +922,7 @@ button.primary:hover:not(:disabled) {
 }
 .analysis-confidence-coverage > div,
 .analysis-confidence-level,
-.analysis-confidence-outcome,
-.analysis-confidence-highlight {
+.analysis-confidence-outcome {
   min-width: 0;
   padding: 12px;
   border: 1px solid var(--border);
@@ -950,6 +939,10 @@ button.primary:hover:not(:disabled) {
   font-size: 1.2rem;
   font-weight: 700;
 }
+.analysis-confidence-coverage > [data-confidence-metric='review'] {
+  border-color: #c66a14;
+  background: #fffaf0;
+}
 .analysis-confidence-level dl {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -961,24 +954,79 @@ button.primary:hover:not(:disabled) {
   font-weight: 700;
   text-align: right;
 }
-.analysis-confidence-outcome p,
-.analysis-confidence-highlight p {
+.analysis-confidence-level__accuracy {
+  color: var(--primary-strong);
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+.analysis-confidence-outcomes {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.analysis-confidence-outcomes__header,
+.analysis-confidence-outcomes__row {
+  display: grid;
+  grid-template-columns: 72px repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+.analysis-confidence-outcomes__axis-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.analysis-confidence-outcome p {
   margin: 0;
   line-height: 1.5;
 }
-.analysis-confidence-outcome[data-guidance='review'],
-.analysis-confidence-highlight {
+.analysis-confidence-outcome[data-guidance='review'] {
   border-left: 5px solid #c66a14;
 }
+.analysis-confidence-outcome__axis {
+  display: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.analysis-confidence-outcome .analysis-confidence-outcome__highlight {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  color: #5f3b08;
+  font-size: 0.86rem;
+}
+.analysis-confidence-outcome__highlight strong {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f8d99b;
+}
 @media (max-width: 480px) {
-  .analysis-confidence-summary {
-    padding: 14px;
-  }
   .analysis-confidence-coverage,
-  .analysis-confidence-levels,
-  .analysis-confidence-outcomes,
-  .analysis-confidence-highlights {
+  .analysis-confidence-levels {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .analysis-confidence-outcomes__header {
+    display: none;
+  }
+  .analysis-confidence-outcomes__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .analysis-confidence-outcomes__axis-heading[role='rowheader'] {
+    justify-content: flex-start;
+    padding-top: 6px;
+    color: var(--text);
+    font-size: 1rem;
+  }
+  .analysis-confidence-outcome__axis {
+    display: block;
   }
 }
 .analysis-summary h3,
@@ -1517,9 +1565,10 @@ input:focus-visible,
   width: 100%;
   margin-top: 10px;
 }
-.analysis-confidence-summary > .analysis-review-target-button,
+.analysis-confidence-summary > .analysis-disclosure__content > .analysis-review-target-button,
 .analysis-confidence-outcome .analysis-review-target-button {
   width: 100%;
+  min-height: 44px;
   margin-top: 10px;
   white-space: normal;
 }

@@ -475,13 +475,9 @@ function createConfidenceAnalysisSummary(source) {
   const coverage =
     analysis.coverage && typeof analysis.coverage === 'object' ? analysis.coverage : {};
   const review = analysis.review && typeof analysis.review === 'object' ? analysis.review : {};
-  const section = document.createElement('section');
-  section.className = 'analysis-confidence-summary';
-  section.setAttribute('aria-labelledby', 'analysis-confidence-title');
-
-  const title = document.createElement('h3');
-  title.id = 'analysis-confidence-title';
-  title.textContent = '確信度から見る理解状態';
+  const section = createAnalysisDisclosure('analysis-confidence-title', '確信度から見る理解状態');
+  section.classList.add('analysis-confidence-summary');
+  const content = section.querySelector('.analysis-disclosure__content');
   const description = document.createElement('p');
   description.className = 'analysis-confidence-summary__description';
   description.textContent =
@@ -490,19 +486,19 @@ function createConfidenceAnalysisSummary(source) {
   status.className = 'analysis-confidence-status';
   status.dataset.coverageStatus = coverage.status ?? 'none';
   status.textContent = getConfidenceCoverageMessage(coverage);
-  section.append(title, description, status);
+  content.append(description, status);
 
   if (coverage.qualityStatus === 'invalid-data-excluded') {
     const quality = document.createElement('p');
     quality.className = 'analysis-confidence-quality';
     quality.dataset.qualityStatus = 'invalid-data-excluded';
     quality.textContent = `判定できない保存データ ${formatSummaryCount(coverage.invalidLatestAnswerCount)}件を分析から除外しました。`;
-    section.appendChild(quality);
+    content.appendChild(quality);
   }
 
-  section.appendChild(createConfidenceCoverageMetrics(coverage, review));
+  content.appendChild(createConfidenceCoverageMetrics(coverage, review));
 
-  section.appendChild(
+  content.appendChild(
     createReviewTargetButton({
       label: '要確認の問題を見る',
       targetType: 'confidenceGuidance',
@@ -519,41 +515,17 @@ function createConfidenceAnalysisSummary(source) {
   for (const level of Array.isArray(analysis.confidenceLevels) ? analysis.confidenceLevels : []) {
     levels.appendChild(createConfidenceLevel(level));
   }
-  section.append(levelsTitle, levels);
+  content.append(levelsTitle, levels);
 
   const outcomesTitle = document.createElement('h4');
   outcomesTitle.textContent = '正誤×確信度の6分類';
-  const outcomes = document.createElement('div');
-  outcomes.className = 'analysis-confidence-outcomes';
-  for (const outcome of Array.isArray(analysis.outcomes) ? analysis.outcomes : []) {
-    outcomes.appendChild(createConfidenceOutcome(outcome));
-  }
-  section.append(outcomesTitle, outcomes);
-
-  const highlightsTitle = document.createElement('h4');
-  highlightsTitle.textContent = '重点確認状態';
-  const highlights = document.createElement('div');
-  highlights.className = 'analysis-confidence-highlights';
-  const outcomeById = new Map((analysis.outcomes ?? []).map((outcome) => [outcome.id, outcome]));
-  for (const highlight of Array.isArray(review.highlightedOutcomes)
-    ? review.highlightedOutcomes
-    : []) {
-    const item = document.createElement('article');
-    item.className = 'analysis-confidence-highlight';
-    item.dataset.outcome = highlight.outcomeId;
-    const heading = document.createElement('h5');
-    heading.textContent = outcomeById.get(highlight.outcomeId)?.title ?? highlight.outcomeId;
-    const detail = document.createElement('p');
-    detail.textContent = `${formatSummaryCount(highlight.questionCount)}問・${highlight.reasonCode === 'misconception-risk' ? '誤認リスク' : '正解の再現性不足'}`;
-    item.append(heading, detail);
-    highlights.appendChild(item);
-  }
-  section.append(highlightsTitle, highlights);
+  const outcomes = createConfidenceOutcomeMatrix(analysis.outcomes, review.highlightedOutcomes);
+  content.append(outcomesTitle, outcomes);
 
   const footnote = document.createElement('p');
   footnote.className = 'analysis-confidence-summary__footnote';
   footnote.textContent = '最新評価ベース正答率の分母は、その確信度で判定できた問題数です。';
-  section.appendChild(footnote);
+  content.appendChild(footnote);
   return section;
 }
 
@@ -561,13 +533,14 @@ function createConfidenceCoverageMetrics(coverage, review) {
   const metrics = document.createElement('dl');
   metrics.className = 'analysis-confidence-coverage';
   const values = [
-    ['分析対象', coverage.classifiedQuestionCount],
-    ['未判定', coverage.unclassifiedQuestionCount],
-    ['安定理解', review.advanceQuestionCount],
-    ['要確認', review.reviewQuestionCount],
+    ['安定理解', review.advanceQuestionCount, 'advance'],
+    ['要確認', review.reviewQuestionCount, 'review'],
+    ['分析対象', coverage.classifiedQuestionCount, 'classified'],
+    ['未判定', coverage.unclassifiedQuestionCount, 'unclassified'],
   ];
-  for (const [labelText, value] of values) {
+  for (const [labelText, value, metric] of values) {
     const item = document.createElement('div');
+    item.dataset.confidenceMetric = metric;
     const label = document.createElement('dt');
     label.textContent = labelText;
     const count = document.createElement('dd');
@@ -597,6 +570,8 @@ function createConfidenceLevel(level) {
     const label = document.createElement('dt');
     label.textContent = labelText;
     const data = document.createElement('dd');
+    if (labelText === '最新評価ベース正答率')
+      data.className = 'analysis-confidence-level__accuracy';
     data.textContent = value;
     metrics.append(label, data);
   }
@@ -604,18 +579,29 @@ function createConfidenceLevel(level) {
   return article;
 }
 
-function createConfidenceOutcome(outcome) {
+function createConfidenceOutcome(outcome, highlight) {
   const article = document.createElement('article');
   article.className = 'analysis-confidence-outcome';
   article.dataset.outcome = outcome.id;
   article.dataset.guidance = outcome.guidance;
+  article.dataset.result = outcome.result;
+  article.dataset.confidenceLevel = outcome.confidence;
+  article.setAttribute('role', 'cell');
+  const axisLabel = document.createElement('p');
+  axisLabel.className = 'analysis-confidence-outcome__axis';
+  axisLabel.textContent = getConfidenceAxisLabel(outcome.confidence);
   const title = document.createElement('h5');
   title.textContent = outcome.title;
   const detail = document.createElement('p');
   detail.textContent = `${formatSummaryCount(outcome.questionCount)}問・${outcome.guidance === 'advance' ? '安定理解' : '要確認'}`;
+  article.append(axisLabel, title, detail);
+  if (highlight) {
+    const emphasis = document.createElement('p');
+    emphasis.className = 'analysis-confidence-outcome__highlight';
+    emphasis.innerHTML = `<strong>重点</strong><span>${highlight.reasonCode === 'misconception-risk' ? '誤認リスク' : '正解の再現性不足'}</span>`;
+    article.appendChild(emphasis);
+  }
   article.append(
-    title,
-    detail,
     createReviewTargetButton({
       label: 'この状態の問題を見る',
       targetType: 'confidenceOutcome',
@@ -625,6 +611,55 @@ function createConfidenceOutcome(outcome) {
     })
   );
   return article;
+}
+
+function createConfidenceOutcomeMatrix(outcomesSource, highlightsSource) {
+  const matrix = document.createElement('div');
+  matrix.className = 'analysis-confidence-outcomes';
+  matrix.setAttribute('role', 'table');
+  matrix.setAttribute('aria-label', '正誤と確信度の6分類');
+  const outcomes = Array.isArray(outcomesSource) ? outcomesSource : [];
+  const outcomeByPair = new Map(
+    outcomes.map((outcome) => [`${outcome.result}:${outcome.confidence}`, outcome])
+  );
+  const highlightById = new Map(
+    (Array.isArray(highlightsSource) ? highlightsSource : []).map((item) => [item.outcomeId, item])
+  );
+
+  const header = document.createElement('div');
+  header.className = 'analysis-confidence-outcomes__header';
+  header.setAttribute('role', 'row');
+  header.appendChild(createMatrixHeader('', 'columnheader'));
+  for (const level of ['high', 'medium', 'low']) {
+    header.appendChild(createMatrixHeader(getConfidenceAxisLabel(level), 'columnheader'));
+  }
+  matrix.appendChild(header);
+
+  for (const result of ['correct', 'wrong']) {
+    const row = document.createElement('div');
+    row.className = 'analysis-confidence-outcomes__row';
+    row.dataset.result = result;
+    row.setAttribute('role', 'row');
+    row.appendChild(createMatrixHeader(result === 'correct' ? '正解' : '不正解', 'rowheader'));
+    for (const level of ['high', 'medium', 'low']) {
+      const outcome = outcomeByPair.get(`${result}:${level}`);
+      if (outcome) row.appendChild(createConfidenceOutcome(outcome, highlightById.get(outcome.id)));
+    }
+    matrix.appendChild(row);
+  }
+  return matrix;
+}
+
+function createMatrixHeader(label, role) {
+  const header = document.createElement('div');
+  header.className = 'analysis-confidence-outcomes__axis-heading';
+  header.setAttribute('role', role);
+  header.textContent = label;
+  return header;
+}
+
+function getConfidenceAxisLabel(level) {
+  return { high: '確信あり', medium: '迷いあり', low: '自信なし' }[level] ?? level;
 }
 
 function getConfidenceCoverageMessage(coverage) {

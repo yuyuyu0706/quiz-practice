@@ -84,6 +84,8 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop six-outcome coverage.');
     const questions = await loadQuestions(request);
     const snapshot = await seedAnalysis(page, questions);
+    const disclosure = page.locator('.analysis-confidence-summary');
+    await disclosure.locator('summary').click();
 
     for (const [index, outcome] of CONFIDENCE_OUTCOMES.entries()) {
       const button = page
@@ -99,6 +101,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
       expect(await readStorage(page)).toEqual(snapshot);
 
       await page.getByRole('button', { name: '分析画面へ戻る' }).click();
+      await expect(disclosure).toHaveJSProperty('open', true);
       await expect(button).toBeFocused();
       expect(await readStorage(page)).toEqual(snapshot);
     }
@@ -111,6 +114,8 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     test.skip(testInfo.project.name !== 'chromium', 'Desktop aggregate/session coverage.');
     const questions = await loadQuestions(request);
     const snapshot = await seedAnalysis(page, questions);
+    const disclosure = page.locator('.analysis-confidence-summary');
+    await disclosure.locator('summary').click();
     const reviewButton = page.getByRole('button', { name: '要確認の問題を見る' });
 
     await reviewButton.click();
@@ -122,6 +127,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     expect(await readStorage(page)).toEqual(snapshot);
 
     await page.getByRole('button', { name: '分析画面へ戻る' }).click();
+    await expect(disclosure).toHaveJSProperty('open', true);
     await expect(reviewButton).toBeFocused();
     expect(await readStorage(page)).toEqual(snapshot);
     await reviewButton.click();
@@ -150,6 +156,7 @@ test.describe('[DEP][FLOW] Confidence analysis / Review targets', () => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Mobile empty/responsive coverage.');
     const questions = await loadQuestions(request);
     const snapshot = await seedAnalysis(page, questions, false);
+    await page.locator('.analysis-confidence-summary > summary').click();
     const buttons = page.locator('.analysis-confidence-summary [data-review-target-type]');
 
     await expect(buttons).toHaveCount(7);
