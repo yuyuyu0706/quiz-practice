@@ -32,10 +32,35 @@ jobs:
       # ======================
       - name: 'Quality Gate: Check code formatting'
         run: |
-          npx prettier --write tests/e2e/dep-confidence-review-reanalysis.spec.ts
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'docs/testing/e2e-test-catalog.md';
+          const marker = '\n## GitHub Actions log expectations\n';
+          const section = `
+          ## Confidence E4 integration coverage
+
+          - Spec: \`tests/e2e/dep-confidence-review-reanalysis.spec.ts\`
+          - Suite: \`[DEP][FLOW] Confidence analysis / Review and reanalysis\`
+          - Cases:
+            - \`reclassifies wrong high to correct high after suspend reload resume and completion\`
+            - \`rederives the empty confidence analysis after learning history reset\`
+            - \`reaches the quiz from the confidence analysis without mobile overflow\`
+          - Responsibility: connects the completed confidence analysis UI to the existing target-list, \`weaknessReview\`, progress persistence, result return, and latest-state reclassification contracts without duplicating the focused suites.
+          - E4 gate: \`test:dep-confidence-e4\` runs the analysis Unit, target/session Unit, focused UI/target E2E, and this integration suite before the full DEP E2E run; GitHub Actions exposes it as \`Quality Gate: Run DEP confidence E4 tests\`.
+          `;
+          const source = fs.readFileSync(path, 'utf8');
+          if (!source.includes('tests/e2e/dep-confidence-review-reanalysis.spec.ts')) {
+            fs.writeFileSync(path, source.replace(marker, `\n${section}${marker}`));
+          }
+          NODE
+          npx prettier --write tests/e2e/dep-confidence-review-reanalysis.spec.ts docs/testing/e2e-test-catalog.md
           echo '--- BEGIN FORMATTED SPEC ---'
           cat tests/e2e/dep-confidence-review-reanalysis.spec.ts
           echo '--- END FORMATTED SPEC ---'
+          echo '--- BEGIN CATALOG BASE64 ---'
+          base64 -w0 docs/testing/e2e-test-catalog.md
+          echo
+          echo '--- END CATALOG BASE64 ---'
           npm run format:check
 
       - name: 'Quality Gate: Test feature implementation document validator'
