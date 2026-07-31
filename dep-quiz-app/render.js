@@ -589,7 +589,7 @@ function createConfidenceOutcome(outcome, highlight) {
   article.setAttribute('role', 'cell');
   const axisLabel = document.createElement('p');
   axisLabel.className = 'analysis-confidence-outcome__axis';
-  axisLabel.textContent = `${outcome.result === 'correct' ? '正解' : '不正解'}・${getConfidenceAxisLabel(outcome.confidence)}`;
+  axisLabel.textContent = getConfidenceAxisLabel(outcome.confidence);
   const title = document.createElement('h5');
   title.textContent = outcome.title;
   const detail = document.createElement('p');

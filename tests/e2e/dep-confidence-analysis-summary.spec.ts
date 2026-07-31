@@ -160,15 +160,38 @@ test.describe('[DEP][UI] Analysis / Confidence summary', () => {
       summary.locator('[data-outcome="correct_low"] .analysis-confidence-outcome__highlight')
     ).toContainText('重点正解の再現性不足');
     await expect(summary.locator('.analysis-confidence-highlights')).toHaveCount(0);
-    await expect(summary.locator('.analysis-confidence-outcomes__row')).toHaveCount(2);
-    await expect(summary.locator('.analysis-confidence-outcomes__row').nth(0)).toHaveAttribute(
-      'data-result',
-      'correct'
-    );
-    await expect(summary.locator('.analysis-confidence-outcomes__row').nth(1)).toHaveAttribute(
-      'data-result',
-      'wrong'
-    );
+    const matrix = summary.locator('.analysis-confidence-outcomes');
+    await expect(
+      matrix
+        .locator('.analysis-confidence-outcomes__header [role="columnheader"]')
+        .allTextContents()
+    ).resolves.toEqual(['', '確信あり', '迷いあり', '自信なし']);
+    const rows = matrix.locator('.analysis-confidence-outcomes__row');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.locator('[role="rowheader"]').allTextContents()).resolves.toEqual([
+      '正解',
+      '不正解',
+    ]);
+    for (const row of ['correct', 'wrong']) {
+      await expect(
+        matrix.locator(`.analysis-confidence-outcomes__row[data-result="${row}"] > [role="cell"]`)
+      ).toHaveCount(3);
+    }
+    await expect(
+      matrix.locator('[role="cell"]').evaluateAll((cells) =>
+        cells.map((cell) => ({
+          result: (cell as HTMLElement).dataset.result,
+          confidenceLevel: (cell as HTMLElement).dataset.confidenceLevel,
+        }))
+      )
+    ).resolves.toEqual([
+      { result: 'correct', confidenceLevel: 'high' },
+      { result: 'correct', confidenceLevel: 'medium' },
+      { result: 'correct', confidenceLevel: 'low' },
+      { result: 'wrong', confidenceLevel: 'high' },
+      { result: 'wrong', confidenceLevel: 'medium' },
+      { result: 'wrong', confidenceLevel: 'low' },
+    ]);
     await expect(summary.getByRole('button')).toHaveCount(7);
     await expect(summary.locator('[data-review-target-type="confidenceOutcome"]')).toHaveCount(6);
     await expect(summary.locator('[data-review-target-type="confidenceGuidance"]')).toHaveAttribute(
@@ -207,10 +230,44 @@ test.describe('[DEP][UI] Analysis / Confidence summary', () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await openAnalysis(page, {});
     await page.locator('.analysis-confidence-summary > summary').click();
+    const matrix = page.locator('.analysis-confidence-outcomes');
+    await expect(matrix.locator('[role="rowheader"]').allTextContents()).resolves.toEqual([
+      '正解',
+      '不正解',
+    ]);
     await expect(
-      page.evaluate(
-        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
-      )
+      matrix.locator('.analysis-confidence-outcome__axis').allTextContents()
+    ).resolves.toEqual(['確信あり', '迷いあり', '自信なし', '確信あり', '迷いあり', '自信なし']);
+    await expect(
+      matrix.locator('[role="cell"]').evaluateAll((cells) => {
+        const positions = cells.map((cell) => ({
+          outcome: (cell as HTMLElement).dataset.outcome,
+          left: cell.getBoundingClientRect().left,
+          top: cell.getBoundingClientRect().top,
+        }));
+        return (
+          positions.map(({ outcome }) => outcome).join(',') ===
+            'correct_high,correct_medium,correct_low,wrong_high,wrong_medium,wrong_low' &&
+          new Set(positions.map(({ left }) => Math.round(left))).size === 1 &&
+          positions.every(
+            (position, index) => index === 0 || position.top > positions[index - 1].top
+          )
+        );
+      })
     ).resolves.toBe(true);
+    const ctaHeights = await page
+      .locator('.analysis-confidence-summary [data-review-target-type]')
+      .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().height));
+    expect(ctaHeights).toHaveLength(7);
+    expect(ctaHeights.every((height) => height >= 44)).toBe(true);
+    await expect(
+      page.evaluate(() => ({
+        document: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        analysis: (() => {
+          const view = document.querySelector('#analysis-view');
+          return view !== null && view.scrollWidth <= view.clientWidth;
+        })(),
+      }))
+    ).resolves.toEqual({ document: true, analysis: true });
   });
 });
