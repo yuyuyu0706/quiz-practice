@@ -121,6 +121,8 @@ test('removes entries whose only retained note fields are blank or whitespace', 
     removedEntryCount: 3,
     retainedEntryCount: 0,
     hasActiveSession: false,
+    resetConfidenceAttemptCount: 0,
+    hasUnsupportedConfidenceHistory: false,
   });
 });
 
@@ -180,6 +182,8 @@ test('is idempotent for nextProgress and impact', () => {
     removedEntryCount: 0,
     retainedEntryCount: 2,
     hasActiveSession: false,
+    resetConfidenceAttemptCount: 0,
+    hasUnsupportedConfidenceHistory: false,
   });
 });
 
@@ -203,6 +207,8 @@ test('reports all impact counts and active session clearing contract', () => {
     removedEntryCount: 3,
     retainedEntryCount: 2,
     hasActiveSession: true,
+    resetConfidenceAttemptCount: 0,
+    hasUnsupportedConfidenceHistory: false,
   });
   assert.deepEqual(plan.activeSession, { shouldClear: true });
 });
@@ -234,4 +240,24 @@ test('reset progress returns weakness analysis to unlearned history and no wrong
   assert.equal(after.overall.correctCount, 0);
   assert.equal(after.overall.wrongCount, 0);
   assert.equal(after.overall.taggedQuestionCount, 0);
+});
+
+test('includes version 1 history and unsupported history in reset impact', () => {
+  const history = { version: 1, attempts: [{ attemptId: 'a' }, { attemptId: 'b' }] };
+  const before = deepClone(history);
+  const ready = buildLearningHistoryResetPlan({}, { confidenceHistory: history });
+  assert.deepEqual(ready.nextHistory, { version: 1, attempts: [] });
+  assert.equal(ready.confidenceHistory.shouldClear, true);
+  assert.equal(ready.impact.resetConfidenceAttemptCount, 2);
+  assert.deepEqual(history, before);
+
+  const unsupported = buildLearningHistoryResetPlan(
+    {},
+    {
+      confidenceHistoryStorageStatus: 'unsupported',
+    }
+  );
+  assert.equal(unsupported.confidenceHistory.shouldClear, true);
+  assert.equal(unsupported.impact.resetConfidenceAttemptCount, null);
+  assert.equal(unsupported.impact.hasUnsupportedConfidenceHistory, true);
 });
