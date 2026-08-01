@@ -111,4 +111,95 @@ const oldP = '{"old":true}',
   assert.throws(() => commitLearningHistoryReset({}, { storage: s }), TypeError);
   assert.deepEqual(s.calls, []);
 }
+{
+  const invalid = plan();
+  invalid.nextHistory = { version: 1, attempts: [{ any: 'value' }] };
+  const s = makeStorage({});
+  assert.throws(() => commitLearningHistoryReset(invalid, { storage: s }), TypeError);
+  assert.deepEqual(s.calls, []);
+}
+for (const key of [STORAGE_KEYS.progress, STORAGE_KEYS.confidenceHistory, STORAGE_KEYS.session]) {
+  const s = makeStorage(
+    {
+      [STORAGE_KEYS.progress]: oldP,
+      [STORAGE_KEYS.confidenceHistory]: oldH,
+      [STORAGE_KEYS.session]: oldS,
+    },
+    { get: key }
+  );
+  assert.throws(() => commitLearningHistoryReset(plan(), { storage: s }), /get/);
+  assert.equal(
+    s.calls.some(([method]) => method === 'set' || method === 'remove'),
+    false
+  );
+}
+{
+  const s = makeStorage(
+    { [STORAGE_KEYS.progress]: oldP, [STORAGE_KEYS.confidenceHistory]: oldH },
+    { set: STORAGE_KEYS.progress }
+  );
+  assert.throws(
+    () => commitLearningHistoryReset(plan(false), { storage: s }),
+    (error) => error.cause.message === 'set' && error.restoreFailures.length === 0
+  );
+  assert.equal(s.raw(STORAGE_KEYS.progress), oldP);
+  assert.equal(s.raw(STORAGE_KEYS.confidenceHistory), oldH);
+}
+{
+  const p = plan(false);
+  const s = makeStorage({ [STORAGE_KEYS.progress]: oldP });
+  const originalSetItem = s.setItem;
+  s.setItem = function (key, value) {
+    originalSetItem.call(this, key, value);
+    if (key === STORAGE_KEYS.confidenceHistory) throw Error('history partial write');
+  };
+  assert.throws(() => commitLearningHistoryReset(p, { storage: s }), /history/);
+  assert.equal(s.raw(STORAGE_KEYS.progress), oldP);
+  assert.equal(s.raw(STORAGE_KEYS.confidenceHistory), null);
+  assert.deepEqual(s.calls.at(-1), ['remove', STORAGE_KEYS.confidenceHistory]);
+}
+{
+  const p = plan(false);
+  const before = structuredClone(p);
+  const nextProgress = p.nextProgress;
+  const nextHistory = p.nextHistory;
+  const s = makeStorage({});
+  commitLearningHistoryReset(p, { storage: s });
+  assert.deepEqual(p, before);
+  assert.equal(p.nextProgress, nextProgress);
+  assert.equal(p.nextHistory, nextHistory);
+  assert.equal(
+    s.calls.some(([, key]) => key === STORAGE_KEYS.session),
+    false
+  );
+}
+{
+  const values = new Map([
+    [STORAGE_KEYS.progress, oldP],
+    [STORAGE_KEYS.confidenceHistory, oldH],
+    [STORAGE_KEYS.session, oldS],
+  ]);
+  const s = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem(key, value) {
+      if (value === oldP || value === oldH) throw Error(`restore ${key}`);
+      values.set(key, String(value));
+    },
+    removeItem(key) {
+      if (key === STORAGE_KEYS.session) throw Error('remove session');
+      values.delete(key);
+    },
+  };
+  assert.throws(
+    () => commitLearningHistoryReset(plan(), { storage: s }),
+    (error) => {
+      assert.equal(error.cause.message, 'remove session');
+      assert.deepEqual(
+        error.restoreFailures.map(({ key }) => key),
+        [STORAGE_KEYS.progress, STORAGE_KEYS.confidenceHistory]
+      );
+      return true;
+    }
+  );
+}
 console.log('✓ learning history reset three-target transaction');

@@ -2,7 +2,12 @@ import { test, expect, type Locator, type Page } from '@playwright/test';
 
 import { gotoDepHome } from './helpers';
 
-const storageKeys = ['depQuizProgress', 'depQuizSettings', 'depQuizActiveSession'] as const;
+const storageKeys = [
+  'depQuizProgress',
+  'depQuizSettings',
+  'depQuizActiveSession',
+  'depQuizConfidenceHistory',
+] as const;
 const defaultSettings = { sections: ['1', '2', '3', '4', '5'], mode: 'normal', count: '50' };
 
 const progressFixture = {
@@ -68,11 +73,17 @@ const analysisSessionFixture = {
   order: ['DEP-Q202'],
 };
 
-async function seedStorage(page: Page, progress: unknown, session: unknown = null) {
+async function seedStorage(
+  page: Page,
+  progress: unknown,
+  session: unknown = null,
+  history: unknown = { version: 1, attempts: [] }
+) {
   const expectedStorage = [
     JSON.stringify(progress),
     JSON.stringify(defaultSettings),
     JSON.stringify(session),
+    JSON.stringify(history),
   ];
   await page.addInitScript(
     ({ keys, expected }) => {
@@ -84,11 +95,17 @@ async function seedStorage(page: Page, progress: unknown, session: unknown = nul
   return expectedStorage;
 }
 
-async function seedStorageOnLoadedPage(page: Page, progress: unknown, session: unknown = null) {
+async function seedStorageOnLoadedPage(
+  page: Page,
+  progress: unknown,
+  session: unknown = null,
+  history: unknown = { version: 1, attempts: [] }
+) {
   const expectedStorage = [
     JSON.stringify(progress),
     JSON.stringify(defaultSettings),
     JSON.stringify(session),
+    JSON.stringify(history),
   ];
   await gotoDepHome(page);
   await page.evaluate(
@@ -277,6 +294,7 @@ test.describe('[DEP][DATA] Weakness analysis / Reset reload consistency', () => 
     const progress = JSON.parse(storage[0] ?? '{}');
     expect(storage[1]).toBe(JSON.stringify(defaultSettings));
     expect(storage[2]).toBeNull();
+    expect(storage[3]).toBe(JSON.stringify({ version: 1, attempts: [] }));
     expect(progress['DEP-Q202']).toEqual({
       bookmark: true,
       noteText: 'Lakeflow Jobs の復習メモ',
@@ -452,9 +470,25 @@ test.describe('[DEP][FLOW] Weakness analysis / Reset confirmation', () => {
   test('guarantees reset commit preserves notes bookmarks settings and clears history session', async ({
     page,
   }) => {
-    await seedStorage(page, progressFixture, sessionFixture);
+    const confidenceHistory = {
+      version: 1,
+      attempts: [
+        {
+          attemptId: 'reset-attempt',
+          questionId: 'dep-q-001',
+          section: '1',
+          result: 'wrong',
+          confidence: 'low',
+          answeredAt: '2026-07-04T00:00:00.000Z',
+        },
+      ],
+    };
+    await seedStorage(page, progressFixture, sessionFixture, confidenceHistory);
     await openAnalysis(page);
     await page.getByRole('button', { name: '学習履歴をリセット' }).click();
+    await expect(page.locator('#learning-history-reset-dialog')).toContainText(
+      '回答試行履歴1件削除予定'
+    );
     await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
 
     await expect(page.locator('#learning-history-reset-dialog')).toBeHidden();
@@ -470,6 +504,7 @@ test.describe('[DEP][FLOW] Weakness analysis / Reset confirmation', () => {
     const progress = JSON.parse(storage[0] ?? '{}');
     expect(storage[1]).toBe(JSON.stringify(defaultSettings));
     expect(storage[2]).toBeNull();
+    expect(storage[3]).toBe(JSON.stringify({ version: 1, attempts: [] }));
     expect(progress['dep-q-001']).toEqual({
       bookmark: true,
       noteText: 'Lakeflow Jobs の復習メモ',

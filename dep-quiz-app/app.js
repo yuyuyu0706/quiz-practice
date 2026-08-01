@@ -619,6 +619,9 @@ function commitActiveLearningHistoryReset() {
     state.confidenceHistory = result.nextHistory;
     state.confidenceHistoryStorageStatus = 'ready';
     state.confidenceHistoryUnsupportedVersion = null;
+    document
+      .querySelectorAll('.confidence-history-compatibility-notice')
+      .forEach((notice) => notice.remove());
     if (result.didClearActiveSession) state.session = null;
     state.analysis = null;
     refreshResumeUI();
@@ -710,6 +713,7 @@ function renderQuestion(options = {}) {
     explanationOpen: state.session.explanationOpen,
     bookmarkEnabled: state.progress[question.id]?.bookmark,
   });
+  syncConfidenceHistoryCompatibilityGuidance();
   updatePrimaryActions(question.id);
   updateExplanationActions();
   renderQuestionNote(question.id);
@@ -724,6 +728,12 @@ function renderQuestion(options = {}) {
     });
   }
   if (scrollToTop) scrollQuizIntoView();
+}
+
+function syncConfidenceHistoryCompatibilityGuidance() {
+  if (state.confidenceHistoryStorageStatus !== 'unsupported') return;
+  els.quizMessage.textContent =
+    '回答試行履歴のバージョンに対応していないため、データ保護のため回答を保存できません。最新版を利用するか、学習履歴をリセットしてください。';
 }
 
 function submitCurrentAnswer(event) {
@@ -848,6 +858,7 @@ function handleChoiceSelectionChange() {
   els.quizMessage.textContent = '';
   els.choicesForm.classList.remove('needs-selection');
   updatePrimaryActions(getCurrentQuestion()?.id);
+  syncConfidenceHistoryCompatibilityGuidance();
 }
 
 function handleConfidenceSelectionChange(options = {}) {
@@ -862,6 +873,7 @@ function handleConfidenceSelectionChange(options = {}) {
   els.quizMessage.textContent =
     options.announce && level ? `確信度「${level.label}」を選択しました。` : '';
   updatePrimaryActions(question.id);
+  syncConfidenceHistoryCompatibilityGuidance();
 }
 
 function focusMissingAnswerInput(inputStateId) {

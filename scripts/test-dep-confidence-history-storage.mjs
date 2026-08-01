@@ -15,24 +15,25 @@ const attempt = (id, answeredAt = '2026-01-01T00:00:00.000Z') => ({
   answeredAt,
 });
 const storage = (raw = null) => {
-  let value = raw;
+  const values = new Map();
+  if (raw !== null) values.set(STORAGE_KEYS.confidenceHistory, raw);
   const calls = [];
   return {
     calls,
     getItem(k) {
       calls.push(['get', k]);
-      return value;
+      return values.get(k) ?? null;
     },
     setItem(k, v) {
       calls.push(['set', k, v]);
-      value = String(v);
+      values.set(k, String(v));
     },
     removeItem(k) {
       calls.push(['remove', k]);
-      value = null;
+      values.delete(k);
     },
-    raw() {
-      return value;
+    raw(key = STORAGE_KEYS.confidenceHistory) {
+      return values.get(key) ?? null;
     },
   };
 };
@@ -95,8 +96,9 @@ const storage = (raw = null) => {
     (e) => e.code === 'UNSUPPORTED_CONFIDENCE_HISTORY_VERSION' && e.version === 2
   );
   assert.equal(s.raw(), future);
+  assert.equal(s.raw(STORAGE_KEYS.progress), null);
   assert.equal(
-    s.calls.some((x) => x[0] === 'set'),
+    s.calls.some((x) => x[0] === 'set' && x[1] === STORAGE_KEYS.progress),
     false
   );
 }

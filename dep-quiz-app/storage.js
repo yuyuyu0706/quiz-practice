@@ -171,11 +171,11 @@ export function getRepairedStorageKeys() {
 }
 
 function validateLearningHistoryResetPlan(plan) {
+  const emptyHistory = createEmptyConfidenceHistory();
   if (
     !isPlainObject(plan) ||
     !isPlainObject(plan.nextProgress) ||
-    JSON.stringify(normalizeConfidenceHistory(plan.nextHistory)) !==
-      JSON.stringify(plan.nextHistory) ||
+    JSON.stringify(plan.nextHistory) !== JSON.stringify(emptyHistory) ||
     !isPlainObject(plan.confidenceHistory) ||
     typeof plan.confidenceHistory.shouldClear !== 'boolean' ||
     !isPlainObject(plan.activeSession) ||
