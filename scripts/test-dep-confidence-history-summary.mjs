@@ -36,6 +36,20 @@ const asOf = '2026-08-01T12:00:00.000Z';
     '2026-05-03T12:00:00.000Z'
   );
   assert.equal(normalizeConfidenceHistoryQuery({ ...input, period: 'all' }).from, null);
+  assert.deepEqual(
+    normalizeConfidenceHistoryQuery({
+      period: 'all',
+      sectionId: null,
+      asOf: '2026-08-01T12:00:00Z',
+    }),
+    {
+      period: 'all',
+      sectionId: null,
+      asOf: '2026-08-01T12:00:00Z',
+      from: null,
+      to: '2026-08-01T12:00:00Z',
+    }
+  );
   for (const query of [
     {},
     { ...input, period: 'week' },
@@ -47,6 +61,92 @@ const asOf = '2026-08-01T12:00:00.000Z';
   ]) {
     assert.throws(() => normalizeConfidenceHistoryQuery(query), TypeError);
   }
+}
+
+{
+  const combinations = [
+    ['correct_high', 'correct', 'high', 'advance', 1],
+    ['correct_medium', 'correct', 'medium', 'review', 2],
+    ['correct_low', 'correct', 'low', 'review', 3],
+    ['wrong_high', 'wrong', 'high', 'review', 4],
+    ['wrong_medium', 'wrong', 'medium', 'review', 5],
+    ['wrong_low', 'wrong', 'low', 'review', 6],
+  ];
+  const attempts = combinations.flatMap(([, result, confidence, , count], combinationIndex) =>
+    Array.from({ length: count }, (_, index) =>
+      attempt(`${combinationIndex}-${index}`, asOf, { result, confidence })
+    )
+  );
+  const history = { version: 1, attempts };
+  const query = { period: 'all', sectionId: null, asOf };
+  const snapshot = structuredClone(history);
+  const firstResult = buildConfidenceHistorySummary(history, query);
+  const secondResult = buildConfidenceHistorySummary(history, query);
+
+  assert.deepEqual(
+    firstResult.outcomes.map(({ id, attemptCount, ratio, ratioStatus, guidance }) => ({
+      id,
+      attemptCount,
+      ratio,
+      ratioStatus,
+      guidance,
+    })),
+    combinations.map(([id, , , guidance, attemptCount]) => ({
+      id,
+      attemptCount,
+      ratio: attemptCount / 21,
+      ratioStatus: 'available',
+      guidance,
+    }))
+  );
+  assert.deepEqual(
+    firstResult.confidenceLevels.map(
+      ({ id, attemptCount, correctCount, wrongCount, accuracyRate, accuracyRateStatus }) => ({
+        id,
+        attemptCount,
+        correctCount,
+        wrongCount,
+        accuracyRate,
+        accuracyRateStatus,
+      })
+    ),
+    [
+      {
+        id: 'high',
+        attemptCount: 5,
+        correctCount: 1,
+        wrongCount: 4,
+        accuracyRate: 1 / 5,
+        accuracyRateStatus: 'available',
+      },
+      {
+        id: 'medium',
+        attemptCount: 7,
+        correctCount: 2,
+        wrongCount: 5,
+        accuracyRate: 2 / 7,
+        accuracyRateStatus: 'available',
+      },
+      {
+        id: 'low',
+        attemptCount: 9,
+        correctCount: 3,
+        wrongCount: 6,
+        accuracyRate: 3 / 9,
+        accuracyRateStatus: 'available',
+      },
+    ]
+  );
+  assert.deepEqual(firstResult.guidance, {
+    advanceAttemptCount: 1,
+    reviewAttemptCount: 20,
+    advanceRatio: 1 / 21,
+    reviewRatio: 20 / 21,
+    ratioStatus: 'available',
+  });
+  assert.deepEqual(firstResult, secondResult);
+  assert.deepEqual(history, snapshot);
+  assert.deepEqual(query, { period: 'all', sectionId: null, asOf });
 }
 
 {
@@ -126,8 +226,49 @@ const asOf = '2026-08-01T12:00:00.000Z';
   assert.equal(empty.coverage.qualityStatus, 'invalid-data-excluded');
   assert.equal(empty.summary.accuracyRate, null);
   assert.equal(empty.summary.accuracyRateStatus, 'not-applicable');
-  assert.ok(empty.confidenceLevels.every(({ accuracyRate }) => accuracyRate === null));
-  assert.ok(empty.outcomes.every(({ ratio }) => ratio === null));
+  assert.deepEqual(
+    empty.confidenceLevels.map(
+      ({ id, attemptCount, correctCount, wrongCount, accuracyRate, accuracyRateStatus }) => ({
+        id,
+        attemptCount,
+        correctCount,
+        wrongCount,
+        accuracyRate,
+        accuracyRateStatus,
+      })
+    ),
+    ['high', 'medium', 'low'].map((id) => ({
+      id,
+      attemptCount: 0,
+      correctCount: 0,
+      wrongCount: 0,
+      accuracyRate: null,
+      accuracyRateStatus: 'not-applicable',
+    }))
+  );
+  assert.deepEqual(
+    empty.outcomes.map(({ id, attemptCount, ratio, ratioStatus, guidance }) => ({
+      id,
+      attemptCount,
+      ratio,
+      ratioStatus,
+      guidance,
+    })),
+    [
+      ['correct_high', 'advance'],
+      ['correct_medium', 'review'],
+      ['correct_low', 'review'],
+      ['wrong_high', 'review'],
+      ['wrong_medium', 'review'],
+      ['wrong_low', 'review'],
+    ].map(([id, guidance]) => ({
+      id,
+      attemptCount: 0,
+      ratio: null,
+      ratioStatus: 'not-applicable',
+      guidance,
+    }))
+  );
   assert.equal(empty.guidance.ratioStatus, 'not-applicable');
   assert.throws(
     () =>
@@ -137,6 +278,37 @@ const asOf = '2026-08-01T12:00:00.000Z';
       ),
     TypeError
   );
+}
+
+{
+  const history = {
+    version: 1,
+    attempts: [
+      attempt('upper-case', asOf, { section: 'Section-A' }),
+      attempt('lower-case', asOf, { section: 'section-a' }),
+    ],
+  };
+  const selected = selectConfidenceHistoryAttempts(history, {
+    period: 'all',
+    sectionId: 'Section-A',
+    asOf,
+  });
+  assert.deepEqual(
+    selected.attempts.map(({ attemptId }) => attemptId),
+    ['a-upper-case']
+  );
+  assert.equal(selected.coverage.excludedBySectionCount, 1);
+  assert.deepEqual(
+    selected.sections.map(({ id }) => id),
+    ['Section-A', 'section-a']
+  );
+
+  const invalidAttempts = buildConfidenceHistorySummary(
+    { version: 1, attempts: {} },
+    { period: 'all', sectionId: null, asOf }
+  );
+  assert.equal(invalidAttempts.summary.attemptCount, 0);
+  assert.equal(invalidAttempts.coverage.qualityStatus, 'invalid-data-excluded');
 }
 
 {
@@ -157,6 +329,18 @@ const asOf = '2026-08-01T12:00:00.000Z';
   const attempts = Array.from({ length: 5001 }, (_, index) =>
     attempt(index, new Date(Date.parse(asOf) - (5000 - index)).toISOString())
   );
+  for (const [attemptCount, expectedStatus] of [
+    [4999, 'within-limit'],
+    [5000, 'capacity-reached'],
+  ]) {
+    const exactSelection = selectConfidenceHistoryAttempts(
+      { version: 1, attempts: attempts.slice(-attemptCount) },
+      { period: 'all', sectionId: null, asOf }
+    );
+    assert.equal(exactSelection.retention.sourceAttemptCount, attemptCount);
+    assert.equal(exactSelection.retention.status, expectedStatus);
+    assert.equal(exactSelection.quality.trimmedAttemptCount, 0);
+  }
   const selection = selectConfidenceHistoryAttempts(
     { version: 1, attempts },
     { period: 'all', sectionId: null, asOf }
