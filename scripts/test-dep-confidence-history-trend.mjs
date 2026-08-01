@@ -166,4 +166,94 @@ function history(...attempts) {
   assert.equal(result.trends.transitionCount, 1);
 }
 
+{
+  const answeredAt = '2026-07-26T00:00:00.000Z';
+  const input = history(
+    attempt('same-1', 'q-same', answeredAt, 'wrong_high'),
+    attempt('same-2', 'q-same', answeredAt, 'correct_high'),
+    attempt('same-3', 'q-same', answeredAt, 'correct_medium'),
+    attempt('same-4', 'q-same', answeredAt, 'correct_high')
+  );
+  const result = buildConfidenceHistoryTrend(input, query());
+
+  assert.equal(result.trends.changedQuestionCount, 1);
+  assert.equal(result.trends.transitionCount, 3);
+  assert.deepEqual(
+    result.changeEvents.map(({ fromAttemptId, toAttemptId, changedAt, changeTypes }) => ({
+      fromAttemptId,
+      toAttemptId,
+      changedAt,
+      changeTypes,
+    })),
+    [
+      {
+        fromAttemptId: 'same-1',
+        toAttemptId: 'same-2',
+        changedAt: answeredAt,
+        changeTypes: ['misconception-corrected', 'review-to-advance'],
+      },
+      {
+        fromAttemptId: 'same-3',
+        toAttemptId: 'same-4',
+        changedAt: answeredAt,
+        changeTypes: ['review-to-advance'],
+      },
+    ],
+    'same-time events and their from/to pairs preserve canonical relative order'
+  );
+}
+
+{
+  const input = history(
+    attempt('review-a1', 'q-review', '2026-07-26T00:00:00.000Z', 'wrong_low', 'A'),
+    attempt('review-b', 'q-review', '2026-07-27T00:00:00.000Z', 'wrong_low', 'B'),
+    attempt('review-a2', 'q-review', '2026-07-28T00:00:00.000Z', 'correct_medium', 'A')
+  );
+  const result = buildConfidenceHistoryTrend(input, query({ sectionId: 'A' }));
+
+  assert.equal(result.questionTrends[0].attemptCount, 2);
+  assert.equal(result.questionTrends[0].reviewStreakCount, 1);
+  assert.equal(result.trends.transitionCount, 0);
+}
+
+{
+  const input = history(
+    attempt('isolated-1', 'q-isolated', '2026-07-26T00:00:00.000Z', 'correct_medium'),
+    attempt('isolated-2', 'q-isolated', '2026-07-27T00:00:00.000Z', 'correct_high')
+  );
+  const result = buildConfidenceHistoryTrend(input, query());
+
+  assert.deepEqual(result.changeEvents[0].changeTypes, ['review-to-advance']);
+  assert.equal(result.trends.misconceptionCorrectedCount, 0);
+  assert.equal(result.trends.unstableCorrectnessStabilizedCount, 0);
+  assert.equal(result.trends.reviewToAdvanceCount, 1);
+}
+
+{
+  const input = history(
+    attempt('detached-1', 'q-detached', '2026-07-26T00:00:00.000Z', 'wrong_high'),
+    attempt('detached-2', 'q-detached', '2026-07-27T00:00:00.000Z', 'correct_high')
+  );
+  const inputSnapshot = structuredClone(input);
+  const pristine = buildConfidenceHistoryTrend(input, query());
+  const mutated = buildConfidenceHistoryTrend(input, query());
+
+  mutated.questionTrends[0].questionId = 'mutated-question';
+  mutated.questionTrends[0].changeTypes.push('mutated-question-type');
+  mutated.changeEvents[0].toAttemptId = 'mutated-attempt';
+  mutated.changeEvents[0].changeTypes.push('mutated-event-type');
+  mutated.questionTrends.push({ mutated: true });
+  mutated.changeEvents.push({ mutated: true });
+
+  assert.deepEqual(input, inputSnapshot);
+  assert.deepEqual(buildConfidenceHistoryTrend(input, query()), pristine);
+  assert.notStrictEqual(mutated.questionTrends, pristine.questionTrends);
+  assert.notStrictEqual(mutated.changeEvents, pristine.changeEvents);
+  assert.notStrictEqual(
+    mutated.questionTrends[0].changeTypes,
+    pristine.questionTrends[0].changeTypes
+  );
+  assert.notStrictEqual(mutated.changeEvents[0].changeTypes, pristine.changeEvents[0].changeTypes);
+}
+
 console.log('dep confidence history trend tests passed');
