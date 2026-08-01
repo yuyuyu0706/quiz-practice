@@ -14,10 +14,18 @@ const OPTIONAL_EMPTY_RETAINED_VALUES = {
 };
 const OPTIONAL_NOTE_KEYS = new Set(['noteText', 'note', 'memo']);
 
-export function buildLearningHistoryResetPlan(progress, { activeSession = null } = {}) {
+export function buildLearningHistoryResetPlan(
+  progress,
+  { activeSession = null, confidenceHistory = null, confidenceHistoryStorageStatus = 'ready' } = {}
+) {
   const safeProgress = isPlainObject(progress) ? progress : {};
   const nextProgress = {};
   const hasActiveSession = activeSession != null;
+  const unsupported = confidenceHistoryStorageStatus === 'unsupported';
+  const attemptCount = Array.isArray(confidenceHistory?.attempts)
+    ? confidenceHistory.attempts.length
+    : 0;
+  const shouldClearHistory = unsupported || attemptCount > 0;
   const impact = {
     resetQuestionCount: 0,
     changedEntryCount: 0,
@@ -26,6 +34,8 @@ export function buildLearningHistoryResetPlan(progress, { activeSession = null }
     removedEntryCount: 0,
     retainedEntryCount: 0,
     hasActiveSession,
+    resetConfidenceAttemptCount: unsupported ? null : attemptCount,
+    hasUnsupportedConfidenceHistory: unsupported,
   };
 
   Object.entries(safeProgress).forEach(([questionId, entry]) => {
@@ -60,10 +70,12 @@ export function buildLearningHistoryResetPlan(progress, { activeSession = null }
 
   return {
     nextProgress,
+    nextHistory: { version: 1, attempts: [] },
     impact,
     activeSession: {
       shouldClear: hasActiveSession,
     },
+    confidenceHistory: { shouldClear: shouldClearHistory },
   };
 }
 

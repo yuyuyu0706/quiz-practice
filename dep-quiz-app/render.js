@@ -1,5 +1,6 @@
 const STORAGE_KEY_LABELS = {
   depQuizProgress: '学習進捗データ',
+  depQuizConfidenceHistory: '回答試行履歴',
   depQuizSettings: '設定データ',
   depQuizActiveSession: '前回セッションデータ',
 };
@@ -35,6 +36,30 @@ export function renderStorageRepairNotice(homeView, repairedKeys) {
 
   content.append(message, target);
   notice.append(content, closeButton);
+  homeView.prepend(notice);
+}
+
+export function renderConfidenceHistoryCompatibilityNotice(homeView, version) {
+  if (!homeView) return;
+  const notice = document.createElement('div');
+  notice.className = 'storage-repair-notice confidence-history-compatibility-notice';
+  notice.setAttribute('role', 'alert');
+  const content = document.createElement('div');
+  content.className = 'storage-repair-notice__content';
+  const message = document.createElement('p');
+  message.className = 'storage-repair-notice__message';
+  message.textContent = `回答試行履歴（Version ${version}）はこのアプリでは読み込めません。データ保護のため回答保存を停止しています。`;
+  const guidance = document.createElement('p');
+  guidance.className = 'storage-repair-notice__target';
+  guidance.textContent = '最新版を利用するか、確認のうえ学習履歴をリセットしてください。';
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'storage-repair-notice__close';
+  close.textContent = '閉じる';
+  close.setAttribute('aria-label', '回答試行履歴の互換性通知を閉じる');
+  close.addEventListener('click', () => notice.remove());
+  content.append(message, guidance);
+  notice.append(content, close);
   homeView.prepend(notice);
 }
 
@@ -1378,6 +1403,9 @@ export function renderLearningHistoryResetSummary(container, plan) {
   const resetQuestionCount = formatSummaryCount(impact.resetQuestionCount);
   const retainedNoteCount = formatSummaryCount(impact.retainedNoteCount);
   const retainedBookmarkCount = formatSummaryCount(impact.retainedBookmarkCount);
+  const historyCount = impact.hasUnsupportedConfidenceHistory
+    ? '削除予定（このバージョンでは件数確認不可）'
+    : `${formatSummaryCount(impact.resetConfidenceAttemptCount)}件削除予定`;
 
   container.replaceChildren();
 
@@ -1398,6 +1426,7 @@ export function renderLearningHistoryResetSummary(container, plan) {
   cards.className = 'learning-history-reset-cards';
   cards.append(
     createLearningHistoryResetCard('リセット対象問題', `${resetQuestionCount}問`),
+    createLearningHistoryResetCard('回答試行履歴', historyCount),
     createLearningHistoryResetCard('保持するメモ', `${retainedNoteCount}件`),
     createLearningHistoryResetCard('保持するブックマーク', `${retainedBookmarkCount}件`),
     createLearningHistoryResetCard(
@@ -1422,6 +1451,7 @@ export function renderLearningHistoryResetSummary(container, plan) {
       '正解・不正解の履歴',
       '最終回答日時',
       '誤答理由タグ',
+      '回答試行履歴（正誤・確信度・回答日時）',
     ]),
     createLearningHistoryResetList('保持対象', ['自分用メモ', 'ブックマーク', '学習設定'])
   );

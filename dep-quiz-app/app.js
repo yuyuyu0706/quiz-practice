@@ -1,7 +1,7 @@
 import {
   loadProgress,
   saveProgress,
-  loadConfidenceHistory,
+  loadConfidenceHistoryState,
   commitConfidenceAnswer,
   loadSettings,
   saveSettings,
@@ -55,15 +55,19 @@ import {
   renderResult,
   toggleNoteEditor,
   renderStorageRepairNotice,
+  renderConfidenceHistoryCompatibilityNotice,
   renderAnalysisSummary,
   renderWeaknessReviewTargetPanel,
   renderLearningHistoryResetSummary,
 } from './render.js';
 
+const confidenceHistoryState = loadConfidenceHistoryState();
 const state = {
   questions: [],
   progress: loadProgress(),
-  confidenceHistory: loadConfidenceHistory(),
+  confidenceHistory: confidenceHistoryState.history,
+  confidenceHistoryStorageStatus: confidenceHistoryState.status,
+  confidenceHistoryUnsupportedVersion: confidenceHistoryState.unsupportedVersion,
   settings: loadSettings(),
   session: null,
   analysis: null,
@@ -180,6 +184,12 @@ async function init() {
   const repairedKeys = getRepairedStorageKeys();
   if (repairedKeys.length > 0) {
     renderStorageRepairNotice(els.views.home, repairedKeys);
+  }
+  if (state.confidenceHistoryStorageStatus === 'unsupported') {
+    renderConfidenceHistoryCompatibilityNotice(
+      els.views.home,
+      state.confidenceHistoryUnsupportedVersion
+    );
   }
 }
 
@@ -455,6 +465,8 @@ function renderAnalysisView() {
   renderAnalysisSummary(els.analysisContainer, state.analysis, state.confidenceAnalysis);
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
+    confidenceHistory: state.confidenceHistory,
+    confidenceHistoryStorageStatus: state.confidenceHistoryStorageStatus,
   });
   updateLearningHistoryResetEntry();
 }
@@ -533,20 +545,24 @@ function buildWeaknessReviewTargetCondition(trigger) {
 function updateLearningHistoryResetEntry() {
   const hasResetTarget = Number(state.activeResetPlan?.impact?.resetQuestionCount) > 0;
   const shouldClearSession = Boolean(state.activeResetPlan?.activeSession?.shouldClear);
+  const shouldClearHistory = Boolean(state.activeResetPlan?.confidenceHistory?.shouldClear);
   els.learningHistoryResetEntry?.classList.toggle(
     'hidden',
-    !(hasResetTarget || shouldClearSession)
+    !(hasResetTarget || shouldClearSession || shouldClearHistory)
   );
 }
 
 function openLearningHistoryResetDialog() {
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
+    confidenceHistory: state.confidenceHistory,
+    confidenceHistoryStorageStatus: state.confidenceHistoryStorageStatus,
   });
   updateLearningHistoryResetEntry();
   if (!state.activeResetPlan || state.isLearningHistoryResetCommitInProgress) return;
   const canReset =
     state.activeResetPlan.impact.resetQuestionCount > 0 ||
+    state.activeResetPlan.confidenceHistory.shouldClear === true ||
     state.activeResetPlan.activeSession.shouldClear === true;
   if (!canReset) return;
   if (state.learningHistoryResetRestoreBlocked) {
@@ -600,11 +616,16 @@ function commitActiveLearningHistoryReset() {
   try {
     const result = commitLearningHistoryReset(state.activeResetPlan);
     state.progress = result.nextProgress;
+    state.confidenceHistory = result.nextHistory;
+    state.confidenceHistoryStorageStatus = 'ready';
+    state.confidenceHistoryUnsupportedVersion = null;
     if (result.didClearActiveSession) state.session = null;
     state.analysis = null;
     refreshResumeUI();
     state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
       activeSession: loadSession(),
+      confidenceHistory: state.confidenceHistory,
+      confidenceHistoryStorageStatus: state.confidenceHistoryStorageStatus,
     });
     renderAnalysisView();
     els.learningHistoryResetSuccess?.classList.remove('hidden');
@@ -708,6 +729,12 @@ function renderQuestion(options = {}) {
 function submitCurrentAnswer(event) {
   event?.preventDefault?.();
   const question = getCurrentQuestion();
+  if (state.confidenceHistoryStorageStatus === 'unsupported') {
+    els.quizMessage.textContent =
+      '回答試行履歴のバージョンに対応していないため、データ保護のため回答を保存できません。最新版を利用するか、学習履歴をリセットしてください。';
+    updatePrimaryActions(question?.id);
+    return;
+  }
   if (
     !question ||
     state.session?.graded?.[question.id] ||
@@ -766,6 +793,13 @@ function submitCurrentAnswer(event) {
     });
     committed = commitConfidenceAnswer(plan);
   } catch (error) {
+    if (error?.code === 'UNSUPPORTED_CONFIDENCE_HISTORY_VERSION') {
+      state.confidenceHistoryStorageStatus = 'unsupported';
+      state.confidenceHistoryUnsupportedVersion = error.version;
+      els.quizMessage.textContent =
+        '回答試行履歴が新しいバージョンへ更新されたため、データ保護のため回答を保存しませんでした。最新版を利用するか、学習履歴をリセットしてください。';
+      return;
+    }
     const restoreFailures = Array.isArray(error?.restoreFailures) ? error.restoreFailures : [];
     state.confidenceAnswerRestoreBlocked = restoreFailures.length > 0;
     els.quizMessage.textContent = state.confidenceAnswerRestoreBlocked
@@ -871,7 +905,10 @@ function updatePrimaryActions(questionId) {
   const reviewFirst = graded && guidance === 'review';
 
   els.submitAnswer.disabled =
-    !canSubmit || state.isConfidenceAnswerCommitInProgress || state.confidenceAnswerRestoreBlocked;
+    !canSubmit ||
+    state.isConfidenceAnswerCommitInProgress ||
+    state.confidenceAnswerRestoreBlocked ||
+    state.confidenceHistoryStorageStatus === 'unsupported';
   els.submitAnswer.classList.toggle('graded-control-withdrawn', graded);
   els.reviewExplanation.classList.toggle('hidden', !graded);
   els.reviewExplanation.classList.toggle('primary', reviewFirst);
