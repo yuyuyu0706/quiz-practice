@@ -75,6 +75,11 @@ export function normalizeConfidenceHistory(value) {
 
 export function appendConfidenceAttempt(history, attempt) {
   const normalizedHistory = normalizeConfidenceHistory(history);
+  const inputAttemptCount = Array.isArray(history?.attempts) ? history.attempts.length : 0;
+  const normalizationTrimmedCount = Math.max(
+    0,
+    inputAttemptCount - normalizedHistory.attempts.length
+  );
   const canonicalAttempt = createConfidenceAttempt(attempt);
   const duplicate = normalizedHistory.attempts.some(
     (existingAttempt) => existingAttempt.attemptId === canonicalAttempt.attemptId
@@ -85,7 +90,7 @@ export function appendConfidenceAttempt(history, attempt) {
       nextHistory: normalizeConfidenceHistory(normalizedHistory),
       added: false,
       duplicate: true,
-      trimmedCount: 0,
+      trimmedCount: normalizationTrimmedCount,
     };
   }
 
@@ -99,7 +104,8 @@ export function appendConfidenceAttempt(history, attempt) {
     nextHistory,
     added: true,
     duplicate: false,
-    trimmedCount: Math.max(0, candidateCount - nextHistory.attempts.length),
+    trimmedCount:
+      normalizationTrimmedCount + Math.max(0, candidateCount - nextHistory.attempts.length),
   };
 }
 

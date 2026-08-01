@@ -185,3 +185,41 @@ test('reports trimming when appending beyond the limit', () => {
   assert.equal(result.nextHistory.attempts[0].attemptId, 'attempt-1');
   assert.equal(result.nextHistory.attempts.at(-1).attemptId, newest.attemptId);
 });
+
+test('counts pre-normalization and post-append trimming without mutating inputs', () => {
+  const attempts = Array.from({ length: MAX_CONFIDENCE_ATTEMPTS + 1 }, (_, index) =>
+    indexedAttempt(index)
+  );
+  const history = { version: 1, attempts };
+  const newest = indexedAttempt(MAX_CONFIDENCE_ATTEMPTS + 1);
+  const historySnapshot = structuredClone(history);
+  const attemptSnapshot = structuredClone(newest);
+
+  const result = appendConfidenceAttempt(history, newest);
+
+  assert.equal(result.trimmedCount, 2);
+  assert.equal(result.nextHistory.attempts.length, MAX_CONFIDENCE_ATTEMPTS);
+  assert.equal(result.nextHistory.attempts.at(-1).attemptId, newest.attemptId);
+  assert.deepEqual(history, historySnapshot);
+  assert.deepEqual(newest, attemptSnapshot);
+});
+
+test('reports pre-normalization trimming when appending a duplicate', () => {
+  const attempts = Array.from({ length: MAX_CONFIDENCE_ATTEMPTS + 1 }, (_, index) =>
+    indexedAttempt(index)
+  );
+  const history = { version: 1, attempts };
+  const duplicate = { ...attempts.at(-1) };
+  const historySnapshot = structuredClone(history);
+  const attemptSnapshot = structuredClone(duplicate);
+
+  const result = appendConfidenceAttempt(history, duplicate);
+
+  assert.equal(result.added, false);
+  assert.equal(result.duplicate, true);
+  assert.equal(result.trimmedCount, 1);
+  assert.equal(result.nextHistory.attempts.length, MAX_CONFIDENCE_ATTEMPTS);
+  assert.equal(result.nextHistory.attempts.at(-1).attemptId, duplicate.attemptId);
+  assert.deepEqual(history, historySnapshot);
+  assert.deepEqual(duplicate, attemptSnapshot);
+});
