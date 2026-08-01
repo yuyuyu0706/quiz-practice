@@ -80,6 +80,9 @@ test.describe('[DEP][DATA] Confidence history / Repair and compatibility', () =>
     await seedHistory(page, { version: 2, attempts: [{ future: true }] });
     await gotoDepHome(page);
     await openReset(page);
+    const dialog = page.locator('#learning-history-reset-dialog');
+    await expect(dialog).toContainText('回答試行履歴がリセット対象です');
+    await expect(dialog).not.toContainText('リセット対象の学習履歴はありません。');
     await expect(page.getByText('このバージョンでは件数確認不可')).toBeVisible();
     await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
     await expect(page.locator('.confidence-history-compatibility-notice')).toHaveCount(0);
@@ -104,9 +107,10 @@ test.describe('[DEP][DATA] Confidence history / Repair and compatibility', () =>
     });
     await page.reload();
     await openReset(page);
-    await expect(page.locator('#learning-history-reset-dialog')).toContainText(
-      '回答試行履歴1件削除予定'
-    );
+    const dialog = page.locator('#learning-history-reset-dialog');
+    await expect(dialog).toContainText('回答試行履歴がリセット対象です');
+    await expect(dialog).toContainText('回答試行履歴1件削除予定');
+    await expect(dialog).not.toContainText('リセット対象の学習履歴はありません。');
     await page.getByRole('button', { name: '学習履歴をリセットする' }).click();
     await page.reload();
     await expect

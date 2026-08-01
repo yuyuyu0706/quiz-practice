@@ -1400,6 +1400,7 @@ export function renderLearningHistoryResetSummary(container, plan) {
 
   const impact = plan?.impact ?? {};
   const shouldClearActiveSession = Boolean(plan?.activeSession?.shouldClear);
+  const shouldClearConfidenceHistory = Boolean(plan?.confidenceHistory?.shouldClear);
   const resetQuestionCount = formatSummaryCount(impact.resetQuestionCount);
   const retainedNoteCount = formatSummaryCount(impact.retainedNoteCount);
   const retainedBookmarkCount = formatSummaryCount(impact.retainedBookmarkCount);
@@ -1414,6 +1415,10 @@ export function renderLearningHistoryResetSummary(container, plan) {
   lead.className = 'learning-history-reset-summary__lead';
   if (hasResetTargets) {
     lead.textContent = `${resetQuestionCount}問の学習履歴がリセット対象です。保持されるデータもあわせて確認できます。`;
+  } else if (shouldClearConfidenceHistory) {
+    lead.textContent = shouldClearActiveSession
+      ? '回答試行履歴がリセット対象です。リセットを確定すると中断データも削除されます。'
+      : '回答試行履歴がリセット対象です。削除内容と保持されるデータを確認してください。';
   } else if (shouldClearActiveSession) {
     lead.textContent =
       'リセット対象の学習履歴はありませんが、リセットを確定すると中断データは削除されます。';
