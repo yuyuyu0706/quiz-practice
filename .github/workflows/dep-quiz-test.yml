@@ -75,6 +75,9 @@ jobs:
       - name: 'Quality Gate: Run DEP confidence E3 tests'
         run: npm run test:dep-confidence-e3
 
+      - name: 'Quality Gate: Run DEP confidence E4 tests'
+        run: npm run test:dep-confidence-e4
+
       # ======================
       # E2E Coverage
       # ======================
