@@ -1,9 +1,9 @@
 import { assertConfidenceLevel, normalizeConfidenceLevel } from './confidence.js';
+import { normalizeUtcIsoDate } from './utc-iso-date.js';
 import { normalizeWrongReasonTags } from './wrong-reason-tags.js';
 
 export { normalizeWrongReasonTags } from './wrong-reason-tags.js';
 
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 export const ANSWER_RESULT_IDS = Object.freeze(['correct', 'wrong']);
 const ANSWER_RESULT_ID_SET = new Set(ANSWER_RESULT_IDS);
 
@@ -26,7 +26,7 @@ export function baseProgress() {
 export function normalizeLastConfidenceAnswer(value) {
   if (!isPlainObject(value) || !ANSWER_RESULT_ID_SET.has(value.result)) return null;
   const confidence = normalizeConfidenceLevel(value.confidence);
-  const answeredAt = normalizeIsoDate(value.answeredAt);
+  const answeredAt = normalizeUtcIsoDate(value.answeredAt);
   if (confidence === null || answeredAt === null) return null;
   return { result: value.result, confidence, answeredAt };
 }
@@ -36,7 +36,7 @@ export function normalizeProgressEntry(entry) {
 
   const noteText = normalizeNoteText(entry);
   const wrongReasonTags = normalizeWrongReasonTags(entry.wrongReasonTags);
-  let lastAnsweredAt = normalizeIsoDate(entry.lastAnsweredAt);
+  let lastAnsweredAt = normalizeUtcIsoDate(entry.lastAnsweredAt);
   let lastConfidenceAnswer = normalizeLastConfidenceAnswer(entry.lastConfidenceAnswer);
 
   if (lastConfidenceAnswer !== null) {
@@ -54,10 +54,10 @@ export function normalizeProgressEntry(entry) {
     bookmark: typeof entry.bookmark === 'boolean' ? entry.bookmark : false,
     noteText,
     note: noteText,
-    noteUpdatedAt: normalizeIsoDate(entry.noteUpdatedAt),
+    noteUpdatedAt: normalizeUtcIsoDate(entry.noteUpdatedAt),
     wrongReasonTags,
     wrongReasonUpdatedAt:
-      wrongReasonTags.length > 0 ? normalizeIsoDate(entry.wrongReasonUpdatedAt) : null,
+      wrongReasonTags.length > 0 ? normalizeUtcIsoDate(entry.wrongReasonUpdatedAt) : null,
   };
 }
 
@@ -69,7 +69,7 @@ export function applyConfidenceAnswerResult(progress, questionId, answerResult) 
     throw new TypeError('Invalid answer result');
   }
   const confidence = assertConfidenceLevel(answerResult.confidence);
-  const answeredAt = normalizeIsoDate(answerResult.answeredAt);
+  const answeredAt = normalizeUtcIsoDate(answerResult.answeredAt);
   if (answeredAt === null) throw new TypeError('Invalid answered date');
 
   const safeProgress = isPlainObject(progress) ? progress : {};
@@ -96,15 +96,6 @@ function normalizeCount(value) {
 function normalizeNoteText(item) {
   const note = item.noteText ?? item.note ?? item.memo ?? '';
   return typeof note === 'string' ? note : '';
-}
-
-function normalizeIsoDate(value) {
-  if (typeof value !== 'string' || !ISO_DATE_PATTERN.test(value)) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  const normalizedValue = value.includes('.') ? value : value.replace(/Z$/, '.000Z');
-  return date.toISOString() === normalizedValue ? value : null;
 }
 
 function isPlainObject(value) {
