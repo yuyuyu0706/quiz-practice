@@ -1,5 +1,12 @@
+import {
+  createConfidenceAttempt,
+  createEmptyConfidenceHistory,
+  normalizeConfidenceHistory,
+} from './confidence-history.js';
+
 export const STORAGE_KEYS = {
   progress: 'depQuizProgress',
+  confidenceHistory: 'depQuizConfidenceHistory',
   settings: 'depQuizSettings',
   session: 'depQuizActiveSession',
 };
@@ -17,6 +24,45 @@ export function loadProgress() {
 }
 export function saveProgress(progress) {
   saveJSON(STORAGE_KEYS.progress, progress);
+}
+export function loadConfidenceHistory() {
+  return normalizeConfidenceHistory(
+    loadJSON(STORAGE_KEYS.confidenceHistory, createEmptyConfidenceHistory())
+  );
+}
+export function saveConfidenceHistory(history) {
+  saveJSON(STORAGE_KEYS.confidenceHistory, history);
+}
+
+export function commitConfidenceAnswer(plan, { storage = globalThis.localStorage } = {}) {
+  validateConfidenceAnswerPlan(plan);
+
+  const progressSnapshot = readRawStorageValue(storage, STORAGE_KEYS.progress);
+  const historySnapshot = readRawStorageValue(storage, STORAGE_KEYS.confidenceHistory);
+
+  try {
+    saveJSONToStorage(storage, STORAGE_KEYS.progress, plan.nextProgress);
+  } catch (error) {
+    throw createCommitStorageError('Failed to save confidence answer progress', error, [
+      restoreRawStorageValue(storage, STORAGE_KEYS.progress, progressSnapshot),
+    ]);
+  }
+
+  try {
+    saveJSONToStorage(storage, STORAGE_KEYS.confidenceHistory, plan.nextHistory);
+  } catch (error) {
+    throw createCommitStorageError('Failed to save confidence answer history', error, [
+      restoreRawStorageValue(storage, STORAGE_KEYS.progress, progressSnapshot),
+      restoreRawStorageValue(storage, STORAGE_KEYS.confidenceHistory, historySnapshot),
+    ]);
+  }
+
+  return {
+    attempt: plan.attempt,
+    nextProgress: plan.nextProgress,
+    nextHistory: plan.nextHistory,
+    trimmedCount: plan.trimmedCount,
+  };
 }
 export function loadSettings() {
   return loadJSON(STORAGE_KEYS.settings, DEFAULT_SETTINGS);
@@ -81,6 +127,33 @@ function validateLearningHistoryResetPlan(plan) {
     typeof plan.activeSession.shouldClear !== 'boolean'
   ) {
     throw new TypeError('Invalid learning history reset plan');
+  }
+}
+
+function validateConfidenceAnswerPlan(plan) {
+  if (
+    !isPlainObject(plan) ||
+    !isPlainObject(plan.nextProgress) ||
+    !isPlainObject(plan.nextHistory) ||
+    !Number.isInteger(plan.trimmedCount) ||
+    plan.trimmedCount < 0
+  ) {
+    throw new TypeError('Invalid confidence answer commit plan');
+  }
+
+  let canonicalAttempt;
+  try {
+    canonicalAttempt = createConfidenceAttempt(plan.attempt);
+  } catch {
+    throw new TypeError('Invalid confidence answer commit plan');
+  }
+  const canonicalHistory = normalizeConfidenceHistory(plan.nextHistory);
+  if (
+    JSON.stringify(canonicalAttempt) !== JSON.stringify(plan.attempt) ||
+    JSON.stringify(canonicalHistory) !== JSON.stringify(plan.nextHistory) ||
+    !canonicalHistory.attempts.some(({ attemptId }) => attemptId === canonicalAttempt.attemptId)
+  ) {
+    throw new TypeError('Invalid confidence answer commit plan');
   }
 }
 

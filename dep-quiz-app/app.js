@@ -1,6 +1,8 @@
 import {
   loadProgress,
   saveProgress,
+  loadConfidenceHistory,
+  commitConfidenceAnswer,
   loadSettings,
   saveSettings,
   loadActiveSession,
@@ -9,6 +11,7 @@ import {
   commitLearningHistoryReset,
   getRepairedStorageKeys,
 } from './storage.js';
+import { buildConfidenceAnswerCommitPlan } from './confidence-answer-commit.js';
 import {
   baseProgress,
   hasNote,
@@ -43,7 +46,6 @@ import {
 import { CONFIDENCE_LEVELS } from './confidence.js';
 import { getConfidenceOutcome } from './confidence-outcome.js';
 import { getAnswerInputState } from './answer-input-state.js';
-import { applyConfidenceAnswerResult } from './progress.js';
 import {
   showView as switchView,
   renderNotesList as renderNotesListView,
@@ -61,6 +63,7 @@ import {
 const state = {
   questions: [],
   progress: loadProgress(),
+  confidenceHistory: loadConfidenceHistory(),
   settings: loadSettings(),
   session: null,
   analysis: null,
@@ -70,6 +73,8 @@ const state = {
   weaknessReviewTargetOrigin: null,
   isLearningHistoryResetCommitInProgress: false,
   learningHistoryResetRestoreBlocked: false,
+  isConfidenceAnswerCommitInProgress: false,
+  confidenceAnswerRestoreBlocked: false,
 };
 
 const els = {
@@ -703,7 +708,12 @@ function renderQuestion(options = {}) {
 function submitCurrentAnswer(event) {
   event?.preventDefault?.();
   const question = getCurrentQuestion();
-  if (!question || state.session?.graded?.[question.id]) {
+  if (
+    !question ||
+    state.session?.graded?.[question.id] ||
+    state.isConfidenceAnswerCommitInProgress ||
+    state.confidenceAnswerRestoreBlocked
+  ) {
     updatePrimaryActions(question?.id);
     return;
   }
@@ -729,19 +739,49 @@ function submitCurrentAnswer(event) {
   const choiceMap = getOrCreateChoiceMap(state.session, question.id, question.choices);
   const confidence = getStoredConfidenceLevel(state.session, question.id);
   const correct = gradeAnswer(question, selectedLabel, choiceMap);
-  const answeredAt = new Date().toISOString();
-  const nextProgress = applyConfidenceAnswerResult(state.progress, question.id, {
-    result: correct ? 'correct' : 'wrong',
-    confidence,
-    answeredAt,
-  });
+  const result = correct ? 'correct' : 'wrong';
 
+  if (typeof globalThis.crypto?.randomUUID !== 'function') {
+    els.quizMessage.textContent = '回答を保存できません。ブラウザを更新して再度お試しください。';
+    updatePrimaryActions(question.id);
+    return;
+  }
+
+  const answeredAt = new Date().toISOString();
+  const attemptId = globalThis.crypto.randomUUID();
+  state.isConfidenceAnswerCommitInProgress = true;
+  updatePrimaryActions(question.id);
+
+  let committed;
+  try {
+    const plan = buildConfidenceAnswerCommitPlan({
+      progress: state.progress,
+      confidenceHistory: state.confidenceHistory,
+      attemptId,
+      questionId: question.id,
+      section: question.section,
+      result,
+      confidence,
+      answeredAt,
+    });
+    committed = commitConfidenceAnswer(plan);
+  } catch (error) {
+    const restoreFailures = Array.isArray(error?.restoreFailures) ? error.restoreFailures : [];
+    state.confidenceAnswerRestoreBlocked = restoreFailures.length > 0;
+    els.quizMessage.textContent = state.confidenceAnswerRestoreBlocked
+      ? '保存データの復元も一部失敗した可能性があります。再読み込みして状態を確認してください。'
+      : '回答を保存できませんでした。入力内容を維持しています。もう一度お試しください。';
+    return;
+  } finally {
+    state.isConfidenceAnswerCommitInProgress = false;
+    updatePrimaryActions(question.id);
+  }
+
+  state.progress = committed.nextProgress;
+  state.confidenceHistory = committed.nextHistory;
   state.session.answers[question.id] = selectedLabel;
   state.session.graded[question.id] = true;
   state.session.explanationOpen = true;
-  state.progress = nextProgress;
-
-  saveProgress(state.progress);
   renderQuestion({ focusConfidenceOutcome: true });
 }
 
@@ -830,7 +870,8 @@ function updatePrimaryActions(questionId) {
   const guidance = els.confidenceOutcome.dataset.guidance;
   const reviewFirst = graded && guidance === 'review';
 
-  els.submitAnswer.disabled = !canSubmit;
+  els.submitAnswer.disabled =
+    !canSubmit || state.isConfidenceAnswerCommitInProgress || state.confidenceAnswerRestoreBlocked;
   els.submitAnswer.classList.toggle('graded-control-withdrawn', graded);
   els.reviewExplanation.classList.toggle('hidden', !graded);
   els.reviewExplanation.classList.toggle('primary', reviewFirst);
