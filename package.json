@@ -24,6 +24,7 @@
     "test:dep-confidence-progress": "node scripts/test-dep-confidence-progress.mjs",
     "test:dep-confidence-history": "node scripts/test-dep-confidence-history.mjs",
     "test:dep-confidence-history-summary": "node scripts/test-dep-confidence-history-summary.mjs",
+    "test:dep-confidence-history-trend": "node scripts/test-dep-confidence-history-trend.mjs",
     "test:dep-confidence-answer-commit": "node scripts/test-dep-confidence-answer-commit.mjs",
     "test:dep-confidence-history-storage": "node scripts/test-dep-confidence-history-storage.mjs",
     "test:dep-confidence-history-foundation": "npm run test:dep-confidence-history && npm run test:dep-confidence-answer-commit && npm run test:dep-confidence-history-storage",
