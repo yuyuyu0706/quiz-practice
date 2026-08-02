@@ -598,7 +598,12 @@ function createConfidenceHistorySummary(options) {
   const controls = createHistoryControls(options.historyAnalysis);
   const results = document.createElement('div');
   results.className = 'analysis-confidence-history__results';
-  renderHistoryResults(results, options.historyAnalysis, options.questions);
+  renderHistoryResults(
+    results,
+    options.historyAnalysis,
+    options.questions,
+    options.removedAttemptCount
+  );
   const status = document.createElement('p');
   status.className = 'analysis-confidence-history__update-status visually-hidden';
   status.setAttribute('role', 'status');
@@ -614,7 +619,7 @@ function createConfidenceHistorySummary(options) {
     options.onHistoryQueryChange?.(
       { period, sectionId: sectionValue === '' ? null : sectionValue },
       (nextAnalysis) => {
-        renderHistoryResults(results, nextAnalysis, options.questions);
+        renderHistoryResults(results, nextAnalysis, options.questions, options.removedAttemptCount);
         syncHistorySectionOptions(controls.querySelector('[data-history-section]'), nextAnalysis);
         status.textContent = '確信度の学習履歴を更新しました。';
       }
@@ -651,13 +656,17 @@ function createHistorySelect(labelText, dataName) {
 function syncHistorySectionOptions(select, analysis) {
   const value = analysis?.query?.sectionId ?? '';
   select.replaceChildren(new Option('全Section', ''));
-  for (const item of Array.isArray(analysis?.sections) ? analysis.sections : []) {
+  const sections = Array.isArray(analysis?.sections) ? analysis.sections : [];
+  for (const item of sections) {
     select.add(new Option(`Section ${item.id}（${item.attemptCount}件）`, item.id));
+  }
+  if (value && !sections.some(({ id }) => id === value)) {
+    select.add(new Option(`Section ${value}（0件）`, value));
   }
   select.value = value;
 }
 
-function renderHistoryResults(container, analysisSource, questionsSource) {
+function renderHistoryResults(container, analysisSource, questionsSource, removedAttemptCount = 0) {
   container.replaceChildren();
   const analysis = analysisSource && typeof analysisSource === 'object' ? analysisSource : {};
   const coverage = analysis.coverage ?? {};
@@ -672,6 +681,13 @@ function renderHistoryResults(container, analysisSource, questionsSource) {
       ? `${formatSummaryCount(coverage.filteredAttemptCount)}件の回答試行を分析しています。`
       : '選択した条件に該当する回答試行はまだありません。率は未算出です。';
   container.appendChild(status);
+  if (removedAttemptCount > 0) {
+    const repairNotice = document.createElement('p');
+    repairNotice.className = 'analysis-confidence-history__notice';
+    repairNotice.dataset.historyQuality = 'repaired';
+    repairNotice.textContent = `不正または重複した回答試行${removedAttemptCount}件を修復時に除外しました。`;
+    container.appendChild(repairNotice);
+  }
   appendHistoryNotices(container, analysis);
 
   container.appendChild(

@@ -69,6 +69,7 @@ const state = {
   confidenceHistory: confidenceHistoryState.history,
   confidenceHistoryStorageStatus: confidenceHistoryState.status,
   confidenceHistoryUnsupportedVersion: confidenceHistoryState.unsupportedVersion,
+  confidenceHistoryRemovedAttemptCount: confidenceHistoryState.removedAttemptCount,
   settings: loadSettings(),
   session: null,
   analysis: null,
@@ -475,6 +476,7 @@ function renderAnalysisView() {
     historyAnalysis: state.confidenceHistoryAnalysis,
     historyStatus: state.confidenceHistoryStorageStatus,
     unsupportedVersion: state.confidenceHistoryUnsupportedVersion,
+    removedAttemptCount: state.confidenceHistoryRemovedAttemptCount,
     questions: state.questions,
     onHistoryQueryChange: handleConfidenceHistoryQueryChange,
   });
