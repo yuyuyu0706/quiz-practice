@@ -1008,7 +1008,113 @@ button.primary:hover:not(:disabled) {
   border-radius: 999px;
   background: #f8d99b;
 }
+.analysis-confidence-history__description,
+.analysis-confidence-history__coverage,
+.analysis-confidence-history__notice {
+  line-height: 1.6;
+}
+.analysis-confidence-history__filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--dep-surface-tint);
+}
+.analysis-confidence-history__filters legend {
+  padding: 0 6px;
+  font-weight: 700;
+}
+.analysis-confidence-history__filter {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-weight: 700;
+}
+.analysis-confidence-history__filter select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+}
+.analysis-confidence-history__coverage,
+.analysis-confidence-history__notice {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--dep-primary-soft);
+}
+.analysis-confidence-history__notice {
+  border: 1px solid #f8d99b;
+  background: #fffaf0;
+  color: #5f3b08;
+}
+.analysis-confidence-history__metrics,
+.analysis-confidence-history__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.analysis-confidence-history__metrics > div,
+.analysis-confidence-history__cards > article,
+.analysis-confidence-history__list > li {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.analysis-confidence-history__metrics dt {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.analysis-confidence-history__metrics dd {
+  margin: 4px 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.analysis-confidence-history__cards h5,
+.analysis-confidence-history__cards p,
+.analysis-confidence-history__list h5,
+.analysis-confidence-history__list p {
+  margin: 0;
+}
+.analysis-confidence-history__list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+.analysis-confidence-history__list-count {
+  color: var(--muted);
+}
+.analysis-confidence-history__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.analysis-confidence-history__badges span {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f8d99b;
+  color: #5f3b08;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
 @media (max-width: 480px) {
+  .analysis-confidence-history__filters,
+  .analysis-confidence-history__metrics,
+  .analysis-confidence-history__cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .analysis-confidence-coverage,
   .analysis-confidence-levels {
     grid-template-columns: minmax(0, 1fr);

@@ -480,7 +480,12 @@ export function renderResult(els, result) {
   });
 }
 
-export function renderAnalysisSummary(container, analysis, confidenceAnalysis) {
+export function renderAnalysisSummary(
+  container,
+  analysis,
+  confidenceAnalysis,
+  historyOptions = {}
+) {
   if (!container) return;
 
   container.replaceChildren();
@@ -490,6 +495,7 @@ export function renderAnalysisSummary(container, analysis, confidenceAnalysis) {
     createSummarySection(result.overall, '学習全体サマリ', 'analysis-summary-title')
   );
   container.appendChild(createConfidenceAnalysisSummary(confidenceAnalysis));
+  container.appendChild(createConfidenceHistorySummary(historyOptions));
   container.appendChild(createFocusSummary(result.overall, result.priorities));
   container.appendChild(createTagSummary(result.tags, result.overall));
   container.appendChild(createSectionSummaries(result.sections));
@@ -552,6 +558,306 @@ function createConfidenceAnalysisSummary(source) {
   footnote.textContent = '最新評価ベース正答率の分母は、その確信度で判定できた問題数です。';
   content.appendChild(footnote);
   return section;
+}
+
+const HISTORY_PERIODS = [
+  ['7d', '直近7日'],
+  ['30d', '直近30日'],
+  ['90d', '直近90日'],
+  ['all', '全期間'],
+];
+
+const HISTORY_CHANGE_LABELS = {
+  'misconception-corrected': '誤った自信を修正',
+  'unstable-correctness-stabilized': '不安定な正解が安定',
+  'review-to-advance': '要確認から安定理解へ',
+};
+
+function createConfidenceHistorySummary(options) {
+  const section = createAnalysisDisclosure('analysis-confidence-history-title', '確信度の学習履歴');
+  section.classList.add('analysis-confidence-history');
+  const content = section.querySelector('.analysis-disclosure__content');
+  const description = document.createElement('p');
+  description.className = 'analysis-confidence-history__description';
+  description.textContent =
+    '選択した期間内の回答試行と、同じ問題を繰り返し解いたときの変化を分析します。上の「確信度から見る理解状態」は各問題の最新評価を1件ずつ使うため、この履歴分析とは件数・正答率の分母が異なります。';
+  content.appendChild(description);
+
+  if (options.historyStatus === 'unsupported') {
+    const notice = document.createElement('p');
+    notice.className = 'analysis-confidence-history__notice';
+    notice.dataset.historyStatus = 'unsupported';
+    const version = options.unsupportedVersion;
+    notice.textContent = `回答試行履歴のVersion${version == null ? '' : ` ${version}`}はこのアプリでは非対応のため分析できません。ホームの互換性通知から学習履歴リセットをご確認ください。`;
+    content.appendChild(notice);
+    return section;
+  }
+
+  const body = document.createElement('div');
+  body.className = 'analysis-confidence-history__body';
+  const controls = createHistoryControls(options.historyAnalysis);
+  const results = document.createElement('div');
+  results.className = 'analysis-confidence-history__results';
+  renderHistoryResults(results, options.historyAnalysis, options.questions);
+  const status = document.createElement('p');
+  status.className = 'analysis-confidence-history__update-status visually-hidden';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  body.append(controls, results, status);
+  content.appendChild(body);
+
+  controls.addEventListener('change', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) return;
+    const period = controls.querySelector('[data-history-period]').value;
+    const sectionValue = controls.querySelector('[data-history-section]').value;
+    options.onHistoryQueryChange?.(
+      { period, sectionId: sectionValue === '' ? null : sectionValue },
+      (nextAnalysis) => {
+        renderHistoryResults(results, nextAnalysis, options.questions);
+        syncHistorySectionOptions(controls.querySelector('[data-history-section]'), nextAnalysis);
+        status.textContent = '確信度の学習履歴を更新しました。';
+      }
+    );
+  });
+  return section;
+}
+
+function createHistoryControls(analysis) {
+  const fieldset = document.createElement('fieldset');
+  fieldset.className = 'analysis-confidence-history__filters';
+  const legend = document.createElement('legend');
+  legend.textContent = '履歴の表示条件';
+  const period = createHistorySelect('期間', 'history-period');
+  for (const [value, label] of HISTORY_PERIODS) period.select.add(new Option(label, value));
+  period.select.value = analysis?.query?.period ?? '30d';
+  const section = createHistorySelect('Section', 'history-section');
+  syncHistorySectionOptions(section.select, analysis);
+  fieldset.append(legend, period.wrapper, section.wrapper);
+  return fieldset;
+}
+
+function createHistorySelect(labelText, dataName) {
+  const wrapper = document.createElement('label');
+  wrapper.className = 'analysis-confidence-history__filter';
+  const label = document.createElement('span');
+  label.textContent = labelText;
+  const select = document.createElement('select');
+  select.dataset[dataName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = 'true';
+  wrapper.append(label, select);
+  return { wrapper, select };
+}
+
+function syncHistorySectionOptions(select, analysis) {
+  const value = analysis?.query?.sectionId ?? '';
+  select.replaceChildren(new Option('全Section', ''));
+  for (const item of Array.isArray(analysis?.sections) ? analysis.sections : []) {
+    select.add(new Option(`Section ${item.id}（${item.attemptCount}件）`, item.id));
+  }
+  select.value = value;
+}
+
+function renderHistoryResults(container, analysisSource, questionsSource) {
+  container.replaceChildren();
+  const analysis = analysisSource && typeof analysisSource === 'object' ? analysisSource : {};
+  const coverage = analysis.coverage ?? {};
+  const summary = analysis.summary ?? {};
+  const guidance = analysis.guidance ?? {};
+  const trends = analysis.trends ?? {};
+  const status = document.createElement('p');
+  status.className = 'analysis-confidence-history__coverage';
+  status.dataset.historyCoverage = coverage.status ?? 'none';
+  status.textContent =
+    coverage.status === 'available'
+      ? `${formatSummaryCount(coverage.filteredAttemptCount)}件の回答試行を分析しています。`
+      : '選択した条件に該当する回答試行はまだありません。率は未算出です。';
+  container.appendChild(status);
+  appendHistoryNotices(container, analysis);
+
+  container.appendChild(
+    createHistoryMetricGroup('回答試行ベース集計', [
+      ['回答試行数', `${formatSummaryCount(summary.attemptCount)}件`],
+      ['対象問題数', `${formatSummaryCount(summary.uniqueQuestionCount)}問`],
+      ['正解数', `${formatSummaryCount(summary.correctCount)}件`],
+      ['不正解数', `${formatSummaryCount(summary.wrongCount)}件`],
+      ['試行ベース正答率', formatHistoryRate(summary.accuracyRate)],
+      [
+        '安定理解（Advance）',
+        `${formatSummaryCount(guidance.advanceAttemptCount)}件・${formatHistoryRate(guidance.advanceRatio)}`,
+      ],
+      [
+        '要確認（Review）',
+        `${formatSummaryCount(guidance.reviewAttemptCount)}件・${formatHistoryRate(guidance.reviewRatio)}`,
+      ],
+    ])
+  );
+
+  container.appendChild(
+    createHistoryCards('確信度別集計', analysis.confidenceLevels, (level) => ({
+      id: level.id,
+      title: level.label,
+      text: `${formatSummaryCount(level.attemptCount)}件（正解${formatSummaryCount(level.correctCount)}件・不正解${formatSummaryCount(level.wrongCount)}件）／試行ベース正答率 ${formatHistoryRate(level.accuracyRate)}`,
+    }))
+  );
+  container.appendChild(
+    createHistoryCards('正誤×確信度の6分類', analysis.outcomes, (outcome) => ({
+      id: outcome.id,
+      title: outcome.title,
+      text: `${formatSummaryCount(outcome.attemptCount)}件・${formatHistoryRate(outcome.ratio)}／${outcome.guidance === 'advance' ? '安定理解' : '要確認'}`,
+    }))
+  );
+
+  container.appendChild(
+    createHistoryMetricGroup('学習推移', [
+      ['分析対象問題数', `${formatSummaryCount(trends.analyzedQuestionCount)}問`],
+      ['遷移数', `${formatSummaryCount(trends.transitionCount)}件`],
+      ['変化があった問題数', `${formatSummaryCount(trends.changedQuestionCount)}問`],
+      ['誤った自信を修正', `${formatSummaryCount(trends.misconceptionCorrectedCount)}件`],
+      ['不安定な正解が安定', `${formatSummaryCount(trends.unstableCorrectnessStabilizedCount)}件`],
+      ['要確認から安定理解へ', `${formatSummaryCount(trends.reviewToAdvanceCount)}件`],
+      ['継続Review問題', `${formatSummaryCount(trends.continuedReviewQuestionCount)}問`],
+    ])
+  );
+  container.appendChild(createHistoryEventList(analysis.changeEvents, questionsSource));
+  container.appendChild(createContinuedReviewList(analysis.questionTrends, questionsSource));
+}
+
+function appendHistoryNotices(container, analysis) {
+  const { coverage = {}, quality = {}, retention = {} } = analysis;
+  const notices = [];
+  if (coverage.qualityStatus === 'invalid-data-excluded') {
+    notices.push(
+      `不正試行${quality.invalidAttemptCount ?? 0}件、重複${quality.duplicateAttemptCount ?? 0}件、保持上限による除外${quality.trimmedAttemptCount ?? 0}件を分析から除外しました。`
+    );
+  }
+  if (coverage.futureAttemptCount)
+    notices.push(`未来日時の試行${coverage.futureAttemptCount}件を除外しました。`);
+  if (coverage.excludedByPeriodCount)
+    notices.push(`期間外${coverage.excludedByPeriodCount}件を除外しました。`);
+  if (coverage.excludedBySectionCount)
+    notices.push(`Section外${coverage.excludedBySectionCount}件を除外しました。`);
+  if (retention.status === 'capacity-reached')
+    notices.push(
+      `保持上限${retention.maxAttemptCount}件に到達しています。「全期間」は保存済みの最新${retention.maxAttemptCount}件の範囲です。`
+    );
+  for (const text of notices) {
+    const notice = document.createElement('p');
+    notice.className = 'analysis-confidence-history__notice';
+    notice.textContent = text;
+    container.appendChild(notice);
+  }
+}
+
+function createHistoryMetricGroup(titleText, values) {
+  const section = document.createElement('section');
+  const title = document.createElement('h4');
+  title.textContent = titleText;
+  const list = document.createElement('dl');
+  list.className = 'analysis-confidence-history__metrics';
+  for (const [labelText, value] of values) {
+    const item = document.createElement('div');
+    const label = document.createElement('dt');
+    label.textContent = labelText;
+    const data = document.createElement('dd');
+    data.textContent = value;
+    item.append(label, data);
+    list.appendChild(item);
+  }
+  section.append(title, list);
+  return section;
+}
+
+function createHistoryCards(titleText, source, toCard) {
+  const section = document.createElement('section');
+  const title = document.createElement('h4');
+  title.textContent = titleText;
+  const list = document.createElement('div');
+  list.className = 'analysis-confidence-history__cards';
+  for (const sourceItem of Array.isArray(source) ? source : []) {
+    const item = toCard(sourceItem);
+    const card = document.createElement('article');
+    card.dataset.historyItem = item.id;
+    const heading = document.createElement('h5');
+    heading.textContent = item.title;
+    const detail = document.createElement('p');
+    detail.textContent = item.text;
+    card.append(heading, detail);
+    list.appendChild(card);
+  }
+  section.append(title, list);
+  return section;
+}
+
+function createHistoryEventList(source, questions) {
+  const events = [...(Array.isArray(source) ? source : [])]
+    .sort((a, b) => String(b.changedAt).localeCompare(String(a.changedAt)))
+    .slice(0, 20);
+  return createHistoryListSection('変化イベント', events, source?.length ?? 0, (event) => {
+    const item = createHistoryQuestionItem(event, questions, event.changedAt);
+    const state = document.createElement('p');
+    state.textContent = `${event.fromOutcomeId} → ${event.toOutcomeId}`;
+    const badges = document.createElement('div');
+    badges.className = 'analysis-confidence-history__badges';
+    for (const type of event.changeTypes ?? []) {
+      const badge = document.createElement('span');
+      badge.textContent = HISTORY_CHANGE_LABELS[type] ?? type;
+      badges.appendChild(badge);
+    }
+    item.append(state, badges);
+    return item;
+  });
+}
+
+function createContinuedReviewList(source, questions) {
+  const items = [...(Array.isArray(source) ? source : [])]
+    .filter((item) => item.latestGuidance === 'review' && item.reviewStreakCount >= 2)
+    .sort((a, b) => String(b.latestAnsweredAt).localeCompare(String(a.latestAnsweredAt)))
+    .slice(0, 20);
+  const total = (Array.isArray(source) ? source : []).filter(
+    (item) => item.latestGuidance === 'review' && item.reviewStreakCount >= 2
+  ).length;
+  return createHistoryListSection('継続Review問題', items, total, (trend) => {
+    const item = createHistoryQuestionItem(trend, questions, trend.latestAnsweredAt);
+    const state = document.createElement('p');
+    state.textContent = `最新状態: ${trend.latestOutcomeId}／連続Review ${trend.reviewStreakCount}回`;
+    item.appendChild(state);
+    return item;
+  });
+}
+
+function createHistoryListSection(titleText, items, total, createItem) {
+  const section = document.createElement('section');
+  const title = document.createElement('h4');
+  title.textContent = titleText;
+  const count = document.createElement('p');
+  count.className = 'analysis-confidence-history__list-count';
+  count.textContent = total ? `最新${items.length}件 / 全${total}件` : '該当する履歴はありません。';
+  const list = document.createElement('ol');
+  list.className = 'analysis-confidence-history__list';
+  items.forEach((item) => list.appendChild(createItem(item)));
+  section.append(title, count, list);
+  return section;
+}
+
+function createHistoryQuestionItem(source, questions, date) {
+  const item = document.createElement('li');
+  const question = (Array.isArray(questions) ? questions : []).find(
+    ({ id }) => id === source.questionId
+  );
+  const heading = document.createElement('h5');
+  heading.textContent = `問題ID: ${source.questionId}`;
+  const meta = document.createElement('p');
+  meta.textContent = `Section ${source.section}・${formatDateTime(date)}`;
+  const preview = document.createElement('p');
+  preview.textContent = question?.question ?? '現在の問題データに問題文がありません。';
+  item.append(heading, meta, preview);
+  return item;
+}
+
+function formatHistoryRate(value) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? `${Math.round(value * 100)}%`
+    : '未算出';
 }
 
 function createConfidenceCoverageMetrics(coverage, review) {
