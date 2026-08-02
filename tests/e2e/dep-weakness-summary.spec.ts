@@ -428,6 +428,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     ).resolves.toEqual([
       'analysis-summary-title',
       'analysis-confidence-title',
+      'analysis-confidence-history-title',
       'analysis-focus-title',
       'analysis-tags-title',
       'analysis-sections-title',
@@ -495,7 +496,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await openAnalysis(page);
 
     const disclosures = page.locator('.analysis-disclosure');
-    await expect(disclosures).toHaveCount(4);
+    await expect(disclosures).toHaveCount(5);
     await expect(
       disclosures.evaluateAll((items) => items.every((item) => !item.hasAttribute('open')))
     ).resolves.toBe(true);
@@ -535,7 +536,7 @@ test.describe('[DEP][UI] Analysis / Weakness summary', () => {
     await page.getByRole('button', { name: '← ホームへ戻る' }).click();
     await expect(page.locator('#home-view')).toBeVisible();
     await page.getByRole('button', { name: '弱点を分析' }).click();
-    await expect(disclosures).toHaveCount(4);
+    await expect(disclosures).toHaveCount(5);
     await expect(
       disclosures.evaluateAll((items) => items.every((item) => !item.hasAttribute('open')))
     ).resolves.toBe(true);
