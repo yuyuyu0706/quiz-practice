@@ -48,6 +48,9 @@ jobs:
       - name: 'Quality Gate: Run DEP confidence history persistence foundation tests'
         run: npm run test:dep-confidence-history-foundation
 
+      - name: 'Quality Gate: Run DEP confidence history analysis tests'
+        run: npm run test:dep-confidence-history-analysis-foundation
+
       - name: 'Quality Gate: Run DEP confidence analysis unit tests'
         run: npm run test:dep-confidence-analysis
 
