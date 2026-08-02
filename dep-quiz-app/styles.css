@@ -1035,6 +1035,7 @@ button.primary:hover:not(:disabled) {
 }
 .analysis-confidence-history__filter select {
   width: 100%;
+  min-height: 44px;
   min-width: 0;
   padding: 9px 10px;
   border: 1px solid var(--border);

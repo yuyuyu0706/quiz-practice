@@ -56,6 +56,16 @@ async function currentQuestionId(page: Page): Promise<string> {
 
 async function gradeAndAssertAtomicSave(page: Page, confidence: 'low' | 'medium' | 'high') {
   const questionId = await currentQuestionId(page);
+  const storageBefore = await page.evaluate(() =>
+    Object.fromEntries(
+      [
+        'depQuizProgress',
+        'depQuizConfidenceHistory',
+        'depQuizSettings',
+        'depQuizActiveSession',
+      ].map((key) => [key, localStorage.getItem(key)])
+    )
+  );
   const before = await page.evaluate(async (id) => {
     const progress = JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}');
     const history = JSON.parse(
@@ -65,7 +75,6 @@ async function gradeAndAssertAtomicSave(page: Page, confidence: 'low' | 'medium'
     return {
       progress: progress[id] ?? { seenCount: 0, correctCount: 0, wrongCount: 0 },
       history,
-      historyRaw: localStorage.getItem('depQuizConfidenceHistory'),
       settingsRaw: localStorage.getItem('depQuizSettings'),
       section: questions.find((question: Question) => question.id === id)?.section,
     };
@@ -75,9 +84,23 @@ async function gradeAndAssertAtomicSave(page: Page, confidence: 'low' | 'medium'
   // scenario can already have both draft inputs, so it intentionally skips this probe.
   if ((await page.locator('#choices-form input[name="choice"]:checked').count()) === 0) {
     await page.locator('#submit-answer').dispatchEvent('click');
-    expect(await page.evaluate(() => localStorage.getItem('depQuizConfidenceHistory'))).toBe(
-      before.historyRaw
-    );
+    const readStorage = () =>
+      page.evaluate(() =>
+        Object.fromEntries(
+          [
+            'depQuizProgress',
+            'depQuizConfidenceHistory',
+            'depQuizSettings',
+            'depQuizActiveSession',
+          ].map((key) => [key, localStorage.getItem(key)])
+        )
+      );
+    expect(await readStorage()).toEqual(storageBefore);
+    await page.reload();
+    await expect(page.locator('#home-view')).toBeVisible();
+    expect(await readStorage()).toEqual(storageBefore);
+    await page.getByRole('button', { name: '続きから再開' }).click();
+    await expect(page.locator('#quiz-view')).toBeVisible();
   }
   await page.locator('#choices-form input[name="choice"]').first().check();
   await page.locator(`#confidence-options input[value="${confidence}"]`).check();

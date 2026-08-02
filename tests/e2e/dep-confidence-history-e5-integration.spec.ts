@@ -128,6 +128,7 @@ test.describe('[DEP][DATA] Confidence history / Reset and reload', () => {
     const settings = JSON.stringify({ sections: ['1'], mode: 'normal', count: '10' });
     await page.addInitScript(
       ({ ids, rawSettings }) => {
+        if (sessionStorage.getItem('depConfidenceE5ResetSeeded') === 'true') return;
         localStorage.setItem(rawSettings.key, rawSettings.value);
         localStorage.setItem(
           'depQuizProgress',
@@ -145,6 +146,7 @@ test.describe('[DEP][DATA] Confidence history / Reset and reload', () => {
             )
           )
         );
+        sessionStorage.setItem('depConfidenceE5ResetSeeded', 'true');
       },
       {
         ids: questions.map(({ id }) => id),
@@ -179,13 +181,40 @@ test.describe('[DEP][DATA] Confidence history / Reset and reload', () => {
     expect(stored.history).toBe(JSON.stringify({ version: 1, attempts: [] }));
     expect(stored.session).toBeNull();
     expect(stored.settings).toBe(settings);
-    expect(stored.progress).toEqual({
+    expect(stored.progress).toMatchObject({
       bookmark: true,
       noteText: '保持するメモ',
       noteUpdatedAt: '2026-08-01T00:00:00.000Z',
       unknownAttribute: 'keep',
     });
+    for (const key of [
+      'seenCount',
+      'correctCount',
+      'wrongCount',
+      'lastAnsweredAt',
+      'lastConfidenceAnswer',
+      'wrongReasonTags',
+      'wrongReasonUpdatedAt',
+    ]) {
+      expect(stored.progress).not.toHaveProperty(key);
+    }
     await openAnalysis(page);
+    const e4 = page.locator('.analysis-confidence-summary');
+    await e4.locator('summary').click();
+    await expect(e4.locator('.analysis-confidence-status')).toHaveAttribute(
+      'data-coverage-status',
+      'none'
+    );
+    await expect(e4.locator('[data-confidence-metric="review"] dd')).toHaveText('0問');
+    await expect(e4.locator('[data-confidence-metric="unclassified"] dd')).not.toHaveText('0問');
+    await expect(
+      e4.locator('.analysis-confidence-outcome[data-outcome="wrong_high"]')
+    ).toContainText('0問');
+    const staleTargets = e4.locator('[data-review-target-type]');
+    await expect(staleTargets).toHaveCount(7);
+    for (let index = 0; index < 7; index += 1) {
+      await expect(staleTargets.nth(index)).toBeDisabled();
+    }
     const empty = historyPanel(page);
     await empty.locator('summary').click();
     await expect(historyMetric(empty, '回答試行数')).toHaveText('0件');
@@ -204,24 +233,48 @@ test.describe('[DEP][UI] Confidence history / Mobile lifecycle', () => {
     test.skip(testInfo.project.name !== 'mobile-chrome', 'Representative mobile lifecycle.');
     await page.setViewportSize({ width: 375, height: 812 });
     await startDepQuiz(page, '10');
+    const expectNoOverflow = async (area: Locator) => {
+      await expect(area).toBeVisible();
+      expect(await area.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+        true
+      );
+    };
+    const expectTouchTarget = async (control: Locator) => {
+      await expect(control).toBeVisible();
+      expect((await control.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    };
+    await expectNoOverflow(page.locator('#quiz-view'));
     await page.locator('#choices-form label').first().tap();
     await page.locator('.confidence-option').first().tap();
     await page.getByRole('button', { name: '回答する' }).tap();
     await page.getByRole('button', { name: '中断してホームへ' }).tap();
     await openAnalysis(page);
+    await expectNoOverflow(page.locator('#analysis-view'));
     const panel = historyPanel(page);
     await panel.locator('summary').tap();
     await expect(historyMetric(panel, '回答試行数')).toHaveText('1件');
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
-      )
-    ).toBe(true);
-    expect(
-      (await page.getByRole('button', { name: '学習履歴をリセット' }).boundingBox())?.height
-    ).toBeGreaterThanOrEqual(44);
-    await page.getByRole('button', { name: '学習履歴をリセット' }).tap();
-    await page.getByRole('button', { name: '学習履歴をリセットする' }).tap();
+    await expectNoOverflow(panel.locator('.analysis-disclosure__content'));
+    const reset = page.getByRole('button', { name: '学習履歴をリセット' });
+    for (const control of [
+      panel.locator('summary'),
+      panel.locator('[data-history-period]'),
+      panel.locator('[data-history-section]'),
+      reset,
+    ]) {
+      await expectTouchTarget(control);
+    }
+    await reset.tap();
+    const dialog = page.locator('#learning-history-reset-dialog');
+    const cancel = dialog.getByRole('button', { name: 'キャンセル' });
+    const confirm = dialog.getByRole('button', { name: '学習履歴をリセットする' });
+    await expectNoOverflow(dialog);
+    await expectTouchTarget(cancel);
+    await expectTouchTarget(confirm);
+    await cancel.tap();
+    await expect(dialog).toBeHidden();
+    await reset.tap();
+    await expectNoOverflow(dialog);
+    await confirm.tap();
     await expect(historyMetric(panel, '回答試行数')).toHaveText('0件');
     expect(await page.evaluate(() => localStorage.getItem('depQuizConfidenceHistory'))).toBe(
       JSON.stringify({ version: 1, attempts: [] })
