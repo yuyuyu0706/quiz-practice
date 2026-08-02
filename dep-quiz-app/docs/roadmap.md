@@ -33,26 +33,29 @@
 
 ## 依存順と開始ゲート
 
-Phase E の統合確認と G-1 を Phase F より先に完了し、Phase F 内は F-1、F-2、F-3 の順に進めます。Phase G のうち G-2 / G-3 は Phase F の後続です。
+G-1 を完了してから Phase E の残作業と統合確認を進め、`variantGroup` / `followUp` の保留判断を確定した後に Phase F の起票を判断します。Phase F 内は F-1、F-2、F-3 の順に進め、Phase G のうち G-2 / G-3 はその後続とします。
 
 ```text
-#374 完了 → #318 で Phase E 全体を統合確認 ─┐
-                                               ├→ Phase F 起票判断ゲート
-G-1 ルーティング契約・ブラウザ履歴同期 ──────┘
-                                                     ↓
-F-1 共通 schema 拡張 → F-2 バリアント出題 → F-3 深堀りクイズ
-                                                     ↓
-G-2 グローバルナビゲーション再設計 → G-3 個別画面 UI 洗練
+G-1 ルーティング契約・ブラウザ履歴同期 完了
+  → #374 完了
+  → #318 で Phase E 全体を統合確認
+  → variantGroup / followUp の保留判断確定
+  → Phase F 起票判断
+  → F-1 共通 schema 拡張
+  → F-2 バリアント出題
+  → F-3 深堀りクイズ
+  → G-2 グローバルナビゲーション再設計
+  → G-3 個別画面 UI 洗練
 ```
 
-G-1 は、ブラウザやスマートフォンの戻る・進む操作をアプリ内の画面遷移と同期し、後続機能と E2E の安定した入口を作るために先行します。一方、G-2 / G-3 は Phase F で追加される要素を含めてナビゲーションと画面全体を調整するため、Phase F の後に進めます。
+G-1 は、ブラウザやスマートフォンの戻る・進む操作をアプリ内の画面遷移と同期し、後続機能と E2E の安定した入口を作るため、#374 と Phase E の統合確認より先に完了させます。その後、Phase E の統合結果と G-1 の公開契約を踏まえて二つの保留判断を確定し、Phase F の起票可否を判断します。G-2 / G-3 は Phase F で追加される要素を含めてナビゲーションと画面全体を調整するため、F-3 の後に進めます。
 
 ### Phase F の起票判断ゲート
 
 Phase F の親 Issue および F-1 / F-2 / F-3 は、次の 4 条件がすべて成立した後に起票を判断します。
 
-1. [Issue #374](https://github.com/yuyuyu0706/quiz-practice/issues/374) が完了し、[Issue #318](https://github.com/yuyuyu0706/quiz-practice/issues/318) で Phase E 全体の統合確認が完了している。
-2. G-1「ルーティング契約・ブラウザ履歴同期」が完了している。
+1. G-1「ルーティング契約・ブラウザ履歴同期」が完了している。
+2. [Issue #374](https://github.com/yuyuyu0706/quiz-practice/issues/374) が完了し、[Issue #318](https://github.com/yuyuyu0706/quiz-practice/issues/318) で Phase E 全体の統合確認が完了している。
 3. 同一 `variantGroup` のセッション内出題制御が確定している。
 4. `followUp` による深堀りクイズの提示条件が確定している。
 
