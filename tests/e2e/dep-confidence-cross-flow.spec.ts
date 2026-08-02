@@ -56,11 +56,29 @@ async function currentQuestionId(page: Page): Promise<string> {
 
 async function gradeAndAssertAtomicSave(page: Page, confidence: 'low' | 'medium' | 'high') {
   const questionId = await currentQuestionId(page);
-  const before = await page.evaluate((id) => {
+  const before = await page.evaluate(async (id) => {
     const progress = JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}');
-    return progress[id] ?? { seenCount: 0, correctCount: 0, wrongCount: 0 };
+    const history = JSON.parse(
+      localStorage.getItem('depQuizConfidenceHistory') ?? '{"version":1,"attempts":[]}'
+    );
+    const questions = await fetch('./questions.json').then((response) => response.json());
+    return {
+      progress: progress[id] ?? { seenCount: 0, correctCount: 0, wrongCount: 0 },
+      history,
+      historyRaw: localStorage.getItem('depQuizConfidenceHistory'),
+      settingsRaw: localStorage.getItem('depQuizSettings'),
+      section: questions.find((question: Question) => question.id === id)?.section,
+    };
   }, questionId);
 
+  // Neither an incomplete submission nor rerendering is an answer commit. A resumed
+  // scenario can already have both draft inputs, so it intentionally skips this probe.
+  if ((await page.locator('#choices-form input[name="choice"]:checked').count()) === 0) {
+    await page.locator('#submit-answer').dispatchEvent('click');
+    expect(await page.evaluate(() => localStorage.getItem('depQuizConfidenceHistory'))).toBe(
+      before.historyRaw
+    );
+  }
   await page.locator('#choices-form input[name="choice"]').first().check();
   await page.locator(`#confidence-options input[value="${confidence}"]`).check();
   await page.getByRole('button', { name: '回答する' }).click();
@@ -68,18 +86,46 @@ async function gradeAndAssertAtomicSave(page: Page, confidence: 'low' | 'medium'
 
   const after = await page.evaluate((id) => {
     const progress = JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}');
-    return progress[id];
+    const history = JSON.parse(localStorage.getItem('depQuizConfidenceHistory') ?? '{}');
+    return { progress: progress[id], history };
   }, questionId);
-  expect(after.seenCount).toBe((before.seenCount ?? 0) + 1);
-  expect(after.correctCount + after.wrongCount).toBe(
-    (before.correctCount ?? 0) + (before.wrongCount ?? 0) + 1
+  expect(after.progress.seenCount).toBe((before.progress.seenCount ?? 0) + 1);
+  expect(after.progress.correctCount + after.progress.wrongCount).toBe(
+    (before.progress.correctCount ?? 0) + (before.progress.wrongCount ?? 0) + 1
   );
-  expect(after.lastConfidenceAnswer.confidence).toBe(confidence);
-  expect(after.lastConfidenceAnswer.answeredAt).toBe(after.lastAnsweredAt);
+  expect(after.progress.lastConfidenceAnswer.confidence).toBe(confidence);
+  expect(after.progress.lastConfidenceAnswer.answeredAt).toBe(after.progress.lastAnsweredAt);
+  expect(after.history.attempts).toHaveLength(before.history.attempts.length + 1);
+  const savedAttempt = after.history.attempts.at(-1);
+  expect(savedAttempt).toMatchObject({
+    questionId,
+    section: before.section,
+    ...after.progress.lastConfidenceAnswer,
+  });
+  expect(savedAttempt.attemptId).toBeTruthy();
+  expect(
+    before.history.attempts.map((attempt: { attemptId: string }) => attempt.attemptId)
+  ).not.toContain(savedAttempt.attemptId);
+  expect(await page.evaluate(() => localStorage.getItem('depQuizSettings'))).toBe(
+    before.settingsRaw
+  );
   await expect(page.locator('#confidence-outcome')).toHaveAttribute(
     'data-outcome',
-    `${after.lastConfidenceAnswer.result}_${confidence}`
+    `${after.progress.lastConfidenceAnswer.result}_${confidence}`
   );
+
+  const committed = await page.evaluate(() => ({
+    progress: localStorage.getItem('depQuizProgress'),
+    history: localStorage.getItem('depQuizConfidenceHistory'),
+  }));
+  await page.keyboard.press('Enter');
+  await page.locator('#submit-answer').dispatchEvent('click');
+  expect(
+    await page.evaluate(() => ({
+      progress: localStorage.getItem('depQuizProgress'),
+      history: localStorage.getItem('depQuizConfidenceHistory'),
+    }))
+  ).toEqual(committed);
 }
 
 test.describe('[DEP][FLOW] Confidence input / Cross-flow contract', () => {
@@ -132,27 +178,7 @@ test.describe('[DEP][FLOW] Confidence input / Cross-flow contract', () => {
       );
       expect(sessionMode).toBe(mode);
 
-      if (mode === 'random') {
-        await page.keyboard.press('1');
-        await page.keyboard.press('m');
-        await page.keyboard.press('Enter');
-        await expect(page.locator('#result-indicator')).toContainText(/正解|不正解/);
-        const saved = await page.evaluate(
-          (id) => {
-            const progress = JSON.parse(localStorage.getItem('depQuizProgress') ?? '{}');
-            return progress[id];
-          },
-          await currentQuestionId(page)
-        );
-        expect(saved.lastConfidenceAnswer.confidence).toBe('medium');
-        expect(saved.lastConfidenceAnswer.answeredAt).toBe(saved.lastAnsweredAt);
-        await expect(page.locator('#confidence-outcome')).toHaveAttribute(
-          'data-outcome',
-          `${saved.lastConfidenceAnswer.result}_${saved.lastConfidenceAnswer.confidence}`
-        );
-      } else {
-        await gradeAndAssertAtomicSave(page, 'medium');
-      }
+      await gradeAndAssertAtomicSave(page, 'medium');
     });
   }
 
