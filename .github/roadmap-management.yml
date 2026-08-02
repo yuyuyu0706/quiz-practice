@@ -1,0 +1,48 @@
+# Canonical responsibility map for GitHub roadmap metadata.
+#
+# This file intentionally contains references and ownership boundaries only. Phase
+# status, due dates, completion criteria, implementation progress, and historical
+# decisions remain in their existing systems of record.
+schemaVersion: 1
+trackedBy: https://github.com/yuyuyu0706/quiz-practice/issues/398
+
+authorities:
+  roadmap:
+    responsibility: >-
+      Overall phase structure, dependency order, start gates, and currently
+      effective roadmap decisions
+    canonicalUrl: ../dep-quiz-app/docs/roadmap.md
+  decisionHistory:
+    responsibility: >-
+      Phase discussion history, alternatives considered, decision rationale,
+      and change history
+    canonicalUrl: https://github.com/yuyuyu0706/quiz-practice/issues/377
+  phaseStatus:
+    responsibility: Current phase status, due date, and completion criteria
+    canonicalUrls:
+      phaseD: https://github.com/yuyuyu0706/quiz-practice/milestone/2
+      phaseE: https://github.com/yuyuyu0706/quiz-practice/milestone/3
+      phaseF: https://github.com/yuyuyu0706/quiz-practice/milestone/5
+      phaseG: https://github.com/yuyuyu0706/quiz-practice/milestone/4
+  implementation:
+    responsibility: Per-phase implementation plans and progress
+    canonicalUrl: https://github.com/yuyuyu0706/quiz-practice/issues
+  dashboard:
+    responsibility: Non-canonical execution overview
+    canonical: false
+    canonicalUrl: https://github.com/users/yuyuyu0706/projects/3
+
+issueMetadataTargets:
+  - 288
+  - 317
+  - 318
+  - 374
+
+preserve:
+  - phase status
+  - due dates
+  - completion criteria
+  - phase scope
+  - implementation history
+  - completed results
+  - historical references to issue 377
