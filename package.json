@@ -37,6 +37,8 @@
     "test:dep-confidence-feedback-e2e": "playwright test tests/e2e/dep-confidence-feedback.spec.ts",
     "test:dep-confidence-analysis-ui-e2e": "playwright test tests/e2e/dep-confidence-analysis-summary.spec.ts",
     "test:dep-confidence-history-ui-e2e": "playwright test tests/e2e/dep-confidence-history-analysis-ui.spec.ts",
+    "test:dep-confidence-e5-e2e": "playwright test tests/e2e/dep-confidence-cross-flow.spec.ts tests/e2e/dep-confidence-history-e5-integration.spec.ts",
+    "test:dep-confidence-e5": "npm run test:dep-confidence-history-foundation && npm run test:dep-confidence-history-analysis-foundation && npm run test:dep-learning-history-reset && npm run test:dep-learning-history-reset-storage && npm run test:dep-confidence-history-ui-e2e && npm run test:dep-confidence-e5-e2e",
     "test:dep-confidence-review-e2e": "playwright test tests/e2e/dep-confidence-review-targets.spec.ts",
     "test:dep-confidence-reanalysis-e2e": "playwright test tests/e2e/dep-confidence-review-reanalysis.spec.ts",
     "test:dep-confidence-e4": "npm run test:dep-confidence-analysis && npm run test:dep-weakness-review-targets && npm run test:dep-weakness-review-session && npm run test:dep-confidence-analysis-ui-e2e && npm run test:dep-confidence-review-e2e && npm run test:dep-confidence-reanalysis-e2e",
