@@ -27,6 +27,7 @@ import {
 import { buildLearningHistoryResetPlan } from './learning-history-reset.js';
 import { buildWeaknessAnalysis } from './analysis.js';
 import { buildConfidenceAnalysis } from './confidence-analysis.js';
+import { buildConfidenceHistoryAnalysis } from './confidence-history-analysis.js';
 import { buildWeaknessReviewTargetPlan } from './weakness-review-targets.js';
 import { createWeaknessReviewSession } from './weakness-review-session.js';
 import { loadQuestions } from './questions.js';
@@ -68,10 +69,13 @@ const state = {
   confidenceHistory: confidenceHistoryState.history,
   confidenceHistoryStorageStatus: confidenceHistoryState.status,
   confidenceHistoryUnsupportedVersion: confidenceHistoryState.unsupportedVersion,
+  confidenceHistoryRemovedAttemptCount: confidenceHistoryState.removedAttemptCount,
   settings: loadSettings(),
   session: null,
   analysis: null,
   confidenceAnalysis: null,
+  confidenceHistoryAnalysis: null,
+  confidenceHistoryQuery: null,
   activeResetPlan: null,
   activeWeaknessReviewTargetPlan: null,
   weaknessReviewTargetOrigin: null,
@@ -462,13 +466,37 @@ function openAnalysisView() {
 function renderAnalysisView() {
   state.analysis = buildWeaknessAnalysis(state.questions, state.progress);
   state.confidenceAnalysis = buildConfidenceAnalysis(state.questions, state.progress);
-  renderAnalysisSummary(els.analysisContainer, state.analysis, state.confidenceAnalysis);
+  state.confidenceHistoryQuery = {
+    period: '30d',
+    sectionId: null,
+    asOf: new Date().toISOString(),
+  };
+  state.confidenceHistoryAnalysis = buildConfidenceHistoryAnalysisForView();
+  renderAnalysisSummary(els.analysisContainer, state.analysis, state.confidenceAnalysis, {
+    historyAnalysis: state.confidenceHistoryAnalysis,
+    historyStatus: state.confidenceHistoryStorageStatus,
+    unsupportedVersion: state.confidenceHistoryUnsupportedVersion,
+    removedAttemptCount: state.confidenceHistoryRemovedAttemptCount,
+    questions: state.questions,
+    onHistoryQueryChange: handleConfidenceHistoryQueryChange,
+  });
   state.activeResetPlan = buildLearningHistoryResetPlan(state.progress, {
     activeSession: loadSession(),
     confidenceHistory: state.confidenceHistory,
     confidenceHistoryStorageStatus: state.confidenceHistoryStorageStatus,
   });
   updateLearningHistoryResetEntry();
+}
+
+function buildConfidenceHistoryAnalysisForView() {
+  if (state.confidenceHistoryStorageStatus === 'unsupported') return null;
+  return buildConfidenceHistoryAnalysis(state.confidenceHistory, state.confidenceHistoryQuery);
+}
+
+function handleConfidenceHistoryQueryChange(query, updateHistoryAnalysis) {
+  state.confidenceHistoryQuery = { ...state.confidenceHistoryQuery, ...query };
+  state.confidenceHistoryAnalysis = buildConfidenceHistoryAnalysisForView();
+  updateHistoryAnalysis(state.confidenceHistoryAnalysis);
 }
 
 function handleWeaknessReviewTargetRequest(event) {
