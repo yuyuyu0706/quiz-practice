@@ -16,6 +16,8 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 - 難易度管理（`difficulty`）
 - 誤答理由の補足（`whyWrong`）
 - 問題管理用メモ（`notes`）
+- 同じ論点の出題バリエーションの関係付け（`variantGroup`）
+- 解説後の追加確認候補の関係付け（`followUp`）
 
 ---
 
@@ -78,6 +80,8 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 | `sourceType`   | string        |         任意 | 問題の出自。`original` など                        |
 | `whyWrong`     | object        |         任意 | 誤答選択肢ごとの補足説明                           |
 | `notes`        | string        |         任意 | 作問・管理用メモ。アプリ表示対象外でも可           |
+| `variantGroup` | string        |         任意 | 同じ論点・選択肢本文集合に属する関係ID             |
+| `followUp`     | object        |         任意 | 解説後の追加確認候補となる問題への有向参照         |
 
 ---
 
@@ -198,6 +202,48 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 - 作問・メンテナンス用の管理メモ
 - アプリに表示しなくてもよい
 
+### 4.15 `variantGroup`
+
+`variantGroup` は、同じ知識・判断基準を異なる問い方で確認し、かつ同じ選択肢本文集合を使う問題どうしを関係付ける、DEP向けPhase F v1の任意フィールドです。タグや表示文言ではなく、アプリには直接表示しない安定した関係IDです。
+
+| 契約              | 内容                                                                           |
+| ----------------- | ------------------------------------------------------------------------------ |
+| 型                | string（非空文字列）                                                           |
+| 前後空白          | 禁止                                                                           |
+| 大文字・小文字    | 区別する                                                                       |
+| 推奨形式          | 英小文字、数字、ハイフンで構成する安定ID（例：`auto-loader-schema-evolution`） |
+| groupの最小問題数 | 2問                                                                            |
+
+同じgroupに属する問題は、次の不変条件を満たします。
+
+- 各問題は異なる`id`を持つ完全なquestion objectです。
+- `choices`はA/B/C/Dのラベルや割り当て順ではなく、選択肢本文の集合が一致します。比較時は各本文の前後空白だけを除きます。大文字小文字、句読点、記号、内部空白、文言の差は同一視しません。類似度判定やその他の自動正規化も行いません。
+- `answer`は問題ごとに持ち、問い方と選択肢の割り当てに応じてgroup内で異なってかまいません。
+- `question`、`answer`、`explanation`、`whyWrong`、`references`、`section`、`sectionTitle`、`domain`、`tags`、`difficulty`、`sourceType`、`notes`をgroup内で暗黙に共有しません。
+- progress、正答率、確信度、回答試行履歴の記録単位は従来どおり個別のquestion IDです。group単位の値は`questions.json`に保存しません。
+- 1sessionに採用する問題数、問題の選択・順序・間隔はschemaではなくF2のruntime責務です。
+
+### 4.16 `followUp`
+
+`followUp` は、元問題の解説後に追加確認候補となる問題を示す、DEP向けPhase F v1の任意フィールドです。これは候補への1段の有向参照だけを表し、自動表示や画面遷移を指示しません。
+
+```json
+{
+  "followUp": {
+    "questionId": "Q403"
+  }
+}
+```
+
+- `followUp`はplain objectで、Phase F v1で許可する子項目は`questionId`だけです。未知の子項目は禁止します。
+- `questionId`は前後空白のない非空文字列で、同じ`questions.json`内に存在する別の問題の`id`を指します。
+- 参照先は通常問題と同じ必須項目を持つ完全な独立question objectです。埋め込みの部分問題として定義しません。
+- 自己参照、存在しないIDへの参照（dangling reference）、A → B・B → Aの循環を禁止します。
+- 参照先問題は`followUp`を持てません。したがってA → B → Cの多段chainも禁止され、深度は1段です。
+- 同じ参照先を複数の元問題から参照することは禁止しません。参照先を通常の出題poolに含めるかもschemaでは決めません。
+- 参照先のID、正解、progress、確信度、回答試行履歴を元問題へ統合しません。follow-upとして回答した場合も、従来どおり参照先のquestion ID単位で記録します。
+- 提示条件、画面状態、遷移、戻り先はschemaではなくF3のruntime・UI責務です。
+
 ---
 
 ## 5. 必須項目と任意項目
@@ -225,6 +271,11 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 - `whyWrong`
 - `notes`
 
+### 任意（出題バリエーション向け）
+
+- `variantGroup`
+- `followUp`
+
 ---
 
 ## 6. DEA版との後方互換性
@@ -232,6 +283,10 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 - 既存DEA問題は、新規項目がなくても動作可能
 - 新規項目は追加方式
 - アプリ側が未対応の場合は無視しやすい設計
+- `variantGroup`と`followUp`は任意であり、両フィールドを持たない既存DEP問題も変更なしで有効
+- 既存必須項目、question ID、問題配列であるtop-level構造は変更せず、schema versionも新設しない
+- Phase F v1の`variantGroup`と`followUp`はDEP限定の拡張とし、本契約はDEA・DEA Plusのschemaや問題データを変更しない
+- 新フィールドの有無にかかわらず、progress、確信度、回答試行履歴は個別のquestion ID単位の既存契約を維持する
 
 ---
 
@@ -242,6 +297,8 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 - `difficulty`: `easy / medium / hard` の3段階
 - `tags`: 3〜6個程度を目安
 - `references`: 可能なら公式Docs中心、`title` を明確にする
+- `variantGroup`: 同じ不変条件を満たす2問以上に同じ安定IDを付与する
+- `followUp`: 同一ファイル内の参照整合性と1段制限を保つ
 
 ---
 
@@ -333,6 +390,147 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 
 ## 12. まとめ
 
-DEP版 `questions.json` は、既存DEA版の基本構造を維持しつつ、`domain / tags / difficulty / sourceType / whyWrong / notes` を拡張できる設計です。
+DEP版 `questions.json` は、既存DEA版の基本構造を維持しつつ、`domain / tags / difficulty / sourceType / whyWrong / notes` と、Phase F v1の`variantGroup / followUp`を拡張できる設計です。
 
-これにより、弱点分析・タグ別復習・難易度別出題・誤答理由の可視化といった学習体験強化に繋げられます。
+これにより、弱点分析・タグ別復習・難易度別出題・誤答理由の可視化に加えて、DEPでは問題間relationを用いた出題体験の拡張に繋げられます。
+
+---
+
+## 13. 出題バリエーション構成サンプル
+
+以下は、必須項目をすべて含むPhase F v1の正常例です。
+
+### 13.1 2問の`variantGroup`
+
+A/B/C/Dへの割り当て順は異なりますが、2問の選択肢本文集合は一致しています。問題文、正解、解説は各問題が独立して持ちます。
+
+```json
+[
+  {
+    "id": "Q401",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "question": "Auto Loaderで推論済みスキーマを継続利用するために永続化する場所はどれ？",
+    "choices": {
+      "A": "checkpointLocation",
+      "B": "schemaLocation",
+      "C": "warehouse directory",
+      "D": "driver local disk"
+    },
+    "answer": "B",
+    "explanation": "schemaLocationには推論済みスキーマが保存されます。",
+    "variantGroup": "auto-loader-schema-location"
+  },
+  {
+    "id": "Q402",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "question": "推論済みスキーマの永続化先として不適切なものはどれ？",
+    "choices": {
+      "A": "driver local disk",
+      "B": "warehouse directory",
+      "C": "schemaLocation",
+      "D": "checkpointLocation"
+    },
+    "answer": "A",
+    "explanation": "driver local diskは安定した永続化先ではありません。",
+    "variantGroup": "auto-loader-schema-location"
+  }
+]
+```
+
+### 13.2 `followUp`と両relationの併用
+
+`Q411`は`variantGroup`と`followUp`を併用しています。`Q413`は同じ配列内の完全な独立question objectで、`followUp`を持たないため、参照は1段で終了します。
+
+```json
+[
+  {
+    "id": "Q411",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "question": "Auto Loaderのスキーマ情報を永続化する設定はどれ？",
+    "choices": {
+      "A": "schemaLocation",
+      "B": "checkpointLocation",
+      "C": "cloudFiles.format",
+      "D": "maxFilesPerTrigger"
+    },
+    "answer": "A",
+    "explanation": "schemaLocationは推論済みスキーマを保持します。",
+    "variantGroup": "auto-loader-schema-setting",
+    "followUp": {
+      "questionId": "Q413"
+    }
+  },
+  {
+    "id": "Q412",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "question": "Auto Loaderのスキーマ情報の永続化に使わない設定はどれ？",
+    "choices": {
+      "A": "maxFilesPerTrigger",
+      "B": "cloudFiles.format",
+      "C": "checkpointLocation",
+      "D": "schemaLocation"
+    },
+    "answer": "C",
+    "explanation": "checkpointLocationはストリーミング進捗用であり、推論済みスキーマの永続化先ではありません。",
+    "variantGroup": "auto-loader-schema-setting"
+  },
+  {
+    "id": "Q413",
+    "section": "3",
+    "sectionTitle": "Data Transformation, Cleansing, and Quality",
+    "question": "schemaLocationとcheckpointLocationを分ける主な理由はどれ？",
+    "choices": {
+      "A": "保存対象となる状態が異なるため",
+      "B": "常に同じ値を指定する必要があるため",
+      "C": "CSVでしか利用できないため",
+      "D": "いずれも画面表示専用だから"
+    },
+    "answer": "A",
+    "explanation": "前者はスキーマ、後者はストリーミング進捗という異なる状態を管理します。"
+  }
+]
+```
+
+8章の最小構成サンプルのように`variantGroup`と`followUp`を持たない既存問題も、引き続き正常なDEP問題です。
+
+---
+
+## 14. 禁止例とschemaの責務境界
+
+次の断片は契約違反の説明用であり、完全なquestion objectを省略しています。
+
+| 禁止例                                                                                    | 契約違反となる理由                         |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 1問だけが`"variantGroup": "single"`を持つ                                                 | groupは2問以上で構成する                   |
+| 同じgroupの一方だけが`{"A": "alpha", ...}`、他方が`{"A": "different", ...}`を選択肢に持つ | 前後空白を除いた選択肢本文集合が一致しない |
+| `"variantGroup": ""`または`" variant"`                                                    | relation IDは非空で前後空白を持たない      |
+| `Q501`の`followUp.questionId`が`Q501`                                                     | 自己参照になる                             |
+| `followUp.questionId`が同じファイルにない`Q999`                                           | dangling referenceになる                   |
+| AがB、BがCを参照                                                                          | 多段chainになる                            |
+| AがB、BがAを参照                                                                          | cycleになる                                |
+| `{"questionId": "Q502", "trigger": "incorrect"}`                                          | `questionId`以外の未知子項目を持つ         |
+
+`followUp`へ提示条件などを埋め込む次の例も禁止です。
+
+```json
+{
+  "followUp": {
+    "questionId": "Q502",
+    "trigger": "incorrect",
+    "sessionMode": "review"
+  }
+}
+```
+
+Phase F v1のschemaは問題間のrelationだけを保持します。次の判断や状態は`questions.json`へ`isFollowUp`、`parentQuestionId`、`trigger`、`progressMode`、`sessionMode`、`displayOrder`などのフィールドとして保存しません。
+
+- 同一`variantGroup`から1sessionに採用する問題数、代表問題の抽選、modeごとの選択規則、出題順・間隔、session snapshot
+- follow-upの採点結果・確信度・guidanceに基づく提示条件、CTA文言、自動開始、開始・キャンセル・完了状態
+- 「次へ」とCTAの優先順位、follow-up後の戻り先、browser back/forwardとの同期
+- follow-up専用progress modeや、group単位のprogress・正答率・確信度・履歴
+
+これらのうちバリアントのsession選択はF2、解説内でのfollow-up提示・操作はF3のruntime・UI責務です。`variantGroup`と`followUp`を同じ問題で併用しても両relationは独立して解釈し、question ID単位の記録契約は変わりません。
