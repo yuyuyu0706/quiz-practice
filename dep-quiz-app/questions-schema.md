@@ -377,6 +377,21 @@ DEP 版では、DEA 版よりも以下を強化できるように、拡張可能
 - `tags` がある場合、配列
 - `whyWrong` がある場合、オブジェクト
 
+### 出題バリエーションの単項目チェック
+
+- `variantGroup` がある場合、string型の非空文字列であり、前後空白がない
+- `followUp` がある場合、plain objectであり、`questionId`以外の未知子項目がない
+- `followUp.questionId` がstring型の非空文字列であり、前後空白がない
+- `followUp.questionId` が元問題の`id`と異なり、自己参照でない
+
+### 出題バリエーションの問題集合横断チェック
+
+- 同じ`variantGroup`を持つ問題が2問以上存在する
+- 同じ`variantGroup`内の各問題で、A/B/C/Dのラベルに依存せず、各本文の前後空白だけを除いた選択肢本文multiset（重複数を含む集合）が一致する
+- `followUp.questionId` が同じ`questions.json`内の完全な独立question objectの`id`と一致し、dangling referenceでない
+- `followUp`の参照先が`followUp`を持たず、A → B → Cの多段chainがない1段参照である
+- `followUp`の参照関係にA → B・B → Aなどの循環がない
+
 ---
 
 ## 11. 今後の拡張候補
@@ -425,15 +440,15 @@ A/B/C/Dへの割り当て順は異なりますが、2問の選択肢本文集合
     "id": "Q402",
     "section": "3",
     "sectionTitle": "Data Transformation, Cleansing, and Quality",
-    "question": "推論済みスキーマの永続化先として不適切なものはどれ？",
+    "question": "ストリーミングの進捗情報を永続化する設定はどれ？",
     "choices": {
       "A": "driver local disk",
       "B": "warehouse directory",
       "C": "schemaLocation",
       "D": "checkpointLocation"
     },
-    "answer": "A",
-    "explanation": "driver local diskは安定した永続化先ではありません。",
+    "answer": "D",
+    "explanation": "checkpointLocationはストリーミングの進捗情報を保持します。",
     "variantGroup": "auto-loader-schema-location"
   }
 ]
@@ -467,7 +482,7 @@ A/B/C/Dへの割り当て順は異なりますが、2問の選択肢本文集合
     "id": "Q412",
     "section": "3",
     "sectionTitle": "Data Transformation, Cleansing, and Quality",
-    "question": "Auto Loaderのスキーマ情報の永続化に使わない設定はどれ？",
+    "question": "Auto Loaderのストリーミング進捗を保持する設定はどれ？",
     "choices": {
       "A": "maxFilesPerTrigger",
       "B": "cloudFiles.format",
