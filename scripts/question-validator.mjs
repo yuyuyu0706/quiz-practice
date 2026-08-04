@@ -6,6 +6,7 @@ export const appConfigs = {
     exactChoiceLabels: ['A', 'B', 'C', 'D'],
     allowSchemaV2: false,
     allowMultipleAnswers: false,
+    allowQuestionRelations: false,
   },
   dep: {
     label: 'DEP',
@@ -14,6 +15,7 @@ export const appConfigs = {
     exactChoiceLabels: ['A', 'B', 'C', 'D'],
     allowSchemaV2: false,
     allowMultipleAnswers: false,
+    allowQuestionRelations: true,
   },
   'dea-plus': {
     label: 'DEA Plus',
@@ -23,6 +25,7 @@ export const appConfigs = {
     maxChoices: 5,
     allowSchemaV2: true,
     allowMultipleAnswers: true,
+    allowQuestionRelations: false,
     idPattern: /^DEA-PLUS-Q\d{3}$/,
     idPatternDescription: 'DEA-PLUS-Q + 3 digits (for example DEA-PLUS-Q001)',
   },
@@ -34,7 +37,11 @@ const sourceTypeValues = ['original', 'official-inspired', 'scenario-based'];
 const scenarioTypeValues = ['single-step', 'multi-step', 'architecture', 'troubleshooting'];
 
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim() !== '';
-const isPlainObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
+const isPlainObject = (value) => {
+  if (value === null || typeof value !== 'object') return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+};
 const formatLabels = (labels) => labels.join('/');
 
 const getLineNumber = (content, startIndex) => content.slice(0, startIndex).split('\n').length;
@@ -221,6 +228,160 @@ function validateWhyWrong(question, config, label, choiceKeys, correctLabels, er
   });
 }
 
+function validateQuestionRelations(question, config, label, errors) {
+  const relationMetadata = {};
+  const relationFields = ['variantGroup', 'followUp'];
+
+  if (!config.allowQuestionRelations) {
+    relationFields.forEach((field) => {
+      if (field in question && question[field] !== undefined) {
+        errors.push(`${label} ${field} is not supported for ${config.label}.`);
+      }
+    });
+    return relationMetadata;
+  }
+
+  if ('variantGroup' in question && question.variantGroup !== undefined) {
+    if (typeof question.variantGroup !== 'string' || question.variantGroup.trim() === '') {
+      errors.push(`${label} variantGroup must be a non-empty string when present.`);
+    } else if (question.variantGroup !== question.variantGroup.trim()) {
+      errors.push(`${label} variantGroup must not have leading or trailing whitespace.`);
+    } else {
+      relationMetadata.variantGroup = question.variantGroup;
+    }
+  }
+
+  if ('followUp' in question && question.followUp !== undefined) {
+    if (!isPlainObject(question.followUp)) {
+      errors.push(`${label} followUp must be a plain object when present.`);
+      return relationMetadata;
+    }
+
+    const keys = Object.keys(question.followUp);
+    const unknownKeys = keys.filter((key) => key !== 'questionId');
+    if (unknownKeys.length > 0) {
+      errors.push(`${label} followUp only supports questionId; found ${unknownKeys.join(', ')}.`);
+    }
+
+    if (!('questionId' in question.followUp)) {
+      errors.push(`${label} followUp is missing required field: questionId.`);
+    } else if (
+      typeof question.followUp.questionId !== 'string' ||
+      question.followUp.questionId.trim() === ''
+    ) {
+      errors.push(`${label} followUp.questionId must be a non-empty string.`);
+    } else if (question.followUp.questionId !== question.followUp.questionId.trim()) {
+      errors.push(`${label} followUp.questionId must not have leading or trailing whitespace.`);
+    } else if (question.followUp.questionId === question.id) {
+      errors.push(`${label} followUp.questionId must not reference the same question.`);
+    } else if (unknownKeys.length === 0) {
+      relationMetadata.followUpQuestionId = question.followUp.questionId;
+    }
+  }
+
+  return relationMetadata;
+}
+
+function getChoicesSignature(question, config) {
+  if (!isPlainObject(question.choices)) {
+    return null;
+  }
+  const keys = Object.keys(question.choices).sort();
+  if (
+    !config.exactChoiceLabels ||
+    keys.length !== config.exactChoiceLabels.length ||
+    !config.exactChoiceLabels.every((key) => keys.includes(key)) ||
+    keys.some((key) => !isNonEmptyString(question.choices[key]))
+  ) {
+    return null;
+  }
+  return JSON.stringify(keys.map((key) => question.choices[key].trim()).sort());
+}
+
+function findCycleSources(edges) {
+  const cycleSources = new Set();
+  edges.forEach((_, start) => {
+    const path = [];
+    const positions = new Map();
+    let current = start;
+    while (edges.has(current) && !positions.has(current)) {
+      positions.set(current, path.length);
+      path.push(current);
+      current = edges.get(current);
+    }
+    if (positions.has(current)) {
+      path.slice(positions.get(current)).forEach((id) => cycleSources.add(id));
+    }
+  });
+  return cycleSources;
+}
+
+function validateRelationCollection(questions, config, metadata, labels, errors) {
+  if (!config.allowQuestionRelations) {
+    return;
+  }
+
+  const groups = new Map();
+  metadata.forEach((item, index) => {
+    if (!item.variantGroup) return;
+    const members = groups.get(item.variantGroup) ?? [];
+    members.push(index);
+    groups.set(item.variantGroup, members);
+  });
+  groups.forEach((members, groupId) => {
+    const firstLabel = labels[members[0]];
+    if (members.length < 2) {
+      errors.push(`${firstLabel} variantGroup ${groupId} must contain at least two questions.`);
+      return;
+    }
+    const signatures = members.map((index) => getChoicesSignature(questions[index], config));
+    const expected = signatures.find((signature) => signature !== null);
+    if (
+      expected !== undefined &&
+      signatures.some((signature) => signature !== null && signature !== expected)
+    ) {
+      errors.push(`${firstLabel} variantGroup ${groupId} must use the same choice text multiset.`);
+    }
+  });
+
+  const idCounts = new Map();
+  questions.forEach((question) => {
+    if (isPlainObject(question) && isNonEmptyString(question.id)) {
+      idCounts.set(question.id, (idCounts.get(question.id) ?? 0) + 1);
+    }
+  });
+  const uniqueIds = new Set(
+    [...idCounts.entries()].filter(([, count]) => count === 1).map(([id]) => id)
+  );
+  const edges = new Map();
+  metadata.forEach((item, index) => {
+    if (item.followUpQuestionId && uniqueIds.has(questions[index].id)) {
+      edges.set(questions[index].id, item.followUpQuestionId);
+    }
+  });
+  const resolvableEdges = new Map(
+    [...edges.entries()].filter(([, targetId]) => uniqueIds.has(targetId))
+  );
+  const cycleSources = findCycleSources(resolvableEdges);
+
+  metadata.forEach((item, index) => {
+    const targetId = item.followUpQuestionId;
+    if (!targetId) return;
+    const sourceId = questions[index].id;
+    if (!uniqueIds.has(sourceId) || !uniqueIds.has(targetId)) {
+      if (!idCounts.has(targetId)) {
+        errors.push(`${labels[index]} followUp references unknown question id: ${targetId}.`);
+      }
+      return;
+    }
+    if (cycleSources.has(sourceId)) {
+      errors.push(`${labels[index]} followUp must not form a cycle with question ${targetId}.`);
+    } else if (resolvableEdges.has(targetId)) {
+      errors.push(`${labels[index]} followUp target ${targetId} must not define another followUp.`);
+    }
+  });
+}
+
 export function getAppConfig(appName) {
   return appConfigs[appName];
 }
@@ -234,6 +395,8 @@ export function validateQuestions(questions, config, options = {}) {
   const ids = new Set();
   const raw = options.raw ?? '';
   const idLineHints = buildIdLineHints(raw);
+  const relationMetadata = [];
+  const labels = [];
 
   if (!config) {
     throw new Error('validateQuestions requires an app config.');
@@ -245,6 +408,8 @@ export function validateQuestions(questions, config, options = {}) {
 
   questions.forEach((question, index) => {
     const label = createQuestionLabel(question, index, raw, idLineHints);
+    labels[index] = label;
+    relationMetadata[index] = {};
 
     if (!isPlainObject(question)) {
       errors.push(`${label} must be an object.`);
@@ -367,7 +532,11 @@ export function validateQuestions(questions, config, options = {}) {
         errors.push(`${label} estimatedTimeSec must be a positive integer when present.`);
       }
     }
+
+    relationMetadata[index] = validateQuestionRelations(question, config, label, errors);
   });
+
+  validateRelationCollection(questions, config, relationMetadata, labels, errors);
 
   return errors;
 }
