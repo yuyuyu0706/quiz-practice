@@ -3335,5 +3335,120 @@
       }
     ],
     "notes": "Query Profile は『可視化・分析ツール』であり『編集ツールではない』。試験では“できること / できないこと”の切り分けが重要"
+  },
+  {
+    "id": "DEP-Q292",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": [
+      "Auto Loader",
+      "cloudFiles.schemaLocation",
+      "checkpointLocation",
+      "Structured Streaming"
+    ],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "estimatedTimeSec": 90,
+    "question": "データエンジニアが Auto Loader で JSON ファイルを継続的に取り込みます。後続実行でも推論済みスキーマを再利用し、時間の経過に伴うスキーマ変化を追跡できるようにしたい場合、読み取り側で指定すべき設定はどれですか？",
+    "choices": {
+      "A": "cloudFiles.schemaLocation",
+      "B": "badRecordsPath",
+      "C": "checkpointLocation",
+      "D": "cloudFiles.maxFilesPerTrigger"
+    },
+    "answer": "A",
+    "explanation": "正解は **cloudFiles.schemaLocation** です\n\n`cloudFiles.schemaLocation` は Auto Loader が推論したスキーマ情報を永続化し、後続実行で再利用できるようにするための読み取り側オプションです。スキーマ推論とスキーマ進化を有効にし、継続的な取り込みでデータ構造の変化を追跡するために使います。\n\n`checkpointLocation` も永続的な場所を指定しますが、主な責務は Structured Streaming の処理進捗や状態の管理です。スキーマ情報の保存先を問うこの問題では `cloudFiles.schemaLocation` が最も適切です。",
+    "whyWrong": {
+      "B": "badRecordsPath は不正または解析できないレコードの退避先を指定するための設定であり、推論済みスキーマの永続化先ではありません。",
+      "C": "checkpointLocation はストリーミングクエリの進捗や状態を保存する場所であり、Auto Loader のスキーマ推論結果を管理する読み取り側オプションではありません。",
+      "D": "cloudFiles.maxFilesPerTrigger は各トリガーで処理する新規ファイル数を制御するための設定であり、スキーマ情報の保存先ではありません。"
+    },
+    "references": [
+      {
+        "title": "Configure schema inference and evolution in Auto Loader",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/schema"
+      },
+      {
+        "title": "Configure Auto Loader for production workloads",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/production"
+      }
+    ],
+    "notes": "Phase F v1 representative variant A. `cloudFiles.schemaLocation` と `checkpointLocation` の責務分離を問う。",
+    "variantGroup": "auto-loader-state-locations",
+    "followUp": {
+      "questionId": "DEP-Q294"
+    }
+  },
+  {
+    "id": "DEP-Q293",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Structured Streaming", "checkpointLocation", "Auto Loader", "streaming state"],
+    "difficulty": "medium",
+    "sourceType": "official-inspired",
+    "estimatedTimeSec": 90,
+    "question": "Auto Loader を使ったストリーミング取り込みを停止後に再開しても、処理済みファイルを重複処理せず、前回の処理進捗から継続したい。writeStream 側で指定すべき場所の設定はどれですか？",
+    "choices": {
+      "A": "badRecordsPath",
+      "B": "cloudFiles.maxFilesPerTrigger",
+      "C": "checkpointLocation",
+      "D": "cloudFiles.schemaLocation"
+    },
+    "answer": "C",
+    "explanation": "正解は **checkpointLocation** です\n\n`checkpointLocation` は Structured Streaming クエリの進捗、オフセット、状態情報を永続化する場所です。Auto Loader でもチェックポイントにより、ストリームを再開したときに前回どこまで処理したかを追跡し、継続処理を可能にします。\n\n一方、`cloudFiles.schemaLocation` は Auto Loader のスキーマ推論・進化に関する情報を保存するための読み取り側オプションです。再開位置や処理済みファイルの管理を問う場合は `checkpointLocation` を選びます。",
+    "whyWrong": {
+      "A": "badRecordsPath は不正なレコードの退避先であり、ストリーミングの処理進捗や再開位置を保存する設定ではありません。",
+      "B": "cloudFiles.maxFilesPerTrigger は1回のトリガーで処理するファイル数を制御する設定であり、再開位置の永続化には使いません。",
+      "D": "cloudFiles.schemaLocation は推論済みスキーマやスキーマ進化の情報を保存するための設定であり、Structured Streaming の処理進捗を保存する設定ではありません。"
+    },
+    "references": [
+      {
+        "title": "Configure Auto Loader for production workloads",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/production"
+      },
+      {
+        "title": "Configure schema inference and evolution in Auto Loader",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/schema"
+      }
+    ],
+    "notes": "Phase F v1 representative variant B. variant pair の choices 本文 multiset を DEP-Q292 と一致させ、label 順だけを変更している。",
+    "variantGroup": "auto-loader-state-locations"
+  },
+  {
+    "id": "DEP-Q294",
+    "section": "2",
+    "sectionTitle": "Data Ingestion & Acquisition",
+    "domain": "Streaming",
+    "tags": ["Auto Loader", "schemaLocation", "checkpointLocation", "Structured Streaming"],
+    "difficulty": "easy",
+    "sourceType": "official-inspired",
+    "estimatedTimeSec": 75,
+    "question": "Auto Loader の本番ストリーミング取り込みで、`cloudFiles.schemaLocation` と `checkpointLocation` を分けて理解する理由として最も適切なものはどれですか？",
+    "choices": {
+      "A": "`cloudFiles.schemaLocation` はスキーマ推論・進化の情報を管理し、`checkpointLocation` はストリーミングの進捗や状態を管理するため",
+      "B": "`cloudFiles.schemaLocation` は不正レコードを保存し、`checkpointLocation` はスキーマ不一致の列だけを保存するため",
+      "C": "`cloudFiles.schemaLocation` は各マイクロバッチの最大ファイル数を制御し、`checkpointLocation` は取り込みファイル形式を指定するため",
+      "D": "`cloudFiles.schemaLocation` と `checkpointLocation` はどちらも同じ意味の必須エイリアスで、片方だけ指定すれば常に同じ設定として扱われるため"
+    },
+    "answer": "A",
+    "explanation": "正解は **`cloudFiles.schemaLocation` はスキーマ推論・進化の情報を管理し、`checkpointLocation` はストリーミングの進捗や状態を管理するため** です\n\nAuto Loader の `cloudFiles.schemaLocation` は、推論したスキーマとスキーマ進化に関する情報を保存するために使います。これに対して `checkpointLocation` は、Structured Streaming がどこまで処理したか、再開に必要な状態を保持するために使います。\n\n同じディレクトリを指定できる場合はありますが、概念上の責務は異なります。設計・運用では、スキーマ管理とストリーミング進捗管理を別の永続状態として理解することが重要です。",
+    "whyWrong": {
+      "B": "不正レコードの保存先は badRecordsPath などで扱う論点であり、schemaLocation と checkpointLocation の責務説明として不正確です。",
+      "C": "マイクロバッチの処理量制御は cloudFiles.maxFilesPerTrigger や cloudFiles.maxBytesPerTrigger の論点であり、ファイル形式指定も cloudFiles.format の責務です。",
+      "D": "同じ場所を指定できるケースはありますが、2つの設定は同義のエイリアスではなく、スキーマ管理と進捗管理という異なる責務を持ちます。"
+    },
+    "references": [
+      {
+        "title": "Configure schema inference and evolution in Auto Loader",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/schema"
+      },
+      {
+        "title": "Configure Auto Loader for production workloads",
+        "url": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/production"
+      }
+    ],
+    "notes": "Phase F v1 follow-up target. 通常問題として単独で回答でき、followUp は持たない。"
   }
 ]
