@@ -34,6 +34,7 @@
     "test:dep-confidence-flow": "node scripts/test-dep-confidence-flow.mjs",
     "test:dep-confidence-foundation": "npm run test:dep-confidence && npm run test:dep-quiz-session && npm run test:dep-confidence-progress && npm run test:dep-confidence-flow",
     "test:dep-confidence-e2e": "playwright test tests/e2e/dep-confidence-accessibility.spec.ts tests/e2e/dep-confidence-progress.spec.ts tests/e2e/dep-confidence-cross-flow.spec.ts",
+    "test:dep-variant-session-e2e": "playwright test --project=chromium tests/e2e/dep-variant-session.spec.ts",
     "test:dep-confidence-e2": "npm run test:dep-confidence-foundation && npm run test:dep-confidence-e2e",
     "test:dep-confidence-feedback-e2e": "playwright test tests/e2e/dep-confidence-feedback.spec.ts",
     "test:dep-confidence-analysis-ui-e2e": "playwright test tests/e2e/dep-confidence-analysis-summary.spec.ts",
