@@ -172,3 +172,96 @@ test('preserves valid session state through JSON round-trip and removes invalid 
   assert.equal(restored.mode, 'bookmarks');
   assert.deepEqual(restored.settingsSnapshot, { count: 2, mode: 'bookmarks' });
 });
+
+test('collapses variants after mode eligibility and before count', () => {
+  const variants = [
+    { id: 'first', section: '1', variantGroup: 'group' },
+    { id: 'independent', section: '1' },
+    { id: 'winner', section: '1', variantGroup: 'group' },
+    { id: 'outside', section: '2', variantGroup: 'group' },
+  ];
+  const progress = {
+    first: { seenCount: 5, wrongCount: 1, bookmark: true, noteText: 'note' },
+    winner: { seenCount: 1 },
+    outside: { seenCount: 0 },
+  };
+
+  const normal = createQuizSession(variants, { sections: ['1'], count: 2 }, 'normal', progress);
+  assert.deepEqual(
+    normal.pool.map(({ id }) => id),
+    ['winner', 'independent']
+  );
+  assert.deepEqual(normal.session.order, ['winner', 'independent']);
+
+  for (const mode of ['wrongOnly', 'bookmarks', 'notesOnly']) {
+    const result = createQuizSession(variants, settings, mode, progress, (entries, id) =>
+      Boolean(entries[id]?.noteText)
+    );
+    assert.deepEqual(
+      result.pool.map(({ id }) => id),
+      ['first'],
+      mode
+    );
+  }
+});
+
+test('uses stable variant ties and collapses before random shuffle', () => {
+  const variants = [
+    { id: 'first', section: '1', variantGroup: 'group' },
+    { id: 'second', section: '1', variantGroup: 'group' },
+    { id: 'independent', section: '1' },
+  ];
+  const tied = createQuizSession(variants, settings, 'normal', {}, () => false);
+  assert.deepEqual(
+    tied.pool.map(({ id }) => id),
+    ['first', 'independent']
+  );
+
+  const random = createQuizSession(
+    variants,
+    settings,
+    'random',
+    { first: { seenCount: 2 }, second: { seenCount: 1 } },
+    () => false
+  );
+  assert.equal(random.pool.length, 2);
+  assert.equal(
+    random.pool.some(({ id }) => id === 'second'),
+    true
+  );
+  assert.equal(
+    random.pool.some(({ id }) => id === 'first'),
+    false
+  );
+  assert.equal(random.session.order.length, 2);
+});
+
+test('preserves selected and legacy same-group orders when restoring sessions', () => {
+  const selected = createQuizSession(
+    [
+      { id: 'seen', section: '1', variantGroup: 'group' },
+      { id: 'unseen', section: '1', variantGroup: 'group' },
+    ],
+    settings,
+    'normal',
+    { seen: { seenCount: 1 } },
+    () => false
+  ).session;
+  assert.deepEqual(normalizeLoadedSession(JSON.parse(JSON.stringify(selected))).order, ['unseen']);
+
+  const legacy = normalizeLoadedSession({
+    schemaVersion: 1,
+    order: ['seen', 'unseen'],
+    currentIndex: 1,
+    answers: { seen: 'A' },
+    confidenceByQuestion: { unseen: 'low' },
+    choiceMap: { seen: { A: 'B' } },
+    graded: { seen: true },
+  });
+  assert.deepEqual(legacy.order, ['seen', 'unseen']);
+  assert.equal(legacy.currentIndex, 1);
+  assert.deepEqual(legacy.answers, { seen: 'A' });
+  assert.deepEqual(legacy.confidenceByQuestion, { unseen: 'low' });
+  assert.deepEqual(legacy.choiceMap, { seen: { A: 'B' } });
+  assert.deepEqual(legacy.graded, { seen: true });
+});

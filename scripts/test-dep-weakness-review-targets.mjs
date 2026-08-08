@@ -379,6 +379,81 @@ test('review guidance derives all five review outcomes and excludes advance', ()
   assert.deepEqual(confidenceAnalysis, original);
 });
 
+test('collapses section variants after eligibility and keeps the first group slot', () => {
+  const questions = [
+    question('seen', '1', { variantGroup: 'group' }),
+    question('independent', '1'),
+    question('winner', '1', { variantGroup: 'group' }),
+    question('outside', '2', { variantGroup: 'group' }),
+  ];
+  const progress = {
+    seen: progressEntry({ seenCount: 4 }),
+    winner: progressEntry({ seenCount: 1 }),
+    outside: progressEntry(),
+  };
+
+  const result = buildWeaknessReviewTargetPlan({
+    questions,
+    progress,
+    condition: { type: 'section', section: '1' },
+  });
+
+  assert.deepEqual(
+    result.items.map(({ id }) => id),
+    ['winner', 'independent']
+  );
+  assert.equal(result.targetCount, 2);
+  assert.equal(Object.hasOwn(result.items[0], 'variantGroup'), false);
+  assert.deepEqual(result.unavailableProgressIds, []);
+});
+
+test('applies variant selection after tag and confidence eligibility', () => {
+  const questions = [
+    question('ineligible', '1', { variantGroup: 'group' }),
+    question('eligible', '1', { variantGroup: 'group' }),
+  ];
+  const progress = {
+    ineligible: progressEntry({ seenCount: 0 }),
+    eligible: progressEntry({ seenCount: 5, wrongReasonTags: [conceptGap] }),
+  };
+  const tagResult = buildWeaknessReviewTargetPlan({
+    questions,
+    progress,
+    condition: { type: 'wrongReasonTag', tag: conceptGap },
+  });
+  assert.deepEqual(
+    tagResult.items.map(({ id }) => id),
+    ['eligible']
+  );
+
+  const confidenceAnalysis = {
+    classifiedItems: [
+      {
+        questionId: 'eligible',
+        result: 'correct',
+        confidence: 'low',
+        outcomeId: 'correct_low',
+        guidance: 'review',
+      },
+    ],
+  };
+  for (const condition of [
+    { type: 'confidenceOutcome', value: 'correct_low' },
+    { type: 'confidenceGuidance', value: 'review' },
+  ]) {
+    const result = buildWeaknessReviewTargetPlan({
+      questions,
+      progress,
+      confidenceAnalysis,
+      condition,
+    });
+    assert.deepEqual(
+      result.items.map(({ id }) => id),
+      ['eligible']
+    );
+  }
+});
+
 test('confidence conditions reject unknown values and return the shared empty state', () => {
   const options = {
     questions: [question('Q1', '1')],
