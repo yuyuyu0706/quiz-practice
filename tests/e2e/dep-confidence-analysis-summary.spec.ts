@@ -47,6 +47,22 @@ function metric(card: ReturnType<Page['locator']>, label: string) {
   return card.locator('dt', { hasText: label }).locator('xpath=following-sibling::dd[1]');
 }
 
+function countByOutcome(totalQuestions: number) {
+  return CONFIDENCE_OUTCOMES.map(
+    (_, index) =>
+      Math.floor(totalQuestions / CONFIDENCE_OUTCOMES.length) +
+      (index < totalQuestions % CONFIDENCE_OUTCOMES.length ? 1 : 0)
+  );
+}
+
+function formatQuestionCount(count: number) {
+  return `${count}問`;
+}
+
+function formatAccuracyRate(correctCount: number, questionCount: number) {
+  return `${Math.round((correctCount / questionCount) * 100)}%`;
+}
+
 async function expectStorageUnchanged(page: Page, expected: StorageSnapshot) {
   const actual = await page.evaluate(
     (keys) => Object.fromEntries(keys.map((key) => [key, localStorage.getItem(key)])),
@@ -110,16 +126,39 @@ test.describe('[DEP][UI] Analysis / Confidence summary', () => {
         .locator(':scope > div')
         .evaluateAll((items) => items.map((item) => item.getAttribute('data-confidence-metric')))
     ).resolves.toEqual(['advance', 'review', 'classified', 'unclassified']);
-    await expect(metric(coverage, '分析対象')).toHaveText(`${source.length}問`);
+    const expectedOutcomeCounts = countByOutcome(source.length);
+    const expectedAdvanceCount = CONFIDENCE_OUTCOMES.reduce(
+      (sum, outcome, index) =>
+        outcome.guidance === 'advance' ? sum + expectedOutcomeCounts[index] : sum,
+      0
+    );
+    const expectedReviewCount = source.length - expectedAdvanceCount;
+    await expect(metric(coverage, '分析対象')).toHaveText(formatQuestionCount(source.length));
     await expect(metric(coverage, '未判定')).toHaveText('0問');
-    await expect(metric(coverage, '安定理解')).toHaveText('16問');
-    await expect(metric(coverage, '要確認')).toHaveText('75問');
+    await expect(metric(coverage, '安定理解')).toHaveText(
+      formatQuestionCount(expectedAdvanceCount)
+    );
+    await expect(metric(coverage, '要確認')).toHaveText(formatQuestionCount(expectedReviewCount));
 
-    const expectedLevels = [
-      { id: 'high', questions: '31問', correct: '16問', wrong: '15問', rate: '52%' },
-      { id: 'medium', questions: '30問', correct: '15問', wrong: '15問', rate: '50%' },
-      { id: 'low', questions: '30問', correct: '15問', wrong: '15問', rate: '50%' },
-    ];
+    const expectedLevels = ['high', 'medium', 'low'].map((id) => {
+      const matchingOutcomes = CONFIDENCE_OUTCOMES.map((outcome, index) => ({
+        outcome,
+        count: expectedOutcomeCounts[index],
+      })).filter(({ outcome }) => outcome.confidence === id);
+      const questions = matchingOutcomes.reduce((sum, { count }) => sum + count, 0);
+      const correct = matchingOutcomes.reduce(
+        (sum, { outcome, count }) => (outcome.result === 'correct' ? sum + count : sum),
+        0
+      );
+      const wrong = questions - correct;
+      return {
+        id,
+        questions: formatQuestionCount(questions),
+        correct: formatQuestionCount(correct),
+        wrong: formatQuestionCount(wrong),
+        rate: formatAccuracyRate(correct, questions),
+      };
+    });
     await expect(
       summary
         .locator('.analysis-confidence-level')
@@ -135,7 +174,6 @@ test.describe('[DEP][UI] Analysis / Confidence summary', () => {
       await expect(metric(card, '最新評価ベース正答率')).toHaveText(expected.rate);
     }
 
-    const expectedOutcomeCounts = [16, 15, 15, 15, 15, 15];
     await expect(
       summary
         .locator('.analysis-confidence-outcome')
@@ -144,7 +182,7 @@ test.describe('[DEP][UI] Analysis / Confidence summary', () => {
     for (const [index, outcome] of CONFIDENCE_OUTCOMES.entries()) {
       const card = summary.locator(`.analysis-confidence-outcome[data-outcome="${outcome.id}"]`);
       await expect(card).toHaveAttribute('data-guidance', outcome.guidance);
-      await expect(card).toContainText(`${expectedOutcomeCounts[index]}問`);
+      await expect(card).toContainText(formatQuestionCount(expectedOutcomeCounts[index]));
     }
 
     const highlights = summary.locator('.analysis-confidence-outcome__highlight');

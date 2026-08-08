@@ -39,6 +39,9 @@ jobs:
       - name: 'Quality Gate: Validate feature implementation documents'
         run: npm run validate:feature-docs
 
+      - name: 'Quality Gate: Run question validator unit tests'
+        run: npm run test:question-validator
+
       - name: 'Quality Gate: Validate DEP question schema'
         run: npm run validate:dep-questions
 
