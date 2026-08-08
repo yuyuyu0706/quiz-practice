@@ -81,6 +81,9 @@ jobs:
       - name: 'Quality Gate: Validate E2E test catalog'
         run: npm run validate:e2e-catalog
 
+      - name: 'Quality Gate: Run DEP variant session E2E tests'
+        run: npm run test:dep-variant-session-e2e
+
       - name: 'Quality Gate: Run DEP confidence E2 tests'
         run: npm run test:dep-confidence-e2
 
