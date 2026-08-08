@@ -1,6 +1,7 @@
 import { normalizeProgressEntry, WRONG_REASON_TAGS } from './notes.js';
 import { CONFIDENCE_LEVELS } from './confidence.js';
 import { CONFIDENCE_OUTCOMES, getConfidenceOutcomeById } from './confidence-outcome.js';
+import { selectVariantCandidates } from './variant-selection.js';
 
 const NO_MATCHING_QUESTIONS = 'NO_MATCHING_QUESTIONS';
 
@@ -28,16 +29,18 @@ export function buildWeaknessReviewTargetPlan({
       raw: question,
       id,
       section,
+      variantGroup: question.variantGroup,
       sectionTitle: normalizeOptionalString(question.sectionTitle),
       questionText: normalizeQuestionText(question),
     });
   });
 
-  const items = validQuestions
-    .filter((question) =>
-      isTargetQuestion(question, safeProgress, normalizedCondition, confidenceItems)
-    )
-    .map((question) => buildTargetItem(question, safeProgress, confidenceItems.get(question.id)));
+  const eligibleQuestions = validQuestions.filter((question) =>
+    isTargetQuestion(question, safeProgress, normalizedCondition, confidenceItems)
+  );
+  const items = selectVariantCandidates(eligibleQuestions, safeProgress).map((question) =>
+    buildTargetItem(question, safeProgress, confidenceItems.get(question.id))
+  );
 
   return {
     condition: normalizedCondition,
