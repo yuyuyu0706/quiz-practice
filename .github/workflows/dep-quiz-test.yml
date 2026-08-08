@@ -45,6 +45,9 @@ jobs:
       - name: 'Quality Gate: Validate DEP question schema'
         run: npm run validate:dep-questions
 
+      - name: 'Quality Gate: Run DEP variant selection unit tests'
+        run: npm run test:dep-variant-selection
+
       - name: 'Quality Gate: Run DEP confidence foundation tests'
         run: npm run test:dep-confidence-foundation
 
