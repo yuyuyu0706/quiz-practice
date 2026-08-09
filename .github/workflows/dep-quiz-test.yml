@@ -48,6 +48,9 @@ jobs:
       - name: 'Quality Gate: Run DEP variant selection unit tests'
         run: npm run test:dep-variant-selection
 
+      - name: 'Quality Gate: Run DEP question authoring foundation tests'
+        run: npm run test:dep-question-authoring-foundation
+
       - name: 'Quality Gate: Run DEP confidence foundation tests'
         run: npm run test:dep-confidence-foundation
 
@@ -83,6 +86,9 @@ jobs:
 
       - name: 'Quality Gate: Run DEP variant session E2E tests'
         run: npm run test:dep-variant-session-e2e
+
+      - name: 'Quality Gate: Run DEP question authoring E2E tests'
+        run: npm run test:dep-question-authoring-e2e
 
       - name: 'Quality Gate: Run DEP confidence E2 tests'
         run: npm run test:dep-confidence-e2

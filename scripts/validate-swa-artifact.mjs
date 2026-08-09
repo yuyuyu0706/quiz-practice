@@ -85,6 +85,9 @@ console.log('✓ Entrypoint links are valid');
 const { artifactDir, cleanupDir } = resolveArtifact();
 
 try {
+  const forbiddenToolsDir = path.join(artifactDir, 'tools');
+  assert.ok(!fs.existsSync(forbiddenToolsDir), 'SWA artifact must not include tools/');
+
   for (const entrypoint of artifactEntrypoints) {
     const filePath = path.join(artifactDir, entrypoint);
     assert.ok(fs.existsSync(filePath), `SWA artifact must include ${entrypoint}`);
@@ -92,6 +95,7 @@ try {
   }
 
   console.log('✓ SWA artifact contains expected app entrypoints');
+  console.log('✓ SWA artifact excludes internal tools');
 } finally {
   if (cleanupDir) {
     fs.rmSync(cleanupDir, { recursive: true, force: true });
