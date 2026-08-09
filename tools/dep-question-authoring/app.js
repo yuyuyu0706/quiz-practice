@@ -9,6 +9,7 @@ import {
   cloneQuestions,
   createVariantGroup,
   removeQuestionFromVariantGroup,
+  reconcileSelectedGroupId,
   renameVariantGroup,
   searchUngroupedQuestions,
 } from './variant-editing.js';
@@ -73,11 +74,21 @@ function showOperationError(message = '') {
 }
 
 function renderSelected() {
+  const selectedGroupId = reconcileSelectedGroupId(state.workingQuestions, state.selectedGroupId);
+  if (selectedGroupId !== state.selectedGroupId) {
+    state.selectedGroupId = selectedGroupId;
+    renderGroups();
+  }
   const members = state.workingQuestions.filter(
     (question) => question.variantGroup === state.selectedGroupId
   );
   comparisonNode.hidden = !members.length;
-  if (!members.length) return;
+  if (!members.length) {
+    comparisonNode.innerHTML = '';
+    inspectorNode.hidden = true;
+    inspectorNode.innerHTML = '';
+    return;
+  }
   const comparison = buildVariantComparison(members);
   const ungrouped = state.workingQuestions.filter((question) => question.variantGroup == null);
   comparisonNode.innerHTML = `<p class="eyebrow">MEMBER COMPARISON</p><div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div>

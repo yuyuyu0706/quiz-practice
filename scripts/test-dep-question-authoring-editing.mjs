@@ -5,6 +5,7 @@ import {
   cloneQuestions,
   createVariantGroup,
   removeQuestionFromVariantGroup,
+  reconcileSelectedGroupId,
   renameVariantGroup,
   searchUngroupedQuestions,
 } from '../tools/dep-question-authoring/variant-editing.js';
@@ -36,6 +37,9 @@ assert.deepEqual(
   ['Q1', 'Q2']
 );
 assert.deepEqual(searchUngroupedQuestions(source, 'existing'), []);
+assert.equal(reconcileSelectedGroupId(source, 'existing'), 'existing');
+assert.equal(reconcileSelectedGroupId(source, 'removed-group'), 'existing');
+assert.equal(reconcileSelectedGroupId(source.slice(0, 2), 'existing'), null);
 
 const created = createVariantGroup(source, ['Q1', 'Q2'], 'new-group');
 assert.deepEqual(

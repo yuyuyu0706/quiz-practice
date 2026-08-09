@@ -17,6 +17,17 @@ export function searchUngroupedQuestions(questions, query = '') {
   });
 }
 
+export function reconcileSelectedGroupId(questions, selectedGroupId) {
+  const groupIds = [
+    ...new Set(
+      questions
+        .map((question) => question.variantGroup)
+        .filter((groupId) => typeof groupId === 'string')
+    ),
+  ];
+  return groupIds.includes(selectedGroupId) ? selectedGroupId : (groupIds[0] ?? null);
+}
+
 function assertGroupId(groupId) {
   if (typeof groupId !== 'string' || groupId.trim() === '') {
     throw new Error('Group ID must be a non-empty string.');
