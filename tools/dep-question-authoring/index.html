@@ -8,9 +8,12 @@
   </head>
   <body>
     <header>
-      <p class="eyebrow">LOCAL AUTHORING TOOL · READ ONLY</p>
-      <h1>DEP Variant Manager</h1>
-      <p>バリアントの構造と、runtime が代表問題を選ぶ理由を確認します。</p>
+      <p class="eyebrow">LOCAL AUTHORING TOOL · BROWSER MEMORY ONLY</p>
+      <div class="title-row">
+        <h1>DEP Variant Manager</h1>
+        <span id="dirty" class="dirty" hidden>Unsaved changes</span>
+      </div>
+      <p>バリアントを編集・検証し、検証済み questions.json を出力します。</p>
     </header>
     <main>
       <aside class="panel groups-panel">
@@ -22,6 +25,27 @@
       <section class="workspace">
         <div id="status" role="status">questions.json を読み込み中...</div>
         <section id="comparison" class="panel" hidden></section>
+        <section class="panel">
+          <p class="eyebrow">CREATE VARIANT GROUP</p>
+          <form id="create-form">
+            <label>Group ID<input name="groupId" required /></label>
+            <label for="create-search"
+              >Search questions
+              <input id="create-search" type="search" placeholder="問題 ID・本文を検索" />
+            </label>
+            <fieldset>
+              <legend>Ungrouped questions（2問以上）</legend>
+              <div id="create-list" class="question-list"></div>
+            </fieldset>
+            <button type="submit" class="primary">Create group</button>
+          </form>
+          <p id="operation-error" class="fail" role="alert"></p>
+        </section>
+        <section id="validation" class="panel"></section>
+        <section class="panel actions">
+          <button id="reset" type="button" disabled>Reset edits</button>
+          <button id="export" type="button">Export questions.json</button>
+        </section>
         <section id="inspector" class="panel" hidden></section>
       </section>
     </main>

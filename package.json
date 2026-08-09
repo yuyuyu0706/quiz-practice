@@ -20,6 +20,7 @@
     "test:question-validator": "node scripts/test-question-validator.mjs",
     "test:dep-variant-selection": "node scripts/test-dep-variant-selection.mjs",
     "test:dep-question-authoring": "node scripts/test-dep-question-authoring.mjs",
+    "test:dep-question-authoring-editing": "node scripts/test-dep-question-authoring-editing.mjs",
     "test:dep-variant-inspector": "node scripts/test-dep-variant-inspector.mjs",
     "test:dep-confidence": "node scripts/test-dep-confidence.mjs",
     "test:dep-confidence-outcome": "node scripts/test-dep-confidence-outcome.mjs",
