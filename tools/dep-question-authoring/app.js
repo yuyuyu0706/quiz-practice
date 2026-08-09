@@ -10,6 +10,7 @@ import {
   createVariantGroup,
   removeQuestionFromVariantGroup,
   renameVariantGroup,
+  searchUngroupedQuestions,
 } from './variant-editing.js';
 import { buildQuestionsExport, validateWorkingQuestions } from './variant-validation.js';
 
@@ -18,6 +19,7 @@ const state = {
   workingQuestions: [],
   selectedGroupId: null,
   query: '',
+  createQuery: '',
   dirty: false,
   inspector: { mode: 'normal', sections: [], progress: {} },
   validation: { valid: true, errors: [], raw: '' },
@@ -47,8 +49,10 @@ function renderGroups() {
 }
 
 function renderCreateList() {
-  document.querySelector('#create-list').innerHTML = state.workingQuestions
-    .filter((question) => question.variantGroup == null)
+  document.querySelector('#create-list').innerHTML = searchUngroupedQuestions(
+    state.workingQuestions,
+    state.createQuery
+  )
     .map(
       (question) =>
         `<label><input type="checkbox" name="questionIds" value="${escapeHtml(question.id)}"> ${escapeHtml(question.id)} — ${escapeHtml(question.question)}</label>`
@@ -87,7 +91,7 @@ function renderSelected() {
             .map(([label, text]) => `<li>${escapeHtml(label)}: ${escapeHtml(text)}</li>`)
             .join(
               ''
-            )}</ol><p class="meta"><strong>Follow-up:</strong> ${escapeHtml(item.followUpTargetId ?? 'なし')}</p><button class="danger" data-remove="${escapeHtml(item.id)}">Remove member</button></article>`
+            )}</ol><p class="meta"><strong>Choice text multiset</strong><br>${item.choiceTextMultiset.map(escapeHtml).join(' · ')}</p><p class="meta"><strong>Follow-up:</strong> ${escapeHtml(item.followUpTargetId ?? 'なし')}</p><button class="danger" data-remove="${escapeHtml(item.id)}">Remove member</button></article>`
       )
       .join('')}</div>
     <form id="add-form" class="inline-form"><label>Add ungrouped question<select name="questionId">${ungrouped.map((q) => `<option value="${escapeHtml(q.id)}">${escapeHtml(q.id)} — ${escapeHtml(q.question)}</option>`).join('')}</select></label><button type="submit" ${ungrouped.length ? '' : 'disabled'}>Add member</button></form>`;
@@ -124,7 +128,12 @@ function renderSelected() {
 function renderInspector(members) {
   const inspector = state.inspector;
   inspectorNode.hidden = false;
-  inspectorNode.innerHTML = `<p class="eyebrow">SELECTION INSPECTOR · MEMORY ONLY</p><h2>代表選択を診断</h2><div class="controls"><label>Mode<select id="mode">${['normal', 'random', 'wrongOnly', 'bookmarks', 'notesOnly'].map((mode) => `<option ${mode === inspector.mode ? 'selected' : ''}>${mode}</option>`).join('')}</select></label><label>Section<select id="section"><option value="all">すべて</option>${[...new Set(state.workingQuestions.map((q) => q.section))].map((section) => `<option ${inspector.sections.length === 1 && inspector.sections[0] === section ? 'selected' : ''}>${escapeHtml(section)}</option>`).join('')}</select></label></div><div id="result" class="result"></div>`;
+  inspectorNode.innerHTML = `<p class="eyebrow">SELECTION INSPECTOR · MEMORY ONLY</p><h2>代表選択を診断</h2><div class="controls"><label>Mode<select id="mode">${['normal', 'random', 'wrongOnly', 'bookmarks', 'notesOnly'].map((mode) => `<option ${mode === inspector.mode ? 'selected' : ''}>${mode}</option>`).join('')}</select></label><label>Section<select id="section"><option value="all">すべて</option>${[...new Set(state.workingQuestions.map((q) => q.section))].map((section) => `<option ${inspector.sections.length === 1 && inspector.sections[0] === section ? 'selected' : ''}>${escapeHtml(section)}</option>`).join('')}</select></label></div><div class="progress-grid"><strong>Member</strong><span>seen</span><span>wrong</span><span>bookmark</span><span>note</span>${members
+    .map((member) => {
+      const progress = inspector.progress[member.id] ?? {};
+      return `<strong>${escapeHtml(member.id)}</strong><input data-id="${escapeHtml(member.id)}" data-field="seenCount" type="number" min="0" value="${progress.seenCount ?? 0}"><input data-id="${escapeHtml(member.id)}" data-field="wrongCount" type="number" min="0" value="${progress.wrongCount ?? 0}"><input data-id="${escapeHtml(member.id)}" data-field="bookmark" type="checkbox" ${progress.bookmark ? 'checked' : ''}><input data-id="${escapeHtml(member.id)}" data-field="noteText" value="${escapeHtml(progress.noteText ?? '')}" aria-label="${escapeHtml(member.id)} note">`;
+    })
+    .join('')}</div><div id="result" class="result"></div>`;
   inspectorNode.querySelector('#mode').addEventListener('change', (event) => {
     inspector.mode = event.target.value;
     updateResult();
@@ -136,6 +145,18 @@ function renderInspector(members) {
         : [event.target.value];
     updateResult();
   });
+  inspectorNode.querySelectorAll('[data-field]').forEach((input) =>
+    input.addEventListener('input', () => {
+      const progress = (inspector.progress[input.dataset.id] ??= {});
+      progress[input.dataset.field] =
+        input.type === 'checkbox'
+          ? input.checked
+          : input.type === 'number'
+            ? Number(input.value)
+            : input.value;
+      updateResult();
+    })
+  );
   updateResult();
 }
 
@@ -148,7 +169,7 @@ function updateResult() {
     progress: state.inspector.progress,
   });
   document.querySelector('#result').innerHTML =
-    `<strong>Winner: ${escapeHtml(result.winnerId ?? 'なし')}</strong><ul>${result.members.map((item) => `<li class="${item.selected ? 'selected' : item.eligible ? '' : 'excluded'}">${escapeHtml(item.id)} — ${escapeHtml(item.reason)}</li>`).join('')}</ul>`;
+    `<strong>Winner: ${escapeHtml(result.winnerId ?? 'なし')}</strong>${result.randomBoundary ? `<p>${escapeHtml(result.randomBoundary)}</p>` : ''}<ul>${result.members.map((item) => `<li class="${item.selected ? 'selected' : item.eligible ? '' : 'excluded'}">${escapeHtml(item.id)} — ${escapeHtml(item.reason)}</li>`).join('')}</ul>`;
 }
 
 function renderValidation() {
@@ -176,12 +197,17 @@ document.querySelector('#search').addEventListener('input', (event) => {
   state.query = event.target.value;
   renderGroups();
 });
+document.querySelector('#create-search').addEventListener('input', (event) => {
+  state.createQuery = event.target.value;
+  renderCreateList();
+});
 document.querySelector('#create-form').addEventListener('submit', (event) => {
   event.preventDefault();
   try {
     const data = new FormData(event.currentTarget);
     const groupId = data.get('groupId');
     const ids = data.getAll('questionIds');
+    state.createQuery = '';
     applyEdit(createVariantGroup(state.workingQuestions, ids, groupId), groupId);
     event.currentTarget.reset();
   } catch (error) {

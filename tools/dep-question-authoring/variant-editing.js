@@ -4,6 +4,19 @@ export function cloneQuestions(questions) {
     : JSON.parse(JSON.stringify(questions));
 }
 
+export function searchUngroupedQuestions(questions, query = '') {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  return questions.filter((question) => {
+    if (question.variantGroup != null) return false;
+    if (!normalizedQuery) return true;
+    return [question.id, question.question].some((value) =>
+      String(value ?? '')
+        .toLocaleLowerCase()
+        .includes(normalizedQuery)
+    );
+  });
+}
+
 function assertGroupId(groupId) {
   if (typeof groupId !== 'string' || groupId.trim() === '') {
     throw new Error('Group ID must be a non-empty string.');

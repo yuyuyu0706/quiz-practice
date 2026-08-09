@@ -29,6 +29,10 @@
           <p class="eyebrow">CREATE VARIANT GROUP</p>
           <form id="create-form">
             <label>Group ID<input name="groupId" required /></label>
+            <label for="create-search"
+              >Search questions
+              <input id="create-search" type="search" placeholder="問題 ID・本文を検索" />
+            </label>
             <fieldset>
               <legend>Ungrouped questions（2問以上）</legend>
               <div id="create-list" class="question-list"></div>
