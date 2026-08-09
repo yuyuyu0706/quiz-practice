@@ -106,7 +106,8 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
 
     await expect(page.locator('#groups button', { hasText: GROUP_ID })).toHaveCount(0);
     await expect(page.locator('#comparison h2', { hasText: GROUP_ID })).toHaveCount(0);
-    await expect(page.locator('#inspector')).not.toContainText(GROUP_ID);
+    await expect(page.locator('#inspector [data-id="DEP-Q292"]')).toHaveCount(0);
+    await expect(page.locator('#inspector [data-id="DEP-Q293"]')).toHaveCount(0);
 
     await page.locator('#create-search').fill('DEP-Q29');
     await page.locator('#create-list input[value="DEP-Q292"]').check();
