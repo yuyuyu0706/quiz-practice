@@ -22,6 +22,8 @@
     "test:dep-question-authoring": "node scripts/test-dep-question-authoring.mjs",
     "test:dep-question-authoring-editing": "node scripts/test-dep-question-authoring-editing.mjs",
     "test:dep-variant-inspector": "node scripts/test-dep-variant-inspector.mjs",
+    "test:dep-question-authoring-foundation": "npm run test:dep-question-authoring && npm run test:dep-variant-inspector && npm run test:dep-question-authoring-editing",
+    "test:dep-question-authoring-e2e": "playwright test --project=chromium tests/e2e/dep-question-authoring.spec.ts",
     "test:dep-confidence": "node scripts/test-dep-confidence.mjs",
     "test:dep-confidence-outcome": "node scripts/test-dep-confidence-outcome.mjs",
     "test:dep-confidence-analysis": "node scripts/test-dep-confidence-analysis.mjs",
