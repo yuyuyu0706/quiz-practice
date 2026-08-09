@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DEP Variant Manager</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">LOCAL AUTHORING TOOL · READ ONLY</p>
+      <h1>DEP Variant Manager</h1>
+      <p>バリアントの構造と、runtime が代表問題を選ぶ理由を確認します。</p>
+    </header>
+    <main>
+      <aside class="panel groups-panel">
+        <label for="search">問題 ID・本文・グループ名を検索</label>
+        <input id="search" type="search" placeholder="例: auto-loader" />
+        <h2>Variant groups</h2>
+        <nav id="groups" aria-label="Variant groups"></nav>
+      </aside>
+      <section class="workspace">
+        <div id="status" role="status">questions.json を読み込み中...</div>
+        <section id="comparison" class="panel" hidden></section>
+        <section id="inspector" class="panel" hidden></section>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
