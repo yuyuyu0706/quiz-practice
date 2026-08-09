@@ -3,15 +3,28 @@
  * Representative selection, shuffling and count limiting intentionally happen later.
  */
 export function filterEligibleQuestionsForSession(questions, settings, mode, progress, hasNoteFn) {
-  let eligible = questions.filter((question) => settings.sections.includes(question.section));
+  return questions.filter(
+    (question) =>
+      getQuestionSessionEligibility(question, settings, mode, progress, hasNoteFn).eligible
+  );
+}
 
-  if (mode === 'wrongOnly') {
-    eligible = eligible.filter((question) => (progress?.[question.id]?.wrongCount ?? 0) > 0);
-  } else if (mode === 'bookmarks') {
-    eligible = eligible.filter((question) => progress?.[question.id]?.bookmark);
-  } else if (mode === 'notesOnly') {
-    eligible = eligible.filter((question) => hasNoteFn(progress, question.id));
+/**
+ * Evaluates one question using the canonical session eligibility rules.
+ * The reason is diagnostic metadata; `eligible` remains the filtering contract.
+ */
+export function getQuestionSessionEligibility(question, settings, mode, progress, hasNoteFn) {
+  if (!settings.sections.includes(question.section)) {
+    return { eligible: false, reason: 'section-excluded' };
   }
-
-  return eligible;
+  if (mode === 'wrongOnly' && (progress?.[question.id]?.wrongCount ?? 0) <= 0) {
+    return { eligible: false, reason: 'wrong-only-ineligible' };
+  }
+  if (mode === 'bookmarks' && !progress?.[question.id]?.bookmark) {
+    return { eligible: false, reason: 'bookmark-ineligible' };
+  }
+  if (mode === 'notesOnly' && !hasNoteFn(progress, question.id)) {
+    return { eligible: false, reason: 'notes-only-ineligible' };
+  }
+  return { eligible: true, reason: null };
 }

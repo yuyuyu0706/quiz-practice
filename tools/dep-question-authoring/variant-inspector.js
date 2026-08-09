@@ -1,16 +1,10 @@
-import { filterEligibleQuestionsForSession } from '../../dep-quiz-app/question-eligibility.js';
+import {
+  filterEligibleQuestionsForSession,
+  getQuestionSessionEligibility,
+} from '../../dep-quiz-app/question-eligibility.js';
 import { hasNote } from '../../dep-quiz-app/notes.js';
 import { normalizeProgressEntry } from '../../dep-quiz-app/progress.js';
 import { selectVariantCandidates } from '../../dep-quiz-app/variant-selection.js';
-
-function ineligibilityReason(question, settings, mode, progress) {
-  if (!settings.sections.includes(question.section)) return 'section-excluded';
-  if (mode === 'wrongOnly' && (progress[question.id]?.wrongCount ?? 0) <= 0)
-    return 'wrong-only-ineligible';
-  if (mode === 'bookmarks' && !progress[question.id]?.bookmark) return 'bookmark-ineligible';
-  if (mode === 'notesOnly' && !hasNote(progress, question.id)) return 'notes-only-ineligible';
-  return null;
-}
 
 export function inspectVariantSelection({ questions, groupId, settings, mode, progress = {} }) {
   const members = questions.filter((question) => question.variantGroup === groupId);
@@ -25,8 +19,16 @@ export function inspectVariantSelection({ questions, groupId, settings, mode, pr
     winnerId: winner?.id ?? null,
     randomBoundary: mode === 'random' ? 'Representative is selected before session shuffle.' : null,
     members: members.map((question) => {
-      const excludedReason = ineligibilityReason(question, settings, mode, progress);
-      if (excludedReason) return { id: question.id, eligible: false, reason: excludedReason };
+      const eligibility = getQuestionSessionEligibility(
+        question,
+        settings,
+        mode,
+        progress,
+        hasNote
+      );
+      if (!eligibility.eligible) {
+        return { id: question.id, eligible: false, reason: eligibility.reason };
+      }
       const seenCount = normalizeProgressEntry(progress[question.id]).seenCount;
       let reason;
       if (question.id === winner?.id) {

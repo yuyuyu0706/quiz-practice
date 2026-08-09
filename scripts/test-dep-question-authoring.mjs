@@ -6,6 +6,7 @@ import {
   getChoiceTextMultiset,
   getVariantGroupMembers,
   searchVariantAuthoringQuestions,
+  searchVariantGroups,
 } from '../tools/dep-question-authoring/variant-authoring.js';
 
 const source = JSON.parse(
@@ -24,6 +25,13 @@ assert.equal(
 );
 assert.deepEqual(getVariantGroupMembers(source, productionGroup.id), productionGroup.members);
 assert.equal(searchVariantAuthoringQuestions(source, 'q293')[0].id, 'DEP-Q293');
+const q293Groups = searchVariantGroups(source, 'q293');
+assert.equal(q293Groups.length, 1);
+assert.equal(q293Groups[0].id, 'auto-loader-state-locations');
+assert.deepEqual(
+  q293Groups[0].members.map((question) => question.id),
+  ['DEP-Q292', 'DEP-Q293']
+);
 assert.equal(
   searchVariantAuthoringQuestions(source, 'auto-loader-state-locations').some(
     (q) => q.id === 'DEP-Q293'

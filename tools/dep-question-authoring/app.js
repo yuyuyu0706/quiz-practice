@@ -1,7 +1,7 @@
 import {
   buildVariantComparison,
   buildVariantGroupIndex,
-  searchVariantAuthoringQuestions,
+  searchVariantGroups,
 } from './variant-authoring.js';
 import { inspectVariantSelection } from './variant-inspector.js';
 
@@ -25,8 +25,7 @@ function escapeHtml(value) {
 }
 
 function renderGroups() {
-  const matches = searchVariantAuthoringQuestions(state.questions, state.query);
-  const groups = buildVariantGroupIndex(matches);
+  const groups = searchVariantGroups(state.questions, state.query);
   groupsNode.innerHTML =
     groups
       .map(

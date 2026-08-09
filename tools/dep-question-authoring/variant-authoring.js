@@ -24,6 +24,16 @@ export function searchVariantAuthoringQuestions(questions, query) {
   );
 }
 
+export function searchVariantGroups(questions, query) {
+  const groups = buildVariantGroupIndex(questions);
+  const matchingGroupIds = new Set(
+    searchVariantAuthoringQuestions(questions, query)
+      .map((question) => question.variantGroup)
+      .filter((groupId) => typeof groupId === 'string')
+  );
+  return groups.filter((group) => matchingGroupIds.has(group.id));
+}
+
 export function getVariantGroupMembers(questions, groupId) {
   return questions.filter((question) => question.variantGroup === groupId);
 }
