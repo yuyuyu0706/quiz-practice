@@ -1,5 +1,6 @@
 import { assertConfidenceLevel, normalizeConfidenceLevel } from './confidence.js';
 import { selectVariantCandidates } from './variant-selection.js';
+import { filterEligibleQuestionsForSession } from './question-eligibility.js';
 
 const FIXED_CHOICE_LABELS = ['A', 'B', 'C', 'D'];
 export const SESSION_SCHEMA_VERSION = 2;
@@ -32,10 +33,7 @@ export function createSession(order, mode, settingsSnapshot) {
 }
 
 export function createQuizSession(questions, settings, mode, progress, hasNoteFn) {
-  let pool = questions.filter((q) => settings.sections.includes(q.section));
-  if (mode === 'wrongOnly') pool = pool.filter((q) => (progress[q.id]?.wrongCount ?? 0) > 0);
-  else if (mode === 'bookmarks') pool = pool.filter((q) => progress[q.id]?.bookmark);
-  else if (mode === 'notesOnly') pool = pool.filter((q) => hasNoteFn(progress, q.id));
+  let pool = filterEligibleQuestionsForSession(questions, settings, mode, progress, hasNoteFn);
   pool = selectVariantCandidates(pool, progress);
   if (mode === 'random') pool = shuffle(pool);
   const count = settings.count === 'all' ? pool.length : Number(settings.count);
