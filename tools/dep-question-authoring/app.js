@@ -24,6 +24,7 @@ const state = {
   dirty: false,
   inspector: { mode: 'normal', sections: [], progress: {} },
   validation: { valid: true, errors: [], raw: '' },
+  loadState: 'loading',
 };
 const groupsNode = document.querySelector('#groups');
 const comparisonNode = document.querySelector('#comparison');
@@ -46,7 +47,8 @@ function renderGroups() {
         (group) =>
           `<button data-group="${escapeHtml(group.id)}" class="${group.id === state.selectedGroupId ? 'active' : ''}">${escapeHtml(group.id)} <span class="badge">${group.members.length}</span></button>`
       )
-      .join('') || '<p class="meta">該当するグループはありません。</p>';
+      .join('') ||
+    '<p class="empty-state">該当するグループはありません。検索語を短くするか、空欄にして全 group を表示してください。</p>';
 }
 
 function renderCreateList() {
@@ -91,7 +93,7 @@ function renderSelected() {
   }
   const comparison = buildVariantComparison(members);
   const ungrouped = state.workingQuestions.filter((question) => question.variantGroup == null);
-  comparisonNode.innerHTML = `<p class="eyebrow">MEMBER COMPARISON</p><div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div>
+  comparisonNode.innerHTML = `<p class="eyebrow">MEMBER COMPARISON</p><div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div><p class="help">問題本文・選択肢・正解・followUp を比較し、必要な場合だけメンバーを編集します。</p>
     <form id="rename-form" class="inline-form"><label>New Group ID<input name="groupId" required></label><button type="submit">Rename group</button></form>
     <div class="cards">${comparison
       .map(
@@ -139,7 +141,7 @@ function renderSelected() {
 function renderInspector(members) {
   const inspector = state.inspector;
   inspectorNode.hidden = false;
-  inspectorNode.innerHTML = `<p class="eyebrow">SELECTION INSPECTOR · MEMORY ONLY</p><h2>代表選択を診断</h2><div class="controls"><label>Mode<select id="mode">${['normal', 'random', 'wrongOnly', 'bookmarks', 'notesOnly'].map((mode) => `<option ${mode === inspector.mode ? 'selected' : ''}>${mode}</option>`).join('')}</select></label><label>Section<select id="section"><option value="all">すべて</option>${[...new Set(state.workingQuestions.map((q) => q.section))].map((section) => `<option ${inspector.sections.length === 1 && inspector.sections[0] === section ? 'selected' : ''}>${escapeHtml(section)}</option>`).join('')}</select></label></div><div class="progress-grid"><strong>Member</strong><span>seen</span><span>wrong</span><span>bookmark</span><span>note</span>${members
+  inspectorNode.innerHTML = `<p class="eyebrow">SELECTION INSPECTOR · MEMORY ONLY</p><h2>代表選択を診断</h2><p class="help">Browser memory 内だけで診断します。実際の学習履歴や questions.json は更新しません。</p><div class="controls"><label>Mode<select id="mode">${['normal', 'random', 'wrongOnly', 'bookmarks', 'notesOnly'].map((mode) => `<option ${mode === inspector.mode ? 'selected' : ''}>${mode}</option>`).join('')}</select></label><label>Section<select id="section"><option value="all">すべて</option>${[...new Set(state.workingQuestions.map((q) => q.section))].map((section) => `<option ${inspector.sections.length === 1 && inspector.sections[0] === section ? 'selected' : ''}>${escapeHtml(section)}</option>`).join('')}</select></label></div><div class="progress-grid"><strong>Member</strong><span>seen</span><span>wrong</span><span>bookmark</span><span>note</span>${members
     .map((member) => {
       const progress = inspector.progress[member.id] ?? {};
       return `<strong>${escapeHtml(member.id)}</strong><input data-id="${escapeHtml(member.id)}" data-field="seenCount" type="number" min="0" value="${progress.seenCount ?? 0}"><input data-id="${escapeHtml(member.id)}" data-field="wrongCount" type="number" min="0" value="${progress.wrongCount ?? 0}"><input data-id="${escapeHtml(member.id)}" data-field="bookmark" type="checkbox" ${progress.bookmark ? 'checked' : ''}><input data-id="${escapeHtml(member.id)}" data-field="noteText" value="${escapeHtml(progress.noteText ?? '')}" aria-label="${escapeHtml(member.id)} note">`;
@@ -184,10 +186,11 @@ function updateResult() {
 }
 
 function renderValidation() {
-  validationNode.innerHTML = `<div class="title-row"><h2>Validation</h2><strong class="${state.validation.valid ? 'pass' : 'fail'}">${state.validation.valid ? '✓ PASS' : '✕ FAIL'} · ${state.validation.errors.length} errors</strong></div>${state.validation.errors.length ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<p class="meta">Canonical DEP validator found no errors.</p>'}`;
+  validationNode.innerHTML = `<div class="title-row"><h2>Validation</h2><strong class="${state.validation.valid ? 'pass' : 'fail'}">${state.validation.valid ? '✓ PASS' : '✕ FAIL'} · ${state.validation.errors.length} errors</strong></div><p class="help">Canonical validation が PASS の場合のみ Export できます。</p>${state.validation.errors.length ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<p class="meta">Canonical DEP validator found no errors.</p>'}`;
   dirtyNode.hidden = !state.dirty;
   document.querySelector('#reset').disabled = !state.dirty;
-  document.querySelector('#export').disabled = !state.validation.valid;
+  document.querySelector('#export').disabled =
+    state.loadState !== 'loaded' || !state.validation.valid;
 }
 
 function render() {
@@ -256,12 +259,26 @@ try {
   const response = await fetch('/dep-quiz-app/questions.json');
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   state.sourceQuestions = cloneQuestions(await response.json());
+  state.loadState = 'loaded';
   state.workingQuestions = cloneQuestions(state.sourceQuestions);
   state.inspector.sections = [...new Set(state.workingQuestions.map((q) => q.section))];
   state.selectedGroupId = buildVariantGroupIndex(state.workingQuestions)[0]?.id ?? null;
   state.validation = validateWorkingQuestions(state.workingQuestions);
-  statusNode.remove();
   render();
+  const groupCount = buildVariantGroupIndex(state.workingQuestions).length;
+  statusNode.classList.add('status-success');
+  statusNode.textContent = `読み込み完了: ${state.workingQuestions.length} questions / ${groupCount} variant groups`;
+  document.querySelector('#create-form button[type="submit"]').disabled = false;
 } catch (error) {
-  statusNode.textContent = `読み込みに失敗しました: ${error.message}`;
+  state.loadState = 'error';
+  statusNode.classList.add('status-error');
+  const isNotFound = String(error.message).startsWith('404 ');
+  statusNode.innerHTML = isNotFound
+    ? `<strong>questions.json が見つかりません (404)</strong><p>repository root を server root として、次の command で起動してください。</p><code>npm run serve:dep-question-authoring</code><p>Tool: <code>http://127.0.0.1:4173/tools/dep-question-authoring/</code><br>Data check: <code>http://127.0.0.1:4173/dep-quiz-app/questions.json</code></p><p>起動後にこのページを再読み込みしてください。</p>`
+    : `<strong>questions.json の読み込みに失敗しました</strong><p>${escapeHtml(error.message)}</p><p>ネットワークまたは server の状態を確認し、ページを再読み込みしてください。</p>`;
+  document.querySelectorAll('#create-form input, #create-form button').forEach((control) => {
+    control.disabled = true;
+  });
+  document.querySelector('#reset').disabled = true;
+  document.querySelector('#export').disabled = true;
 }
