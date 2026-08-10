@@ -258,7 +258,11 @@ window.addEventListener('beforeunload', (event) => {
 try {
   const response = await fetch('/dep-quiz-app/questions.json');
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-  state.sourceQuestions = cloneQuestions(await response.json());
+  const loadedQuestions = await response.json();
+  if (!Array.isArray(loadedQuestions) || loadedQuestions.length === 0) {
+    throw new Error('questions.json に利用可能な問題がありません。');
+  }
+  state.sourceQuestions = cloneQuestions(loadedQuestions);
   state.loadState = 'loaded';
   state.workingQuestions = cloneQuestions(state.sourceQuestions);
   state.inspector.sections = [...new Set(state.workingQuestions.map((q) => q.section))];

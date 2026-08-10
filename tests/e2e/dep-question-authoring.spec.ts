@@ -59,6 +59,23 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#export')).toBeDisabled();
   });
 
+  test('rejects an empty questions payload and keeps authoring actions disabled', async ({
+    page,
+  }) => {
+    await page.route('**/dep-quiz-app/questions.json', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+    await page.goto(TOOL_URL);
+
+    const status = page.locator('#status');
+    await expect(status).toContainText('questions.json の読み込みに失敗しました');
+    await expect(status).toContainText('questions.json に利用可能な問題がありません。');
+    await expect(status).not.toContainText('0 questions / 0 variant groups');
+    await expect(page.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await expect(page.locator('#reset')).toBeDisabled();
+    await expect(page.locator('#export')).toBeDisabled();
+  });
+
   test('guarantees production variant comparison, search, and read-only relations remain visible', async ({
     page,
   }) => {
