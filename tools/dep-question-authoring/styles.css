@@ -36,9 +36,14 @@ header {
 .validation-status {
   align-self: center;
 }
+.validation-result {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0;
+}
 .global-tools > details {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 3;
 }
 .global-actions {
   display: flex;
@@ -66,6 +71,27 @@ header {
 .quick-start ol {
   margin-bottom: 0;
   line-height: 1.7;
+}
+.glossary {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #355273;
+}
+.glossary h2 {
+  font-size: 1rem;
+}
+.glossary dl {
+  margin-bottom: 0;
+}
+.glossary dt {
+  margin-top: 10px;
+  font-weight: 800;
+}
+.glossary dd {
+  margin: 3px 0 0;
+  color: #aab7d4;
+  font-size: 0.82rem;
+  line-height: 1.55;
 }
 h1 {
   margin: 4px 0;
@@ -286,11 +312,6 @@ fieldset {
 .actions {
   flex-wrap: wrap;
 }
-.action-help {
-  flex-basis: 100%;
-  grid-column: 1 / -1;
-  margin: 0;
-}
 .operation-error:not(:empty) {
   padding: 10px 12px;
   border: 1px solid #743d48;
@@ -304,38 +325,44 @@ fieldset {
   border-radius: 12px;
   background: #101a2d;
 }
-.member-relation {
+.relation-graph {
+  display: inline-grid;
+  gap: 0;
+  min-width: min(100%, 480px);
+  padding: 10px 0;
+}
+.variant-relation {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   align-items: center;
+}
+.relation-node {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid #526889;
+  border-radius: 7px;
+  background: #0d172b;
+}
+.variant-edge {
+  flex: 1 1 80px;
+  min-width: 40px;
+  border-top: 2px solid #78e7c3;
+}
+.follow-up-relation {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 22px;
+  color: #d5a6ff;
+}
+.relation-branch {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+.edge-label {
   font-weight: 800;
 }
-.relation-label {
-  color: #78e7c3;
-  font-size: 0.82rem;
-}
-.follow-up-relations {
-  margin: 16px 0;
-  padding-left: 16px;
-  border-left: 3px solid #d5a6ff;
-}
-.relation-legend {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 0;
-}
-.relation-legend div {
-  display: grid;
-  grid-template-columns: 130px 1fr;
-  gap: 12px;
-}
-.relation-legend dt {
-  font-weight: 800;
-}
-.relation-legend dd {
-  margin: 0;
-  color: #aab7d4;
+.relation-arrow {
+  letter-spacing: -0.08em;
 }
 .choices {
   padding-left: 20px;
@@ -376,7 +403,7 @@ fieldset {
   }
   .global-tools > details,
   .global-actions,
-  .action-help {
+  .validation-result {
     grid-column: 1;
     grid-row: auto;
   }

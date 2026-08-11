@@ -31,6 +31,8 @@ const comparisonNode = document.querySelector('#comparison');
 const inspectorNode = document.querySelector('#inspector');
 const validationNode = document.querySelector('#validation-content');
 const validationStatusNode = document.querySelector('#validation-status');
+const validationResultNode = document.querySelector('#validation-result');
+const validationDetailsNode = document.querySelector('#validation');
 const statusNode = document.querySelector('#status');
 const dirtyNode = document.querySelector('#dirty');
 
@@ -108,7 +110,7 @@ function renderSelected() {
     <form id="rename-form" class="inline-form"><label>Group Name<input name="groupId" required></label><button type="submit">Rename group</button></form>
     <p id="comparison-operation-error" class="fail operation-error" role="alert"></p>
     <p class="help">questions.jsonでは<code>variantGroup</code>として保存されます。英小文字・数字・ハイフンによる安定した名前を推奨します。</p>
-    <section class="relationship-map" aria-labelledby="relationship-title"><h3 id="relationship-title">Relationship Map</h3><p class="meta">Variant Group: ${escapeHtml(state.selectedGroupId)}</p><div class="member-relation">${members.map((member) => `<span>${escapeHtml(member.id)}</span>`).join('<span aria-hidden="true">────</span>')}</div><p class="relation-label">同じ論点の出題バリエーション</p><div class="follow-up-relations">${followUps.length ? followUps.map((member) => `<p><strong>${escapeHtml(member.id)}</strong><span aria-hidden="true"> ↓ </span><strong>followUp → ${escapeHtml(member.followUp.questionId)}</strong></p>`).join('') : '<p class="meta">followUp relationはありません。</p>'}</div><dl class="relation-legend"><div><dt>Variant Group</dt><dd>同じ知識・判断基準を異なる問い方で確認する出題バリエーション。新規sessionでは同一groupから最大1問を代表として採用します。</dd></div><div><dt>followUp</dt><dd>元問題の解説後に追加確認候補となる問題への1段の有向参照。自動表示・自動遷移そのものを意味しません。</dd></div></dl></section>
+    <section class="relationship-map" aria-labelledby="relationship-title"><h3 id="relationship-title">Relationship Map</h3><p class="meta">Variant Group: ${escapeHtml(state.selectedGroupId)}</p><div class="relation-graph"><div class="variant-relation" aria-label="Variant Group members: ${members.map((member) => escapeHtml(member.id)).join(', ')}">${members.map((member, index) => `${index ? '<span class="variant-edge" aria-hidden="true"></span>' : ''}<strong class="relation-node">${escapeHtml(member.id)}</strong>`).join('')}</div>${followUps.map((member) => `<div class="follow-up-relation" aria-label="${escapeHtml(member.id)} followUp to ${escapeHtml(member.followUp.questionId)}"><span class="relation-branch" aria-hidden="true">└─</span><span class="edge-label">followUp</span><span class="relation-arrow" aria-hidden="true">──→</span><strong class="relation-node">${escapeHtml(member.followUp.questionId)}</strong></div>`).join('')}</div></section>
     <div class="cards">${comparison
       .map(
         (item) =>
@@ -162,7 +164,7 @@ function renderInspector(members) {
     bookmarks: 'ブックマークのみ',
     notesOnly: 'メモあり問題のみ',
   };
-  inspectorNode.innerHTML = `<h2>代表選択を診断</h2><p class="help">選択中のVariant Groupについて、学習履歴や出題条件を仮入力し、実際のsessionでどの問題が代表として選ばれるかをシミュレーションします。</p><p class="help">シミュレーションはBrowser memory内だけで行い、実際の学習履歴やquestions.jsonは更新しません。</p><div class="controls"><label>Session Mode（出題モード）<select id="mode">${Object.entries(
+  inspectorNode.innerHTML = `<h2>代表選択を診断</h2><p class="help">Variant Groupから1sessionに採用される問題は最大1問です。<br>どの問題が代表として選ばれるかを、本機能でシミュレーションできます。</p><div class="controls"><label>Session Mode（出題モード）<select id="mode">${Object.entries(
     modeLabels
   )
     .map(
@@ -218,7 +220,15 @@ function updateResult() {
 function renderValidation() {
   validationStatusNode.className = `validation-status ${state.validation.valid ? 'pass' : 'fail'}`;
   validationStatusNode.textContent = `Validation ${state.validation.valid ? '✓ PASS' : '✕ FAIL'} · ${state.validation.errors.length} errors`;
-  validationNode.innerHTML = `<p class="help">Canonical validation が PASS の場合のみ Export できます。</p>${state.validation.errors.length ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<p class="meta">Canonical DEP validator found no errors.</p>'}`;
+  validationResultNode.className = `validation-result ${state.validation.valid ? 'pass' : 'fail'}`;
+  validationResultNode.innerHTML = state.validation.valid
+    ? '<strong>Result : OK</strong> — Canonical DEP validator found no errors.'
+    : `<strong>Result : NG</strong> — ${state.validation.errors.length} validation errors found.`;
+  validationDetailsNode.hidden = state.validation.errors.length === 0;
+  if (!state.validation.errors.length) validationDetailsNode.open = false;
+  validationNode.innerHTML = state.validation.errors.length
+    ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>`
+    : '';
   dirtyNode.hidden = !state.dirty;
   document.querySelector('#reset').disabled = !state.dirty;
   document.querySelector('#export').disabled =

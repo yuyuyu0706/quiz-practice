@@ -40,12 +40,33 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       'Question ID・問題本文・Group 名'
     );
     await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
+    await page.locator('#quick-start-title').click();
+    const quickStart = page.locator('.quick-start');
+    await expect(quickStart.getByRole('heading', { name: '用語解説' })).toBeVisible();
+    await expect(quickStart.locator('dt')).toHaveText(['Variant Group', 'followUp']);
+    await expect(quickStart).toContainText('同じVariant Groupから最大1問を代表として採用します');
+    await expect(quickStart).toContainText('自動遷移そのものを意味しません');
     await page.locator('#create-panel > summary').click();
     await expect(
       page.locator('#create-form').locator('..').getByText('新しい group')
     ).toBeVisible();
-    await expect(page.locator('#validation')).toContainText('PASS の場合のみ Export');
-    await expect(page.getByText('Export は download only')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(
+      'Canonical validation が PASS の場合のみ Export できます。'
+    );
+    await expect(page.locator('body')).not.toContainText(
+      'Reset はbrowser memory上の未export編集を破棄します。'
+    );
+    await expect(page.locator('body')).not.toContainText(
+      'Export は download only で、元データを直接更新しません。'
+    );
+    await expect(page.locator('#reset')).toHaveAttribute(
+      'title',
+      'Browser memory上の未export編集を破棄します。'
+    );
+    await expect(page.locator('#export')).toHaveAttribute(
+      'title',
+      'Canonical validation が PASS の場合のみ Export できます。'
+    );
   });
 
   test('presents the authoring workflow as exclusive accordions with global actions', async ({
@@ -56,6 +77,11 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#validation')).not.toHaveAttribute('open', '');
     await expect(validationStatus).toBeVisible();
     await expect(validationStatus).toHaveText('Validation ✓ PASS · 0 errors');
+    await expect(page.locator('#validation-result')).toBeVisible();
+    await expect(page.locator('#validation-result')).toHaveText(
+      'Result : OK — Canonical DEP validator found no errors.'
+    );
+    await expect(page.locator('#validation')).toBeHidden();
     const summaries = page.locator('.accordion > summary');
     await expect(summaries).toHaveText([
       '1. CREATE VARIANT GROUP',
@@ -67,11 +93,15 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#comparison-panel')).not.toHaveAttribute('open', '');
     await expect(page.locator('#inspector-panel')).toHaveAttribute('open', '');
     await expect(page.locator('#inspector')).toContainText(
-      '実際のsessionでどの問題が代表として選ばれるかをシミュレーションします'
+      'Variant Groupから1sessionに採用される問題は最大1問です。'
     );
+    await expect(page.locator('#inspector')).toContainText(
+      'どの問題が代表として選ばれるかを、本機能でシミュレーションできます。'
+    );
+    await expect(page.locator('#inspector')).not.toContainText('Browser memory内だけで行い');
     await expect(page.getByLabel('Session Mode（出題モード）')).toBeVisible();
     await expect(page.getByLabel('Target Section（出題対象Section）')).toBeVisible();
-    await expect(page.locator('header #validation')).toBeVisible();
+    await expect(page.locator('header #validation-status')).toBeVisible();
     await expect(page.locator('header #reset')).toBeVisible();
     await expect(page.locator('header #export')).toBeVisible();
     await expect(page.locator('.quick-start strong')).toHaveCount(5);
@@ -122,8 +152,17 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     const relationshipMap = page.locator('.relationship-map');
     await expect(relationshipMap).toContainText('DEP-Q292');
     await expect(relationshipMap).toContainText('DEP-Q293');
-    await expect(relationshipMap).toContainText('followUp → DEP-Q294');
-    await expect(relationshipMap).toContainText('自動表示・自動遷移そのものを意味しません');
+    await expect(relationshipMap).toContainText('DEP-Q294');
+    await expect(relationshipMap.locator('.relation-graph')).toHaveCount(1);
+    await expect(relationshipMap.locator('.variant-relation')).toHaveAttribute(
+      'aria-label',
+      'Variant Group members: DEP-Q292, DEP-Q293'
+    );
+    await expect(relationshipMap.locator('.follow-up-relation')).toHaveAttribute(
+      'aria-label',
+      'DEP-Q292 followUp to DEP-Q294'
+    );
+    await expect(relationshipMap.locator('.relation-legend')).toHaveCount(0);
 
     await page.locator('#search').fill('DEP-Q293');
     await expect(page.locator('#groups button', { hasText: GROUP_ID })).toContainText('2');
@@ -177,6 +216,11 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
 
     await expect(page.locator('#comparison h2')).toContainText('1 members');
     await expect(page.locator('#validation-status')).toContainText('FAIL · 1 errors');
+    await expect(page.locator('#validation-result')).toHaveText(
+      'Result : NG — 1 validation errors found.'
+    );
+    await expect(page.locator('#validation-result')).toBeVisible();
+    await expect(page.locator('#validation')).toBeVisible();
     await expect(page.locator('#export')).toBeDisabled();
     await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
 
@@ -233,7 +277,7 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(page.locator('#comparison h2')).toContainText(
       'recreated-loader-locations 2 members'
     );
-    await expect(page.locator('#validation')).toContainText('PASS');
+    await expect(page.locator('#validation-status')).toContainText('PASS');
 
     page.once('dialog', (dialog) => dialog.accept());
     await page.locator('#reset').click();
