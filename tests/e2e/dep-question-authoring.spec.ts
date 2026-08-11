@@ -52,6 +52,10 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     page,
   }) => {
     await openRepresentativeGroup(page);
+    const validationStatus = page.locator('#validation-status');
+    await expect(page.locator('#validation')).not.toHaveAttribute('open', '');
+    await expect(validationStatus).toBeVisible();
+    await expect(validationStatus).toHaveText('Validation ✓ PASS · 0 errors');
     const summaries = page.locator('.accordion > summary');
     await expect(summaries).toHaveText([
       '1. CREATE VARIANT GROUP',
@@ -172,20 +176,40 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await memberCard(page, 'DEP-Q293').getByRole('button', { name: 'Remove member' }).click();
 
     await expect(page.locator('#comparison h2')).toContainText('1 members');
-    await expect(page.locator('#validation')).toContainText('FAIL');
+    await expect(page.locator('#validation-status')).toContainText('FAIL · 1 errors');
     await expect(page.locator('#export')).toBeDisabled();
     await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
 
     await page.locator('#add-form select').selectOption('DEP-Q293');
     await page.locator('#add-form').getByRole('button', { name: 'Add member' }).click();
-    await expect(page.locator('#validation')).toContainText('PASS');
+    await expect(page.locator('#validation-status')).toContainText('PASS · 0 errors');
 
     const renamedGroup = 'auto-loader-state-locations-e2e';
     await page.locator('#rename-form input').fill(renamedGroup);
     await page.locator('#rename-form').getByRole('button', { name: 'Rename group' }).click();
     await expect(page.locator('#comparison h2')).toContainText(`${renamedGroup} 2 members`);
     await expect(page.locator('#groups button.active')).toContainText(renamedGroup);
-    await expect(page.locator('#validation')).toContainText('PASS');
+    await expect(page.locator('#validation-status')).toContainText('PASS · 0 errors');
+  });
+
+  test('keeps a duplicate Group Name rename error visible in Comparison', async ({ page }) => {
+    await openRepresentativeGroup(page);
+    await page.locator('#create-panel > summary').click();
+    const ungrouped = page.locator('#create-list input[name="questionIds"]');
+    await ungrouped.nth(0).check();
+    await ungrouped.nth(1).check();
+    await page.locator('#create-form input[name="groupId"]').fill('comparison-error-e2e');
+    await page.locator('#create-form').getByRole('button', { name: 'Create group' }).click();
+
+    await expect(page.locator('#comparison-panel')).toHaveAttribute('open', '');
+    await page.locator('#rename-form input').fill(GROUP_ID);
+    await page.locator('#rename-form').getByRole('button', { name: 'Rename group' }).click();
+
+    const error = page.locator('#comparison-operation-error');
+    await expect(page.locator('#comparison-panel')).toHaveAttribute('open', '');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText(`Group ${GROUP_ID} already exists.`);
+    await expect(page.locator('#operation-error')).toBeHidden();
   });
 
   test('guarantees empty groups disappear, can be recreated, and Reset restores the source snapshot', async ({

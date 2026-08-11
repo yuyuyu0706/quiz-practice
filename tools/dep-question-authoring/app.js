@@ -30,6 +30,7 @@ const groupsNode = document.querySelector('#groups');
 const comparisonNode = document.querySelector('#comparison');
 const inspectorNode = document.querySelector('#inspector');
 const validationNode = document.querySelector('#validation-content');
+const validationStatusNode = document.querySelector('#validation-status');
 const statusNode = document.querySelector('#status');
 const dirtyNode = document.querySelector('#dirty');
 
@@ -71,8 +72,13 @@ function applyEdit(nextQuestions, selectedGroupId = state.selectedGroupId) {
   render();
 }
 
-function showOperationError(message = '') {
+function showCreateOperationError(message = '') {
   document.querySelector('#operation-error').textContent = message;
+}
+
+function showComparisonOperationError(message = '') {
+  const errorNode = document.querySelector('#comparison-operation-error');
+  if (errorNode) errorNode.textContent = message;
 }
 
 function renderSelected() {
@@ -100,6 +106,7 @@ function renderSelected() {
   const followUps = members.filter((member) => member.followUp?.questionId);
   comparisonNode.innerHTML = `<div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div><p class="help">このメニューでは、選択中のVariant Groupに所属する問題を比較し、メンバーの追加・削除やGroup名の変更を行えます。問題本文・選択肢・正解・followUpを確認し、「同じ論点の出題バリエーション」としてまとめる問題だけを所属させてください。</p>
     <form id="rename-form" class="inline-form"><label>Group Name<input name="groupId" required></label><button type="submit">Rename group</button></form>
+    <p id="comparison-operation-error" class="fail operation-error" role="alert"></p>
     <p class="help">questions.jsonでは<code>variantGroup</code>として保存されます。英小文字・数字・ハイフンによる安定した名前を推奨します。</p>
     <section class="relationship-map" aria-labelledby="relationship-title"><h3 id="relationship-title">Relationship Map</h3><p class="meta">Variant Group: ${escapeHtml(state.selectedGroupId)}</p><div class="member-relation">${members.map((member) => `<span>${escapeHtml(member.id)}</span>`).join('<span aria-hidden="true">────</span>')}</div><p class="relation-label">同じ論点の出題バリエーション</p><div class="follow-up-relations">${followUps.length ? followUps.map((member) => `<p><strong>${escapeHtml(member.id)}</strong><span aria-hidden="true"> ↓ </span><strong>followUp → ${escapeHtml(member.followUp.questionId)}</strong></p>`).join('') : '<p class="meta">followUp relationはありません。</p>'}</div><dl class="relation-legend"><div><dt>Variant Group</dt><dd>同じ知識・判断基準を異なる問い方で確認する出題バリエーション。新規sessionでは同一groupから最大1問を代表として採用します。</dd></div><div><dt>followUp</dt><dd>元問題の解説後に追加確認候補となる問題への1段の有向参照。自動表示・自動遷移そのものを意味しません。</dd></div></dl></section>
     <div class="cards">${comparison
@@ -121,7 +128,7 @@ function renderSelected() {
       const newId = new FormData(event.currentTarget).get('groupId');
       applyEdit(renameVariantGroup(state.workingQuestions, state.selectedGroupId, newId), newId);
     } catch (error) {
-      showOperationError(error.message);
+      showComparisonOperationError(error.message);
     }
   });
   comparisonNode.querySelector('#add-form').addEventListener('submit', (event) => {
@@ -130,7 +137,7 @@ function renderSelected() {
       const id = new FormData(event.currentTarget).get('questionId');
       applyEdit(addQuestionToVariantGroup(state.workingQuestions, id, state.selectedGroupId));
     } catch (error) {
-      showOperationError(error.message);
+      showComparisonOperationError(error.message);
     }
   });
   comparisonNode.querySelectorAll('[data-remove]').forEach((button) =>
@@ -138,7 +145,7 @@ function renderSelected() {
       try {
         applyEdit(removeQuestionFromVariantGroup(state.workingQuestions, button.dataset.remove));
       } catch (error) {
-        showOperationError(error.message);
+        showComparisonOperationError(error.message);
       }
     })
   );
@@ -209,7 +216,9 @@ function updateResult() {
 }
 
 function renderValidation() {
-  validationNode.innerHTML = `<div class="title-row"><h2>Validation</h2><strong class="${state.validation.valid ? 'pass' : 'fail'}">${state.validation.valid ? '✓ PASS' : '✕ FAIL'} · ${state.validation.errors.length} errors</strong></div><p class="help">Canonical validation が PASS の場合のみ Export できます。</p>${state.validation.errors.length ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<p class="meta">Canonical DEP validator found no errors.</p>'}`;
+  validationStatusNode.className = `validation-status ${state.validation.valid ? 'pass' : 'fail'}`;
+  validationStatusNode.textContent = `Validation ${state.validation.valid ? '✓ PASS' : '✕ FAIL'} · ${state.validation.errors.length} errors`;
+  validationNode.innerHTML = `<p class="help">Canonical validation が PASS の場合のみ Export できます。</p>${state.validation.errors.length ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<p class="meta">Canonical DEP validator found no errors.</p>'}`;
   dirtyNode.hidden = !state.dirty;
   document.querySelector('#reset').disabled = !state.dirty;
   document.querySelector('#export').disabled =
@@ -217,7 +226,7 @@ function renderValidation() {
 }
 
 function render() {
-  showOperationError();
+  showCreateOperationError();
   renderGroups();
   renderCreateList();
   renderSelected();
@@ -261,7 +270,7 @@ document.querySelector('#create-form').addEventListener('submit', (event) => {
     document.querySelector('#comparison-panel').open = true;
     event.currentTarget.reset();
   } catch (error) {
-    showOperationError(error.message);
+    showCreateOperationError(error.message);
   }
 });
 document.querySelector('#reset').addEventListener('click', () => {

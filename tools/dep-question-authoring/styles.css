@@ -33,9 +33,18 @@ header {
   cursor: pointer;
   font-weight: 800;
 }
+.validation-status {
+  align-self: center;
+}
+.global-tools > details {
+  grid-column: 1;
+  grid-row: 2;
+}
 .global-actions {
   display: flex;
   gap: 8px;
+  grid-column: 2;
+  grid-row: 1;
 }
 .global-actions button {
   width: auto;
@@ -279,7 +288,14 @@ fieldset {
 }
 .action-help {
   flex-basis: 100%;
+  grid-column: 1 / -1;
   margin: 0;
+}
+.operation-error:not(:empty) {
+  padding: 10px 12px;
+  border: 1px solid #743d48;
+  border-radius: 8px;
+  background: #301923;
 }
 .relationship-map {
   margin: 20px 0;
@@ -357,6 +373,12 @@ fieldset {
 @media (max-width: 760px) {
   .global-tools {
     grid-template-columns: 1fr;
+  }
+  .global-tools > details,
+  .global-actions,
+  .action-help {
+    grid-column: 1;
+    grid-row: auto;
   }
   main {
     grid-template-columns: 1fr;
