@@ -34,6 +34,9 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#status')).toContainText(
       /読み込み完了: \d+ questions \/ \d+ variant groups/
     );
+    await expect(page.locator('header')).toContainText(
+      'バリアント問題（同一選択肢×異なる問い）を作成するための、グルーピング・シミュレーション・問題データ（questions.json）の整合性検証が可能な開発者ツールです。'
+    );
     await expect(page.getByText('はじめて使う方へ — Quick Start')).toBeVisible();
     await expect(page.locator('.groups-panel .help')).toContainText('空欄では全 Variant groups');
     await expect(page.locator('.groups-panel .help')).toContainText(
@@ -50,15 +53,29 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#glossary')).not.toHaveAttribute('open', '');
     await page.locator('#glossary > summary').click();
     const glossary = page.locator('#glossary');
-    await expect(glossary.locator('dt')).toHaveText(['Variant Group', 'followUp']);
+    await expect(glossary.locator('dt')).toHaveText([
+      'バリアント問題',
+      'Variant Group',
+      'followUp',
+    ]);
+    await expect(glossary).toContainText('同じ選択肢を使い、問い方を変えた問題です。');
     await expect(glossary).toContainText('同じVariant Groupから最大1問を代表として採用します');
     await expect(glossary).toContainText('自動遷移そのものを意味しません');
     await page.locator('#error-help > summary').click();
     await expect(page.locator('#choice-multiset-help')).toContainText(
-      'group内の問題は、選択肢本文の集合が同じである必要があります'
+      'Variant Groupは、選択肢本文が一致している必要があります。'
     );
-    await expect(page.locator('#choice-multiset-help')).toContainText('DEP-Q208とDEP-Q226');
-    await expect(page.locator('#choice-multiset-help li')).toHaveCount(4);
+    const troubleshooting = page.locator('.troubleshooting-options');
+    await expect(troubleshooting.locator('dt')).toHaveText([
+      'Variant Groupとして扱いたい場合',
+      'Variant Groupではなく類似問題としたい場合',
+    ]);
+    await expect(troubleshooting.locator('dd')).toHaveText([
+      '同じ選択肢で、別の問題文（問い方）を作成してください。',
+      'tagsで集約することを検討してください。',
+    ]);
+    await expect(page.locator('#choice-multiset-help')).not.toContainText('DEP-Q208');
+    await expect(page.locator('#choice-multiset-help')).not.toContainText('DEP-Q226');
     await page.locator('#create-panel > summary').click();
     await expect(
       page.locator('#create-form').locator('..').getByText('新しい group')

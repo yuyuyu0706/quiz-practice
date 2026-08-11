@@ -13,7 +13,9 @@
         <h1>DEP Variant Manager</h1>
         <span id="dirty" class="dirty" hidden>Unsaved changes</span>
       </div>
-      <p>バリアントを編集・検証し、検証済み questions.json を出力します。</p>
+      <p>
+        バリアント問題（同一選択肢×異なる問い）を作成するための、グルーピング・シミュレーション・問題データ（questions.json）の整合性検証が可能な開発者ツールです。
+      </p>
       <section class="global-tools" aria-label="Global validation and actions">
         <strong id="validation-status" class="validation-status" role="status"
           >Validation を準備中...</strong
@@ -69,6 +71,8 @@
         <summary id="glossary-title">用語解説</summary>
         <div class="manual-content">
           <dl>
+            <dt>バリアント問題</dt>
+            <dd>同じ選択肢を使い、問い方を変えた問題です。</dd>
             <dt>Variant Group</dt>
             <dd>
               同じ知識・判断基準を異なる問い方で確認する問題のまとまり。新規sessionでは、同じVariant
@@ -86,26 +90,14 @@
         <div class="manual-content">
           <section id="choice-multiset-help" aria-labelledby="choice-multiset-help-title">
             <h2 id="choice-multiset-help-title">同じchoice text multisetではない</h2>
-            <p>
-              Variant
-              Groupは「同じ論点」というだけでは作成できません。group内の問題は、選択肢本文の集合が同じである必要があります。
-            </p>
-            <p>
-              例えばDEP-Q208とDEP-Q226はどちらもストリーミング重複排除を扱いますが、選択肢本文のセットが異なるため同じVariant
-              Groupにはできません。
-            </p>
+            <p>Variant Groupは、選択肢本文が一致している必要があります。</p>
             <h3>対策</h3>
-            <ol>
-              <li>単にtopic / keywordが似ている場合はgroup化しない。</li>
-              <li>topic上の関連付けには既存tagsを利用する。</li>
-              <li>
-                Variantとして扱いたい場合は、同じchoice text setを使用した別の問い方として作問する。
-              </li>
-              <li>label A/B/C/Dの割り当て順は異なってよいが、choice本文そのものは一致させる。</li>
-            </ol>
-            <p class="manual-warning">
-              既存問題の選択肢をValidationを通す目的だけで無理に書き換えないでください。
-            </p>
+            <dl class="troubleshooting-options">
+              <dt>Variant Groupとして扱いたい場合</dt>
+              <dd>同じ選択肢で、別の問題文（問い方）を作成してください。</dd>
+              <dt>Variant Groupではなく類似問題としたい場合</dt>
+              <dd><code>tags</code>で集約することを検討してください。</dd>
+            </dl>
           </section>
         </div>
       </details>

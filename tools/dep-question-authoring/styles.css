@@ -95,11 +95,13 @@ header {
   font-size: 0.82rem;
   line-height: 1.55;
 }
-.manual-warning,
 .validation-guidance {
   padding: 10px 12px;
   border-left: 3px solid #ffcf70;
   background: #2b2416;
+}
+.troubleshooting-options dd::before {
+  content: '→ ';
 }
 .validation-guidance a {
   color: #78e7c3;
