@@ -42,10 +42,23 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
     await page.locator('#quick-start-title').click();
     const quickStart = page.locator('.quick-start');
-    await expect(quickStart.getByRole('heading', { name: '用語解説' })).toBeVisible();
-    await expect(quickStart.locator('dt')).toHaveText(['Variant Group', 'followUp']);
-    await expect(quickStart).toContainText('同じVariant Groupから最大1問を代表として採用します');
-    await expect(quickStart).toContainText('自動遷移そのものを意味しません');
+    await expect(quickStart.locator('li')).toHaveCount(5);
+    await expect(quickStart.locator('li').nth(4)).toContainText('dep-quiz-app/questions.json');
+    await expect(quickStart.locator('li').nth(4)).toContainText('commit');
+    await expect(quickStart.locator('li').nth(4)).toContainText('PR / mergeフロー');
+    await expect(page.locator('.manual-panel')).toHaveCount(3);
+    await expect(page.locator('#glossary')).not.toHaveAttribute('open', '');
+    await page.locator('#glossary > summary').click();
+    const glossary = page.locator('#glossary');
+    await expect(glossary.locator('dt')).toHaveText(['Variant Group', 'followUp']);
+    await expect(glossary).toContainText('同じVariant Groupから最大1問を代表として採用します');
+    await expect(glossary).toContainText('自動遷移そのものを意味しません');
+    await page.locator('#error-help > summary').click();
+    await expect(page.locator('#choice-multiset-help')).toContainText(
+      'group内の問題は、選択肢本文の集合が同じである必要があります'
+    );
+    await expect(page.locator('#choice-multiset-help')).toContainText('DEP-Q208とDEP-Q226');
+    await expect(page.locator('#choice-multiset-help li')).toHaveCount(4);
     await page.locator('#create-panel > summary').click();
     await expect(
       page.locator('#create-form').locator('..').getByText('新しい group')
@@ -149,6 +162,13 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(memberCard(page, 'DEP-Q292').getByText('Choice text multiset')).toBeVisible();
     await expect(memberCard(page, 'DEP-Q292').getByText(/Follow-up:\s*DEP-Q294/)).toBeVisible();
     await expect(memberCard(page, 'DEP-Q293')).toBeVisible();
+    const comparisonGuide = page.locator('.comparison-guide');
+    await expect(comparisonGuide.locator('p')).toHaveCount(2);
+    await expect(comparisonGuide.locator('li')).toHaveText([
+      '問題本文・選択肢・正解・followUpを比較する',
+      'Variant Groupのメンバーを追加・削除する',
+      'Group Nameを変更する',
+    ]);
     const relationshipMap = page.locator('.relationship-map');
     await expect(relationshipMap).toContainText('DEP-Q292');
     await expect(relationshipMap).toContainText('DEP-Q293');
@@ -254,6 +274,27 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(error).toBeVisible();
     await expect(error).toHaveText(`Group ${GROUP_ID} already exists.`);
     await expect(page.locator('#operation-error')).toBeHidden();
+  });
+
+  test('links a choice multiset validation failure to its troubleshooting guide', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#create-panel > summary').click();
+    await page.locator('#create-list input[value="DEP-Q208"]').check();
+    await page.locator('#create-list input[value="DEP-Q226"]').check();
+    await page.locator('#create-form input[name="groupId"]').fill('invalid-choice-multiset-e2e');
+    await page.locator('#create-form').getByRole('button', { name: 'Create group' }).click();
+
+    await expect(page.locator('#validation-content')).toContainText(
+      'must use the same choice text multiset'
+    );
+    await page.locator('#validation > summary').click();
+    const helpLink = page.locator('#choice-multiset-help-link');
+    await expect(helpLink).toBeVisible();
+    await helpLink.click();
+    await expect(page.locator('#error-help')).toHaveAttribute('open', '');
+    await expect(page.locator('#choice-multiset-help')).toBeVisible();
   });
 
   test('guarantees empty groups disappear, can be recreated, and Reset restores the source snapshot', async ({

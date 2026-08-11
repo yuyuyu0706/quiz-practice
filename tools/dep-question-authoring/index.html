@@ -43,8 +43,8 @@
         </div>
       </section>
     </header>
-    <section class="quick-start" aria-labelledby="quick-start-title">
-      <details>
+    <section class="manuals" aria-label="Authoring guide">
+      <details class="manual-panel quick-start">
         <summary id="quick-start-title">はじめて使う方へ — Quick Start</summary>
         <ol>
           <li>必要なら <strong>CREATE VARIANT GROUP</strong> で新しいgroupを作ります。</li>
@@ -54,12 +54,20 @@
             <strong>Validation</strong> がPASSしたら
             <strong>Export questions.json</strong> で出力します。
           </li>
+          <li>
+            出力した<code>questions.json</code>を
+            <code>quiz-practice/dep-quiz-app/questions.json</code
+            >へ反映します。差分を確認して開発branchへcommitし、通常のPR /
+            mergeフローでmainへ反映してください。
+          </li>
         </ol>
         <p class="help">
           既存Variant Groupの確認だけなら、Createを飛ばしてComparisonから開始できます。
         </p>
-        <section class="glossary" aria-labelledby="glossary-title">
-          <h2 id="glossary-title">用語解説</h2>
+      </details>
+      <details id="glossary" class="manual-panel">
+        <summary id="glossary-title">用語解説</summary>
+        <div class="manual-content">
           <dl>
             <dt>Variant Group</dt>
             <dd>
@@ -71,7 +79,35 @@
               元問題の解説後に、理解をもう一段確認するための追加確認候補。元問題から別questionへの1段の参照であり、自動遷移そのものを意味しません。
             </dd>
           </dl>
-        </section>
+        </div>
+      </details>
+      <details id="error-help" class="manual-panel">
+        <summary>エラー対策</summary>
+        <div class="manual-content">
+          <section id="choice-multiset-help" aria-labelledby="choice-multiset-help-title">
+            <h2 id="choice-multiset-help-title">同じchoice text multisetではない</h2>
+            <p>
+              Variant
+              Groupは「同じ論点」というだけでは作成できません。group内の問題は、選択肢本文の集合が同じである必要があります。
+            </p>
+            <p>
+              例えばDEP-Q208とDEP-Q226はどちらもストリーミング重複排除を扱いますが、選択肢本文のセットが異なるため同じVariant
+              Groupにはできません。
+            </p>
+            <h3>対策</h3>
+            <ol>
+              <li>単にtopic / keywordが似ている場合はgroup化しない。</li>
+              <li>topic上の関連付けには既存tagsを利用する。</li>
+              <li>
+                Variantとして扱いたい場合は、同じchoice text setを使用した別の問い方として作問する。
+              </li>
+              <li>label A/B/C/Dの割り当て順は異なってよいが、choice本文そのものは一致させる。</li>
+            </ol>
+            <p class="manual-warning">
+              既存問題の選択肢をValidationを通す目的だけで無理に書き換えないでください。
+            </p>
+          </section>
+        </div>
       </details>
     </section>
     <main>

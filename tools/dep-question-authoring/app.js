@@ -106,7 +106,7 @@ function renderSelected() {
   const comparison = buildVariantComparison(members);
   const ungrouped = state.workingQuestions.filter((question) => question.variantGroup == null);
   const followUps = members.filter((member) => member.followUp?.questionId);
-  comparisonNode.innerHTML = `<div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div><p class="help">このメニューでは、選択中のVariant Groupに所属する問題を比較し、メンバーの追加・削除やGroup名の変更を行えます。問題本文・選択肢・正解・followUpを確認し、「同じ論点の出題バリエーション」としてまとめる問題だけを所属させてください。</p>
+  comparisonNode.innerHTML = `<div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div><div class="comparison-guide"><p>このメニューでは、選択中のVariant Groupを確認・編集できます。</p><ul><li>問題本文・選択肢・正解・followUpを比較する</li><li>Variant Groupのメンバーを追加・削除する</li><li>Group Nameを変更する</li></ul><p>同じ論点の「出題バリエーション」として扱える問題だけを同じVariant Groupへ所属させてください。</p></div>
     <form id="rename-form" class="inline-form"><label>Group Name<input name="groupId" required></label><button type="submit">Rename group</button></form>
     <p id="comparison-operation-error" class="fail operation-error" role="alert"></p>
     <p class="help">questions.jsonでは<code>variantGroup</code>として保存されます。英小文字・数字・ハイフンによる安定した名前を推奨します。</p>
@@ -227,8 +227,11 @@ function renderValidation() {
   validationDetailsNode.hidden = state.validation.errors.length === 0;
   if (!state.validation.errors.length) validationDetailsNode.open = false;
   validationNode.innerHTML = state.validation.errors.length
-    ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>`
+    ? `<ul class="errors">${state.validation.errors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>${state.validation.errors.some((error) => String(error).includes('must use the same choice text multiset')) ? '<p class="validation-guidance"><a href="#choice-multiset-help" id="choice-multiset-help-link">エラー対策 &gt; 同じchoice text multisetではない</a>を確認してください。</p>' : ''}`
     : '';
+  document.querySelector('#choice-multiset-help-link')?.addEventListener('click', () => {
+    document.querySelector('#error-help').open = true;
+  });
   dirtyNode.hidden = !state.dirty;
   document.querySelector('#reset').disabled = !state.dirty;
   document.querySelector('#export').disabled =

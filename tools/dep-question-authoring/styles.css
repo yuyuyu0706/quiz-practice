@@ -56,42 +56,62 @@ header {
   margin: 0;
   text-align: center;
 }
-.quick-start {
+.manuals {
+  display: grid;
+  gap: 10px;
   margin: 20px clamp(24px, 5vw, 72px) 0;
+}
+.manual-panel {
   padding: 14px 20px;
   border: 1px solid #355273;
   border-radius: 12px;
   background: #101d33;
 }
-.quick-start summary {
+.manual-panel summary {
   color: #78e7c3;
   cursor: pointer;
   font-weight: 800;
 }
 .quick-start ol {
-  margin-bottom: 0;
   line-height: 1.7;
 }
-.glossary {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid #355273;
+.manual-content {
+  padding-top: 8px;
 }
-.glossary h2 {
-  font-size: 1rem;
+.manual-content h2 {
+  margin-top: 12px;
+  font-size: 1.05rem;
 }
-.glossary dl {
+.manual-content dl {
   margin-bottom: 0;
 }
-.glossary dt {
+.manual-content dt {
   margin-top: 10px;
   font-weight: 800;
 }
-.glossary dd {
+.manual-content dd {
   margin: 3px 0 0;
   color: #aab7d4;
   font-size: 0.82rem;
   line-height: 1.55;
+}
+.manual-warning,
+.validation-guidance {
+  padding: 10px 12px;
+  border-left: 3px solid #ffcf70;
+  background: #2b2416;
+}
+.validation-guidance a {
+  color: #78e7c3;
+  font-weight: 800;
+}
+.comparison-guide {
+  color: #aab7d4;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.comparison-guide ul {
+  margin: 8px 0;
 }
 h1 {
   margin: 4px 0;
