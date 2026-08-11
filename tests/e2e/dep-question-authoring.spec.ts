@@ -22,6 +22,60 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     test.skip(testInfo.project.name !== 'chromium', 'The local authoring tool is Chromium-only.');
   });
 
+  test('guides first-time use and explains search, editing, validation, and export boundaries', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await expect(page.locator('#status')).toContainText(
+      /読み込み完了: \d+ questions \/ \d+ variant groups/
+    );
+    await expect(page.getByText('はじめて使う方へ — Quick Start')).toBeVisible();
+    await expect(page.locator('.groups-panel .help')).toContainText('空欄では全 Variant groups');
+    await expect(page.locator('.groups-panel .help')).toContainText(
+      'Question ID・問題本文・Group 名'
+    );
+    await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
+    await expect(
+      page.locator('#create-form').locator('..').getByText('新しい group')
+    ).toBeVisible();
+    await expect(page.locator('#validation')).toContainText('PASS の場合のみ Export');
+    await expect(page.getByText('Export は download only')).toBeVisible();
+  });
+
+  test('shows actionable 404 recovery and prevents authoring against unloaded data', async ({
+    page,
+  }) => {
+    await page.route('**/dep-quiz-app/questions.json', (route) =>
+      route.fulfill({ status: 404, body: 'not found' })
+    );
+    await page.goto(TOOL_URL);
+    const status = page.locator('#status');
+    await expect(status).toContainText('questions.json が見つかりません (404)');
+    await expect(status).toContainText('npm run serve:dep-question-authoring');
+    await expect(status).toContainText('http://127.0.0.1:4173/tools/dep-question-authoring/');
+    await expect(status).toContainText('http://127.0.0.1:4173/dep-quiz-app/questions.json');
+    await expect(page.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await expect(page.locator('#reset')).toBeDisabled();
+    await expect(page.locator('#export')).toBeDisabled();
+  });
+
+  test('rejects an empty questions payload and keeps authoring actions disabled', async ({
+    page,
+  }) => {
+    await page.route('**/dep-quiz-app/questions.json', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+    await page.goto(TOOL_URL);
+
+    const status = page.locator('#status');
+    await expect(status).toContainText('questions.json の読み込みに失敗しました');
+    await expect(status).toContainText('questions.json に利用可能な問題がありません。');
+    await expect(status).not.toContainText('0 questions / 0 variant groups');
+    await expect(page.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await expect(page.locator('#reset')).toBeDisabled();
+    await expect(page.locator('#export')).toBeDisabled();
+  });
+
   test('guarantees production variant comparison, search, and read-only relations remain visible', async ({
     page,
   }) => {

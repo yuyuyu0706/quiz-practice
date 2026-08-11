@@ -16,6 +16,22 @@ header {
   padding: 32px clamp(24px, 5vw, 72px) 24px;
   border-bottom: 1px solid #293653;
 }
+.quick-start {
+  margin: 20px clamp(24px, 5vw, 72px) 0;
+  padding: 14px 20px;
+  border: 1px solid #355273;
+  border-radius: 12px;
+  background: #101d33;
+}
+.quick-start summary {
+  color: #78e7c3;
+  cursor: pointer;
+  font-weight: 800;
+}
+.quick-start ol {
+  margin-bottom: 0;
+  line-height: 1.7;
+}
 h1 {
   margin: 4px 0;
   font-size: clamp(2rem, 4vw, 3.25rem);
@@ -181,6 +197,43 @@ fieldset {
 .meta {
   color: #8fa3ca;
   font-size: 0.82rem;
+}
+.help {
+  color: #aab7d4;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.empty-state,
+.status {
+  border: 1px dashed #526889;
+  border-radius: 10px;
+  padding: 14px;
+  color: #b9c8e4;
+  background: #101a2d;
+}
+.status-success {
+  border-color: #397d70;
+  color: #9bf0d5;
+}
+.status-error {
+  border-style: solid;
+  border-color: #9b4f58;
+  color: #ffd0d0;
+}
+.status code {
+  display: inline-block;
+  margin: 2px 0;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #eaf0ff;
+  background: #080e1c;
+}
+.actions {
+  flex-wrap: wrap;
+}
+.action-help {
+  flex-basis: 100%;
+  margin: 0;
 }
 .choices {
   padding-left: 20px;

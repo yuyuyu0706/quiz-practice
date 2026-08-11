@@ -15,18 +15,39 @@
       </div>
       <p>バリアントを編集・検証し、検証済み questions.json を出力します。</p>
     </header>
+    <section class="quick-start" aria-labelledby="quick-start-title">
+      <details>
+        <summary id="quick-start-title">はじめて使う方へ — Quick Start</summary>
+        <ol>
+          <li>左の一覧から既存 group を選択します（検索は任意です）。</li>
+          <li>問題・選択肢・followUp を Comparison で比較します。</li>
+          <li>Selection Inspector で出題条件を試します。</li>
+          <li>必要な場合だけ Create / Add / Remove / Rename で編集します。</li>
+          <li>Validation が PASS したら questions.json を Export します。</li>
+        </ol>
+      </details>
+    </section>
     <main>
       <aside class="panel groups-panel">
         <label for="search">問題 ID・本文・グループ名を検索</label>
-        <input id="search" type="search" placeholder="例: auto-loader" />
+        <input id="search" type="search" placeholder="例: DEP-Q292 / auto-loader-state-locations" />
+        <p class="help">
+          検索は任意です。空欄では全 Variant groups を表示し、Question ID・問題本文・Group
+          名で絞り込みます。
+        </p>
         <h2>Variant groups</h2>
         <nav id="groups" aria-label="Variant groups"></nav>
       </aside>
       <section class="workspace">
-        <div id="status" role="status">questions.json を読み込み中...</div>
+        <div id="status" class="status" role="status">questions.json を読み込み中...</div>
         <section id="comparison" class="panel" hidden></section>
         <section class="panel">
           <p class="eyebrow">CREATE VARIANT GROUP</p>
+          <h2>Create Variant Group</h2>
+          <p class="help">
+            新しい group を作る場合のみ使用します。検索対象は variantGroup 未所属の questions
+            だけで、2問以上の選択が必要です。
+          </p>
           <form id="create-form">
             <label>Group ID<input name="groupId" required /></label>
             <label for="create-search"
@@ -37,14 +58,24 @@
               <legend>Ungrouped questions（2問以上）</legend>
               <div id="create-list" class="question-list"></div>
             </fieldset>
-            <button type="submit" class="primary">Create group</button>
+            <button type="submit" class="primary" disabled>Create group</button>
           </form>
           <p id="operation-error" class="fail" role="alert"></p>
         </section>
-        <section id="validation" class="panel"></section>
+        <section id="validation" class="panel">
+          <h2>Validation</h2>
+          <p class="help">読み込み完了後に検証します。PASS の場合のみ Export できます。</p>
+        </section>
         <section class="panel actions">
+          <div>
+            <strong>Actions</strong>
+            <p class="help">Reset は browser memory 上の未export編集を破棄します。</p>
+          </div>
           <button id="reset" type="button" disabled>Reset edits</button>
-          <button id="export" type="button">Export questions.json</button>
+          <button id="export" type="button" disabled>Export questions.json</button>
+          <p class="help action-help">
+            Export は download only です。元の questions.json、Git、GitHub を直接更新しません。
+          </p>
         </section>
         <section id="inspector" class="panel" hidden></section>
       </section>
