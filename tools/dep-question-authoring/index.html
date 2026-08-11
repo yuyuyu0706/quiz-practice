@@ -13,18 +13,93 @@
         <h1>DEP Variant Manager</h1>
         <span id="dirty" class="dirty" hidden>Unsaved changes</span>
       </div>
-      <p>バリアントを編集・検証し、検証済み questions.json を出力します。</p>
+      <p>
+        バリアント問題（同一選択肢×異なる問い）を作成するための、グルーピング・シミュレーション・問題データ（questions.json）の整合性検証が可能な開発者ツールです。
+      </p>
+      <section class="global-tools" aria-label="Global validation and actions">
+        <strong id="validation-status" class="validation-status" role="status"
+          >Validation を準備中...</strong
+        >
+        <p id="validation-result" class="validation-result">Resultを準備中...</p>
+        <details id="validation">
+          <summary>Validation error details</summary>
+          <div id="validation-content"></div>
+        </details>
+        <div class="global-actions">
+          <button
+            id="reset"
+            type="button"
+            title="Browser memory上の未export編集を破棄します。"
+            disabled
+          >
+            Reset edits
+          </button>
+          <button
+            id="export"
+            type="button"
+            title="Canonical validation が PASS の場合のみ Export できます。"
+            disabled
+          >
+            Export questions.json
+          </button>
+        </div>
+      </section>
     </header>
-    <section class="quick-start" aria-labelledby="quick-start-title">
-      <details>
+    <section class="manuals" aria-label="Authoring guide">
+      <details class="manual-panel quick-start">
         <summary id="quick-start-title">はじめて使う方へ — Quick Start</summary>
         <ol>
-          <li>左の一覧から既存 group を選択します（検索は任意です）。</li>
-          <li>問題・選択肢・followUp を Comparison で比較します。</li>
-          <li>Selection Inspector で出題条件を試します。</li>
-          <li>必要な場合だけ Create / Add / Remove / Rename で編集します。</li>
-          <li>Validation が PASS したら questions.json を Export します。</li>
+          <li>必要なら <strong>CREATE VARIANT GROUP</strong> で新しいgroupを作ります。</li>
+          <li><strong>MEMBER COMPARISON &amp; EDIT</strong> で問題を比較・編集します。</li>
+          <li><strong>SELECTION INSPECTOR</strong> で出題条件を試します。</li>
+          <li>
+            <strong>Validation</strong> がPASSしたら
+            <strong>Export questions.json</strong> で出力します。
+          </li>
+          <li>
+            出力した<code>questions.json</code>を
+            <code>quiz-practice/dep-quiz-app/questions.json</code
+            >へ反映します。差分を確認して開発branchへcommitし、通常のPR /
+            mergeフローでmainへ反映してください。
+          </li>
         </ol>
+        <p class="help">
+          既存Variant Groupの確認だけなら、Createを飛ばしてComparisonから開始できます。
+        </p>
+      </details>
+      <details id="glossary" class="manual-panel">
+        <summary id="glossary-title">用語解説</summary>
+        <div class="manual-content">
+          <dl>
+            <dt>バリアント問題</dt>
+            <dd>同じ選択肢を使い、問い方を変えた問題です。</dd>
+            <dt>Variant Group</dt>
+            <dd>
+              同じ知識・判断基準を異なる問い方で確認する問題のまとまり。新規sessionでは、同じVariant
+              Groupから最大1問を代表として採用します。
+            </dd>
+            <dt>followUp</dt>
+            <dd>
+              元問題の解説後に、理解をもう一段確認するための追加確認候補。元問題から別questionへの1段の参照であり、自動遷移そのものを意味しません。
+            </dd>
+          </dl>
+        </div>
+      </details>
+      <details id="error-help" class="manual-panel">
+        <summary>エラー対策</summary>
+        <div class="manual-content">
+          <section id="choice-multiset-help" aria-labelledby="choice-multiset-help-title">
+            <h2 id="choice-multiset-help-title">同じchoice text multisetではない</h2>
+            <p>Variant Groupは、選択肢本文が一致している必要があります。</p>
+            <h3>対策</h3>
+            <dl class="troubleshooting-options">
+              <dt>Variant Groupとして扱いたい場合</dt>
+              <dd>同じ選択肢で、別の問題文（問い方）を作成してください。</dd>
+              <dt>Variant Groupではなく類似問題としたい場合</dt>
+              <dd><code>tags</code>で集約することを検討してください。</dd>
+            </dl>
+          </section>
+        </div>
       </details>
     </section>
     <main>
@@ -40,44 +115,36 @@
       </aside>
       <section class="workspace">
         <div id="status" class="status" role="status">questions.json を読み込み中...</div>
-        <section id="comparison" class="panel" hidden></section>
-        <section class="panel">
-          <p class="eyebrow">CREATE VARIANT GROUP</p>
-          <h2>Create Variant Group</h2>
-          <p class="help">
-            新しい group を作る場合のみ使用します。検索対象は variantGroup 未所属の questions
-            だけで、2問以上の選択が必要です。
-          </p>
-          <form id="create-form">
-            <label>Group ID<input name="groupId" required /></label>
-            <label for="create-search"
-              >Search questions
-              <input id="create-search" type="search" placeholder="問題 ID・本文を検索" />
-            </label>
-            <fieldset>
-              <legend>Ungrouped questions（2問以上）</legend>
-              <div id="create-list" class="question-list"></div>
-            </fieldset>
-            <button type="submit" class="primary" disabled>Create group</button>
-          </form>
-          <p id="operation-error" class="fail" role="alert"></p>
-        </section>
-        <section id="validation" class="panel">
-          <h2>Validation</h2>
-          <p class="help">読み込み完了後に検証します。PASS の場合のみ Export できます。</p>
-        </section>
-        <section class="panel actions">
-          <div>
-            <strong>Actions</strong>
-            <p class="help">Reset は browser memory 上の未export編集を破棄します。</p>
+        <details id="create-panel" class="panel accordion">
+          <summary><span>1.</span> CREATE VARIANT GROUP</summary>
+          <div class="accordion-body">
+            <p class="help">
+              新しい group を作る場合のみ使用します。検索対象は variantGroup 未所属の questions
+              だけで、2問以上の選択が必要です。
+            </p>
+            <form id="create-form">
+              <label>New Group Name<input name="groupId" required /></label>
+              <label for="create-search"
+                >Search questions
+                <input id="create-search" type="search" placeholder="問題 ID・本文を検索" />
+              </label>
+              <fieldset>
+                <legend>Ungrouped questions（2問以上）</legend>
+                <div id="create-list" class="question-list"></div>
+              </fieldset>
+              <button type="submit" class="primary" disabled>Create group</button>
+            </form>
+            <p id="operation-error" class="fail" role="alert"></p>
           </div>
-          <button id="reset" type="button" disabled>Reset edits</button>
-          <button id="export" type="button" disabled>Export questions.json</button>
-          <p class="help action-help">
-            Export は download only です。元の questions.json、Git、GitHub を直接更新しません。
-          </p>
-        </section>
-        <section id="inspector" class="panel" hidden></section>
+        </details>
+        <details id="comparison-panel" class="panel accordion" open>
+          <summary><span>2.</span> MEMBER COMPARISON &amp; EDIT</summary>
+          <section id="comparison"></section>
+        </details>
+        <details id="inspector-panel" class="panel accordion">
+          <summary><span>3.</span> SELECTION INSPECTOR</summary>
+          <section id="inspector"></section>
+        </details>
       </section>
     </main>
     <script type="module" src="./app.js"></script>

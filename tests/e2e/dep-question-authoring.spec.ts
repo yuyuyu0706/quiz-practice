@@ -11,6 +11,11 @@ async function openRepresentativeGroup(page: Page) {
   await expect(page.locator('#comparison h2')).toContainText(`${GROUP_ID} 2 members`);
 }
 
+async function openInspector(page: Page) {
+  await page.locator('#inspector-panel > summary').click();
+  await expect(page.locator('#inspector-panel')).toHaveAttribute('open', '');
+}
+
 function memberCard(page: Page, questionId: string) {
   return page.locator('#comparison article', {
     has: page.getByRole('heading', { name: questionId }),
@@ -29,17 +34,107 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#status')).toContainText(
       /読み込み完了: \d+ questions \/ \d+ variant groups/
     );
+    await expect(page.locator('header')).toContainText(
+      'バリアント問題（同一選択肢×異なる問い）を作成するための、グルーピング・シミュレーション・問題データ（questions.json）の整合性検証が可能な開発者ツールです。'
+    );
     await expect(page.getByText('はじめて使う方へ — Quick Start')).toBeVisible();
     await expect(page.locator('.groups-panel .help')).toContainText('空欄では全 Variant groups');
     await expect(page.locator('.groups-panel .help')).toContainText(
       'Question ID・問題本文・Group 名'
     );
     await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
+    await page.locator('#quick-start-title').click();
+    const quickStart = page.locator('.quick-start');
+    await expect(quickStart.locator('li')).toHaveCount(5);
+    await expect(quickStart.locator('li').nth(4)).toContainText('dep-quiz-app/questions.json');
+    await expect(quickStart.locator('li').nth(4)).toContainText('commit');
+    await expect(quickStart.locator('li').nth(4)).toContainText('PR / mergeフロー');
+    await expect(page.locator('.manual-panel')).toHaveCount(3);
+    await expect(page.locator('#glossary')).not.toHaveAttribute('open', '');
+    await page.locator('#glossary > summary').click();
+    const glossary = page.locator('#glossary');
+    await expect(glossary.locator('dt')).toHaveText([
+      'バリアント問題',
+      'Variant Group',
+      'followUp',
+    ]);
+    await expect(glossary).toContainText('同じ選択肢を使い、問い方を変えた問題です。');
+    await expect(glossary).toContainText('同じVariant Groupから最大1問を代表として採用します');
+    await expect(glossary).toContainText('自動遷移そのものを意味しません');
+    await page.locator('#error-help > summary').click();
+    await expect(page.locator('#choice-multiset-help')).toContainText(
+      'Variant Groupは、選択肢本文が一致している必要があります。'
+    );
+    const troubleshooting = page.locator('.troubleshooting-options');
+    await expect(troubleshooting.locator('dt')).toHaveText([
+      'Variant Groupとして扱いたい場合',
+      'Variant Groupではなく類似問題としたい場合',
+    ]);
+    await expect(troubleshooting.locator('dd')).toHaveText([
+      '同じ選択肢で、別の問題文（問い方）を作成してください。',
+      'tagsで集約することを検討してください。',
+    ]);
+    await expect(page.locator('#choice-multiset-help')).not.toContainText('DEP-Q208');
+    await expect(page.locator('#choice-multiset-help')).not.toContainText('DEP-Q226');
+    await page.locator('#create-panel > summary').click();
     await expect(
       page.locator('#create-form').locator('..').getByText('新しい group')
     ).toBeVisible();
-    await expect(page.locator('#validation')).toContainText('PASS の場合のみ Export');
-    await expect(page.getByText('Export は download only')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(
+      'Canonical validation が PASS の場合のみ Export できます。'
+    );
+    await expect(page.locator('body')).not.toContainText(
+      'Reset はbrowser memory上の未export編集を破棄します。'
+    );
+    await expect(page.locator('body')).not.toContainText(
+      'Export は download only で、元データを直接更新しません。'
+    );
+    await expect(page.locator('#reset')).toHaveAttribute(
+      'title',
+      'Browser memory上の未export編集を破棄します。'
+    );
+    await expect(page.locator('#export')).toHaveAttribute(
+      'title',
+      'Canonical validation が PASS の場合のみ Export できます。'
+    );
+  });
+
+  test('presents the authoring workflow as exclusive accordions with global actions', async ({
+    page,
+  }) => {
+    await openRepresentativeGroup(page);
+    const validationStatus = page.locator('#validation-status');
+    await expect(page.locator('#validation')).not.toHaveAttribute('open', '');
+    await expect(validationStatus).toBeVisible();
+    await expect(validationStatus).toHaveText('Validation ✓ PASS · 0 errors');
+    await expect(page.locator('#validation-result')).toBeVisible();
+    await expect(page.locator('#validation-result')).toHaveText(
+      'Result : OK — Canonical DEP validator found no errors.'
+    );
+    await expect(page.locator('#validation')).toBeHidden();
+    const summaries = page.locator('.accordion > summary');
+    await expect(summaries).toHaveText([
+      '1. CREATE VARIANT GROUP',
+      '2. MEMBER COMPARISON & EDIT',
+      '3. SELECTION INSPECTOR',
+    ]);
+    await expect(page.locator('#comparison-panel')).toHaveAttribute('open', '');
+    await page.locator('#inspector-panel > summary').click();
+    await expect(page.locator('#comparison-panel')).not.toHaveAttribute('open', '');
+    await expect(page.locator('#inspector-panel')).toHaveAttribute('open', '');
+    await expect(page.locator('#inspector')).toContainText(
+      'Variant Groupから1sessionに採用される問題は最大1問です。'
+    );
+    await expect(page.locator('#inspector')).toContainText(
+      'どの問題が代表として選ばれるかを、本機能でシミュレーションできます。'
+    );
+    await expect(page.locator('#inspector')).not.toContainText('Browser memory内だけで行い');
+    await expect(page.getByLabel('Session Mode（出題モード）')).toBeVisible();
+    await expect(page.getByLabel('Target Section（出題対象Section）')).toBeVisible();
+    await expect(page.locator('header #validation-status')).toBeVisible();
+    await expect(page.locator('header #reset')).toBeVisible();
+    await expect(page.locator('header #export')).toBeVisible();
+    await expect(page.locator('.quick-start strong')).toHaveCount(5);
   });
 
   test('shows actionable 404 recovery and prevents authoring against unloaded data', async ({
@@ -54,7 +149,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(status).toContainText('npm run serve:dep-question-authoring');
     await expect(status).toContainText('http://127.0.0.1:4173/tools/dep-question-authoring/');
     await expect(status).toContainText('http://127.0.0.1:4173/dep-quiz-app/questions.json');
-    await expect(page.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await expect(page.locator('#create-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('#reset')).toBeDisabled();
     await expect(page.locator('#export')).toBeDisabled();
   });
@@ -71,7 +166,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(status).toContainText('questions.json の読み込みに失敗しました');
     await expect(status).toContainText('questions.json に利用可能な問題がありません。');
     await expect(status).not.toContainText('0 questions / 0 variant groups');
-    await expect(page.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await expect(page.locator('#create-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('#reset')).toBeDisabled();
     await expect(page.locator('#export')).toBeDisabled();
   });
@@ -84,6 +179,27 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(memberCard(page, 'DEP-Q292').getByText('Choice text multiset')).toBeVisible();
     await expect(memberCard(page, 'DEP-Q292').getByText(/Follow-up:\s*DEP-Q294/)).toBeVisible();
     await expect(memberCard(page, 'DEP-Q293')).toBeVisible();
+    const comparisonGuide = page.locator('.comparison-guide');
+    await expect(comparisonGuide.locator('p')).toHaveCount(2);
+    await expect(comparisonGuide.locator('li')).toHaveText([
+      '問題本文・選択肢・正解・followUpを比較する',
+      'Variant Groupのメンバーを追加・削除する',
+      'Group Nameを変更する',
+    ]);
+    const relationshipMap = page.locator('.relationship-map');
+    await expect(relationshipMap).toContainText('DEP-Q292');
+    await expect(relationshipMap).toContainText('DEP-Q293');
+    await expect(relationshipMap).toContainText('DEP-Q294');
+    await expect(relationshipMap.locator('.relation-graph')).toHaveCount(1);
+    await expect(relationshipMap.locator('.variant-relation')).toHaveAttribute(
+      'aria-label',
+      'Variant Group members: DEP-Q292, DEP-Q293'
+    );
+    await expect(relationshipMap.locator('.follow-up-relation')).toHaveAttribute(
+      'aria-label',
+      'DEP-Q292 followUp to DEP-Q294'
+    );
+    await expect(relationshipMap.locator('.relation-legend')).toHaveCount(0);
 
     await page.locator('#search').fill('DEP-Q293');
     await expect(page.locator('#groups button', { hasText: GROUP_ID })).toContainText('2');
@@ -94,6 +210,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     page,
   }) => {
     await openRepresentativeGroup(page);
+    await openInspector(page);
     const beforeStorage = await page.evaluate(() => JSON.stringify(localStorage));
     const inspector = page.locator('#inspector');
     const field = (id: string, name: string) =>
@@ -135,20 +252,66 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await memberCard(page, 'DEP-Q293').getByRole('button', { name: 'Remove member' }).click();
 
     await expect(page.locator('#comparison h2')).toContainText('1 members');
-    await expect(page.locator('#validation')).toContainText('FAIL');
+    await expect(page.locator('#validation-status')).toContainText('FAIL · 1 errors');
+    await expect(page.locator('#validation-result')).toHaveText(
+      'Result : NG — 1 validation errors found.'
+    );
+    await expect(page.locator('#validation-result')).toBeVisible();
+    await expect(page.locator('#validation')).toBeVisible();
     await expect(page.locator('#export')).toBeDisabled();
     await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
 
     await page.locator('#add-form select').selectOption('DEP-Q293');
     await page.locator('#add-form').getByRole('button', { name: 'Add member' }).click();
-    await expect(page.locator('#validation')).toContainText('PASS');
+    await expect(page.locator('#validation-status')).toContainText('PASS · 0 errors');
 
     const renamedGroup = 'auto-loader-state-locations-e2e';
     await page.locator('#rename-form input').fill(renamedGroup);
     await page.locator('#rename-form').getByRole('button', { name: 'Rename group' }).click();
     await expect(page.locator('#comparison h2')).toContainText(`${renamedGroup} 2 members`);
     await expect(page.locator('#groups button.active')).toContainText(renamedGroup);
-    await expect(page.locator('#validation')).toContainText('PASS');
+    await expect(page.locator('#validation-status')).toContainText('PASS · 0 errors');
+  });
+
+  test('keeps a duplicate Group Name rename error visible in Comparison', async ({ page }) => {
+    await openRepresentativeGroup(page);
+    await page.locator('#create-panel > summary').click();
+    const ungrouped = page.locator('#create-list input[name="questionIds"]');
+    await ungrouped.nth(0).check();
+    await ungrouped.nth(1).check();
+    await page.locator('#create-form input[name="groupId"]').fill('comparison-error-e2e');
+    await page.locator('#create-form').getByRole('button', { name: 'Create group' }).click();
+
+    await expect(page.locator('#comparison-panel')).toHaveAttribute('open', '');
+    await page.locator('#rename-form input').fill(GROUP_ID);
+    await page.locator('#rename-form').getByRole('button', { name: 'Rename group' }).click();
+
+    const error = page.locator('#comparison-operation-error');
+    await expect(page.locator('#comparison-panel')).toHaveAttribute('open', '');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText(`Group ${GROUP_ID} already exists.`);
+    await expect(page.locator('#operation-error')).toBeHidden();
+  });
+
+  test('links a choice multiset validation failure to its troubleshooting guide', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#create-panel > summary').click();
+    await page.locator('#create-list input[value="DEP-Q208"]').check();
+    await page.locator('#create-list input[value="DEP-Q226"]').check();
+    await page.locator('#create-form input[name="groupId"]').fill('invalid-choice-multiset-e2e');
+    await page.locator('#create-form').getByRole('button', { name: 'Create group' }).click();
+
+    await expect(page.locator('#validation-content')).toContainText(
+      'must use the same choice text multiset'
+    );
+    await page.locator('#validation > summary').click();
+    const helpLink = page.locator('#choice-multiset-help-link');
+    await expect(helpLink).toBeVisible();
+    await helpLink.click();
+    await expect(page.locator('#error-help')).toHaveAttribute('open', '');
+    await expect(page.locator('#choice-multiset-help')).toBeVisible();
   });
 
   test('guarantees empty groups disappear, can be recreated, and Reset restores the source snapshot', async ({
@@ -163,6 +326,7 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(page.locator('#inspector [data-id="DEP-Q292"]')).toHaveCount(0);
     await expect(page.locator('#inspector [data-id="DEP-Q293"]')).toHaveCount(0);
 
+    await page.locator('#create-panel > summary').click();
     await page.locator('#create-search').fill('DEP-Q29');
     await page.locator('#create-list input[value="DEP-Q292"]').check();
     await page.locator('#create-list input[value="DEP-Q293"]').check();
@@ -171,7 +335,7 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(page.locator('#comparison h2')).toContainText(
       'recreated-loader-locations 2 members'
     );
-    await expect(page.locator('#validation')).toContainText('PASS');
+    await expect(page.locator('#validation-status')).toContainText('PASS');
 
     page.once('dialog', (dialog) => dialog.accept());
     await page.locator('#reset').click();
@@ -198,6 +362,7 @@ test.describe('[DEP][DATA] Question authoring / Export and browser isolation', (
 
     await page.locator('#rename-form input').fill(renamedGroup);
     await page.locator('#rename-form').getByRole('button', { name: 'Rename group' }).click();
+    await openInspector(page);
     await page.locator('#inspector [data-id="DEP-Q292"][data-field="seenCount"]').fill('9');
     const downloadPromise = page.waitForEvent('download');
     await page.locator('#export').click();
