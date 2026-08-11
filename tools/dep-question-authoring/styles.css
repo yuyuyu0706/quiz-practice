@@ -16,6 +16,32 @@ header {
   padding: 32px clamp(24px, 5vw, 72px) 24px;
   border-bottom: 1px solid #293653;
 }
+.global-tools {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  gap: 10px 20px;
+  align-items: start;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid #355273;
+  border-radius: 12px;
+  background: #101d33;
+}
+.global-tools summary,
+.accordion > summary {
+  color: #78e7c3;
+  cursor: pointer;
+  font-weight: 800;
+}
+.global-actions {
+  display: flex;
+  gap: 8px;
+}
+.global-actions button {
+  width: auto;
+  margin: 0;
+  text-align: center;
+}
 .quick-start {
   margin: 20px clamp(24px, 5vw, 72px) 0;
   padding: 14px 20px;
@@ -59,6 +85,26 @@ main {
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 16px 40px #0004;
+}
+.accordion {
+  padding: 0;
+  overflow: hidden;
+}
+.accordion > summary {
+  padding: 20px;
+  list-style-position: inside;
+  letter-spacing: 0.06em;
+}
+.accordion > summary span {
+  color: #8fa3ca;
+}
+.accordion[open] > summary {
+  border-bottom: 1px solid #2c3a59;
+  background: #162743;
+}
+.accordion-body,
+.accordion > section {
+  padding: 20px;
 }
 .groups-panel {
   align-self: start;
@@ -235,6 +281,46 @@ fieldset {
   flex-basis: 100%;
   margin: 0;
 }
+.relationship-map {
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid #415173;
+  border-radius: 12px;
+  background: #101a2d;
+}
+.member-relation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-weight: 800;
+}
+.relation-label {
+  color: #78e7c3;
+  font-size: 0.82rem;
+}
+.follow-up-relations {
+  margin: 16px 0;
+  padding-left: 16px;
+  border-left: 3px solid #d5a6ff;
+}
+.relation-legend {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 0;
+}
+.relation-legend div {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+}
+.relation-legend dt {
+  font-weight: 800;
+}
+.relation-legend dd {
+  margin: 0;
+  color: #aab7d4;
+}
 .choices {
   padding-left: 20px;
   color: #cad5eb;
@@ -269,6 +355,9 @@ fieldset {
   font-weight: 800;
 }
 @media (max-width: 760px) {
+  .global-tools {
+    grid-template-columns: 1fr;
+  }
   main {
     grid-template-columns: 1fr;
   }

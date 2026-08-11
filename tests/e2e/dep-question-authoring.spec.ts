@@ -11,6 +11,11 @@ async function openRepresentativeGroup(page: Page) {
   await expect(page.locator('#comparison h2')).toContainText(`${GROUP_ID} 2 members`);
 }
 
+async function openInspector(page: Page) {
+  await page.locator('#inspector-panel > summary').click();
+  await expect(page.locator('#inspector-panel')).toHaveAttribute('open', '');
+}
+
 function memberCard(page: Page, questionId: string) {
   return page.locator('#comparison article', {
     has: page.getByRole('heading', { name: questionId }),
@@ -35,11 +40,37 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       'Question ID・問題本文・Group 名'
     );
     await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
+    await page.locator('#create-panel > summary').click();
     await expect(
       page.locator('#create-form').locator('..').getByText('新しい group')
     ).toBeVisible();
     await expect(page.locator('#validation')).toContainText('PASS の場合のみ Export');
     await expect(page.getByText('Export は download only')).toBeVisible();
+  });
+
+  test('presents the authoring workflow as exclusive accordions with global actions', async ({
+    page,
+  }) => {
+    await openRepresentativeGroup(page);
+    const summaries = page.locator('.accordion > summary');
+    await expect(summaries).toHaveText([
+      '1. CREATE VARIANT GROUP',
+      '2. MEMBER COMPARISON & EDIT',
+      '3. SELECTION INSPECTOR',
+    ]);
+    await expect(page.locator('#comparison-panel')).toHaveAttribute('open', '');
+    await page.locator('#inspector-panel > summary').click();
+    await expect(page.locator('#comparison-panel')).not.toHaveAttribute('open', '');
+    await expect(page.locator('#inspector-panel')).toHaveAttribute('open', '');
+    await expect(page.locator('#inspector')).toContainText(
+      '実際のsessionでどの問題が代表として選ばれるかをシミュレーションします'
+    );
+    await expect(page.getByLabel('Session Mode（出題モード）')).toBeVisible();
+    await expect(page.getByLabel('Target Section（出題対象Section）')).toBeVisible();
+    await expect(page.locator('header #validation')).toBeVisible();
+    await expect(page.locator('header #reset')).toBeVisible();
+    await expect(page.locator('header #export')).toBeVisible();
+    await expect(page.locator('.quick-start strong')).toHaveCount(5);
   });
 
   test('shows actionable 404 recovery and prevents authoring against unloaded data', async ({
@@ -54,7 +85,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(status).toContainText('npm run serve:dep-question-authoring');
     await expect(status).toContainText('http://127.0.0.1:4173/tools/dep-question-authoring/');
     await expect(status).toContainText('http://127.0.0.1:4173/dep-quiz-app/questions.json');
-    await expect(page.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await expect(page.locator('#create-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('#reset')).toBeDisabled();
     await expect(page.locator('#export')).toBeDisabled();
   });
@@ -71,7 +102,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(status).toContainText('questions.json の読み込みに失敗しました');
     await expect(status).toContainText('questions.json に利用可能な問題がありません。');
     await expect(status).not.toContainText('0 questions / 0 variant groups');
-    await expect(page.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await expect(page.locator('#create-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('#reset')).toBeDisabled();
     await expect(page.locator('#export')).toBeDisabled();
   });
@@ -84,6 +115,11 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(memberCard(page, 'DEP-Q292').getByText('Choice text multiset')).toBeVisible();
     await expect(memberCard(page, 'DEP-Q292').getByText(/Follow-up:\s*DEP-Q294/)).toBeVisible();
     await expect(memberCard(page, 'DEP-Q293')).toBeVisible();
+    const relationshipMap = page.locator('.relationship-map');
+    await expect(relationshipMap).toContainText('DEP-Q292');
+    await expect(relationshipMap).toContainText('DEP-Q293');
+    await expect(relationshipMap).toContainText('followUp → DEP-Q294');
+    await expect(relationshipMap).toContainText('自動表示・自動遷移そのものを意味しません');
 
     await page.locator('#search').fill('DEP-Q293');
     await expect(page.locator('#groups button', { hasText: GROUP_ID })).toContainText('2');
@@ -94,6 +130,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     page,
   }) => {
     await openRepresentativeGroup(page);
+    await openInspector(page);
     const beforeStorage = await page.evaluate(() => JSON.stringify(localStorage));
     const inspector = page.locator('#inspector');
     const field = (id: string, name: string) =>
@@ -163,6 +200,7 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(page.locator('#inspector [data-id="DEP-Q292"]')).toHaveCount(0);
     await expect(page.locator('#inspector [data-id="DEP-Q293"]')).toHaveCount(0);
 
+    await page.locator('#create-panel > summary').click();
     await page.locator('#create-search').fill('DEP-Q29');
     await page.locator('#create-list input[value="DEP-Q292"]').check();
     await page.locator('#create-list input[value="DEP-Q293"]').check();
@@ -198,6 +236,7 @@ test.describe('[DEP][DATA] Question authoring / Export and browser isolation', (
 
     await page.locator('#rename-form input').fill(renamedGroup);
     await page.locator('#rename-form').getByRole('button', { name: 'Rename group' }).click();
+    await openInspector(page);
     await page.locator('#inspector [data-id="DEP-Q292"][data-field="seenCount"]').fill('9');
     const downloadPromise = page.waitForEvent('download');
     await page.locator('#export').click();

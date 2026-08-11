@@ -29,7 +29,7 @@ const state = {
 const groupsNode = document.querySelector('#groups');
 const comparisonNode = document.querySelector('#comparison');
 const inspectorNode = document.querySelector('#inspector');
-const validationNode = document.querySelector('#validation');
+const validationNode = document.querySelector('#validation-content');
 const statusNode = document.querySelector('#status');
 const dirtyNode = document.querySelector('#dirty');
 
@@ -84,17 +84,24 @@ function renderSelected() {
   const members = state.workingQuestions.filter(
     (question) => question.variantGroup === state.selectedGroupId
   );
+  const comparisonPanel = document.querySelector('#comparison-panel');
+  const inspectorPanel = document.querySelector('#inspector-panel');
   comparisonNode.hidden = !members.length;
   if (!members.length) {
     comparisonNode.innerHTML = '';
     inspectorNode.hidden = true;
+    comparisonPanel.open = false;
+    inspectorPanel.open = false;
     inspectorNode.innerHTML = '';
     return;
   }
   const comparison = buildVariantComparison(members);
   const ungrouped = state.workingQuestions.filter((question) => question.variantGroup == null);
-  comparisonNode.innerHTML = `<p class="eyebrow">MEMBER COMPARISON</p><div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div><p class="help">問題本文・選択肢・正解・followUp を比較し、必要な場合だけメンバーを編集します。</p>
-    <form id="rename-form" class="inline-form"><label>New Group ID<input name="groupId" required></label><button type="submit">Rename group</button></form>
+  const followUps = members.filter((member) => member.followUp?.questionId);
+  comparisonNode.innerHTML = `<div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div><p class="help">このメニューでは、選択中のVariant Groupに所属する問題を比較し、メンバーの追加・削除やGroup名の変更を行えます。問題本文・選択肢・正解・followUpを確認し、「同じ論点の出題バリエーション」としてまとめる問題だけを所属させてください。</p>
+    <form id="rename-form" class="inline-form"><label>Group Name<input name="groupId" required></label><button type="submit">Rename group</button></form>
+    <p class="help">questions.jsonでは<code>variantGroup</code>として保存されます。英小文字・数字・ハイフンによる安定した名前を推奨します。</p>
+    <section class="relationship-map" aria-labelledby="relationship-title"><h3 id="relationship-title">Relationship Map</h3><p class="meta">Variant Group: ${escapeHtml(state.selectedGroupId)}</p><div class="member-relation">${members.map((member) => `<span>${escapeHtml(member.id)}</span>`).join('<span aria-hidden="true">────</span>')}</div><p class="relation-label">同じ論点の出題バリエーション</p><div class="follow-up-relations">${followUps.length ? followUps.map((member) => `<p><strong>${escapeHtml(member.id)}</strong><span aria-hidden="true"> ↓ </span><strong>followUp → ${escapeHtml(member.followUp.questionId)}</strong></p>`).join('') : '<p class="meta">followUp relationはありません。</p>'}</div><dl class="relation-legend"><div><dt>Variant Group</dt><dd>同じ知識・判断基準を異なる問い方で確認する出題バリエーション。新規sessionでは同一groupから最大1問を代表として採用します。</dd></div><div><dt>followUp</dt><dd>元問題の解説後に追加確認候補となる問題への1段の有向参照。自動表示・自動遷移そのものを意味しません。</dd></div></dl></section>
     <div class="cards">${comparison
       .map(
         (item) =>
@@ -141,7 +148,23 @@ function renderSelected() {
 function renderInspector(members) {
   const inspector = state.inspector;
   inspectorNode.hidden = false;
-  inspectorNode.innerHTML = `<p class="eyebrow">SELECTION INSPECTOR · MEMORY ONLY</p><h2>代表選択を診断</h2><p class="help">Browser memory 内だけで診断します。実際の学習履歴や questions.json は更新しません。</p><div class="controls"><label>Mode<select id="mode">${['normal', 'random', 'wrongOnly', 'bookmarks', 'notesOnly'].map((mode) => `<option ${mode === inspector.mode ? 'selected' : ''}>${mode}</option>`).join('')}</select></label><label>Section<select id="section"><option value="all">すべて</option>${[...new Set(state.workingQuestions.map((q) => q.section))].map((section) => `<option ${inspector.sections.length === 1 && inspector.sections[0] === section ? 'selected' : ''}>${escapeHtml(section)}</option>`).join('')}</select></label></div><div class="progress-grid"><strong>Member</strong><span>seen</span><span>wrong</span><span>bookmark</span><span>note</span>${members
+  const modeLabels = {
+    normal: '通常出題',
+    random: 'ランダム出題',
+    wrongOnly: '誤答した問題のみ',
+    bookmarks: 'ブックマークのみ',
+    notesOnly: 'メモあり問題のみ',
+  };
+  inspectorNode.innerHTML = `<h2>代表選択を診断</h2><p class="help">選択中のVariant Groupについて、学習履歴や出題条件を仮入力し、実際のsessionでどの問題が代表として選ばれるかをシミュレーションします。</p><p class="help">シミュレーションはBrowser memory内だけで行い、実際の学習履歴やquestions.jsonは更新しません。</p><div class="controls"><label>Session Mode（出題モード）<select id="mode">${Object.entries(
+    modeLabels
+  )
+    .map(
+      ([mode, label]) =>
+        `<option value="${mode}" ${mode === inspector.mode ? 'selected' : ''}>${mode} — ${label}</option>`
+    )
+    .join(
+      ''
+    )}</select></label><label>Target Section（出題対象Section）<select id="section"><option value="all">すべて</option>${[...new Set(state.workingQuestions.map((q) => q.section))].map((section) => `<option ${inspector.sections.length === 1 && inspector.sections[0] === section ? 'selected' : ''}>${escapeHtml(section)}</option>`).join('')}</select></label></div><div class="progress-grid"><strong>Member</strong><span>seen</span><span>wrong</span><span>bookmark</span><span>note</span>${members
     .map((member) => {
       const progress = inspector.progress[member.id] ?? {};
       return `<strong>${escapeHtml(member.id)}</strong><input data-id="${escapeHtml(member.id)}" data-field="seenCount" type="number" min="0" value="${progress.seenCount ?? 0}"><input data-id="${escapeHtml(member.id)}" data-field="wrongCount" type="number" min="0" value="${progress.wrongCount ?? 0}"><input data-id="${escapeHtml(member.id)}" data-field="bookmark" type="checkbox" ${progress.bookmark ? 'checked' : ''}><input data-id="${escapeHtml(member.id)}" data-field="noteText" value="${escapeHtml(progress.noteText ?? '')}" aria-label="${escapeHtml(member.id)} note">`;
@@ -205,7 +228,19 @@ groupsNode.addEventListener('click', (event) => {
   const button = event.target.closest('[data-group]');
   if (!button) return;
   state.selectedGroupId = button.dataset.group;
+  document.querySelector('#comparison-panel').open = true;
+  document.querySelector('#create-panel').open = false;
+  document.querySelector('#inspector-panel').open = false;
   render();
+});
+
+document.querySelectorAll('.accordion').forEach((panel) => {
+  panel.addEventListener('toggle', () => {
+    if (!panel.open) return;
+    document.querySelectorAll('.accordion').forEach((other) => {
+      if (other !== panel) other.open = false;
+    });
+  });
 });
 document.querySelector('#search').addEventListener('input', (event) => {
   state.query = event.target.value;
@@ -223,6 +258,7 @@ document.querySelector('#create-form').addEventListener('submit', (event) => {
     const ids = data.getAll('questionIds');
     state.createQuery = '';
     applyEdit(createVariantGroup(state.workingQuestions, ids, groupId), groupId);
+    document.querySelector('#comparison-panel').open = true;
     event.currentTarget.reset();
   } catch (error) {
     showOperationError(error.message);
