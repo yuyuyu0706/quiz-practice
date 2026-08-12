@@ -347,6 +347,46 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(results).toContainText(/候補 [1-9]\d*件/);
   });
 
+  test('shows the Candidate Assist empty state without editing or grouping questions', async ({
+    page,
+  }) => {
+    await page.route('**/dep-quiz-app/questions.json', async (route) => {
+      const response = await route.fetch();
+      const questions = await response.json();
+      const seed = {
+        ...questions[0],
+        id: 'CANDIDATE-NO-MATCH',
+        question: 'exact same choice setを持たない候補確認用の問い',
+        choices: Object.fromEntries(
+          Object.keys(questions[0].choices).map((label) => [
+            label,
+            `candidate-empty-${label}-unique-choice`,
+          ])
+        ),
+        variantGroup: undefined,
+      };
+      delete seed.followUp;
+      await route.fulfill({ response, json: [seed, ...questions] });
+    });
+    await page.goto(TOOL_URL);
+    await page.locator('#create-panel > summary').click();
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+    const groupCountBefore = await page.locator('#groups button').count();
+
+    await page.locator('#candidate-seed').selectOption('CANDIDATE-NO-MATCH');
+
+    const emptyState = page.locator('#candidate-results .empty-state');
+    await expect(emptyState).toBeVisible();
+    await expect(emptyState).toHaveText(
+      'Same choice set のUngrouped候補はありません。別のSeed Questionを選んでください。'
+    );
+    await expect(page.locator('#create-list input:checked')).toHaveCount(0);
+    await expect(page.locator('#dirty')).toBeHidden();
+    await expect(page.locator('#groups button')).toHaveCount(groupCountBefore);
+    await expect(page.locator('#groups')).not.toContainText('CANDIDATE-NO-MATCH');
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
+
   test('keeps a duplicate Group Name rename error visible in Comparison', async ({ page }) => {
     await openRepresentativeGroup(page);
     await page.locator('#create-panel > summary').click();
