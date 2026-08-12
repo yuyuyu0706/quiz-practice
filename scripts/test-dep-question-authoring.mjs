@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import {
   buildVariantComparison,
   buildVariantGroupIndex,
+  findUngroupedVariantCandidates,
   getChoiceTextMultiset,
   getVariantGroupMembers,
   searchVariantAuthoringQuestions,
@@ -47,4 +48,34 @@ assert.equal(JSON.stringify(source), snapshot, 'read model must not mutate sourc
 
 const duplicates = { choices: { B: ' same ', A: 'same', C: 'Case' } };
 assert.deepEqual(getChoiceTextMultiset(duplicates), ['Case', 'same', 'same']);
+
+const candidateSource = [
+  { id: 'seed', choices: { A: ' Alpha ', B: 'Beta', C: 'Alpha' } },
+  { id: 'exact-1', choices: { C: 'Alpha', B: 'Alpha', A: 'Beta' } },
+  { id: 'case-diff', choices: { A: 'alpha', B: 'Beta', C: 'Alpha' } },
+  { id: 'punctuation-diff', choices: { A: 'Alpha!', B: 'Beta', C: 'Alpha' } },
+  { id: 'space-diff', choices: { A: 'Al pha', B: 'Beta', C: 'Alpha' } },
+  {
+    id: 'grouped-exact',
+    choices: { A: 'Alpha', B: 'Beta', C: 'Alpha' },
+    variantGroup: 'existing',
+  },
+  { id: 'exact-2', choices: { A: 'Beta', B: ' Alpha', C: 'Alpha ' } },
+];
+const candidateSnapshot = JSON.stringify(candidateSource);
+assert.deepEqual(
+  findUngroupedVariantCandidates(candidateSource, 'seed').map((question) => question.id),
+  ['exact-1', 'exact-2'],
+  'candidates must preserve input order and exact duplicate-preserving multiset matching'
+);
+assert.throws(
+  () => findUngroupedVariantCandidates(candidateSource, 'grouped-exact'),
+  /already belongs/
+);
+assert.throws(() => findUngroupedVariantCandidates(candidateSource, 'missing'), /was not found/);
+assert.equal(
+  JSON.stringify(candidateSource),
+  candidateSnapshot,
+  'candidate lookup must be read-only'
+);
 console.log('dep question authoring tests passed');

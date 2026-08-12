@@ -1,6 +1,7 @@
 import {
   buildVariantComparison,
   buildVariantGroupIndex,
+  findUngroupedVariantCandidates,
   searchVariantGroups,
 } from './variant-authoring.js';
 import { inspectVariantSelection } from './variant-inspector.js';
@@ -8,6 +9,7 @@ import {
   addQuestionToVariantGroup,
   cloneQuestions,
   createVariantGroup,
+  deleteVariantGroup,
   removeQuestionFromVariantGroup,
   reconcileSelectedGroupId,
   renameVariantGroup,
@@ -21,6 +23,7 @@ const state = {
   selectedGroupId: null,
   query: '',
   createQuery: '',
+  candidateSeedQuestionId: '',
   dirty: false,
   inspector: { mode: 'normal', sections: [], progress: {} },
   validation: { valid: true, errors: [], raw: '' },
@@ -66,6 +69,49 @@ function renderCreateList() {
     .join('');
 }
 
+function renderCandidateAssist() {
+  const ungrouped = state.workingQuestions.filter((question) => question.variantGroup == null);
+  if (!ungrouped.some((question) => question.id === state.candidateSeedQuestionId)) {
+    state.candidateSeedQuestionId = '';
+  }
+  const select = document.querySelector('#candidate-seed');
+  select.innerHTML = `<option value="">Seed Questionを選択</option>${ungrouped
+    .map(
+      (question) =>
+        `<option value="${escapeHtml(question.id)}" ${question.id === state.candidateSeedQuestionId ? 'selected' : ''}>${escapeHtml(question.id)} — ${escapeHtml(question.question)}</option>`
+    )
+    .join('')}`;
+  const result = document.querySelector('#candidate-results');
+  if (!state.candidateSeedQuestionId) {
+    result.innerHTML = '<p class="empty-state">Seed Questionを選ぶと候補を表示します。</p>';
+    return;
+  }
+  const candidates = findUngroupedVariantCandidates(
+    state.workingQuestions,
+    state.candidateSeedQuestionId
+  );
+  result.innerHTML = candidates.length
+    ? `<p><strong>候補 ${candidates.length}件</strong> · 条件: Same choice set</p><ul class="candidate-list">${candidates
+        .map(
+          (question) =>
+            `<li><strong>${escapeHtml(question.id)}</strong> — ${escapeHtml(question.question)}<p class="meta">Section ${escapeHtml(question.section ?? 'なし')}${question.tags?.length ? ` · tags: ${question.tags.map(escapeHtml).join(', ')}` : ''} · Same choice set</p><button type="button" class="secondary" data-show-candidate="${escapeHtml(question.id)}">Show in list</button></li>`
+        )
+        .join(
+          ''
+        )}</ul><p class="help">候補が同じ知識・判断基準を確認しているかは、作問者が最終判断してください。候補は自動選択されません。</p>`
+    : '<p class="empty-state">Same choice set のUngrouped候補はありません。別のSeed Questionを選んでください。</p>';
+  result.querySelectorAll('[data-show-candidate]').forEach((button) =>
+    button.addEventListener('click', () => {
+      state.createQuery = button.dataset.showCandidate;
+      document.querySelector('#create-search').value = state.createQuery;
+      renderCreateList();
+      document
+        .querySelector('#create-list')
+        .scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    })
+  );
+}
+
 function applyEdit(nextQuestions, selectedGroupId = state.selectedGroupId) {
   state.workingQuestions = nextQuestions;
   state.selectedGroupId = selectedGroupId;
@@ -107,7 +153,8 @@ function renderSelected() {
   const ungrouped = state.workingQuestions.filter((question) => question.variantGroup == null);
   const followUps = members.filter((member) => member.followUp?.questionId);
   comparisonNode.innerHTML = `<div class="title-row"><h2>${escapeHtml(state.selectedGroupId)} <span class="badge">${members.length} members</span></h2><span class="health ${state.validation.errors.some((error) => String(error).includes(state.selectedGroupId) || members.some((m) => String(error).includes(m.id))) ? 'fail' : 'pass'}">Group health</span></div><div class="comparison-guide"><p>このメニューでは、選択中のVariant Groupを確認・編集できます。</p><ul><li>問題本文・選択肢・正解・followUpを比較する</li><li>Variant Groupのメンバーを追加・削除する</li><li>Group Nameを変更する</li></ul><p>同じ論点の「出題バリエーション」として扱える問題だけを同じVariant Groupへ所属させてください。</p></div>
-    <form id="rename-form" class="inline-form"><label>Group Name<input name="groupId" required></label><button type="submit">Rename group</button></form>
+    <section class="group-management" aria-labelledby="group-management-title"><h3 id="group-management-title">GROUP MANAGEMENT</h3><form id="rename-form" class="inline-form"><label>Group Name<input name="groupId" required></label><button type="submit">Rename Group</button></form>
+    <button id="delete-group" type="button" class="danger">Delete Group</button><p class="help">Delete Groupは問題自体を削除しません。${members.length} questionsは残り、Ungrouped questionsへ戻ります。</p></section>
     <p id="comparison-operation-error" class="fail operation-error" role="alert"></p>
     <p class="help">questions.jsonでは<code>variantGroup</code>として保存されます。英小文字・数字・ハイフンによる安定した名前を推奨します。</p>
     <section class="relationship-map" aria-labelledby="relationship-title"><h3 id="relationship-title">Relationship Map</h3><p class="meta">Variant Group: ${escapeHtml(state.selectedGroupId)}</p><div class="relation-graph"><div class="variant-relation" aria-label="Variant Group members: ${members.map((member) => escapeHtml(member.id)).join(', ')}">${members.map((member, index) => `${index ? '<span class="variant-edge" aria-hidden="true"></span>' : ''}<strong class="relation-node">${escapeHtml(member.id)}</strong>`).join('')}</div>${followUps.map((member) => `<div class="follow-up-relation" aria-label="${escapeHtml(member.id)} followUp to ${escapeHtml(member.followUp.questionId)}"><span class="relation-branch" aria-hidden="true">└─</span><span class="edge-label">followUp</span><span class="relation-arrow" aria-hidden="true">──→</span><strong class="relation-node">${escapeHtml(member.followUp.questionId)}</strong></div>`).join('')}</div></section>
@@ -129,6 +176,20 @@ function renderSelected() {
     try {
       const newId = new FormData(event.currentTarget).get('groupId');
       applyEdit(renameVariantGroup(state.workingQuestions, state.selectedGroupId, newId), newId);
+    } catch (error) {
+      showComparisonOperationError(error.message);
+    }
+  });
+  comparisonNode.querySelector('#delete-group').addEventListener('click', () => {
+    const groupId = state.selectedGroupId;
+    if (
+      !confirm(
+        `Delete Variant Group "${groupId}"?\n\n${members.length} questions will remain and return to Ungrouped.`
+      )
+    )
+      return;
+    try {
+      applyEdit(deleteVariantGroup(state.workingQuestions, groupId));
     } catch (error) {
       showComparisonOperationError(error.message);
     }
@@ -242,6 +303,7 @@ function render() {
   showCreateOperationError();
   renderGroups();
   renderCreateList();
+  renderCandidateAssist();
   renderSelected();
   renderValidation();
 }
@@ -272,6 +334,10 @@ document.querySelector('#create-search').addEventListener('input', (event) => {
   state.createQuery = event.target.value;
   renderCreateList();
 });
+document.querySelector('#candidate-seed').addEventListener('change', (event) => {
+  state.candidateSeedQuestionId = event.target.value;
+  renderCandidateAssist();
+});
 document.querySelector('#create-form').addEventListener('submit', (event) => {
   event.preventDefault();
   try {
@@ -279,6 +345,7 @@ document.querySelector('#create-form').addEventListener('submit', (event) => {
     const groupId = data.get('groupId');
     const ids = data.getAll('questionIds');
     state.createQuery = '';
+    state.candidateSeedQuestionId = '';
     applyEdit(createVariantGroup(state.workingQuestions, ids, groupId), groupId);
     document.querySelector('#comparison-panel').open = true;
     event.currentTarget.reset();
@@ -289,6 +356,7 @@ document.querySelector('#create-form').addEventListener('submit', (event) => {
 document.querySelector('#reset').addEventListener('click', () => {
   if (!state.dirty || !confirm('Discard all variantGroup edits?')) return;
   state.workingQuestions = cloneQuestions(state.sourceQuestions);
+  state.candidateSeedQuestionId = '';
   state.dirty = false;
   state.validation = validateWorkingQuestions(state.workingQuestions);
   const groups = buildVariantGroupIndex(state.workingQuestions);
