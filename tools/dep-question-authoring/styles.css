@@ -115,6 +115,41 @@ header {
 .comparison-guide ul {
   margin: 8px 0;
 }
+.group-criteria,
+.candidate-assist,
+.group-management {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #415173;
+  border-radius: 12px;
+  background: #101a2d;
+}
+.group-criteria h2,
+.candidate-assist h2,
+.group-management h3 {
+  font-size: 1rem;
+}
+.group-criteria ul {
+  padding-left: 20px;
+  color: #78e7c3;
+}
+.candidate-assist h2 span {
+  color: #8fa3ca;
+  font-size: 0.75rem;
+}
+.candidate-list {
+  padding-left: 22px;
+}
+.candidate-list li {
+  margin: 14px 0;
+}
+.candidate-list button,
+#delete-group {
+  width: auto;
+}
+.secondary {
+  border-color: #526889;
+}
 h1 {
   margin: 4px 0;
   font-size: clamp(2rem, 4vw, 3.25rem);

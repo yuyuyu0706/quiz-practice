@@ -87,6 +87,16 @@ export function removeQuestionFromVariantGroup(questions, questionId) {
   });
 }
 
+export function deleteVariantGroup(questions, groupId) {
+  if (!groupExists(questions, groupId)) throw new Error(`Group ${groupId} was not found.`);
+  return questions.map((question) => {
+    if (question.variantGroup !== groupId) return question;
+    const next = { ...question };
+    delete next.variantGroup;
+    return next;
+  });
+}
+
 export function renameVariantGroup(questions, oldGroupId, newGroupId) {
   assertGroupId(newGroupId);
   if (!groupExists(questions, oldGroupId)) throw new Error(`Group ${oldGroupId} was not found.`);

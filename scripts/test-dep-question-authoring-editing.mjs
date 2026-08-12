@@ -4,6 +4,7 @@ import {
   addQuestionToVariantGroup,
   cloneQuestions,
   createVariantGroup,
+  deleteVariantGroup,
   removeQuestionFromVariantGroup,
   reconcileSelectedGroupId,
   renameVariantGroup,
@@ -65,8 +66,13 @@ assert.deepEqual(
   ['renamed', 'renamed']
 );
 assert.throws(() => renameVariantGroup(created, 'new-group', 'existing'), /already exists/);
+const deleted = deleteVariantGroup(source, 'existing');
+assert.equal(deleted.length, source.length);
+assert.equal('variantGroup' in deleted[2], false);
+assert.equal('variantGroup' in deleted[3], false);
+assert.throws(() => deleteVariantGroup(source, 'missing'), /was not found/);
 assert.equal(JSON.stringify(source), snapshot);
-for (const result of [created, added, removed, renamed]) {
+for (const result of [created, added, removed, renamed, deleted]) {
   result.forEach((question, index) => {
     const { variantGroup: _before, ...before } = source[index];
     const { variantGroup: _after, ...after } = question;

@@ -122,6 +122,28 @@
               新しい group を作る場合のみ使用します。検索対象は variantGroup 未所属の questions
               だけで、2問以上の選択が必要です。
             </p>
+            <section class="group-criteria" aria-labelledby="group-criteria-title">
+              <h2 id="group-criteria-title">Variant Groupにまとめる条件</h2>
+              <ul>
+                <li>✓ 同じ知識・判断基準</li>
+                <li>✓ 問い方・視点は異なる</li>
+                <li>✓ 選択肢本文は同じ</li>
+              </ul>
+              <p>
+                choice-set一致は必要条件です。最終的に「同じ知識・判断基準か」を確認してください。類似問題だけならVariant
+                Groupではなく<code>tags</code>での集約を検討してください。
+              </p>
+            </section>
+            <section class="candidate-assist" aria-labelledby="candidate-assist-title">
+              <h2 id="candidate-assist-title">Candidate Assist <span>任意</span></h2>
+              <label for="candidate-seed">Seed Question</label>
+              <select id="candidate-seed"></select>
+              <p class="help">
+                同じchoice text multisetを持つUngrouped
+                questionだけを、元のquestions順で提示します。
+              </p>
+              <div id="candidate-results" aria-live="polite"></div>
+            </section>
             <form id="create-form">
               <label>New Group Name<input name="groupId" required /></label>
               <label for="create-search"

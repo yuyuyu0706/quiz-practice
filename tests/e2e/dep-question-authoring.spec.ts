@@ -273,6 +273,80 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(page.locator('#validation-status')).toContainText('PASS · 0 errors');
   });
 
+  test('deletes only the group relation after confirmation and supports cancel and Reset', async ({
+    page,
+  }) => {
+    await openRepresentativeGroup(page);
+    const deleteButton = page.getByRole('button', { name: 'Delete Group' });
+    await expect(page.locator('.group-management')).toContainText(
+      'Delete Groupは問題自体を削除しません。2 questionsは残り'
+    );
+
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await deleteButton.click();
+    await expect(page.locator('#groups button', { hasText: GROUP_ID })).toHaveCount(1);
+    await expect(page.locator('#dirty')).toBeHidden();
+
+    page.once('dialog', async (dialog) => {
+      expect(dialog.message()).toContain(`Delete Variant Group "${GROUP_ID}"?`);
+      expect(dialog.message()).toContain('2 questions will remain and return to Ungrouped.');
+      await dialog.accept();
+    });
+    await deleteButton.click();
+    await expect(page.locator('#groups button', { hasText: GROUP_ID })).toHaveCount(0);
+    await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
+    await expect(page.locator('#validation-status')).toContainText('PASS');
+
+    await page.locator('#create-panel > summary').click();
+    await page.locator('#create-search').fill('DEP-Q29');
+    await expect(page.locator('#create-list input[value="DEP-Q292"]')).toHaveCount(1);
+    await expect(page.locator('#create-list input[value="DEP-Q293"]')).toHaveCount(1);
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('#reset').click();
+    await expect(page.locator('#groups button', { hasText: GROUP_ID })).toContainText('2');
+    await expect(page.locator('#dirty')).toBeHidden();
+  });
+
+  test('offers deterministic same-choice candidates without selecting or persisting them', async ({
+    page,
+  }) => {
+    await page.route('**/dep-quiz-app/questions.json', async (route) => {
+      const response = await route.fetch();
+      const questions = await response.json();
+      const seed = { ...questions[0], id: 'CANDIDATE-SEED', variantGroup: undefined };
+      const match = {
+        ...questions[0],
+        id: 'CANDIDATE-MATCH',
+        question: '同じ選択肢を持つ別の問い',
+        variantGroup: undefined,
+      };
+      delete seed.followUp;
+      delete match.followUp;
+      await route.fulfill({ response, json: [seed, match, ...questions] });
+    });
+    await page.goto(TOOL_URL);
+    await page.locator('#create-panel > summary').click();
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+    await page.locator('#candidate-seed').selectOption('CANDIDATE-SEED');
+    const results = page.locator('#candidate-results');
+    await expect(results).toContainText(/候補 [1-9]\d*件/);
+    await expect(results).toContainText('CANDIDATE-MATCH');
+    await expect(results).toContainText('Same choice set');
+    await expect(page.locator('#create-list input:checked')).toHaveCount(0);
+    await expect(page.locator('#dirty')).toBeHidden();
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+
+    await results
+      .locator('li', { hasText: 'CANDIDATE-MATCH' })
+      .getByRole('button', { name: 'Show in list' })
+      .click();
+    await expect(page.locator('#create-search')).toHaveValue('CANDIDATE-MATCH');
+    await expect(page.locator('#create-list input[value="CANDIDATE-MATCH"]')).not.toBeChecked();
+    await page.locator('#candidate-seed').selectOption('CANDIDATE-MATCH');
+    await expect(results).toContainText(/候補 [1-9]\d*件/);
+  });
+
   test('keeps a duplicate Group Name rename error visible in Comparison', async ({ page }) => {
     await openRepresentativeGroup(page);
     await page.locator('#create-panel > summary').click();

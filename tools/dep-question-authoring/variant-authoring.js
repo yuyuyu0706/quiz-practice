@@ -44,6 +44,21 @@ export function getChoiceTextMultiset(question) {
     .sort();
 }
 
+export function findUngroupedVariantCandidates(questions, seedQuestionId) {
+  const seed = questions.find((question) => question.id === seedQuestionId);
+  if (!seed) throw new Error(`Question ${seedQuestionId} was not found.`);
+  if (seed.variantGroup != null) {
+    throw new Error(`Question ${seedQuestionId} already belongs to a variant group.`);
+  }
+  const seedMultiset = JSON.stringify(getChoiceTextMultiset(seed));
+  return questions.filter(
+    (question) =>
+      question.id !== seedQuestionId &&
+      question.variantGroup == null &&
+      JSON.stringify(getChoiceTextMultiset(question)) === seedMultiset
+  );
+}
+
 export function buildVariantComparison(groupMembers) {
   return groupMembers.map((question) => ({
     id: question.id,
