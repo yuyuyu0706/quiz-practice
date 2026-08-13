@@ -72,6 +72,35 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await expect(page.locator('#candidate-seed')).toHaveValue('');
     await expect(page.locator('#dirty')).toBeHidden();
   });
+
+  test('keeps catalog and authoring data unchanged during a workspace round trip', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+
+    const countBefore = await page.locator('#catalog-count').textContent();
+    const validationBefore = await page.locator('#validation-status').textContent();
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+    await expect(page.locator('#question-detail h2')).toHaveText('DEP-Q292');
+    await expect(page.locator('#dirty')).toBeHidden();
+
+    await page.locator('#variant-tab').click();
+    await expect(page.locator('#variant-workspace')).toBeVisible();
+    await page.locator('#catalog-tab').click();
+
+    await expect(page.locator('#catalog-workspace')).toBeVisible();
+    await expect(page.locator('#catalog-count')).toHaveText(countBefore ?? '');
+    await expect(page.locator('#catalog-list button.active')).toHaveAttribute(
+      'data-question-id',
+      'DEP-Q292'
+    );
+    await expect(page.locator('#question-detail h2')).toHaveText('DEP-Q292');
+    await expect(page.locator('#validation-status')).toHaveText(validationBefore ?? '');
+    await expect(page.locator('#dirty')).toBeHidden();
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
 });
 
 test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Inspector', () => {
@@ -196,12 +225,16 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       route.fulfill({ status: 404, body: 'not found' })
     );
     await page.goto(TOOL_URL);
-    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
-    const status = page.locator('#status');
+    const status = page.locator('#catalog-status');
+    await expect(page.locator('#catalog-workspace')).toBeVisible();
     await expect(status).toContainText('questions.json が見つかりません (404)');
     await expect(status).toContainText('npm run serve:dep-question-authoring');
     await expect(status).toContainText('http://127.0.0.1:4173/tools/dep-question-authoring/');
     await expect(status).toContainText('http://127.0.0.1:4173/dep-quiz-app/questions.json');
+    await expect(page.locator('#catalog-search')).toBeDisabled();
+    await expect(page.locator('#catalog-list')).toContainText('Questionを読み込めませんでした。');
+    await expect(page.locator('#question-detail')).toContainText('Question Detailを表示できません');
+    await expect(page.locator('.future-actions button')).toHaveCount(0);
     await expect(page.locator('#create-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('#reset')).toBeDisabled();
     await expect(page.locator('#export')).toBeDisabled();
@@ -214,12 +247,16 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
     );
     await page.goto(TOOL_URL);
-    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
 
-    const status = page.locator('#status');
+    const status = page.locator('#catalog-status');
+    await expect(page.locator('#catalog-workspace')).toBeVisible();
     await expect(status).toContainText('questions.json の読み込みに失敗しました');
     await expect(status).toContainText('questions.json に利用可能な問題がありません。');
     await expect(status).not.toContainText('0 questions / 0 variant groups');
+    await expect(page.locator('#catalog-search')).toBeDisabled();
+    await expect(page.locator('#catalog-list')).toContainText('Questionを読み込めませんでした。');
+    await expect(page.locator('#question-detail')).toContainText('Question Detailを表示できません');
+    await expect(page.locator('.future-actions button')).toHaveCount(0);
     await expect(page.locator('#create-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('#reset')).toBeDisabled();
     await expect(page.locator('#export')).toBeDisabled();

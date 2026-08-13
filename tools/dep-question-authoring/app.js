@@ -45,6 +45,7 @@ const validationStatusNode = document.querySelector('#validation-status');
 const validationResultNode = document.querySelector('#validation-result');
 const validationDetailsNode = document.querySelector('#validation');
 const statusNode = document.querySelector('#status');
+const catalogStatusNode = document.querySelector('#catalog-status');
 const dirtyNode = document.querySelector('#dirty');
 const catalogListNode = document.querySelector('#catalog-list');
 const questionDetailNode = document.querySelector('#question-detail');
@@ -519,15 +520,24 @@ try {
   const groupCount = buildVariantGroupIndex(state.workingQuestions).length;
   statusNode.classList.add('status-success');
   statusNode.textContent = `読み込み完了: ${state.workingQuestions.length} questions / ${groupCount} variant groups`;
+  catalogStatusNode.classList.add('status-success');
+  catalogStatusNode.textContent = `読み込み完了: ${state.workingQuestions.length} questions`;
   document.querySelector('#create-form button[type="submit"]').disabled = false;
   document.querySelector('#catalog-search').disabled = false;
 } catch (error) {
   state.loadState = 'error';
   statusNode.classList.add('status-error');
+  catalogStatusNode.classList.add('status-error');
   const isNotFound = String(error.message).startsWith('404 ');
-  statusNode.innerHTML = isNotFound
+  const errorContent = isNotFound
     ? `<strong>questions.json が見つかりません (404)</strong><p>repository root を server root として、次の command で起動してください。</p><code>npm run serve:dep-question-authoring</code><p>Tool: <code>http://127.0.0.1:4173/tools/dep-question-authoring/</code><br>Data check: <code>http://127.0.0.1:4173/dep-quiz-app/questions.json</code></p><p>起動後にこのページを再読み込みしてください。</p>`
     : `<strong>questions.json の読み込みに失敗しました</strong><p>${escapeHtml(error.message)}</p><p>ネットワークまたは server の状態を確認し、ページを再読み込みしてください。</p>`;
+  statusNode.innerHTML = errorContent;
+  catalogStatusNode.innerHTML = errorContent;
+  document.querySelector('#catalog-count').textContent = '0 / 0 questions';
+  catalogListNode.innerHTML = '<p class="empty-state">Questionを読み込めませんでした。</p>';
+  questionDetailNode.innerHTML =
+    '<p class="empty-state">Question Detailを表示できません。上記のエラーを解消して再読み込みしてください。</p>';
   document.querySelectorAll('#create-form input, #create-form button').forEach((control) => {
     control.disabled = true;
   });

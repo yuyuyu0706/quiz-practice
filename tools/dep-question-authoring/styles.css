@@ -192,6 +192,9 @@ main {
 .catalog-layout {
   grid-template-columns: minmax(320px, 42%) 1fr;
 }
+.catalog-status {
+  grid-column: 1 / -1;
+}
 .catalog-controls {
   align-self: start;
 }
