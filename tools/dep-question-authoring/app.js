@@ -6,6 +6,11 @@ import {
 } from './variant-authoring.js';
 import { inspectVariantSelection } from './variant-inspector.js';
 import {
+  buildCatalogFilterOptions,
+  filterQuestionCatalog,
+  reconcileSelectedQuestionId,
+} from './question-catalog.js';
+import {
   addQuestionToVariantGroup,
   cloneQuestions,
   createVariantGroup,
@@ -28,6 +33,9 @@ const state = {
   inspector: { mode: 'normal', sections: [], progress: {} },
   validation: { valid: true, errors: [], raw: '' },
   loadState: 'loading',
+  activeWorkspace: 'catalog',
+  selectedQuestionId: null,
+  catalogFilters: { keyword: '', section: '', domain: '', difficulty: '', sourceType: '' },
 };
 const groupsNode = document.querySelector('#groups');
 const comparisonNode = document.querySelector('#comparison');
@@ -38,6 +46,97 @@ const validationResultNode = document.querySelector('#validation-result');
 const validationDetailsNode = document.querySelector('#validation');
 const statusNode = document.querySelector('#status');
 const dirtyNode = document.querySelector('#dirty');
+const catalogListNode = document.querySelector('#catalog-list');
+const questionDetailNode = document.querySelector('#question-detail');
+
+function setWorkspace(workspace) {
+  state.activeWorkspace = workspace;
+  document.querySelector('#catalog-workspace').hidden = workspace !== 'catalog';
+  document.querySelector('#variant-workspace').hidden = workspace !== 'variant';
+  document.querySelector('#catalog-tab').setAttribute('aria-selected', workspace === 'catalog');
+  document.querySelector('#variant-tab').setAttribute('aria-selected', workspace === 'variant');
+}
+
+function renderCatalogFilters() {
+  const options = buildCatalogFilterOptions(state.workingQuestions);
+  document.querySelector('#catalog-filters').innerHTML = [
+    ['section', 'Section'],
+    ['domain', 'Domain'],
+    ['difficulty', 'Difficulty'],
+    ['sourceType', 'Source Type'],
+  ]
+    .map(
+      ([field, label]) =>
+        `<label>${label}<select data-catalog-filter="${field}"><option value="">All</option>${options[
+          field
+        ]
+          .map(
+            (value) =>
+              `<option value="${escapeHtml(value)}" ${state.catalogFilters[field] === value ? 'selected' : ''}>${escapeHtml(value)}</option>`
+          )
+          .join('')}</select></label>`
+    )
+    .join('');
+}
+
+function renderQuestionDetail(question) {
+  if (!question) {
+    questionDetailNode.innerHTML = '<p class="empty-state">Questionを選択してください。</p>';
+    return;
+  }
+  questionDetailNode.innerHTML = `<p class="eyebrow">QUESTION DETAIL</p>
+    <div class="title-row"><h2>${escapeHtml(question.id)}</h2><span class="badge">${question.grouped ? 'Grouped' : 'Ungrouped'}</span></div>
+    <p class="meta">Section ${escapeHtml(question.section || 'なし')} · ${escapeHtml(question.sectionTitle || 'なし')} · ${escapeHtml(question.domain || 'なし')}</p>
+    <p class="meta">tags: ${escapeHtml(question.tags.join(', ') || 'なし')} · difficulty: ${escapeHtml(question.difficulty || 'なし')} · sourceType: ${escapeHtml(question.sourceType || 'なし')}</p>
+    <p class="question-copy">${escapeHtml(question.question || '問題文なし')}</p>
+    <ol class="choices">${Object.entries(question.choices)
+      .map(
+        ([label, choice]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(choice)}</li>`
+      )
+      .join('')}</ol>
+    <p><strong>Answer:</strong> ${escapeHtml(question.answer || 'なし')}</p>
+    <dl class="relation-detail"><dt>variantGroup</dt><dd>${escapeHtml(question.variantGroup || 'Ungrouped')}</dd><dt>followUp target</dt><dd>${escapeHtml(question.followUpTargetId || 'なし')}</dd></dl>
+    <div class="future-actions" aria-label="Future authoring actions"><button type="button" disabled title="F2.6-2で有効化予定">Edit Question</button><button type="button" disabled title="F2.6-3で有効化予定">Clone Question</button><button type="button" disabled title="F2.6-3で有効化予定">Create Variant</button></div>
+    <button id="open-variant-context" type="button" class="primary">${question.grouped ? 'Open group in Variant Management' : 'Find in Create Variant Group'}</button>`;
+  document.querySelector('#open-variant-context').addEventListener('click', () => {
+    setWorkspace('variant');
+    if (question.grouped) {
+      state.selectedGroupId = question.variantGroup;
+      document.querySelector('#comparison-panel').open = true;
+      document.querySelector('#create-panel').open = false;
+      render();
+    } else {
+      state.createQuery = question.id;
+      document.querySelector('#create-search').value = question.id;
+      document.querySelector('#create-panel').open = true;
+      document.querySelector('#comparison-panel').open = false;
+      document.querySelector('#inspector-panel').open = false;
+      renderCreateList();
+    }
+  });
+}
+
+function renderCatalog() {
+  const entries = filterQuestionCatalog(state.workingQuestions, state.catalogFilters);
+  state.selectedQuestionId = reconcileSelectedQuestionId(
+    state.workingQuestions,
+    state.selectedQuestionId
+  );
+  document.querySelector('#catalog-count').textContent =
+    `${entries.length} / ${state.workingQuestions.length} questions`;
+  catalogListNode.innerHTML = entries.length
+    ? entries
+        .map(
+          (question) =>
+            `<button type="button" data-question-id="${escapeHtml(question.id)}" class="${question.id === state.selectedQuestionId ? 'active' : ''}"><strong>${escapeHtml(question.id)}</strong><span>${escapeHtml(question.question || '問題文なし')}</span><small>Section ${escapeHtml(question.section || 'なし')} · ${escapeHtml(question.domain || 'なし')} · ${escapeHtml(question.difficulty || 'なし')} · ${escapeHtml(question.sourceType || 'なし')}<br>tags: ${escapeHtml(question.tags.join(', ') || 'なし')} · ${question.grouped ? `variantGroup: ${escapeHtml(question.variantGroup)}` : 'Ungrouped'} · followUp: ${escapeHtml(question.followUpTargetId || 'なし')}</small></button>`
+        )
+        .join('')
+    : '<p class="empty-state">該当するQuestionはありません。検索条件を変更してください。</p>';
+  const selected = filterQuestionCatalog(state.workingQuestions).find(
+    (question) => question.id === state.selectedQuestionId
+  );
+  renderQuestionDetail(selected);
+}
 
 function escapeHtml(value) {
   const node = document.createElement('span');
@@ -306,7 +405,28 @@ function render() {
   renderCandidateAssist();
   renderSelected();
   renderValidation();
+  renderCatalogFilters();
+  renderCatalog();
 }
+
+document.querySelector('#catalog-tab').addEventListener('click', () => setWorkspace('catalog'));
+document.querySelector('#variant-tab').addEventListener('click', () => setWorkspace('variant'));
+document.querySelector('#catalog-search').addEventListener('input', (event) => {
+  state.catalogFilters.keyword = event.target.value;
+  renderCatalog();
+});
+document.querySelector('#catalog-filters').addEventListener('change', (event) => {
+  const field = event.target.dataset.catalogFilter;
+  if (!field) return;
+  state.catalogFilters[field] = event.target.value;
+  renderCatalog();
+});
+catalogListNode.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-question-id]');
+  if (!button) return;
+  state.selectedQuestionId = button.dataset.questionId;
+  renderCatalog();
+});
 
 groupsNode.addEventListener('click', (event) => {
   const button = event.target.closest('[data-group]');
@@ -393,12 +513,14 @@ try {
   state.workingQuestions = cloneQuestions(state.sourceQuestions);
   state.inspector.sections = [...new Set(state.workingQuestions.map((q) => q.section))];
   state.selectedGroupId = buildVariantGroupIndex(state.workingQuestions)[0]?.id ?? null;
+  state.selectedQuestionId = state.workingQuestions[0]?.id ?? null;
   state.validation = validateWorkingQuestions(state.workingQuestions);
   render();
   const groupCount = buildVariantGroupIndex(state.workingQuestions).length;
   statusNode.classList.add('status-success');
   statusNode.textContent = `読み込み完了: ${state.workingQuestions.length} questions / ${groupCount} variant groups`;
   document.querySelector('#create-form button[type="submit"]').disabled = false;
+  document.querySelector('#catalog-search').disabled = false;
 } catch (error) {
   state.loadState = 'error';
   statusNode.classList.add('status-error');

@@ -5,6 +5,7 @@ const GROUP_ID = 'auto-loader-state-locations';
 
 async function openRepresentativeGroup(page: Page) {
   await page.goto(TOOL_URL);
+  await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
   const groupButton = page.locator('#groups button', { hasText: GROUP_ID });
   await expect(groupButton).toContainText('2');
   await groupButton.click();
@@ -22,6 +23,57 @@ function memberCard(page: Page, questionId: string) {
   });
 }
 
+test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'The local authoring tool is Chromium-only.');
+  });
+
+  test('loads the complete catalog by default and supports read-only search and detail', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await expect(page.locator('#catalog-tab')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#catalog-workspace')).toBeVisible();
+    await expect(page.locator('#variant-workspace')).toBeHidden();
+    const total = await page.locator('#catalog-list [data-question-id]').count();
+    expect(total).toBeGreaterThan(0);
+    await expect(page.locator('#catalog-count')).toHaveText(`${total} / ${total} questions`);
+    await expect(page.locator('#question-detail')).toContainText('QUESTION DETAIL');
+    await expect(page.locator('.future-actions button')).toHaveCount(3);
+    await expect(page.locator('.future-actions button:disabled')).toHaveCount(3);
+
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await expect(page.locator('#catalog-list [data-question-id]')).toHaveCount(1);
+    await expect(page.locator('#catalog-count')).toHaveText(`1 / ${total} questions`);
+    await expect(page.locator('#dirty')).toBeHidden();
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
+
+  test('bridges grouped and ungrouped questions into Variant Management without mutation', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    await page.getByRole('button', { name: 'Open group in Variant Management' }).click();
+    await expect(page.locator('#variant-tab')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#comparison h2')).toContainText(GROUP_ID);
+    await expect(page.locator('#comparison-panel')).toHaveAttribute('open', '');
+    await expect(page.locator('#dirty')).toBeHidden();
+
+    await page.locator('#catalog-tab').click();
+    await page.locator('#catalog-search').fill('DEP-Q001');
+    await page.locator('[data-question-id="DEP-Q001"]').click();
+    await page.getByRole('button', { name: 'Find in Create Variant Group' }).click();
+    await expect(page.locator('#create-panel')).toHaveAttribute('open', '');
+    await expect(page.locator('#create-search')).toHaveValue('DEP-Q001');
+    await expect(page.locator('#create-list input:checked')).toHaveCount(0);
+    await expect(page.locator('#candidate-seed')).toHaveValue('');
+    await expect(page.locator('#dirty')).toBeHidden();
+  });
+});
+
 test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Inspector', () => {
   test.beforeEach(async ({}, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'The local authoring tool is Chromium-only.');
@@ -31,12 +83,12 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     page,
   }) => {
     await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     await expect(page.locator('#status')).toContainText(
       /読み込み完了: \d+ questions \/ \d+ variant groups/
     );
-    await expect(page.locator('header')).toContainText(
-      'バリアント問題（同一選択肢×異なる問い）を作成するための、グルーピング・シミュレーション・問題データ（questions.json）の整合性検証が可能な開発者ツールです。'
-    );
+    await expect(page).toHaveTitle('DEP Question Authoring Tool');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('DEP Question Authoring Tool');
     await expect(page.getByText('はじめて使う方へ — Quick Start')).toBeVisible();
     await expect(page.locator('.groups-panel .help')).toContainText('空欄では全 Variant groups');
     await expect(page.locator('.groups-panel .help')).toContainText(
@@ -45,10 +97,10 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
     await page.locator('#quick-start-title').click();
     const quickStart = page.locator('.quick-start');
-    await expect(quickStart.locator('li')).toHaveCount(5);
-    await expect(quickStart.locator('li').nth(4)).toContainText('dep-quiz-app/questions.json');
-    await expect(quickStart.locator('li').nth(4)).toContainText('commit');
-    await expect(quickStart.locator('li').nth(4)).toContainText('PR / mergeフロー');
+    await expect(quickStart.locator('li')).toHaveCount(7);
+    await expect(quickStart.locator('li').nth(6)).toContainText('dep-quiz-app/questions.json');
+    await expect(quickStart.locator('li').nth(6)).toContainText('commit');
+    await expect(quickStart.locator('li').nth(6)).toContainText('PR / mergeフロー');
     await expect(page.locator('.manual-panel')).toHaveCount(3);
     await expect(page.locator('#glossary')).not.toHaveAttribute('open', '');
     await page.locator('#glossary > summary').click();
@@ -134,7 +186,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('header #validation-status')).toBeVisible();
     await expect(page.locator('header #reset')).toBeVisible();
     await expect(page.locator('header #export')).toBeVisible();
-    await expect(page.locator('.quick-start strong')).toHaveCount(5);
+    await expect(page.locator('.quick-start strong')).toHaveCount(7);
   });
 
   test('shows actionable 404 recovery and prevents authoring against unloaded data', async ({
@@ -144,6 +196,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       route.fulfill({ status: 404, body: 'not found' })
     );
     await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     const status = page.locator('#status');
     await expect(status).toContainText('questions.json が見つかりません (404)');
     await expect(status).toContainText('npm run serve:dep-question-authoring');
@@ -161,6 +214,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
     );
     await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
 
     const status = page.locator('#status');
     await expect(status).toContainText('questions.json の読み込みに失敗しました');
@@ -326,6 +380,7 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
       await route.fulfill({ response, json: [seed, match, ...questions] });
     });
     await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     await page.locator('#create-panel > summary').click();
     const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
     await page.locator('#candidate-seed').selectOption('CANDIDATE-SEED');
@@ -369,6 +424,7 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
       await route.fulfill({ response, json: [seed, ...questions] });
     });
     await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     await page.locator('#create-panel > summary').click();
     const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
     const groupCountBefore = await page.locator('#groups button').count();
@@ -411,6 +467,7 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     page,
   }) => {
     await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     await page.locator('#create-panel > summary').click();
     await page.locator('#create-list input[value="DEP-Q208"]').check();
     await page.locator('#create-list input[value="DEP-Q226"]').check();
