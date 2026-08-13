@@ -3,18 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DEP Variant Manager</title>
+    <title>DEP Question Authoring Tool</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header>
       <p class="eyebrow">LOCAL AUTHORING TOOL · BROWSER MEMORY ONLY</p>
       <div class="title-row">
-        <h1>DEP Variant Manager</h1>
+        <h1>DEP Question Authoring Tool</h1>
         <span id="dirty" class="dirty" hidden>Unsaved changes</span>
       </div>
       <p>
-        バリアント問題（同一選択肢×異なる問い）を作成するための、グルーピング・シミュレーション・問題データ（questions.json）の整合性検証が可能な開発者ツールです。
+        DEP Question全般の確認と、Variant relationの管理・検証を行うローカルAuthoring Toolです。
       </p>
       <section class="global-tools" aria-label="Global validation and actions">
         <strong id="validation-status" class="validation-status" role="status"
@@ -49,7 +49,8 @@
       <details class="manual-panel quick-start">
         <summary id="quick-start-title">はじめて使う方へ — Quick Start</summary>
         <ol>
-          <li>必要なら <strong>CREATE VARIANT GROUP</strong> で新しいgroupを作ります。</li>
+          <li><strong>QUESTION CATALOG</strong> で扱うQuestionを検索・確認します。</li>
+          <li>relation管理が必要なら <strong>VARIANT MANAGEMENT</strong> へ移動します。</li>
           <li><strong>MEMBER COMPARISON &amp; EDIT</strong> で問題を比較・編集します。</li>
           <li><strong>SELECTION INSPECTOR</strong> で出題条件を試します。</li>
           <li>
@@ -102,7 +103,41 @@
         </div>
       </details>
     </section>
-    <main>
+    <nav class="workspace-tabs" aria-label="Authoring workspace">
+      <button id="catalog-tab" type="button" aria-controls="catalog-workspace" aria-selected="true">
+        QUESTION CATALOG
+      </button>
+      <button
+        id="variant-tab"
+        type="button"
+        aria-controls="variant-workspace"
+        aria-selected="false"
+      >
+        VARIANT MANAGEMENT
+      </button>
+    </nav>
+    <main id="catalog-workspace" class="catalog-layout">
+      <div id="catalog-status" class="status catalog-status" role="status">
+        questions.json を読み込み中...
+      </div>
+      <aside class="panel catalog-controls">
+        <h2>Question Catalog</h2>
+        <label for="catalog-search">Keyword Search</label>
+        <input
+          id="catalog-search"
+          type="search"
+          placeholder="ID・問題文・metadataを検索"
+          disabled
+        />
+        <div id="catalog-filters"></div>
+        <p id="catalog-count" class="meta">0 / 0 questions</p>
+        <div id="catalog-list" class="catalog-list" aria-label="Questions"></div>
+      </aside>
+      <section id="question-detail" class="panel question-detail" aria-live="polite">
+        <p class="empty-state">questions.json を読み込み中...</p>
+      </section>
+    </main>
+    <main id="variant-workspace" hidden>
       <aside class="panel groups-panel">
         <label for="search">問題 ID・本文・グループ名を検索</label>
         <input id="search" type="search" placeholder="例: DEP-Q292 / auto-loader-state-locations" />

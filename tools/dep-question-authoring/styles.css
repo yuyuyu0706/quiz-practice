@@ -7,6 +7,9 @@
 * {
   box-sizing: border-box;
 }
+[hidden] {
+  display: none !important;
+}
 body {
   margin: 0;
   min-height: 100vh;
@@ -170,6 +173,74 @@ main {
   grid-template-columns: minmax(260px, 330px) 1fr;
   gap: 24px;
   padding: 24px clamp(24px, 5vw, 72px) 60px;
+}
+.workspace-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 24px clamp(24px, 5vw, 72px) 0;
+}
+.workspace-tabs button {
+  width: auto;
+  padding-inline: 22px;
+  border-color: #415173;
+  text-align: center;
+}
+.workspace-tabs button[aria-selected='true'] {
+  border-color: #78e7c3;
+  background: #176b59;
+}
+.catalog-layout {
+  grid-template-columns: minmax(320px, 42%) 1fr;
+}
+.catalog-status {
+  grid-column: 1 / -1;
+}
+.catalog-controls {
+  align-self: start;
+}
+.catalog-list {
+  max-height: 70vh;
+  overflow: auto;
+}
+.catalog-list button span,
+.catalog-list button small {
+  display: block;
+  margin-top: 5px;
+}
+.catalog-list button small {
+  color: #8fa3ca;
+  line-height: 1.45;
+}
+.question-detail {
+  align-self: start;
+  position: sticky;
+  top: 20px;
+}
+.question-copy {
+  margin-block: 24px;
+  font-size: 1.1rem;
+  line-height: 1.65;
+}
+.relation-detail {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+}
+.relation-detail dt {
+  color: #8fa3ca;
+  font-weight: 800;
+}
+.relation-detail dd {
+  margin: 0;
+}
+.future-actions {
+  display: flex;
+  gap: 8px;
+  margin-block: 22px;
+}
+.future-actions button {
+  text-align: center;
+  border-color: #415173;
 }
 .panel {
   background: rgba(17, 27, 49, 0.92);
