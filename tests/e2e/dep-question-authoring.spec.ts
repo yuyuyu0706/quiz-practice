@@ -63,11 +63,11 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await expect(page.locator('#dirty')).toBeHidden();
 
     await page.locator('#catalog-tab').click();
-    await page.locator('#catalog-search').fill('DEP-Q001');
-    await page.locator('[data-question-id="DEP-Q001"]').click();
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
     await page.getByRole('button', { name: 'Find in Create Variant Group' }).click();
     await expect(page.locator('#create-panel')).toHaveAttribute('open', '');
-    await expect(page.locator('#create-search')).toHaveValue('DEP-Q001');
+    await expect(page.locator('#create-search')).toHaveValue('DEP-Q201');
     await expect(page.locator('#create-list input:checked')).toHaveCount(0);
     await expect(page.locator('#candidate-seed')).toHaveValue('');
     await expect(page.locator('#dirty')).toBeHidden();
@@ -97,10 +97,10 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
     await page.locator('#quick-start-title').click();
     const quickStart = page.locator('.quick-start');
-    await expect(quickStart.locator('li')).toHaveCount(7);
-    await expect(quickStart.locator('li').nth(6)).toContainText('dep-quiz-app/questions.json');
-    await expect(quickStart.locator('li').nth(6)).toContainText('commit');
-    await expect(quickStart.locator('li').nth(6)).toContainText('PR / mergeフロー');
+    await expect(quickStart.locator('li')).toHaveCount(6);
+    await expect(quickStart.locator('li').nth(5)).toContainText('dep-quiz-app/questions.json');
+    await expect(quickStart.locator('li').nth(5)).toContainText('commit');
+    await expect(quickStart.locator('li').nth(5)).toContainText('PR / mergeフロー');
     await expect(page.locator('.manual-panel')).toHaveCount(3);
     await expect(page.locator('#glossary')).not.toHaveAttribute('open', '');
     await page.locator('#glossary > summary').click();
@@ -186,7 +186,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('header #validation-status')).toBeVisible();
     await expect(page.locator('header #reset')).toBeVisible();
     await expect(page.locator('header #export')).toBeVisible();
-    await expect(page.locator('.quick-start strong')).toHaveCount(7);
+    await expect(page.locator('.quick-start strong')).toHaveCount(6);
   });
 
   test('shows actionable 404 recovery and prevents authoring against unloaded data', async ({
