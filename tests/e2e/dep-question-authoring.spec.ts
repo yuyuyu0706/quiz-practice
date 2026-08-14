@@ -68,6 +68,9 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await form.locator('[name="explanation"]').fill('Created explanation');
     await form.getByRole('button', { name: 'Create Question' }).click();
     await expect(page.locator('#question-detail h2')).toHaveText('DEP-Q999');
+    await expect(page.locator('#question-detail .meta').first()).toContainText(
+      'Section 10 · Data Modelling'
+    );
     await expect(page.locator('#dirty')).toBeVisible();
     await expect(page.locator('#catalog-count')).toContainText(`${originalCount + 1}`);
 

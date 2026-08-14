@@ -1,10 +1,24 @@
 import assert from 'node:assert/strict';
 import {
+  SECTION_TITLES,
   createQuestion,
   createQuestionDraft,
   updateQuestion,
   validateQuestionDraft,
 } from '../tools/dep-question-authoring/question-editing.js';
+
+assert.deepEqual(SECTION_TITLES, {
+  1: 'Developing Code for Data Processing using Python and SQL',
+  2: 'Data Ingestion & Acquisition',
+  3: 'Data Transformation, Cleansing, and Quality',
+  4: 'Data Sharing and Federation',
+  5: 'Monitoring and Alerting',
+  6: 'Cost & Performance Optimisation',
+  7: 'Ensuring Data Security and Compliance',
+  8: 'Data Governance',
+  9: 'Debugging and Deploying',
+  10: 'Data Modelling',
+});
 
 const source = [
   {
