@@ -21,6 +21,13 @@ import {
   searchUngroupedQuestions,
 } from './variant-editing.js';
 import { buildQuestionsExport, validateWorkingQuestions } from './variant-validation.js';
+import {
+  SECTION_TITLES,
+  createQuestion,
+  createQuestionDraft,
+  updateQuestion,
+  validateQuestionDraft,
+} from './question-editing.js';
 
 const state = {
   sourceQuestions: [],
@@ -36,6 +43,7 @@ const state = {
   activeWorkspace: 'catalog',
   selectedQuestionId: null,
   catalogFilters: { keyword: '', section: '', domain: '', difficulty: '', sourceType: '' },
+  authoringDraft: null,
 };
 const groupsNode = document.querySelector('#groups');
 const comparisonNode = document.querySelector('#comparison');
@@ -50,7 +58,16 @@ const dirtyNode = document.querySelector('#dirty');
 const catalogListNode = document.querySelector('#catalog-list');
 const questionDetailNode = document.querySelector('#question-detail');
 
+function discardDraft() {
+  if (!state.authoringDraft) return true;
+  if (state.authoringDraft.touched && !confirm('Discard unsaved Question draft?')) return false;
+  state.authoringDraft = null;
+  renderValidation();
+  return true;
+}
+
 function setWorkspace(workspace) {
+  if (workspace !== state.activeWorkspace && !discardDraft()) return;
   state.activeWorkspace = workspace;
   document.querySelector('#catalog-workspace').hidden = workspace !== 'catalog';
   document.querySelector('#variant-workspace').hidden = workspace !== 'variant';
@@ -81,8 +98,15 @@ function renderCatalogFilters() {
 }
 
 function renderQuestionDetail(question) {
+  if (state.authoringDraft) {
+    renderQuestionForm();
+    return;
+  }
   if (!question) {
-    questionDetailNode.innerHTML = '<p class="empty-state">Questionを選択してください。</p>';
+    questionDetailNode.innerHTML = `<p class="empty-state">Questionを選択してください。</p>${state.loadState === 'loaded' ? '<button id="create-question" type="button" class="primary">Create Question</button>' : ''}`;
+    document
+      .querySelector('#create-question')
+      ?.addEventListener('click', () => openQuestionForm('create'));
     return;
   }
   questionDetailNode.innerHTML = `<p class="eyebrow">QUESTION DETAIL</p>
@@ -97,7 +121,7 @@ function renderQuestionDetail(question) {
       .join('')}</ol>
     <p><strong>Answer:</strong> ${escapeHtml(question.answer || 'なし')}</p>
     <dl class="relation-detail"><dt>variantGroup</dt><dd>${escapeHtml(question.variantGroup || 'Ungrouped')}</dd><dt>followUp target</dt><dd>${escapeHtml(question.followUpTargetId || 'なし')}</dd></dl>
-    <div class="future-actions" aria-label="Future authoring actions"><button type="button" disabled title="F2.6-2で有効化予定">Edit Question</button><button type="button" disabled title="F2.6-3で有効化予定">Clone Question</button><button type="button" disabled title="F2.6-3で有効化予定">Create Variant</button></div>
+    <div class="future-actions" aria-label="Question authoring actions"><button id="edit-question" type="button">Edit Question</button><button type="button" disabled title="F2.6-3で有効化予定">Clone Question</button><button type="button" disabled title="F2.6-3で有効化予定">Create Variant</button></div>
     <button id="open-variant-context" type="button" class="primary">${question.grouped ? 'Open group in Variant Management' : 'Find in Create Variant Group'}</button>`;
   document.querySelector('#open-variant-context').addEventListener('click', () => {
     setWorkspace('variant');
@@ -114,6 +138,135 @@ function renderQuestionDetail(question) {
       document.querySelector('#inspector-panel').open = false;
       renderCreateList();
     }
+  });
+  document
+    .querySelector('#edit-question')
+    .addEventListener('click', () => openQuestionForm('edit', question.id));
+}
+
+function openQuestionForm(mode, questionId = null) {
+  if (!discardDraft()) return;
+  const question = state.workingQuestions.find((item) => item.id === questionId);
+  state.authoringDraft = {
+    mode,
+    sourceQuestionId: questionId,
+    values: createQuestionDraft(question),
+    touched: false,
+    errors: {},
+  };
+  renderCatalog();
+  renderValidation();
+}
+
+function readQuestionForm(form) {
+  const data = new FormData(form);
+  const values = state.authoringDraft.values;
+  values.id = data.get('id');
+  [
+    'section',
+    'domain',
+    'tags',
+    'difficulty',
+    'sourceType',
+    'scenarioType',
+    'estimatedTimeSec',
+    'question',
+    'answer',
+    'explanation',
+    'notes',
+  ].forEach((field) => {
+    values[field] = data.get(field) ?? '';
+  });
+  values.choices = Object.fromEntries(
+    ['A', 'B', 'C', 'D'].map((key) => [key, data.get(`choice-${key}`) ?? ''])
+  );
+  values.whyWrong = Object.fromEntries(
+    ['A', 'B', 'C', 'D'].map((key) => [key, data.get(`whyWrong-${key}`) ?? ''])
+  );
+  values.references = [...form.querySelectorAll('[data-reference-row]')].map((row) => ({
+    title: row.querySelector('[name="reference-title"]').value,
+    url: row.querySelector('[name="reference-url"]').value,
+  }));
+  return values;
+}
+
+function fieldError(name) {
+  const message = state.authoringDraft.errors[name];
+  return message ? `<span class="form-error" role="alert">${escapeHtml(message)}</span>` : '';
+}
+
+function renderQuestionForm() {
+  const draft = state.authoringDraft;
+  const values = draft.values;
+  const source = state.workingQuestions.find((question) => question.id === draft.sourceQuestionId);
+  const input = (name, value, extra = '') =>
+    `<input name="${name}" value="${escapeHtml(value)}" ${extra}>${fieldError(name)}`;
+  questionDetailNode.innerHTML = `<p class="eyebrow">QUESTION ${draft.mode === 'create' ? 'CREATE' : 'EDIT'}</p>
+    <form id="question-form" novalidate>
+      <fieldset><legend>Identity</legend><label>Question ID ${input('id', values.id, draft.mode === 'edit' ? 'readonly' : 'required')}</label><label>Section<select name="section">${Object.entries(
+        SECTION_TITLES
+      )
+        .map(
+          ([section, title]) =>
+            `<option value="${section}" ${values.section === section ? 'selected' : ''}>${section} — ${escapeHtml(title)}</option>`
+        )
+        .join(
+          ''
+        )}</select></label><p class="meta">Section Title: <strong id="section-title">${escapeHtml(SECTION_TITLES[values.section])}</strong></p></fieldset>
+      <fieldset><legend>Classification</legend><div class="form-grid"><label>Domain ${input('domain', values.domain)}</label><label>Difficulty<select name="difficulty"><option value="">Blank</option>${['easy', 'medium', 'hard'].map((v) => `<option ${values.difficulty === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Source Type<select name="sourceType"><option value="">Blank</option>${['original', 'official-inspired', 'scenario-based'].map((v) => `<option ${values.sourceType === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div><label>Tags (1行1tag)<textarea name="tags">${escapeHtml(values.tags)}</textarea></label></fieldset>
+      <fieldset><legend>Question</legend>${source?.variantGroup ? '<p class="warning">Grouped Questionです。choicesの変更は同じchoice text multiset契約を壊す可能性があります。Submit後のcanonical validationを確認してください。</p>' : ''}<label>Question text<textarea name="question" required>${escapeHtml(values.question)}</textarea>${fieldError('question')}</label><div class="form-grid">${['A', 'B', 'C', 'D'].map((key) => `<label>Choice ${key}${input(`choice-${key}`, values.choices[key], 'required')}</label>`).join('')}</div><label>Answer<select name="answer">${['A', 'B', 'C', 'D'].map((key) => `<option ${values.answer === key ? 'selected' : ''}>${key}</option>`).join('')}</select></label></fieldset>
+      <fieldset><legend>Learning</legend><label>Explanation<textarea name="explanation" required>${escapeHtml(values.explanation)}</textarea>${fieldError('explanation')}</label><div class="form-grid">${['A', 'B', 'C', 'D'].map((key) => `<label>Why Wrong ${key}<textarea name="whyWrong-${key}" ${values.answer === key ? 'disabled title="Correct answer is omitted"' : ''}>${escapeHtml(values.whyWrong[key])}</textarea></label>`).join('')}</div></fieldset>
+      <fieldset><legend>References &amp; Maintenance</legend><div id="reference-rows">${values.references.map((reference, index) => `<div class="reference-row" data-reference-row><label>Title<input name="reference-title" value="${escapeHtml(reference.title)}"></label><label>URL<input name="reference-url" type="url" value="${escapeHtml(reference.url)}"></label><button type="button" class="danger" data-remove-reference="${index}">Remove</button>${fieldError(`reference-${index}`)}</div>`).join('')}</div><button id="add-reference" type="button" class="secondary">Add Reference</button><label>Notes<textarea name="notes">${escapeHtml(values.notes)}</textarea></label></fieldset>
+      <fieldset><legend>Extended Metadata</legend><div class="form-grid"><label>Scenario Type<select name="scenarioType"><option value="">Blank</option>${['single-step', 'multi-step', 'architecture', 'troubleshooting'].map((v) => `<option ${values.scenarioType === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Estimated Time (sec) ${input('estimatedTimeSec', values.estimatedTimeSec, 'inputmode="numeric"')}</label></div></fieldset>
+      ${draft.mode === 'edit' ? `<fieldset><legend>Relations (read-only)</legend><dl class="relation-detail"><dt>variantGroup</dt><dd>${escapeHtml(source?.variantGroup ?? 'Ungrouped')}</dd><dt>followUp.questionId</dt><dd>${escapeHtml(source?.followUp?.questionId ?? 'なし')}</dd></dl></fieldset>` : ''}
+      <div class="actions"><button type="button" id="cancel-question">Cancel</button><button type="submit" class="primary">${draft.mode === 'create' ? 'Create Question' : 'Save Question'}</button></div><p id="form-error-summary" class="fail" role="alert"></p>
+    </form>`;
+  const form = document.querySelector('#question-form');
+  form.addEventListener('input', () => {
+    readQuestionForm(form);
+    draft.touched = true;
+  });
+  form.querySelector('[name="section"]').addEventListener('change', (event) => {
+    document.querySelector('#section-title').textContent = SECTION_TITLES[event.target.value];
+  });
+  form.querySelector('[name="answer"]').addEventListener('change', () => {
+    readQuestionForm(form);
+    draft.touched = true;
+    renderQuestionForm();
+  });
+  document.querySelector('#add-reference').addEventListener('click', () => {
+    readQuestionForm(form);
+    values.references.push({ title: '', url: '' });
+    draft.touched = true;
+    renderQuestionForm();
+  });
+  form.querySelectorAll('[data-remove-reference]').forEach((button) =>
+    button.addEventListener('click', () => {
+      readQuestionForm(form);
+      values.references.splice(Number(button.dataset.removeReference), 1);
+      draft.touched = true;
+      renderQuestionForm();
+    })
+  );
+  document.querySelector('#cancel-question').addEventListener('click', () => {
+    if (discardDraft()) renderCatalog();
+  });
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    readQuestionForm(form);
+    draft.errors = validateQuestionDraft(values, state.workingQuestions, draft.sourceQuestionId);
+    if (Object.keys(draft.errors).length) {
+      renderQuestionForm();
+      document.querySelector('#form-error-summary').textContent = '入力内容を確認してください。';
+      return;
+    }
+    const next =
+      draft.mode === 'create'
+        ? createQuestion(state.workingQuestions, values)
+        : updateQuestion(state.workingQuestions, draft.sourceQuestionId, values);
+    state.selectedQuestionId = draft.mode === 'create' ? values.id.trim() : draft.sourceQuestionId;
+    state.authoringDraft = null;
+    applyEdit(next);
   });
 }
 
@@ -394,9 +547,9 @@ function renderValidation() {
     document.querySelector('#error-help').open = true;
   });
   dirtyNode.hidden = !state.dirty;
-  document.querySelector('#reset').disabled = !state.dirty;
+  document.querySelector('#reset').disabled = !state.dirty && !state.authoringDraft;
   document.querySelector('#export').disabled =
-    state.loadState !== 'loaded' || !state.validation.valid;
+    state.loadState !== 'loaded' || !state.validation.valid || Boolean(state.authoringDraft);
 }
 
 function render() {
@@ -425,9 +578,13 @@ document.querySelector('#catalog-filters').addEventListener('change', (event) =>
 catalogListNode.addEventListener('click', (event) => {
   const button = event.target.closest('[data-question-id]');
   if (!button) return;
+  if (button.dataset.questionId !== state.selectedQuestionId && !discardDraft()) return;
   state.selectedQuestionId = button.dataset.questionId;
   renderCatalog();
 });
+document
+  .querySelector('#create-question-action')
+  .addEventListener('click', () => openQuestionForm('create'));
 
 groupsNode.addEventListener('click', (event) => {
   const button = event.target.closest('[data-group]');
@@ -475,10 +632,15 @@ document.querySelector('#create-form').addEventListener('submit', (event) => {
   }
 });
 document.querySelector('#reset').addEventListener('click', () => {
-  if (!state.dirty || !confirm('Discard all variantGroup edits?')) return;
+  if (
+    (!state.dirty && !state.authoringDraft) ||
+    !confirm('Discard all authoring edits and restore source questions?')
+  )
+    return;
   state.workingQuestions = cloneQuestions(state.sourceQuestions);
   state.candidateSeedQuestionId = '';
   state.dirty = false;
+  state.authoringDraft = null;
   state.validation = validateWorkingQuestions(state.workingQuestions);
   const groups = buildVariantGroupIndex(state.workingQuestions);
   if (!groups.some((group) => group.id === state.selectedGroupId)) {
@@ -524,6 +686,7 @@ try {
   catalogStatusNode.textContent = `読み込み完了: ${state.workingQuestions.length} questions`;
   document.querySelector('#create-form button[type="submit"]').disabled = false;
   document.querySelector('#catalog-search').disabled = false;
+  document.querySelector('#create-question-action').disabled = false;
 } catch (error) {
   state.loadState = 'error';
   statusNode.classList.add('status-error');
@@ -543,4 +706,5 @@ try {
   });
   document.querySelector('#reset').disabled = true;
   document.querySelector('#export').disabled = true;
+  document.querySelector('#create-question-action').disabled = true;
 }

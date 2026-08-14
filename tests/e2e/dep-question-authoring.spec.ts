@@ -40,7 +40,8 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await expect(page.locator('#catalog-count')).toHaveText(`${total} / ${total} questions`);
     await expect(page.locator('#question-detail')).toContainText('QUESTION DETAIL');
     await expect(page.locator('.future-actions button')).toHaveCount(3);
-    await expect(page.locator('.future-actions button:disabled')).toHaveCount(3);
+    await expect(page.getByRole('button', { name: 'Edit Question' })).toBeEnabled();
+    await expect(page.locator('.future-actions button:disabled')).toHaveCount(2);
 
     const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
     await page.locator('#catalog-search').fill('DEP-Q292');
@@ -48,6 +49,51 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await expect(page.locator('#catalog-count')).toHaveText(`1 / ${total} questions`);
     await expect(page.locator('#dirty')).toBeHidden();
     expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
+
+  test('creates and edits Questions through an isolated draft', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    const originalCount = await page.locator('#catalog-list [data-question-id]').count();
+    await page.getByRole('button', { name: 'Create Question', exact: true }).click();
+    await expect(page.locator('#dirty')).toBeHidden();
+    await expect(page.locator('#export')).toBeDisabled();
+    const form = page.locator('#question-form');
+    await form.locator('[name="id"]').fill('DEP-Q999');
+    await form.locator('[name="section"]').selectOption('10');
+    await form.locator('[name="question"]').fill('Created question?');
+    for (const key of ['A', 'B', 'C', 'D']) {
+      await form.locator(`[name="choice-${key}"]`).fill(`Choice ${key}`);
+    }
+    await form.locator('[name="answer"]').selectOption('B');
+    await form.locator('[name="explanation"]').fill('Created explanation');
+    await form.getByRole('button', { name: 'Create Question' }).click();
+    await expect(page.locator('#question-detail h2')).toHaveText('DEP-Q999');
+    await expect(page.locator('#dirty')).toBeVisible();
+    await expect(page.locator('#catalog-count')).toContainText(`${originalCount + 1}`);
+
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await expect(form.locator('[name="id"]')).toBeVisible();
+    await expect(page.locator('#question-form [name="id"]')).toHaveAttribute('readonly', '');
+    await page.locator('#question-form [name="question"]').fill('Edited question?');
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await expect(page.locator('#question-detail')).toContainText('Edited question?');
+  });
+
+  test('guards touched drafts and keeps working data unchanged when discard is cancelled', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'Create Question', exact: true }).click();
+    await page.locator('#question-form [name="id"]').fill('DEP-Q998');
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
+    await expect(page.locator('#question-form')).toBeVisible();
+    await expect(page.locator('#catalog-workspace')).toBeVisible();
+    await expect(page.locator('#dirty')).toBeHidden();
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
+    await expect(page.locator('#variant-workspace')).toBeVisible();
+    await expect(page.locator('#dirty')).toBeHidden();
   });
 
   test('bridges grouped and ungrouped questions into Variant Management without mutation', async ({
