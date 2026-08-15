@@ -499,23 +499,41 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#search')).toHaveAttribute('placeholder', /DEP-Q292/);
     await page.locator('#quick-start-title').click();
     const quickStart = page.locator('.quick-start');
-    await expect(quickStart.locator('li')).toHaveCount(6);
-    await expect(quickStart.locator('li').nth(5)).toContainText('dep-quiz-app/questions.json');
-    await expect(quickStart.locator('li').nth(5)).toContainText('commit');
-    await expect(quickStart.locator('li').nth(5)).toContainText('PR / mergeフロー');
+    await expect(quickStart.locator('li')).toHaveCount(5);
+    await expect(quickStart.locator('li').nth(0)).toContainText('QUESTION CATALOG');
+    await expect(quickStart.locator('li').nth(1)).toContainText('Create Variant');
+    await expect(quickStart.locator('li').nth(2)).toContainText('Preview / Review');
+    await expect(quickStart.locator('li').nth(3)).toContainText('Reviewを開いたまま');
+    await expect(quickStart.locator('li').nth(4)).toContainText('Git diffとPR');
     await expect(page.locator('.manual-panel')).toHaveCount(3);
     await expect(page.locator('#glossary')).not.toHaveAttribute('open', '');
     await page.locator('#glossary > summary').click();
     const glossary = page.locator('#glossary');
     await expect(glossary.locator('dt')).toHaveText([
+      'Create Question / Edit Question',
+      'Clone Question / Create Variant',
+      'Preview / Review',
+      'Candidate Assist / Variant Management',
+      'Selection Inspector',
+      'Global Validation / Export',
       'バリアント問題',
       'Variant Group',
       'followUp',
     ]);
+    await expect(glossary).toContainText('Cloneは内容を複製してrelationを継承しない');
+    await expect(glossary).toContainText('Candidate Assistは同じchoice setを持つ既存Question候補');
+    await expect(glossary).toContainText('canonical validatorが唯一のquality判定');
     await expect(glossary).toContainText('同じ選択肢を使い、問い方を変えた問題です。');
     await expect(glossary).toContainText('同じVariant Groupから最大1問を代表として採用します');
     await expect(glossary).toContainText('自動遷移そのものを意味しません');
     await page.locator('#error-help > summary').click();
+    await expect(page.locator('#draft-recovery-title')).toBeVisible();
+    await expect(page.locator('#error-help')).toContainText(
+      'submitするまでworking Questionsへ入りません'
+    );
+    await expect(page.locator('#error-help')).toContainText(
+      'localStorageへのdraft保存やautosaveは行いません'
+    );
     await expect(page.locator('#choice-multiset-help')).toContainText(
       'Variant Groupは、選択肢本文が一致している必要があります。'
     );
@@ -588,7 +606,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('header #validation-status')).toBeVisible();
     await expect(page.locator('header #reset')).toBeVisible();
     await expect(page.locator('header #export')).toBeVisible();
-    await expect(page.locator('.quick-start strong')).toHaveCount(6);
+    await expect(page.locator('.quick-start strong')).toHaveCount(8);
   });
 
   test('shows actionable 404 recovery and prevents authoring against unloaded data', async ({
@@ -923,6 +941,113 @@ test.describe('[DEP][FLOW] Question authoring / Editing and validation', () => {
     await expect(page.locator('#dirty')).toBeHidden();
     await expect(page.locator('#reset')).toBeDisabled();
     await expect(page.locator('#groups button', { hasText: GROUP_ID })).toContainText('2');
+  });
+});
+
+test.describe('[DEP][FLOW] Question-first authoring journeys', () => {
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'The local authoring tool is Chromium-only.');
+  });
+
+  test('creates, reviews, validates, and exports a Question without transient state', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    const sourceBefore = await page.evaluate(async () =>
+      (await fetch('/dep-quiz-app/questions.json')).text()
+    );
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+    await page.getByRole('button', { name: 'Create Question', exact: true }).first().click();
+    const form = page.locator('#question-form');
+    await form.locator('[name="id"]').fill('DEP-Q999-FLOW');
+    await form.locator('[name="question"]').fill('Can the complete workflow be reviewed?');
+    for (const key of ['A', 'B', 'C', 'D']) {
+      await form.locator(`[name="choice-${key}"]`).fill(`Workflow choice ${key}`);
+    }
+    await form.locator('[name="answer"]').selectOption('A');
+    await form.locator('[name="explanation"]').fill('The author reviews before export.');
+    await form.getByRole('button', { name: 'Create Question' }).click();
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await expect(page.locator('.question-review')).toContainText('DEP-Q999-FLOW');
+    await expect(page.locator('.validation-review')).toContainText('Global PASS');
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#export').click();
+    const exported = JSON.parse(
+      await (await (await downloadPromise).createReadStream())
+        .toArray()
+        .then(Buffer.concat)
+        .then(String)
+    );
+    expect(
+      exported.find((question: { id: string }) => question.id === 'DEP-Q999-FLOW')
+    ).toBeTruthy();
+    expect(JSON.stringify(exported)).not.toContain('reviewState');
+    expect(JSON.stringify(exported)).not.toContain('authoringDraft');
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+    expect(
+      await page.evaluate(async () => (await fetch('/dep-quiz-app/questions.json')).text())
+    ).toBe(sourceBefore);
+  });
+
+  test('edits and reviews a Question, then Reset recovers the source snapshot', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    const originalQuestion = await page.locator('#question-detail .question-copy').textContent();
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await page.locator('#question-form [name="question"]').fill('Temporary workflow edit?');
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await expect(page.locator('.question-review')).toContainText('Temporary workflow edit?');
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('#reset').click();
+    await expect(page.locator('.question-review')).toHaveCount(0);
+    await expect(page.locator('#question-detail .question-copy')).toHaveText(
+      originalQuestion ?? ''
+    );
+    await expect(page.locator('#dirty')).toBeHidden();
+  });
+
+  test('creates and reviews a Variant, then opens its Variant Management context', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    await page.getByRole('button', { name: 'Create Variant', exact: true }).click();
+    const form = await completeVariantForm(page, 'DEP-Q999-FLOW-VARIANT');
+    await form.getByRole('button', { name: 'Create Variant' }).click();
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await expect(page.locator('.question-review')).toContainText('DEP-Q999-FLOW-VARIANT');
+    await expect(page.locator('.question-review')).toContainText(GROUP_ID);
+    await page.getByRole('button', { name: 'Open group in Variant Management' }).click();
+    await expect(page.locator('#variant-tab')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#comparison h2')).toContainText(`${GROUP_ID} 3 members`);
+  });
+
+  test('recovers canonical FAIL through Review and Edit before returning to PASS', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    const choice = page.locator('#question-form [name="choice-A"]');
+    const originalChoice = await choice.inputValue();
+    await choice.fill('Invalid workflow choice');
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await expect(page.locator('#validation-status')).toContainText('FAIL');
+    await expect(page.locator('#export')).toBeDisabled();
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await expect(page.locator('.validation-review')).toContainText('Global FAIL');
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await page.locator('#question-form [name="choice-A"]').fill(originalChoice);
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await expect(page.locator('#validation-status')).toContainText('PASS');
+    await expect(page.locator('#export')).toBeEnabled();
   });
 });
 
