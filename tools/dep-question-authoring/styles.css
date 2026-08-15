@@ -242,6 +242,39 @@ main {
   text-align: center;
   border-color: #415173;
 }
+.question-detail textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.reference-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+.reference-row button,
+#add-reference,
+#create-question-action {
+  width: auto;
+  text-align: center;
+}
+.form-error {
+  display: block;
+  margin-top: 4px;
+  color: #ff9d9d;
+}
+.warning {
+  padding: 10px 12px;
+  border-left: 3px solid #ffcf70;
+  color: #ffe3a1;
+  background: #2b2416;
+}
 .panel {
   background: rgba(17, 27, 49, 0.92);
   border: 1px solid #2c3a59;
@@ -543,5 +576,9 @@ fieldset {
   }
   .progress-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .form-grid,
+  .reference-row {
+    grid-template-columns: 1fr;
   }
 }
