@@ -34,6 +34,7 @@ import {
   createQuestionClone,
   createQuestionVariant,
 } from './question-derivation.js';
+import { buildQuestionReviewModel } from './question-review.js';
 
 const state = {
   sourceQuestions: [],
@@ -50,6 +51,7 @@ const state = {
   selectedQuestionId: null,
   catalogFilters: { keyword: '', section: '', domain: '', difficulty: '', sourceType: '' },
   authoringDraft: null,
+  reviewState: null,
 };
 const groupsNode = document.querySelector('#groups');
 const comparisonNode = document.querySelector('#comparison');
@@ -75,6 +77,7 @@ function discardDraft() {
 function setWorkspace(workspace) {
   if (workspace !== state.activeWorkspace && !discardDraft()) return;
   state.activeWorkspace = workspace;
+  if (workspace !== 'catalog') state.reviewState = null;
   document.querySelector('#catalog-workspace').hidden = workspace !== 'catalog';
   document.querySelector('#variant-workspace').hidden = workspace !== 'variant';
   document.querySelector('#catalog-tab').setAttribute('aria-selected', workspace === 'catalog');
@@ -108,6 +111,10 @@ function renderQuestionDetail(question) {
     renderQuestionForm();
     return;
   }
+  if (state.reviewState) {
+    renderQuestionReview();
+    return;
+  }
   if (!question) {
     questionDetailNode.innerHTML = `<p class="empty-state">Questionを選択してください。</p>${state.loadState === 'loaded' ? '<button id="create-question" type="button" class="primary">Create Question</button>' : ''}`;
     document
@@ -116,9 +123,9 @@ function renderQuestionDetail(question) {
     return;
   }
   questionDetailNode.innerHTML = `<p class="eyebrow">QUESTION DETAIL</p>
-    <div class="title-row"><h2>${escapeHtml(question.id)}</h2><span class="badge">${question.grouped ? 'Grouped' : 'Ungrouped'}</span></div>
+    <div class="title-row"><h2>${escapeHtml(question.id)}</h2><span class="badge">${question.variantGroup ? 'Grouped' : 'Ungrouped'}</span></div>
     <p class="meta">Section ${escapeHtml(question.section || 'なし')} · ${escapeHtml(question.sectionTitle || 'なし')} · ${escapeHtml(question.domain || 'なし')}</p>
-    <p class="meta">tags: ${escapeHtml(question.tags.join(', ') || 'なし')} · difficulty: ${escapeHtml(question.difficulty || 'なし')} · sourceType: ${escapeHtml(question.sourceType || 'なし')}</p>
+    <p class="meta">tags: ${escapeHtml(question.tags?.join(', ') || 'なし')} · difficulty: ${escapeHtml(question.difficulty || 'なし')} · sourceType: ${escapeHtml(question.sourceType || 'なし')}</p>
     <p class="question-copy">${escapeHtml(question.question || '問題文なし')}</p>
     <ol class="choices">${Object.entries(question.choices)
       .map(
@@ -126,12 +133,12 @@ function renderQuestionDetail(question) {
       )
       .join('')}</ol>
     <p><strong>Answer:</strong> ${escapeHtml(question.answer || 'なし')}</p>
-    <dl class="relation-detail"><dt>variantGroup</dt><dd>${escapeHtml(question.variantGroup || 'Ungrouped')}</dd><dt>followUp target</dt><dd>${escapeHtml(question.followUpTargetId || 'なし')}</dd></dl>
-    <div class="future-actions" aria-label="Question authoring actions"><button id="edit-question" type="button">Edit Question</button><button id="clone-question" type="button">Clone Question</button><button id="create-variant" type="button">Create Variant</button></div>
-    <button id="open-variant-context" type="button" class="primary">${question.grouped ? 'Open group in Variant Management' : 'Find in Create Variant Group'}</button>`;
+    <dl class="relation-detail"><dt>variantGroup</dt><dd>${escapeHtml(question.variantGroup || 'Ungrouped')}</dd><dt>followUp target</dt><dd>${escapeHtml(question.followUp?.questionId || 'なし')}</dd></dl>
+    <div class="future-actions" aria-label="Question authoring actions"><button id="review-question" type="button" class="primary">Preview / Review</button><button id="edit-question" type="button">Edit Question</button><button id="clone-question" type="button">Clone Question</button><button id="create-variant" type="button">Create Variant</button></div>
+    <button id="open-variant-context" type="button" class="primary">${question.variantGroup ? 'Open group in Variant Management' : 'Find in Create Variant Group'}</button>`;
   document.querySelector('#open-variant-context').addEventListener('click', () => {
     setWorkspace('variant');
-    if (question.grouped) {
+    if (question.variantGroup) {
       state.selectedGroupId = question.variantGroup;
       document.querySelector('#comparison-panel').open = true;
       document.querySelector('#create-panel').open = false;
@@ -145,6 +152,10 @@ function renderQuestionDetail(question) {
       renderCreateList();
     }
   });
+  document.querySelector('#review-question').addEventListener('click', () => {
+    state.reviewState = { questionId: question.id };
+    renderCatalog();
+  });
   document
     .querySelector('#edit-question')
     .addEventListener('click', () => openQuestionForm('edit', question.id));
@@ -156,9 +167,62 @@ function renderQuestionDetail(question) {
     .addEventListener('click', () => openQuestionForm('createVariant', question.id));
 }
 
+function displayValue(value, fallback = 'なし') {
+  return escapeHtml(value || fallback);
+}
+
+function renderQuestionReview() {
+  const workingQuestion = state.workingQuestions.find(
+    (question) => question.id === state.reviewState?.questionId
+  );
+  if (!workingQuestion) {
+    state.reviewState = null;
+    renderCatalog();
+    return;
+  }
+  const sourceQuestion = state.sourceQuestions.find(
+    (question) => question.id === workingQuestion.id
+  );
+  const model = buildQuestionReviewModel({
+    sourceQuestion,
+    workingQuestion,
+    workingQuestions: state.workingQuestions,
+    validation: state.validation,
+  });
+  const { preview, diff, validation } = model;
+  questionDetailNode.innerHTML = `<article class="question-review" aria-labelledby="review-title">
+    <p class="eyebrow">QUESTION PREVIEW / REVIEW</p>
+    <div class="title-row"><h2 id="review-title">${escapeHtml(preview.id)}</h2><span class="diff-badge diff-${diff.status.toLowerCase()}">${diff.status}</span></div>
+    <section class="review-section preview-card" aria-labelledby="preview-question"><h3 id="preview-question">Question Preview</h3><p class="question-copy">${displayValue(preview.question, '問題文なし')}</p><ol class="review-choices">${preview.choices.map((choice) => `<li class="${choice.correct ? 'correct-choice' : ''}"><strong>${choice.label}</strong><span>${displayValue(choice.text)}</span>${choice.correct ? '<span class="correct-label">Correct Answer</span>' : ''}</li>`).join('')}</ol><p><strong>Correct Answer:</strong> ${displayValue(preview.answer)}${preview.answerValid ? '' : ' (invalid)'}</p></section>
+    <section class="review-section"><h3>Learning Review</h3><h4>Explanation</h4><p class="review-copy">${displayValue(preview.explanation)}</p><h4>Why Wrong</h4><dl class="review-grid">${preview.whyWrong.map((item) => `<dt>${item.label}</dt><dd>${displayValue(item.text, item.label === preview.answer ? 'Correct answer (not applicable)' : 'なし')}</dd>`).join('')}</dl></section>
+    <section class="review-section"><h3>Metadata</h3><dl class="review-grid"><dt>Section</dt><dd>${displayValue(preview.metadata.section)}</dd><dt>Section Title</dt><dd>${displayValue(preview.metadata.sectionTitle)}</dd><dt>Domain</dt><dd>${displayValue(preview.metadata.domain)}</dd><dt>Tags</dt><dd>${displayValue(preview.metadata.tags.join(', '))}</dd><dt>Difficulty</dt><dd>${displayValue(preview.metadata.difficulty)}</dd><dt>Source Type</dt><dd>${displayValue(preview.metadata.sourceType)}</dd><dt>Scenario Type</dt><dd>${displayValue(preview.metadata.scenarioType)}</dd><dt>Estimated Time</dt><dd>${preview.metadata.estimatedTimeSec ? `${escapeHtml(preview.metadata.estimatedTimeSec)} sec` : 'なし'}</dd><dt>Notes</dt><dd>${displayValue(preview.metadata.notes)}</dd></dl></section>
+    <section class="review-section"><h3>References</h3>${preview.references.length ? `<ol class="reference-review">${preview.references.map((reference) => `<li><strong>${displayValue(reference.title)}</strong><br><span>${displayValue(reference.url)}</span></li>`).join('')}</ol>` : '<p>なし</p>'}</section>
+    <section class="review-section"><h3>Relations</h3><dl class="review-grid"><dt>variantGroup</dt><dd>${displayValue(preview.relations.variantGroup, 'Ungrouped')}</dd><dt>followUp.questionId</dt><dd>${displayValue(preview.relations.followUpQuestionId)}</dd></dl>${preview.relations.variantGroup ? '<button id="review-open-variant" type="button">Open group in Variant Management</button>' : ''}</section>
+    <section class="review-section"><h3>Source vs Working</h3><p><strong>${diff.status}</strong></p>${diff.changedFields.length ? `<p class="meta">Changed field paths</p><ul class="changed-fields">${diff.changedFields.map((path) => `<li><code>${escapeHtml(path)}</code></li>`).join('')}</ul>` : '<p>No changed fields.</p>'}</section>
+    <section class="review-section validation-review"><h3>Canonical Validation</h3><p class="${validation.valid ? 'pass' : 'fail'}"><strong>Global ${validation.valid ? 'PASS' : 'FAIL'}</strong> · ${validation.totalErrors} errors</p><h4>Related errors (${validation.relatedErrors.length})</h4>${validation.relatedErrors.length ? `<ul class="errors">${validation.relatedErrors.map((error) => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<p>No related errors. Global validation status remains authoritative.</p>'}</section>
+    <div class="actions"><button id="review-back" type="button">Back to Detail</button><button id="review-edit" type="button" class="primary">Edit Question</button></div>
+  </article>`;
+  document.querySelector('#review-back').addEventListener('click', () => {
+    state.reviewState = null;
+    renderCatalog();
+  });
+  document.querySelector('#review-edit').addEventListener('click', () => {
+    state.reviewState = null;
+    openQuestionForm('edit', workingQuestion.id);
+  });
+  document.querySelector('#review-open-variant')?.addEventListener('click', () => {
+    state.reviewState = null;
+    state.selectedGroupId = workingQuestion.variantGroup;
+    setWorkspace('variant');
+    document.querySelector('#comparison-panel').open = true;
+    render();
+  });
+}
+
 function openQuestionForm(mode, questionId = null) {
   if (!discardDraft()) return;
   const question = state.workingQuestions.find((item) => item.id === questionId);
+  state.reviewState = null;
   state.authoringDraft = {
     mode,
     sourceQuestionId: questionId,
@@ -335,6 +399,9 @@ function renderCatalog() {
     state.workingQuestions,
     state.selectedQuestionId
   );
+  if (state.reviewState && state.reviewState.questionId !== state.selectedQuestionId) {
+    state.reviewState = { questionId: state.selectedQuestionId };
+  }
   document.querySelector('#catalog-count').textContent =
     `${entries.length} / ${state.workingQuestions.length} questions`;
   catalogListNode.innerHTML = entries.length
@@ -345,7 +412,7 @@ function renderCatalog() {
         )
         .join('')
     : '<p class="empty-state">該当するQuestionはありません。検索条件を変更してください。</p>';
-  const selected = filterQuestionCatalog(state.workingQuestions).find(
+  const selected = state.workingQuestions.find(
     (question) => question.id === state.selectedQuestionId
   );
   renderQuestionDetail(selected);
@@ -700,6 +767,7 @@ document.querySelector('#reset').addEventListener('click', () => {
   state.candidateSeedQuestionId = '';
   state.dirty = false;
   state.authoringDraft = null;
+  state.reviewState = null;
   state.validation = validateWorkingQuestions(state.workingQuestions);
   const groups = buildVariantGroupIndex(state.workingQuestions);
   if (!groups.some((group) => group.id === state.selectedGroupId)) {
@@ -748,6 +816,7 @@ try {
   document.querySelector('#create-question-action').disabled = false;
 } catch (error) {
   state.loadState = 'error';
+  state.reviewState = null;
   statusNode.classList.add('status-error');
   catalogStatusNode.classList.add('status-error');
   const isNotFound = String(error.message).startsWith('404 ');

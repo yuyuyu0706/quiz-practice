@@ -36,6 +36,86 @@ async function completeVariantForm(page: Page, id: string, groupId?: string) {
   return form;
 }
 
+test.describe('[DEP][UI] Question Preview / Review', () => {
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'The local authoring tool is Chromium-only.');
+  });
+
+  test('reviews complete working Question content without adding learner inputs', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+
+    const review = page.locator('.question-review');
+    await expect(review).toContainText('QUESTION PREVIEW / REVIEW');
+    await expect(review).toContainText('Correct Answer');
+    await expect(review).toContainText('Explanation');
+    await expect(review).toContainText('Metadata');
+    await expect(review).toContainText('References');
+    await expect(review).toContainText(GROUP_ID);
+    await expect(review).toContainText('Global PASS');
+    await expect(review).toContainText('Unchanged');
+    await expect(review.locator('input, select, textarea')).toHaveCount(0);
+    await expect(page.locator('#dirty')).toBeHidden();
+    await expect(page.locator('#export')).toBeEnabled();
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
+
+  test('shows field-level working diff and supports Review to Edit', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await page.locator('#question-form [name="question"]').fill('Modified for review?');
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await expect(page.locator('.question-review')).toContainText('Modified');
+    await expect(page.locator('.changed-fields')).toContainText('question');
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await expect(page.locator('#question-form [name="question"]')).toHaveValue(
+      'Modified for review?'
+    );
+  });
+
+  test('keeps Review active across catalog selection and bridges grouped relations', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q29');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await page.locator('[data-question-id="DEP-Q293"]').click();
+    await expect(page.locator('.question-review h2')).toHaveText('DEP-Q293');
+    await page.getByRole('button', { name: 'Open group in Variant Management' }).click();
+    await expect(page.locator('#variant-tab')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#comparison h2')).toContainText(GROUP_ID);
+  });
+
+  test('reconciles New Question Review through Reset', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    await page.getByRole('button', { name: 'Create Question', exact: true }).first().click();
+    const form = page.locator('#question-form');
+    await form.locator('[name="id"]').fill('DEP-Q999-REVIEW');
+    await form.locator('[name="question"]').fill('New review question?');
+    for (const key of ['A', 'B', 'C', 'D']) {
+      await form.locator(`[name="choice-${key}"]`).fill(`Choice ${key}`);
+    }
+    await form.locator('[name="answer"]').selectOption('A');
+    await form.locator('[name="explanation"]').fill('Review explanation.');
+    await form.getByRole('button', { name: 'Create Question' }).click();
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await expect(page.locator('.question-review')).toContainText('New');
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('#reset').click();
+    await expect(page.locator('.question-review')).toHaveCount(0);
+    await expect(page.locator('#question-detail')).toContainText('QUESTION DETAIL');
+  });
+});
+
 test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
   test.beforeEach(async ({}, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'The local authoring tool is Chromium-only.');
@@ -52,7 +132,8 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     expect(total).toBeGreaterThan(0);
     await expect(page.locator('#catalog-count')).toHaveText(`${total} / ${total} questions`);
     await expect(page.locator('#question-detail')).toContainText('QUESTION DETAIL');
-    await expect(page.locator('.future-actions button')).toHaveCount(3);
+    await expect(page.locator('.future-actions button')).toHaveCount(4);
+    await expect(page.getByRole('button', { name: 'Preview / Review' })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Edit Question' })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Clone Question' })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Create Variant', exact: true })).toBeEnabled();
