@@ -23,6 +23,19 @@ function memberCard(page: Page, questionId: string) {
   });
 }
 
+async function completeVariantForm(page: Page, id: string, groupId?: string) {
+  const form = page.locator('#question-form');
+  await form.locator('[name="id"]').fill(id);
+  await form.locator('[name="question"]').fill('A different authoring perspective?');
+  await form.locator('[name="answer"]').selectOption('C');
+  await form.locator('[name="explanation"]').fill('A derived explanation.');
+  if (groupId !== undefined) await form.locator('[name="newGroupId"]').fill(groupId);
+  for (const checkbox of await form.locator('.confirmation-list input').all()) {
+    await checkbox.check();
+  }
+  return form;
+}
+
 test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
   test.beforeEach(async ({}, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium', 'The local authoring tool is Chromium-only.');
@@ -92,6 +105,7 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await page.getByRole('button', { name: 'Clone Question' }).click();
     const form = page.locator('#question-form');
     await expect(form).toContainText('variantGroup / followUpは継承されません');
+    await expect(form).not.toContainText('same-choice契約を壊す可能性');
     await expect(form.locator('[name="id"]')).toHaveValue('');
     await form.locator('[name="id"]').fill('DEP-Q999-CLONE');
     await form.getByRole('button', { name: 'Create Clone' }).click();
@@ -145,6 +159,78 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await expect(page.locator('#question-detail .relation-detail')).toContainText(
       'new-authoring-group'
     );
+  });
+
+  test('rejects a whitespace-padded New Group Name without partial mutation', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    const totalBefore = (await page.locator('#catalog-count').textContent())?.split(' / ')[1];
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    await page.getByRole('button', { name: 'Create Variant', exact: true }).click();
+    const form = await completeVariantForm(page, 'DEP-Q999-WHITESPACE', ' padded-group ');
+
+    await form.getByRole('button', { name: 'Create Variant' }).click();
+
+    await expect(page.locator('#form-error-summary')).toHaveText(
+      'Group ID must not have leading or trailing whitespace.'
+    );
+    await expect(form).toBeVisible();
+    await expect(page.locator('#dirty')).toBeHidden();
+    await expect(page.locator('#catalog-count')).toHaveText(`1 / ${totalBefore}`);
+    await expect(page.locator('#export')).toBeDisabled();
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await form.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.locator('#question-detail .relation-detail')).toContainText('Ungrouped');
+    await page.locator('#catalog-search').fill('DEP-Q999-WHITESPACE');
+    await expect(page.locator('#catalog-list [data-question-id]')).toHaveCount(0);
+  });
+
+  test('guards touched Clone and Create Variant drafts without changing working Questions', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    const countBefore = await page.locator('#catalog-count').textContent();
+    await page.getByRole('button', { name: 'Clone Question' }).click();
+    await page.locator('#question-form [name="id"]').fill('DEP-Q999-GUARDED-CLONE');
+    await expect(page.locator('#export')).toBeDisabled();
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
+    await expect(page.locator('#question-form')).toBeVisible();
+    await expect(page.locator('#dirty')).toBeHidden();
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    await page.getByRole('button', { name: 'Create Variant', exact: true }).click();
+    await page.locator('#question-form [name="id"]').fill('DEP-Q999-GUARDED-VARIANT');
+    await expect(page.locator('#export')).toBeDisabled();
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
+    await expect(page.locator('#variant-workspace')).toBeVisible();
+    await expect(page.locator('#dirty')).toBeHidden();
+    await page.getByRole('button', { name: 'QUESTION CATALOG' }).click();
+    await expect(page.locator('#catalog-count')).toHaveText(countBefore ?? '');
+  });
+
+  test('Reset removes a derived Question and restores its source relation', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    await page.getByRole('button', { name: 'Create Variant', exact: true }).click();
+    const form = await completeVariantForm(page, 'DEP-Q999-RESET', 'reset-derived-group');
+    await form.getByRole('button', { name: 'Create Variant' }).click();
+    await expect(page.locator('#question-detail .relation-detail')).toContainText(
+      'reset-derived-group'
+    );
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('#reset').click();
+    await expect(page.locator('#dirty')).toBeHidden();
+    await page.locator('#catalog-search').fill('DEP-Q999-RESET');
+    await expect(page.locator('#catalog-list [data-question-id]')).toHaveCount(0);
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    await expect(page.locator('#question-detail .relation-detail')).toContainText('Ungrouped');
   });
 
   test('guards touched drafts and keeps working data unchanged when discard is cancelled', async ({
@@ -709,5 +795,28 @@ test.describe('[DEP][DATA] Question authoring / Export and browser isolation', (
     expect(
       await page.evaluate(async () => (await fetch('/dep-quiz-app/questions.json')).text())
     ).toBe(sourceBefore);
+  });
+
+  test('exports a derived Question together with its atomic Variant relation', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    await page.getByRole('button', { name: 'Create Variant', exact: true }).click();
+    const form = await completeVariantForm(page, 'DEP-Q999-EXPORT', 'export-derived-group');
+    await form.getByRole('button', { name: 'Create Variant' }).click();
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#export').click();
+    const download = await downloadPromise;
+    const exported = JSON.parse(
+      await (await download.createReadStream()).toArray().then(Buffer.concat).then(String)
+    );
+    const source = exported.find((question: { id: string }) => question.id === 'DEP-Q201');
+    const derived = exported.find((question: { id: string }) => question.id === 'DEP-Q999-EXPORT');
+    expect(source.variantGroup).toBe('export-derived-group');
+    expect(derived.variantGroup).toBe('export-derived-group');
+    expect(derived.choices).toEqual(source.choices);
+    expect(derived.followUp).toBeUndefined();
+    expect(JSON.stringify(exported)).not.toContain('confirm-knowledge');
   });
 });
