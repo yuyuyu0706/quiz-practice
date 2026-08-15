@@ -49,29 +49,58 @@
       <details class="manual-panel quick-start">
         <summary id="quick-start-title">はじめて使う方へ — Quick Start</summary>
         <ol>
-          <li><strong>QUESTION CATALOG</strong> で扱うQuestionを検索・確認します。</li>
-          <li>relation管理が必要なら <strong>VARIANT MANAGEMENT</strong> へ移動します。</li>
-          <li><strong>MEMBER COMPARISON &amp; EDIT</strong> で問題を比較・編集します。</li>
-          <li><strong>SELECTION INSPECTOR</strong> で出題条件を試します。</li>
           <li>
-            <strong>Validation</strong> がPASSしたら
-            <strong>Export questions.json</strong> で出力します。
+            <strong>QUESTION CATALOG</strong> でQuestionを検索し、内容とrelationを確認します。
           </li>
           <li>
-            出力した<code>questions.json</code>を
-            <code>quiz-practice/dep-quiz-app/questions.json</code
-            >へ反映します。差分を確認して開発branchへcommitし、通常のPR /
-            mergeフローでmainへ反映してください。
+            目的に合わせて <strong>Create Question</strong> / <strong>Edit Question</strong> /
+            <strong>Clone Question</strong> / <strong>Create Variant</strong> を選びます。
+          </li>
+          <li><strong>Preview / Review</strong> でworking Questionをread-only確認します。</li>
+          <li>
+            Global <strong>Validation</strong> がPASSしたら、Reviewを開いたままでも
+            <strong>Export questions.json</strong> でworking Questionsを出力できます。
+          </li>
+          <li>
+            出力結果を<code>dep-quiz-app/questions.json</code>へ反映し、Git
+            diffとPRを最終確認の正本としてレビューします。
           </li>
         </ol>
         <p class="help">
-          既存Variant Groupの確認だけなら、Createを飛ばしてComparisonから開始できます。
+          Variant relationを確認・変更する場合だけVARIANT MANAGEMENTへ進み、必要に応じてCandidate
+          Assist / MEMBER COMPARISON &amp; EDIT / SELECTION INSPECTORを使います。
         </p>
       </details>
       <details id="glossary" class="manual-panel">
         <summary id="glossary-title">用語解説</summary>
         <div class="manual-content">
           <dl>
+            <dt>Create Question / Edit Question</dt>
+            <dd>独立した新規Questionを作る / 選択中の既存Questionを更新する操作です。</dd>
+            <dt>Clone Question / Create Variant</dt>
+            <dd>
+              Cloneは内容を複製してrelationを継承しない独立Questionを作ります。Create
+              Variantは同じchoice setを固定し、既存または新規Variant
+              Groupへ新しい問い方を追加します。
+            </dd>
+            <dt>Preview / Review</dt>
+            <dd>
+              working Question、sourceとの差分、Global
+              Validationを確認するread-only工程です。learnerの回答や進捗を再現する画面ではありません。
+            </dd>
+            <dt>Candidate Assist / Variant Management</dt>
+            <dd>
+              Candidate Assistは同じchoice
+              setを持つ既存Question候補を探すだけで、新規Questionは作りません。Variant
+              ManagementではGroup memberの比較・relation編集を行います。
+            </dd>
+            <dt>Selection Inspector</dt>
+            <dd>保存を行わず、Variant Groupの代表選択条件を試す確認機能です。</dd>
+            <dt>Global Validation / Export</dt>
+            <dd>
+              canonical validatorが唯一のquality判定です。選択Questionのrelated errorが0件でもGlobal
+              FAILならExportできず、Global PASSのworking QuestionsだけをExportできます。
+            </dd>
             <dt>バリアント問題</dt>
             <dd>同じ選択肢を使い、問い方を変えた問題です。</dd>
             <dt>Variant Group</dt>
@@ -89,6 +118,24 @@
       <details id="error-help" class="manual-panel">
         <summary>エラー対策</summary>
         <div class="manual-content">
+          <section aria-labelledby="draft-recovery-title">
+            <h2 id="draft-recovery-title">未保存draft・Reset・Export後の確認</h2>
+            <p>
+              入力中のdraftはsubmitするまでworking
+              Questionsへ入りません。別の操作へ進む際のdiscard確認でキャンセルすればdraftを維持し、破棄を選べばworking
+              Questionsを変えずに移動します。
+            </p>
+            <p>
+              Reset editsはbrowser memory上の未export編集をsource
+              snapshotへ戻し、開いていたReviewやderived
+              selectionも安全に再調整します。localStorageへのdraft保存やautosaveは行いません。
+            </p>
+            <p>
+              Validation FAILではerror detailsとReviewを確認して編集へ戻り、Global
+              PASSへ回復してからExportします。Export後はGit diff / PRで意図しない変更やtransient
+              stateの混入がないことを最終確認してください。
+            </p>
+          </section>
           <section id="choice-multiset-help" aria-labelledby="choice-multiset-help-title">
             <h2 id="choice-multiset-help-title">同じchoice text multisetではない</h2>
             <p>Variant Groupは、選択肢本文が一致している必要があります。</p>
