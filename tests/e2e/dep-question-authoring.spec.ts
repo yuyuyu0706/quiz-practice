@@ -114,6 +114,98 @@ test.describe('[DEP][UI] Question Preview / Review', () => {
     await expect(page.locator('.question-review')).toHaveCount(0);
     await expect(page.locator('#question-detail')).toContainText('QUESTION DETAIL');
   });
+
+  test('shows canonical same-choice failure as a related error for a grouped Question', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    const questionCount = await page.locator('#catalog-count').textContent();
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await page.locator('#question-form [name="choice-A"]').fill('A changed grouped choice');
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await expect(page.locator('#validation-status')).toContainText('FAIL');
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+
+    const validationReview = page.locator('.validation-review');
+    await expect(validationReview).toContainText('Global FAIL');
+    await expect(validationReview).toContainText('Related errors (1)');
+    await expect(validationReview).toContainText('must use the same choice text multiset');
+    await expect(page.locator('#catalog-count')).toHaveText(questionCount ?? '');
+    await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
+    await expect(page.locator('#export')).toBeDisabled();
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+
+    await page.getByRole('button', { name: 'Back to Detail' }).click();
+    await expect(page.locator('#validation-status')).toContainText('FAIL');
+    await expect(page.locator('#catalog-count')).toHaveText(questionCount ?? '');
+    await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
+
+  test('keeps Global FAIL when only another Question has a canonical error', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await page.locator('#question-form [name="choice-A"]').fill('A changed grouped choice');
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await expect(page.locator('#validation-status')).toContainText('FAIL');
+
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+
+    const validationReview = page.locator('.validation-review');
+    await expect(validationReview).toContainText('Global FAIL');
+    await expect(validationReview).toContainText('Related errors (0)');
+    await expect(validationReview).toContainText(
+      'No related errors. Global validation status remains authoritative.'
+    );
+    await expect(validationReview).not.toContainText('Global PASS');
+    await expect(page.locator('#export')).toBeDisabled();
+    await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
+
+  test('exports the working Questions while PASS Review remains open without review state', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    await page.getByRole('button', { name: 'Edit Question' }).click();
+    await page.locator('#question-form [name="question"]').fill('Exported from open Review?');
+    await page.getByRole('button', { name: 'Save Question' }).click();
+    await expect(page.locator('#validation-status')).toContainText('PASS');
+    const questionCount = await page.locator('#catalog-count').textContent();
+    const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
+
+    await page.getByRole('button', { name: 'Preview / Review' }).click();
+    await expect(page.locator('.validation-review')).toContainText('Global PASS');
+    await expect(page.locator('#export')).toBeEnabled();
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('#export').click();
+    const download = await downloadPromise;
+    const exported = JSON.parse(
+      await (await download.createReadStream()).toArray().then(Buffer.concat).then(String)
+    );
+
+    expect(exported.find((question: { id: string }) => question.id === 'DEP-Q201').question).toBe(
+      'Exported from open Review?'
+    );
+    expect(exported).toHaveLength(Number.parseInt(questionCount?.split(' / ')[1] ?? '', 10));
+    expect(JSON.stringify(exported)).not.toContain('reviewState');
+    await expect(page.locator('.question-review')).toBeVisible();
+    await expect(page.locator('#catalog-count')).toHaveText(questionCount ?? '');
+    await expect(page.locator('#dirty')).toHaveText('Unsaved changes');
+    await expect(page.locator('#validation-status')).toContainText('PASS');
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).toBe(storageBefore);
+  });
 });
 
 test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
