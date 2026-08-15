@@ -28,6 +28,12 @@ import {
   updateQuestion,
   validateQuestionDraft,
 } from './question-editing.js';
+import {
+  buildCloneQuestionDraft,
+  buildVariantQuestionDraft,
+  createQuestionClone,
+  createQuestionVariant,
+} from './question-derivation.js';
 
 const state = {
   sourceQuestions: [],
@@ -121,7 +127,7 @@ function renderQuestionDetail(question) {
       .join('')}</ol>
     <p><strong>Answer:</strong> ${escapeHtml(question.answer || 'なし')}</p>
     <dl class="relation-detail"><dt>variantGroup</dt><dd>${escapeHtml(question.variantGroup || 'Ungrouped')}</dd><dt>followUp target</dt><dd>${escapeHtml(question.followUpTargetId || 'なし')}</dd></dl>
-    <div class="future-actions" aria-label="Question authoring actions"><button id="edit-question" type="button">Edit Question</button><button type="button" disabled title="F2.6-3で有効化予定">Clone Question</button><button type="button" disabled title="F2.6-3で有効化予定">Create Variant</button></div>
+    <div class="future-actions" aria-label="Question authoring actions"><button id="edit-question" type="button">Edit Question</button><button id="clone-question" type="button">Clone Question</button><button id="create-variant" type="button">Create Variant</button></div>
     <button id="open-variant-context" type="button" class="primary">${question.grouped ? 'Open group in Variant Management' : 'Find in Create Variant Group'}</button>`;
   document.querySelector('#open-variant-context').addEventListener('click', () => {
     setWorkspace('variant');
@@ -142,6 +148,12 @@ function renderQuestionDetail(question) {
   document
     .querySelector('#edit-question')
     .addEventListener('click', () => openQuestionForm('edit', question.id));
+  document
+    .querySelector('#clone-question')
+    .addEventListener('click', () => openQuestionForm('clone', question.id));
+  document
+    .querySelector('#create-variant')
+    .addEventListener('click', () => openQuestionForm('createVariant', question.id));
 }
 
 function openQuestionForm(mode, questionId = null) {
@@ -150,9 +162,16 @@ function openQuestionForm(mode, questionId = null) {
   state.authoringDraft = {
     mode,
     sourceQuestionId: questionId,
-    values: createQuestionDraft(question),
+    values:
+      mode === 'clone'
+        ? buildCloneQuestionDraft(question)
+        : mode === 'createVariant'
+          ? buildVariantQuestionDraft(question)
+          : createQuestionDraft(question),
     touched: false,
     errors: {},
+    confirmations: { knowledge: false, perspective: false, choices: false },
+    newGroupId: '',
   };
   renderCatalog();
   renderValidation();
@@ -187,6 +206,12 @@ function readQuestionForm(form) {
     title: row.querySelector('[name="reference-title"]').value,
     url: row.querySelector('[name="reference-url"]').value,
   }));
+  if (state.authoringDraft.mode === 'createVariant') {
+    state.authoringDraft.newGroupId = data.get('newGroupId') ?? '';
+    Object.keys(state.authoringDraft.confirmations).forEach((key) => {
+      state.authoringDraft.confirmations[key] = data.has(`confirm-${key}`);
+    });
+  }
   return values;
 }
 
@@ -199,10 +224,19 @@ function renderQuestionForm() {
   const draft = state.authoringDraft;
   const values = draft.values;
   const source = state.workingQuestions.find((question) => question.id === draft.sourceQuestionId);
+  const isVariant = draft.mode === 'createVariant';
+  const modeLabels = {
+    create: ['CREATE', 'Create Question'],
+    edit: ['EDIT', 'Save Question'],
+    clone: ['CLONE', 'Create Clone'],
+    createVariant: ['CREATE VARIANT', 'Create Variant'],
+  };
   const input = (name, value, extra = '') =>
     `<input name="${name}" value="${escapeHtml(value)}" ${extra}>${fieldError(name)}`;
-  questionDetailNode.innerHTML = `<p class="eyebrow">QUESTION ${draft.mode === 'create' ? 'CREATE' : 'EDIT'}</p>
+  questionDetailNode.innerHTML = `<p class="eyebrow">QUESTION ${modeLabels[draft.mode][0]}</p>
     <form id="question-form" novalidate>
+      ${draft.mode === 'clone' ? `<section class="derivation-context"><strong>Source: ${escapeHtml(source?.id)}</strong><p>独立Questionを作成します。variantGroup / followUpは継承されません。</p></section>` : ''}
+      ${isVariant ? `<section class="derivation-context"><strong>Source: ${escapeHtml(source?.id)}</strong><p>Question / Answer / Explanationを新しく入力し、sourceと同じchoicesでVariantを作成します。</p><p><strong>Destination:</strong> ${source?.variantGroup ? escapeHtml(source.variantGroup) : 'New Variant Group'}</p></section>` : ''}
       <fieldset><legend>Identity</legend><label>Question ID ${input('id', values.id, draft.mode === 'edit' ? 'readonly' : 'required')}</label><label>Section<select name="section">${Object.entries(
         SECTION_TITLES
       )
@@ -214,12 +248,13 @@ function renderQuestionForm() {
           ''
         )}</select></label><p class="meta">Section Title: <strong id="section-title">${escapeHtml(SECTION_TITLES[values.section])}</strong></p></fieldset>
       <fieldset><legend>Classification</legend><div class="form-grid"><label>Domain ${input('domain', values.domain)}</label><label>Difficulty<select name="difficulty"><option value="">Blank</option>${['easy', 'medium', 'hard'].map((v) => `<option ${values.difficulty === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Source Type<select name="sourceType"><option value="">Blank</option>${['original', 'official-inspired', 'scenario-based'].map((v) => `<option ${values.sourceType === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div><label>Tags (1行1tag)<textarea name="tags">${escapeHtml(values.tags)}</textarea></label></fieldset>
-      <fieldset><legend>Question</legend>${source?.variantGroup ? '<p class="warning">Grouped Questionです。choicesの変更は同じchoice text multiset契約を壊す可能性があります。Submit後のcanonical validationを確認してください。</p>' : ''}<label>Question text<textarea name="question" required>${escapeHtml(values.question)}</textarea>${fieldError('question')}</label><div class="form-grid">${['A', 'B', 'C', 'D'].map((key) => `<label>Choice ${key}${input(`choice-${key}`, values.choices[key], 'required')}</label>`).join('')}</div><label>Answer<select name="answer">${['A', 'B', 'C', 'D'].map((key) => `<option ${values.answer === key ? 'selected' : ''}>${key}</option>`).join('')}</select></label></fieldset>
+      <fieldset><legend>Question</legend>${source?.variantGroup && draft.mode === 'edit' ? '<p class="warning">Grouped Questionです。choicesの変更は同じchoice text multiset契約を壊す可能性があります。Submit後のcanonical validationを確認してください。</p>' : ''}<label>Question text<textarea name="question" required>${escapeHtml(values.question)}</textarea>${fieldError('question')}</label><div class="form-grid">${['A', 'B', 'C', 'D'].map((key) => `<label>Choice ${key}${input(`choice-${key}`, values.choices[key], `required ${isVariant ? 'readonly aria-readonly="true"' : ''}`)}</label>`).join('')}</div><label>Answer<select name="answer" required><option value="" ${values.answer ? '' : 'selected'}>Select answer</option>${['A', 'B', 'C', 'D'].map((key) => `<option ${values.answer === key ? 'selected' : ''}>${key}</option>`).join('')}</select>${fieldError('answer')}</label></fieldset>
       <fieldset><legend>Learning</legend><label>Explanation<textarea name="explanation" required>${escapeHtml(values.explanation)}</textarea>${fieldError('explanation')}</label><div class="form-grid">${['A', 'B', 'C', 'D'].map((key) => `<label>Why Wrong ${key}<textarea name="whyWrong-${key}" ${values.answer === key ? 'disabled title="Correct answer is omitted"' : ''}>${escapeHtml(values.whyWrong[key])}</textarea></label>`).join('')}</div></fieldset>
       <fieldset><legend>References &amp; Maintenance</legend><div id="reference-rows">${values.references.map((reference, index) => `<div class="reference-row" data-reference-row><label>Title<input name="reference-title" value="${escapeHtml(reference.title)}"></label><label>URL<input name="reference-url" type="url" value="${escapeHtml(reference.url)}"></label><button type="button" class="danger" data-remove-reference="${index}">Remove</button>${fieldError(`reference-${index}`)}</div>`).join('')}</div><button id="add-reference" type="button" class="secondary">Add Reference</button><label>Notes<textarea name="notes">${escapeHtml(values.notes)}</textarea></label></fieldset>
       <fieldset><legend>Extended Metadata</legend><div class="form-grid"><label>Scenario Type<select name="scenarioType"><option value="">Blank</option>${['single-step', 'multi-step', 'architecture', 'troubleshooting'].map((v) => `<option ${values.scenarioType === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Estimated Time (sec) ${input('estimatedTimeSec', values.estimatedTimeSec, 'inputmode="numeric"')}</label></div></fieldset>
       ${draft.mode === 'edit' ? `<fieldset><legend>Relations (read-only)</legend><dl class="relation-detail"><dt>variantGroup</dt><dd>${escapeHtml(source?.variantGroup ?? 'Ungrouped')}</dd><dt>followUp.questionId</dt><dd>${escapeHtml(source?.followUp?.questionId ?? 'なし')}</dd></dl></fieldset>` : ''}
-      <div class="actions"><button type="button" id="cancel-question">Cancel</button><button type="submit" class="primary">${draft.mode === 'create' ? 'Create Question' : 'Save Question'}</button></div><p id="form-error-summary" class="fail" role="alert"></p>
+      ${isVariant ? `<fieldset><legend>Variant Relation</legend>${source?.variantGroup ? `<p>Existing Group: <strong>${escapeHtml(source.variantGroup)}</strong> (read-only)</p>` : `<label>New Group Name ${input('newGroupId', draft.newGroupId, 'required')}</label>`}<div class="confirmation-list"><label><input type="checkbox" name="confirm-knowledge" ${draft.confirmations.knowledge ? 'checked' : ''} required> sourceと同じ知識・判断基準を確認する</label><label><input type="checkbox" name="confirm-perspective" ${draft.confirmations.perspective ? 'checked' : ''} required> sourceとは異なる問い方・視点である</label><label><input type="checkbox" name="confirm-choices" ${draft.confirmations.choices ? 'checked' : ''} required> sourceと同じchoicesを使用する</label></div>${fieldError('confirmations')}</fieldset>` : ''}
+      <div class="actions"><button type="button" id="cancel-question">Cancel</button><button type="submit" class="primary">${modeLabels[draft.mode][1]}</button></div><p id="form-error-summary" class="fail" role="alert"></p>
     </form>`;
   const form = document.querySelector('#question-form');
   form.addEventListener('input', () => {
@@ -254,19 +289,43 @@ function renderQuestionForm() {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     readQuestionForm(form);
-    draft.errors = validateQuestionDraft(values, state.workingQuestions, draft.sourceQuestionId);
+    draft.errors = validateQuestionDraft(
+      values,
+      state.workingQuestions,
+      draft.mode === 'edit' ? draft.sourceQuestionId : null
+    );
+    if (isVariant && !Object.values(draft.confirmations).every(Boolean)) {
+      draft.errors.confirmations = 'すべての条件を確認してください。';
+    }
+    if (isVariant && !source?.variantGroup && !draft.newGroupId.trim()) {
+      draft.errors.newGroupId = 'Required';
+    }
     if (Object.keys(draft.errors).length) {
       renderQuestionForm();
       document.querySelector('#form-error-summary').textContent = '入力内容を確認してください。';
       return;
     }
-    const next =
-      draft.mode === 'create'
-        ? createQuestion(state.workingQuestions, values)
-        : updateQuestion(state.workingQuestions, draft.sourceQuestionId, values);
-    state.selectedQuestionId = draft.mode === 'create' ? values.id.trim() : draft.sourceQuestionId;
-    state.authoringDraft = null;
-    applyEdit(next);
+    try {
+      const next =
+        draft.mode === 'create'
+          ? createQuestion(state.workingQuestions, values)
+          : draft.mode === 'edit'
+            ? updateQuestion(state.workingQuestions, draft.sourceQuestionId, values)
+            : draft.mode === 'clone'
+              ? createQuestionClone(state.workingQuestions, draft.sourceQuestionId, values)
+              : createQuestionVariant(
+                  state.workingQuestions,
+                  draft.sourceQuestionId,
+                  values,
+                  draft.newGroupId
+                );
+      state.selectedQuestionId = draft.mode === 'edit' ? draft.sourceQuestionId : values.id.trim();
+      state.authoringDraft = null;
+      applyEdit(next);
+    } catch (error) {
+      draft.errors.operation = error.message;
+      document.querySelector('#form-error-summary').textContent = error.message;
+    }
   });
 }
 
