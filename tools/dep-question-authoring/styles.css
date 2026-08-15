@@ -242,6 +242,30 @@ main {
   text-align: center;
   border-color: #415173;
 }
+.derivation-context {
+  margin-block: 16px;
+  padding: 14px;
+  border: 1px solid #78e7c3;
+  border-radius: 10px;
+  background: #102b2b;
+}
+.derivation-context p {
+  margin-bottom: 0;
+  color: #c0d7d2;
+}
+.confirmation-list {
+  display: grid;
+  gap: 10px;
+}
+.confirmation-list label {
+  display: flex;
+  gap: 8px;
+  align-items: start;
+}
+.confirmation-list input {
+  width: auto;
+  margin-top: 4px;
+}
 .question-detail textarea {
   min-height: 96px;
   resize: vertical;

@@ -41,7 +41,8 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await expect(page.locator('#question-detail')).toContainText('QUESTION DETAIL');
     await expect(page.locator('.future-actions button')).toHaveCount(3);
     await expect(page.getByRole('button', { name: 'Edit Question' })).toBeEnabled();
-    await expect(page.locator('.future-actions button:disabled')).toHaveCount(2);
+    await expect(page.getByRole('button', { name: 'Clone Question' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Create Variant', exact: true })).toBeEnabled();
 
     const storageBefore = await page.evaluate(() => JSON.stringify(localStorage));
     await page.locator('#catalog-search').fill('DEP-Q292');
@@ -80,6 +81,70 @@ test.describe('[DEP][UI] Question Catalog and authoring shell', () => {
     await page.locator('#question-form [name="question"]').fill('Edited question?');
     await page.getByRole('button', { name: 'Save Question' }).click();
     await expect(page.locator('#question-detail')).toContainText('Edited question?');
+  });
+
+  test('clones editable fields into an independent Question without relations', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    await page.getByRole('button', { name: 'Clone Question' }).click();
+    const form = page.locator('#question-form');
+    await expect(form).toContainText('variantGroup / followUpは継承されません');
+    await expect(form.locator('[name="id"]')).toHaveValue('');
+    await form.locator('[name="id"]').fill('DEP-Q999-CLONE');
+    await form.getByRole('button', { name: 'Create Clone' }).click();
+    await expect(page.locator('#question-detail h2')).toHaveText('DEP-Q999-CLONE');
+    await expect(page.locator('#question-detail .relation-detail')).toContainText('Ungrouped');
+    await expect(page.locator('#dirty')).toBeVisible();
+  });
+
+  test('creates a grouped Variant with locked choices and explicit confirmations', async ({
+    page,
+  }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q292');
+    await page.locator('[data-question-id="DEP-Q292"]').click();
+    await page.getByRole('button', { name: 'Create Variant', exact: true }).click();
+    const form = page.locator('#question-form');
+    await expect(form.locator('[name="choice-A"]')).toHaveAttribute('readonly', '');
+    await expect(form.locator('[name="answer"]')).toHaveValue('');
+    await expect(form).toContainText(GROUP_ID);
+    await form.locator('[name="id"]').fill('DEP-Q999-VARIANT');
+    await form.locator('[name="question"]').fill('A different question?');
+    await form.locator('[name="answer"]').selectOption('B');
+    await form.locator('[name="explanation"]').fill('A new explanation.');
+    await form.getByRole('button', { name: 'Create Variant' }).click();
+    await expect(form.getByText('すべての条件を確認してください。')).toBeVisible();
+    for (const checkbox of await form.locator('.confirmation-list input').all()) {
+      await checkbox.check();
+    }
+    await form.getByRole('button', { name: 'Create Variant' }).click();
+    await expect(page.locator('#question-detail h2')).toHaveText('DEP-Q999-VARIANT');
+    await expect(page.locator('#question-detail .relation-detail')).toContainText(GROUP_ID);
+    await expect(page.locator('#validation-status')).toContainText('PASS');
+  });
+
+  test('creates a new group atomically for an ungrouped Variant', async ({ page }) => {
+    await page.goto(TOOL_URL);
+    await page.locator('#catalog-search').fill('DEP-Q201');
+    await page.locator('[data-question-id="DEP-Q201"]').click();
+    await page.getByRole('button', { name: 'Create Variant', exact: true }).click();
+    const form = page.locator('#question-form');
+    await expect(form.locator('[name="newGroupId"]')).toBeVisible();
+    await form.locator('[name="id"]').fill('DEP-Q999-UNGROUPED-VARIANT');
+    await form.locator('[name="question"]').fill('A new perspective?');
+    await form.locator('[name="answer"]').selectOption('C');
+    await form.locator('[name="explanation"]').fill('New explanation.');
+    await form.locator('[name="newGroupId"]').fill('new-authoring-group');
+    for (const checkbox of await form.locator('.confirmation-list input').all()) {
+      await checkbox.check();
+    }
+    await form.getByRole('button', { name: 'Create Variant' }).click();
+    await expect(page.locator('#question-detail .relation-detail')).toContainText(
+      'new-authoring-group'
+    );
   });
 
   test('guards touched drafts and keeps working data unchanged when discard is cancelled', async ({
