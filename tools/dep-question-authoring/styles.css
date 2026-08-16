@@ -61,21 +61,74 @@ header {
 }
 .manuals {
   display: grid;
-  gap: 10px;
-  margin: 20px clamp(24px, 5vw, 72px) 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 1180px;
+  margin: 16px auto 0;
+  padding: 0 clamp(24px, 5vw, 72px);
+}
+.manuals-heading {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 24px;
+  align-items: end;
+  justify-content: space-between;
+  padding: 0 2px 4px;
+  color: #8f9dbb;
+}
+.manuals-heading h2,
+.manuals-heading p {
+  margin: 0;
+}
+.manuals-heading h2 {
+  color: #cbd5e9;
+  font-size: 1rem;
+}
+.manuals-heading > p {
+  max-width: 600px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: right;
+}
+.manuals-eyebrow {
+  margin-bottom: 3px !important;
+  color: #71809e;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 .manual-panel {
-  padding: 14px 20px;
-  border: 1px solid #355273;
-  border-radius: 12px;
-  background: #101d33;
+  align-self: start;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid #2b3b57;
+  border-radius: 8px;
+  background: #0d182b;
 }
 .manual-panel summary {
-  color: #78e7c3;
+  color: #a7cbbb;
   cursor: pointer;
-  font-weight: 800;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.manual-panel summary::marker {
+  color: #71809e;
+}
+.manual-panel[open] {
+  padding-bottom: 14px;
+  border-color: #3c5875;
+  background: #101d33;
+}
+.manual-panel[open] summary {
+  padding-bottom: 9px;
+  border-bottom: 1px solid #293b57;
+  color: #78e7c3;
 }
 .quick-start ol {
+  margin-bottom: 10px;
+  padding-left: 22px;
+  font-size: 0.82rem;
   line-height: 1.7;
 }
 .manual-content {
@@ -673,7 +726,26 @@ fieldset {
     grid-column: 1;
     grid-row: auto;
   }
-  main {
+  .manuals {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    margin-top: 12px;
+    padding: 0 16px;
+  }
+  .manuals-heading {
+    display: block;
+    padding-bottom: 3px;
+  }
+  .manuals-heading > p {
+    margin-top: 6px;
+    max-width: none;
+    text-align: left;
+  }
+  .manual-panel {
+    padding: 10px 12px;
+  }
+  main,
+  .catalog-layout {
     grid-template-columns: 1fr;
   }
   .groups-panel {

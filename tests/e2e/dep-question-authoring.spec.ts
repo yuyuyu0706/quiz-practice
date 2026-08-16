@@ -491,6 +491,9 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     );
     await expect(page).toHaveTitle('DEP Question Authoring Tool');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('DEP Question Authoring Tool');
+    await expect(page.locator('.manuals')).toHaveAccessibleName('Variant Management ガイド');
+    await expect(page.locator('.manuals-heading')).toContainText('VARIANT MANAGEMENT REFERENCE');
+    await expect(page.locator('.manuals-heading')).toContainText('必要な項目だけ開いてください');
     await expect(page.getByText('はじめて使う方へ — Quick Start')).toBeVisible();
     await expect(page.locator('.groups-panel .help')).toContainText('空欄では全 Variant groups');
     await expect(page.locator('.groups-panel .help')).toContainText(
@@ -569,6 +572,29 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       'title',
       'Canonical validation が PASS の場合のみ Export できます。'
     );
+  });
+
+  test('keeps the manuals and catalog workspace readable at the narrow breakpoint', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 600, height: 900 });
+    await page.goto(TOOL_URL);
+    await expect(page.locator('.manual-panel')).toHaveCount(3);
+
+    const panelPositions = await page.locator('.manual-panel').evaluateAll((panels) =>
+      panels.map((panel) => ({
+        left: panel.getBoundingClientRect().left,
+        width: panel.getBoundingClientRect().width,
+      }))
+    );
+    expect(new Set(panelPositions.map(({ left }) => Math.round(left))).size).toBe(1);
+    expect(panelPositions.every(({ width }) => width <= 568)).toBe(true);
+
+    const catalogColumns = await page
+      .locator('#catalog-workspace')
+      .evaluate((workspace) => getComputedStyle(workspace).gridTemplateColumns);
+    expect(catalogColumns.trim().split(/\s+/)).toHaveLength(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(600);
   });
 
   test('presents the authoring workflow as exclusive accordions with global actions', async ({
