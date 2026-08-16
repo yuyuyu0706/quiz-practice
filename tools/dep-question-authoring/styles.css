@@ -21,7 +21,7 @@ header {
 .workspace-toolbar {
   display: flex;
   gap: 20px;
-  align-items: start;
+  align-items: flex-start;
   padding: 10px clamp(24px, 5vw, 72px) 12px;
   border-bottom: 1px solid #293653;
 }
@@ -30,7 +30,7 @@ header {
   flex: 1;
   grid-template-columns: max-content max-content minmax(220px, 1fr);
   gap: 6px 10px;
-  align-items: center;
+  align-items: start;
 }
 .global-tools summary,
 .accordion > summary {
@@ -245,6 +245,7 @@ main {
 .workspace-tabs button {
   width: auto;
   padding-inline: 22px;
+  margin: 0;
   border-color: #415173;
   text-align: center;
 }
