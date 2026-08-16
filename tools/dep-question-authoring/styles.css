@@ -26,9 +26,6 @@ header {
   align-items: start;
   margin-top: 20px;
   padding: 14px 16px;
-  border: 1px solid #355273;
-  border-radius: 12px;
-  background: #101d33;
 }
 .global-tools summary,
 .accordion > summary {
