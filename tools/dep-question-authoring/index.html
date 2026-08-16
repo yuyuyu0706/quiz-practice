@@ -16,24 +16,28 @@
       <p>
         DEP Question全般の確認と、Variant relationの管理・検証を行うローカルAuthoring Toolです。
       </p>
-      <section class="global-tools" aria-label="Global validation and actions">
-        <strong id="validation-status" class="validation-status" role="status"
-          >Validation を準備中...</strong
+    </header>
+    <div class="workspace-toolbar">
+      <nav class="workspace-tabs" aria-label="Authoring workspace">
+        <button
+          id="catalog-tab"
+          type="button"
+          aria-controls="catalog-workspace"
+          aria-selected="true"
         >
-        <p id="validation-result" class="validation-result">Resultを準備中...</p>
-        <details id="validation">
-          <summary>Validation error details</summary>
-          <div id="validation-content"></div>
-        </details>
+          QUESTION CATALOG
+        </button>
+        <button
+          id="variant-tab"
+          type="button"
+          aria-controls="variant-workspace"
+          aria-selected="false"
+        >
+          VARIANT MANAGEMENT
+        </button>
+      </nav>
+      <section class="global-tools" aria-label="Global validation and actions">
         <div class="global-actions">
-          <button
-            id="reset"
-            type="button"
-            title="Browser memory上の未export編集を破棄します。"
-            disabled
-          >
-            Reset edits
-          </button>
           <button
             id="export"
             type="button"
@@ -42,22 +46,27 @@
           >
             Export questions.json
           </button>
+          <button
+            id="reset"
+            type="button"
+            title="Browser memory上の未export編集を破棄します。"
+            disabled
+          >
+            Reset edits
+          </button>
         </div>
+        <div class="validation-info">
+          <strong id="validation-status" class="validation-status" role="status"
+            >Validation を準備中...</strong
+          >
+          <p id="validation-result" class="validation-result">Resultを準備中...</p>
+        </div>
+        <details id="validation">
+          <summary>Validation error details</summary>
+          <div id="validation-content"></div>
+        </details>
       </section>
-    </header>
-    <nav class="workspace-tabs" aria-label="Authoring workspace">
-      <button id="catalog-tab" type="button" aria-controls="catalog-workspace" aria-selected="true">
-        QUESTION CATALOG
-      </button>
-      <button
-        id="variant-tab"
-        type="button"
-        aria-controls="variant-workspace"
-        aria-selected="false"
-      >
-        VARIANT MANAGEMENT
-      </button>
-    </nav>
+    </div>
     <main id="catalog-workspace" class="catalog-layout">
       <div id="catalog-status" class="status catalog-status" role="status">
         questions.json を読み込み中...

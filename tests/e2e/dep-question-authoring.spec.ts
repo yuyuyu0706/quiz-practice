@@ -635,9 +635,9 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#inspector')).not.toContainText('Browser memory内だけで行い');
     await expect(page.getByLabel('Session Mode（出題モード）')).toBeVisible();
     await expect(page.getByLabel('Target Section（出題対象Section）')).toBeVisible();
-    await expect(page.locator('header #validation-status')).toBeVisible();
-    await expect(page.locator('header #reset')).toBeVisible();
-    await expect(page.locator('header #export')).toBeVisible();
+    await expect(page.locator('.workspace-toolbar #validation-status')).toBeVisible();
+    await expect(page.locator('.workspace-toolbar #reset')).toBeVisible();
+    await expect(page.locator('.workspace-toolbar #export')).toBeVisible();
     await expect(page.locator('.quick-start strong')).toHaveCount(8);
   });
 
