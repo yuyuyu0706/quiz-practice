@@ -485,6 +485,7 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     page,
   }) => {
     await page.goto(TOOL_URL);
+    await expect(page.locator('.manuals')).toBeHidden();
     await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     await expect(page.locator('#status')).toContainText(
       /読み込み完了: \d+ questions \/ \d+ variant groups/
@@ -579,7 +580,10 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
   }) => {
     await page.setViewportSize({ width: 600, height: 900 });
     await page.goto(TOOL_URL);
+    await expect(page.locator('.manuals')).toBeHidden();
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     await expect(page.locator('.manual-panel')).toHaveCount(3);
+    await expect(page.locator('#variant-workspace > .workspace > .manuals')).toBeVisible();
 
     const panelPositions = await page.locator('.manual-panel').evaluateAll((panels) =>
       panels.map((panel) => ({
@@ -590,6 +594,8 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     expect(new Set(panelPositions.map(({ left }) => Math.round(left))).size).toBe(1);
     expect(panelPositions.every(({ width }) => width <= 568)).toBe(true);
 
+    await page.getByRole('button', { name: 'QUESTION CATALOG' }).click();
+    await expect(page.locator('.manuals')).toBeHidden();
     const catalogColumns = await page
       .locator('#catalog-workspace')
       .evaluate((workspace) => getComputedStyle(workspace).gridTemplateColumns);
