@@ -601,6 +601,11 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
       .evaluate((workspace) => getComputedStyle(workspace).gridTemplateColumns);
     expect(catalogColumns.trim().split(/\s+/)).toHaveLength(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(600);
+
+    for (const width of [800, 1024]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
   });
 
   test('presents the authoring workflow as exclusive accordions with global actions', async ({
