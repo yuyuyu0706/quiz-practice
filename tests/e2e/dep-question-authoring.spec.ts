@@ -485,12 +485,16 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     page,
   }) => {
     await page.goto(TOOL_URL);
+    await expect(page.locator('.manuals')).toBeHidden();
     await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
     await expect(page.locator('#status')).toContainText(
       /読み込み完了: \d+ questions \/ \d+ variant groups/
     );
     await expect(page).toHaveTitle('DEP Question Authoring Tool');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('DEP Question Authoring Tool');
+    await expect(page.locator('.manuals')).toHaveAccessibleName('Variant Management ガイド');
+    await expect(page.locator('.manuals-heading')).toContainText('VARIANT MANAGEMENT REFERENCE');
+    await expect(page.locator('.manuals-heading')).toContainText('必要な項目だけ開いてください');
     await expect(page.getByText('はじめて使う方へ — Quick Start')).toBeVisible();
     await expect(page.locator('.groups-panel .help')).toContainText('空欄では全 Variant groups');
     await expect(page.locator('.groups-panel .help')).toContainText(
@@ -571,6 +575,39 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     );
   });
 
+  test('keeps the manuals and catalog workspace readable at the narrow breakpoint', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 600, height: 900 });
+    await page.goto(TOOL_URL);
+    await expect(page.locator('.manuals')).toBeHidden();
+    await page.getByRole('button', { name: 'VARIANT MANAGEMENT' }).click();
+    await expect(page.locator('.manual-panel')).toHaveCount(3);
+    await expect(page.locator('#variant-workspace > .workspace > .manuals')).toBeVisible();
+
+    const panelPositions = await page.locator('.manual-panel').evaluateAll((panels) =>
+      panels.map((panel) => ({
+        left: panel.getBoundingClientRect().left,
+        width: panel.getBoundingClientRect().width,
+      }))
+    );
+    expect(new Set(panelPositions.map(({ left }) => Math.round(left))).size).toBe(1);
+    expect(panelPositions.every(({ width }) => width <= 568)).toBe(true);
+
+    await page.getByRole('button', { name: 'QUESTION CATALOG' }).click();
+    await expect(page.locator('.manuals')).toBeHidden();
+    const catalogColumns = await page
+      .locator('#catalog-workspace')
+      .evaluate((workspace) => getComputedStyle(workspace).gridTemplateColumns);
+    expect(catalogColumns.trim().split(/\s+/)).toHaveLength(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(600);
+
+    for (const width of [800, 1024]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
+  });
+
   test('presents the authoring workflow as exclusive accordions with global actions', async ({
     page,
   }) => {
@@ -603,9 +640,9 @@ test.describe('[DEP][UI] Question authoring / Variant Manager and Selection Insp
     await expect(page.locator('#inspector')).not.toContainText('Browser memory内だけで行い');
     await expect(page.getByLabel('Session Mode（出題モード）')).toBeVisible();
     await expect(page.getByLabel('Target Section（出題対象Section）')).toBeVisible();
-    await expect(page.locator('header #validation-status')).toBeVisible();
-    await expect(page.locator('header #reset')).toBeVisible();
-    await expect(page.locator('header #export')).toBeVisible();
+    await expect(page.locator('.workspace-toolbar #validation-status')).toBeVisible();
+    await expect(page.locator('.workspace-toolbar #reset')).toBeVisible();
+    await expect(page.locator('.workspace-toolbar #export')).toBeVisible();
     await expect(page.locator('.quick-start strong')).toHaveCount(8);
   });
 

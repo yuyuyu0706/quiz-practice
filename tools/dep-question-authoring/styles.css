@@ -16,19 +16,22 @@ body {
   background: radial-gradient(circle at 20% 0%, #1c3156 0, transparent 34%), #0a1020;
 }
 header {
-  padding: 32px clamp(24px, 5vw, 72px) 24px;
+  padding: 28px clamp(24px, 5vw, 72px) 14px;
+}
+.workspace-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 10px clamp(24px, 5vw, 72px) 12px;
   border-bottom: 1px solid #293653;
 }
 .global-tools {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) auto;
-  gap: 10px 20px;
+  flex: 1 1 auto;
+  grid-template-columns: max-content max-content minmax(220px, 1fr);
+  gap: 6px 10px;
   align-items: start;
-  margin-top: 20px;
-  padding: 14px 16px;
-  border: 1px solid #355273;
-  border-radius: 12px;
-  background: #101d33;
 }
 .global-tools summary,
 .accordion > summary {
@@ -37,45 +40,105 @@ header {
   font-weight: 800;
 }
 .validation-status {
-  align-self: center;
+  display: block;
 }
 .validation-result {
-  grid-column: 1 / -1;
-  grid-row: 2;
   margin: 0;
 }
 .global-tools > details {
-  grid-column: 1;
-  grid-row: 3;
+  grid-column: 1 / -1;
+  grid-row: 2;
 }
 .global-actions {
-  display: flex;
-  gap: 8px;
-  grid-column: 2;
-  grid-row: 1;
+  display: contents;
 }
 .global-actions button {
   width: auto;
   margin: 0;
   text-align: center;
 }
+#export {
+  grid-column: 1;
+  grid-row: 1;
+}
+#reset {
+  grid-column: 2;
+  grid-row: 1;
+}
+.validation-info {
+  display: grid;
+  gap: 3px;
+  grid-column: 3;
+  grid-row: 1;
+}
 .manuals {
   display: grid;
-  gap: 10px;
-  margin: 20px clamp(24px, 5vw, 72px) 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.manuals-heading {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 24px;
+  align-items: end;
+  justify-content: space-between;
+  padding: 0 2px 4px;
+  color: #8f9dbb;
+}
+.manuals-heading h2,
+.manuals-heading p {
+  margin: 0;
+}
+.manuals-heading h2 {
+  color: #cbd5e9;
+  font-size: 1rem;
+}
+.manuals-heading > p {
+  max-width: 600px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: right;
+}
+.manuals-eyebrow {
+  margin-bottom: 3px !important;
+  color: #71809e;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 .manual-panel {
-  padding: 14px 20px;
-  border: 1px solid #355273;
-  border-radius: 12px;
-  background: #101d33;
+  align-self: start;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid #2b3b57;
+  border-radius: 8px;
+  background: #0d182b;
 }
 .manual-panel summary {
-  color: #78e7c3;
+  color: #a7cbbb;
   cursor: pointer;
-  font-weight: 800;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.manual-panel summary::marker {
+  color: #71809e;
+}
+.manual-panel[open] {
+  padding-bottom: 14px;
+  border-color: #3c5875;
+  background: #101d33;
+}
+.manual-panel[open] summary {
+  padding-bottom: 9px;
+  border-bottom: 1px solid #293b57;
+  color: #78e7c3;
 }
 .quick-start ol {
+  margin-bottom: 10px;
+  padding-left: 22px;
+  font-size: 0.82rem;
   line-height: 1.7;
 }
 .manual-content {
@@ -176,12 +239,14 @@ main {
 }
 .workspace-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  padding: 24px clamp(24px, 5vw, 72px) 0;
+  flex: none;
 }
 .workspace-tabs button {
   width: auto;
   padding-inline: 22px;
+  margin: 0;
   border-color: #415173;
   text-align: center;
 }
@@ -664,16 +729,39 @@ fieldset {
   font-weight: 800;
 }
 @media (max-width: 760px) {
+  .workspace-toolbar {
+    display: grid;
+    gap: 10px;
+    padding-inline: 16px;
+  }
   .global-tools {
+    grid-template-columns: max-content max-content;
+  }
+  .validation-info {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .global-tools > details {
+    grid-row: 3;
+  }
+  .manuals {
     grid-template-columns: 1fr;
+    gap: 7px;
   }
-  .global-tools > details,
-  .global-actions,
-  .validation-result {
-    grid-column: 1;
-    grid-row: auto;
+  .manuals-heading {
+    display: block;
+    padding-bottom: 3px;
   }
-  main {
+  .manuals-heading > p {
+    margin-top: 6px;
+    max-width: none;
+    text-align: left;
+  }
+  .manual-panel {
+    padding: 10px 12px;
+  }
+  main,
+  .catalog-layout {
     grid-template-columns: 1fr;
   }
   .groups-panel {
