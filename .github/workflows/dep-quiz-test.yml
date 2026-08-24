@@ -48,6 +48,9 @@ jobs:
       - name: 'Quality Gate: Run DEP variant selection unit tests'
         run: npm run test:dep-variant-selection
 
+      - name: 'Quality Gate: Run DEP follow-up contract unit tests'
+        run: npm run test:dep-follow-up
+
       - name: 'Quality Gate: Run DEP question authoring foundation tests'
         run: npm run test:dep-question-authoring-foundation
 
