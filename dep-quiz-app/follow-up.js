@@ -54,18 +54,29 @@ export function normalizeFollowUpInteractions(value) {
     if (
       isNonEmptyString(sourceId) &&
       isPlainObject(interaction) &&
+      interaction.sourceQuestionId === sourceId &&
+      isNonEmptyString(interaction.targetQuestionId) &&
       (interaction.status === ACTIVE || interaction.status === COMPLETED)
     ) {
-      normalized[sourceId] = { status: interaction.status };
+      normalized[sourceId] = {
+        sourceQuestionId: sourceId,
+        targetQuestionId: interaction.targetQuestionId,
+        status: interaction.status,
+      };
     }
   }
   return normalized;
 }
 
-export function startFollowUp(interactions, sourceId) {
+export function startFollowUp(interactions, sourceId, targetId) {
   const normalized = normalizeFollowUpInteractions(interactions);
-  if (!isNonEmptyString(sourceId) || normalized[sourceId]) return normalized;
-  return { ...normalized, [sourceId]: { status: ACTIVE } };
+  if (!isNonEmptyString(sourceId) || !isNonEmptyString(targetId) || normalized[sourceId]) {
+    return normalized;
+  }
+  return {
+    ...normalized,
+    [sourceId]: { sourceQuestionId: sourceId, targetQuestionId: targetId, status: ACTIVE },
+  };
 }
 
 export function cancelFollowUp(interactions, sourceId) {
@@ -78,7 +89,7 @@ export function cancelFollowUp(interactions, sourceId) {
 export function completeFollowUp(interactions, sourceId) {
   const normalized = normalizeFollowUpInteractions(interactions);
   if (!isNonEmptyString(sourceId) || normalized[sourceId]?.status !== ACTIVE) return normalized;
-  return { ...normalized, [sourceId]: { status: COMPLETED } };
+  return { ...normalized, [sourceId]: { ...normalized[sourceId], status: COMPLETED } };
 }
 
 function unavailable(reason, presentation, target = null) {

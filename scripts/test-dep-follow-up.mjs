@@ -38,12 +38,27 @@ test('availability uses stable reasons in contract priority order', () => {
     reason({
       sessionOrder: ['target'],
       interactions: {
-        source: { status: 'completed' },
+        source: {
+          sourceQuestionId: 'source',
+          targetQuestionId: 'target',
+          status: 'completed',
+        },
       },
     }),
     'target_in_session'
   );
-  assert.equal(reason({ interactions: { source: { status: 'completed' } } }), 'already_completed');
+  assert.equal(
+    reason({
+      interactions: {
+        source: {
+          sourceQuestionId: 'source',
+          targetQuestionId: 'target',
+          status: 'completed',
+        },
+      },
+    }),
+    'already_completed'
+  );
 });
 
 test('presentation maps review to recommended and other guidance to optional', () => {
@@ -54,36 +69,63 @@ test('presentation maps review to recommended and other guidance to optional', (
 });
 
 test('lifecycle supports idle, active, cancel, and completed idempotently', () => {
-  const active = startFollowUp({}, 'source');
-  assert.deepEqual(active, { source: { status: 'active' } });
-  assert.deepEqual(startFollowUp(active, 'source'), active);
+  const active = startFollowUp({}, 'source', 'target');
+  assert.deepEqual(active, {
+    source: { sourceQuestionId: 'source', targetQuestionId: 'target', status: 'active' },
+  });
+  assert.deepEqual(startFollowUp(active, 'source', 'other-target'), active);
+  assert.deepEqual(startFollowUp({}, 'source'), {});
   assert.deepEqual(cancelFollowUp(active, 'source'), {});
   const completed = completeFollowUp(active, 'source');
-  assert.deepEqual(completed, { source: { status: 'completed' } });
-  assert.deepEqual(startFollowUp(completed, 'source'), completed);
+  assert.deepEqual(completed, {
+    source: { sourceQuestionId: 'source', targetQuestionId: 'target', status: 'completed' },
+  });
+  assert.deepEqual(startFollowUp(completed, 'source', 'target'), completed);
   assert.deepEqual(cancelFollowUp(completed, 'source'), completed);
   assert.deepEqual(completeFollowUp({}, 'source'), {});
 });
 
 test('different sources remain independent', () => {
-  const both = startFollowUp(startFollowUp({}, 'source-a'), 'source-b');
+  const both = startFollowUp(startFollowUp({}, 'source-a', 'target'), 'source-b', 'target');
   assert.deepEqual(completeFollowUp(both, 'source-a'), {
-    'source-a': { status: 'completed' },
-    'source-b': { status: 'active' },
+    'source-a': { sourceQuestionId: 'source-a', targetQuestionId: 'target', status: 'completed' },
+    'source-b': { sourceQuestionId: 'source-b', targetQuestionId: 'target', status: 'active' },
   });
 });
 
 test('normalizer removes malformed state and canonicalizes valid entries', () => {
   assert.deepEqual(
     normalizeFollowUpInteractions({
-      active: { status: 'active', extra: true },
-      completed: { status: 'completed' },
-      idle: { status: 'idle' },
+      active: {
+        sourceQuestionId: 'active',
+        targetQuestionId: 'target-a',
+        status: 'active',
+        extra: true,
+      },
+      completed: {
+        sourceQuestionId: 'completed',
+        targetQuestionId: 'target-b',
+        status: 'completed',
+      },
+      idle: { sourceQuestionId: 'idle', targetQuestionId: 'target', status: 'idle' },
       array: [],
       missing: {},
+      missingTarget: { sourceQuestionId: 'missingTarget', status: 'active' },
+      mismatchedSource: {
+        sourceQuestionId: 'other',
+        targetQuestionId: 'target',
+        status: 'active',
+      },
       '': { status: 'active' },
     }),
-    { active: { status: 'active' }, completed: { status: 'completed' } }
+    {
+      active: { sourceQuestionId: 'active', targetQuestionId: 'target-a', status: 'active' },
+      completed: {
+        sourceQuestionId: 'completed',
+        targetQuestionId: 'target-b',
+        status: 'completed',
+      },
+    }
   );
   for (const value of [null, [], 'bad', 3]) {
     assert.deepEqual(normalizeFollowUpInteractions(value), {});
@@ -92,7 +134,14 @@ test('normalizer removes malformed state and canonicalizes valid entries', () =>
 
 test('all operations preserve caller-owned inputs', () => {
   const sessionOrder = ['source'];
-  const interactions = { source: { status: 'active', extra: true } };
+  const interactions = {
+    source: {
+      sourceQuestionId: 'source',
+      targetQuestionId: 'target',
+      status: 'active',
+      extra: true,
+    },
+  };
   const snapshot = structuredClone({ questions, source, sessionOrder, interactions });
   getFollowUpAvailability({ source, questions, sourceGraded: true, sessionOrder, interactions });
   normalizeFollowUpInteractions(interactions);
